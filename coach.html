@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolve — Coach Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #f59e0b;
+            --gold-light: #fbbf24;
+            --gold-dim: rgba(245,158,11,0.12);
+            --green: #10b981;
+            --bg-deep: #060a0f;
+            --bg-mid: #0d1520;
+            --bg-card: #111a27;
+            --bg-surface: #1a2638;
+            --border: #1e3048;
+            --text: #e2e8f0;
+            --text-muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: var(--bg-deep);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* ─── HEADER ─── */
+        .header {
+            background: var(--bg-card);
+            padding: 14px 18px;
+            display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+            flex-shrink: 0;
+        }
+
+        .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px; flex-shrink: 0;
+            font-family: 'Barlow Condensed', sans-serif;
+        }
+
+        .coach-avatar { background: var(--gold); color: #000; }
+        .client-avatar { background: var(--green); color: #fff; }
+
+        .header-info { flex: 1; min-width: 0; }
+
+        .header-info h2 {
+            font-size: 15px; font-weight: 700;
+            letter-spacing: -0.2px; color: var(--text);
+        }
+
+        .header-info p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+        .header-badge {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            background: var(--gold-dim);
+            color: var(--gold);
+            border: 1px solid rgba(245,158,11,0.25);
+            padding: 2px 8px; border-radius: 20px;
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+
+        .btn-video {
+            background: var(--gold);
+            color: #000; border: none;
+            border-radius: 20px;
+            padding: 7px 14px;
+            font-size: 12px; font-weight: 700;
+            font-family: 'Barlow', sans-serif;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            transition: background 0.2s, transform 0.1s;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-video:hover { background: var(--gold-light); transform: scale(1.02); }
+        .btn-video svg { width: 14px; height: 14px; }
+
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--green);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        /* ─── CHAT AREA ─── */
+        .chat-area {
+            flex: 1; overflow-y: auto;
+            padding: 20px 16px;
+            display: flex; flex-direction: column; gap: 10px;
+            background: var(--bg-mid);
+        }
+
+        .chat-area::-webkit-scrollbar { width: 4px; }
+        .chat-area::-webkit-scrollbar-track { background: transparent; }
+        .chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+        .message {
+            max-width: 72%; padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 14px; line-height: 1.55;
+            word-wrap: break-word;
+            animation: msgIn 0.2s ease both;
+        }
+
+        @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+        .message.sent {
+            align-self: flex-end;
+            background: var(--gold);
+            color: #0f172a;
+            border-bottom-right-radius: 4px;
+            font-weight: 600;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background: var(--bg-surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message .meta { font-size: 10px; margin-top: 4px; opacity: 0.6; }
+
+        .system-msg {
+            align-self: center; color: #475569;
+            font-size: 11px; font-weight: 500;
+            background: rgba(71,85,105,0.15);
+            padding: 4px 12px; border-radius: 20px;
+            margin: 4px 0;
+        }
+
+        /* ─── INPUT ─── */
+        .input-area {
+            background: var(--bg-card);
+            padding: 12px 14px;
+            display: flex; gap: 8px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .input-area input {
+            flex: 1;
+            background: var(--bg-mid);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 10px 16px;
+            color: var(--text);
+            font-size: 14px; font-family: 'Barlow', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-area input:focus { border-color: var(--gold); }
+        .input-area input::placeholder { color: #334155; }
+
+        .input-area button {
+            background: var(--gold); color: #000;
+            border: none; border-radius: 50%;
+            width: 40px; height: 40px;
+            cursor: pointer; font-size: 17px;
+            transition: background 0.2s, transform 0.1s;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .input-area button:hover { background: var(--gold-light); transform: scale(1.05); }
+
+        /* ─── VIDEO CALL MODAL ─── */
+        #videoModal {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: var(--bg-deep);
+            flex-direction: column;
+        }
+
+        #videoModal.active { display: flex; }
+
+        .video-header {
+            position: absolute; top: 0; left: 0; right: 0;
+            padding: 16px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(6,10,15,0.96) 0%, transparent 100%);
+            z-index: 10;
+        }
+
+        .video-title {
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .video-title .call-brand {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px; font-weight: 700;
+            color: #fff; letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .call-status-pill {
+            background: rgba(16,185,129,0.2);
+            border: 1px solid rgba(16,185,129,0.4);
+            color: #10b981;
+            font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .call-status-pill.connecting {
+            color: var(--gold);
+            border-color: rgba(245,158,11,0.4);
+            background: rgba(245,158,11,0.1);
+        }
+
+        .video-main { flex: 1; position: relative; overflow: hidden; }
+
+        #remoteVideo {
+            width: 100%; height: 100%;
+            background: #080e18;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #remoteVideo video { width: 100%; height: 100%; object-fit: cover; }
+
+        .remote-placeholder {
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+
+        .remote-placeholder .big-avatar {
+            width: 88px; height: 88px; border-radius: 50%;
+            background: rgba(16,185,129,0.12);
+            border: 2px solid rgba(16,185,129,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 700;
+            color: var(--green);
+            font-family: 'Barlow Condensed', sans-serif;
+        }
+
+        .remote-placeholder p { color: #475569; font-size: 14px; font-weight: 500; }
+
+        #localVideo {
+            position: absolute; bottom: 100px; right: 16px;
+            width: 120px; height: 170px;
+            background: #1a2638;
+            border-radius: 12px; overflow: hidden;
+            border: 2px solid rgba(245,158,11,0.25);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #localVideo video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        .local-placeholder { color: #475569; font-size: 11px; text-align: center; padding: 8px; }
+
+        .video-controls {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 24px;
+            display: flex; align-items: center; justify-content: center; gap: 14px;
+            background: linear-gradient(to top, rgba(6,10,15,0.96) 0%, transparent 100%);
+        }
+
+        .ctrl-btn {
+            width: 52px; height: 52px;
+            border-radius: 50%; border: none;
+            cursor: pointer; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.15s, background 0.2s;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        .ctrl-btn:hover { transform: scale(1.08); background: rgba(255,255,255,0.15); }
+        .ctrl-btn.muted { background: rgba(239,68,68,0.22); }
+        .ctrl-btn.end-call { background: #ef4444; width: 60px; height: 60px; font-size: 22px; }
+        .ctrl-btn.end-call:hover { background: #dc2626; }
+
+        .ctrl-label {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+
+        .ctrl-label span { font-size: 10px; color: #64748b; font-weight: 500; }
+
+        #callTimer {
+            color: #64748b; font-size: 13px;
+            font-family: 'Barlow Condensed', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .connecting-overlay {
+            position: absolute; inset: 0;
+            background: var(--bg-mid);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; z-index: 5;
+        }
+
+        .connecting-overlay.hidden { display: none; }
+
+        .connecting-spinner {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(245,158,11,0.15);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .connecting-overlay p { color: #475569; font-size: 14px; font-weight: 500; }
+
+        /* Coach watermark */
+        .coach-watermark {
+            position: absolute; top: 18px; right: 20px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: rgba(245,158,11,0.35);
+            z-index: 11;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="avatar client-avatar">C</div>
+    <div class="header-info">
+        <h2>Client</h2>
+        <p>Professional Coaching Session</p>
+    </div>
+    <div class="header-actions">
+        <span class="header-badge">Coach View</span>
+        <button class="btn-video" onclick="startVideoCall()">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 8h8a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"/></svg>
+            Video Call
+        </button>
+        <div class="status-dot"></div>
+    </div>
+</div>
+
+<div class="chat-area" id="chatArea">
+    <div class="system-msg">Session started. Waiting for client messages…</div>
+</div>
+
+<div class="input-area">
+    <input type="text" id="msgInput" placeholder="Type a message as Coach…" autocomplete="off">
+    <button onclick="sendMessage()">➤</button>
+</div>
+
+<!-- ─── VIDEO CALL MODAL ─── -->
+<div id="videoModal">
+    <div class="video-header">
+        <div class="video-title">
+            <span class="call-brand">Evolve Session</span>
+            <span class="call-status-pill connecting" id="callStatusPill">Connecting…</span>
+        </div>
+        <span id="callTimer"></span>
+    </div>
+    <span class="coach-watermark">Coach Mode</span>
+
+    <div class="video-main">
+        <div class="connecting-overlay" id="connectingOverlay">
+            <div class="connecting-spinner"></div>
+            <p>Starting video session…</p>
+        </div>
+
+        <div id="remoteVideo">
+            <div class="remote-placeholder" id="remotePlaceholder">
+                <div class="big-avatar">C</div>
+                <p>Waiting for client to join…</p>
+            </div>
+        </div>
+
+        <div id="localVideo">
+            <div class="local-placeholder" id="localPlaceholder">📷<br>Camera off</div>
+        </div>
+    </div>
+
+    <div class="video-controls">
+        <div class="ctrl-label">
+            <button class="ctrl-btn" id="micBtn" onclick="toggleMic()">🎤</button>
+            <span>Mic</span>
+        </div>
+        <div class="ctrl-label">
+            <button class="ctrl-btn" id="camBtn" onclick="toggleCam()">📷</button>
+            <span>Camera</span>
+        </div>
+        <div class="ctrl-label">
+            <button class="ctrl-btn end-call" onclick="endCall()">📵</button>
+            <span style="color:#f87171">End</span>
+        </div>
+    </div>
+</div>
+
+<!-- LiveKit Client -->
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+
+<script>
+// ─── LIVEKIT CONFIG ───
+const LK_URL    = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
+const LK_KEY    = 'APINy8wg8sjumEe';
+const LK_SECRET = 'Gt6UJZQxNBNeKau7FaoJ2ffJHFdeKJhrhKOkQZv3hcxB';
+const ROOM_NAME = 'evolve-coaching-room';
+
+// ─── CHAT ───
+const channel = new BroadcastChannel('coach_client_chat');
+const chatArea = document.getElementById('chatArea');
+const myName = 'Coach';
+
+channel.postMessage({ type: 'join', name: myName, time: Date.now() });
+
+channel.onmessage = (event) => {
+    const data = event.data;
+    if (data.type === 'chat' && data.sender !== myName) {
+        appendMessage(data.text, 'received', data.sender, data.time);
+    } else if (data.type === 'join' && data.name !== myName) {
+        appendSystem(`${data.name} joined the session`);
+    } else if (data.type === 'video_invite') {
+        appendSystem('📹 Client started a video call — click Video Call to join');
+    }
+};
+
+function appendMessage(text, type, sender, time) {
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    const date = time ? new Date(time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+    div.innerHTML = `${escapeHtml(text)}<div class="meta">${sender} · ${date}</div>`;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function appendSystem(text) {
+    const div = document.createElement('div');
+    div.className = 'system-msg';
+    div.textContent = text;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const time = Date.now();
+    appendMessage(text, 'sent', myName, time);
+    channel.postMessage({ type: 'chat', text, sender: myName, time });
+    input.value = '';
+    input.focus();
+}
+
+document.getElementById('msgInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendMessage();
+});
+
+window.addEventListener('beforeunload', () => {
+    channel.postMessage({ type: 'leave', name: myName });
+});
+
+// ─── LIVEKIT VIDEO CALL ───
+let room = null;
+let micEnabled = true;
+let camEnabled = true;
+let callTimerInterval = null;
+
+async function generateToken(identity) {
+    const header = { alg: 'HS256', typ: 'JWT' };
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+        iss: LK_KEY,
+        sub: identity,
+        iat: now,
+        exp: now + 7200,
+        video: {
+            room: ROOM_NAME,
+            roomJoin: true,
+            canPublish: true,
+            canSubscribe: true,
+            canPublishData: true
+        }
+    };
+    const b64url = obj =>
+        btoa(JSON.stringify(obj))
+            .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    const sigInput = `${b64url(header)}.${b64url(payload)}`;
+    const key = await crypto.subtle.importKey(
+        'raw', new TextEncoder().encode(LK_SECRET),
+        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(sigInput));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
+        .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    return `${sigInput}.${sigB64}`;
+}
+
+async function startVideoCall() {
+    channel.postMessage({ type: 'video_invite', sender: myName });
+    const modal = document.getElementById('videoModal');
+    modal.classList.add('active');
+    document.getElementById('connectingOverlay').classList.remove('hidden');
+    document.getElementById('callStatusPill').textContent = 'Connecting…';
+    document.getElementById('callStatusPill').className = 'call-status-pill connecting';
+
+    try {
+        const token = await generateToken('coach-host');
+
+        room = new LivekitClient.Room({
+            adaptiveStream: true,
+            dynacast: true,
+        });
+
+        room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
+            if (track.kind === LivekitClient.Track.Kind.Video) {
+                const el = track.attach();
+                el.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                const container = document.getElementById('remoteVideo');
+                document.getElementById('remotePlaceholder').style.display = 'none';
+                container.appendChild(el);
+            }
+        });
+
+        room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
+            track.detach();
+        });
+
+        room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => {
+            appendSystem(`Client joined the video call`);
+            document.getElementById('callStatusPill').textContent = 'Live';
+            document.getElementById('callStatusPill').className = 'call-status-pill';
+            startCallTimer();
+        });
+
+        room.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => {
+            appendSystem('Client left the video call');
+        });
+
+        room.on(LivekitClient.RoomEvent.Disconnected, () => {
+            cleanupVideo();
+        });
+
+        await room.connect(LK_URL, token);
+
+        document.getElementById('connectingOverlay').classList.add('hidden');
+        document.getElementById('callStatusPill').textContent = 'Connected';
+        document.getElementById('callStatusPill').className = 'call-status-pill';
+
+        await room.localParticipant.enableCameraAndMicrophone();
+        const camTrack = room.localParticipant.getTrack(LivekitClient.Track.Source.Camera);
+        if (camTrack && camTrack.track) {
+            const localEl = camTrack.track.attach();
+            localEl.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
+            const localContainer = document.getElementById('localVideo');
+            document.getElementById('localPlaceholder').style.display = 'none';
+            localContainer.appendChild(localEl);
+        }
+
+        startCallTimer();
+
+    } catch(e) {
+        console.error('LiveKit error:', e);
+        document.getElementById('connectingOverlay').querySelector('p').textContent = 'Connection failed. Please try again.';
+    }
+}
+
+function startCallTimer() {
+    if (callTimerInterval) return;
+    const start = Date.now();
+    callTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - start) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2,'0');
+        const s = String(elapsed % 60).padStart(2,'0');
+        document.getElementById('callTimer').textContent = `${m}:${s}`;
+    }, 1000);
+}
+
+async function toggleMic() {
+    if (!room) return;
+    micEnabled = !micEnabled;
+    await room.localParticipant.setMicrophoneEnabled(micEnabled);
+    const btn = document.getElementById('micBtn');
+    btn.textContent = micEnabled ? '🎤' : '🔇';
+    btn.classList.toggle('muted', !micEnabled);
+}
+
+async function toggleCam() {
+    if (!room) return;
+    camEnabled = !camEnabled;
+    await room.localParticipant.setCameraEnabled(camEnabled);
+    const btn = document.getElementById('camBtn');
+    btn.textContent = camEnabled ? '📷' : '🚫';
+    btn.classList.toggle('muted', !camEnabled);
+}
+
+async function endCall() {
+    if (room) {
+        await room.disconnect();
+        room = null;
+    }
+    cleanupVideo();
+}
+
+function cleanupVideo() {
+    document.getElementById('videoModal').classList.remove('active');
+    if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
+    document.getElementById('callTimer').textContent = '';
+    document.getElementById('remoteVideo').querySelectorAll('video').forEach(v => v.remove());
+    document.getElementById('remotePlaceholder').style.display = 'flex';
+    document.getElementById('localVideo').querySelectorAll('video').forEach(v => v.remove());
+    document.getElementById('localPlaceholder').style.display = 'block';
+    micEnabled = true; camEnabled = true;
+    document.getElementById('micBtn').textContent = '🎤';
+    document.getElementById('camBtn').textContent = '📷';
+    document.getElementById('micBtn').classList.remove('muted');
+    document.getElementById('camBtn').classList.remove('muted');
+}
+</script>
+</body>
+</html>

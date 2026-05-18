@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolve — Client Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #f59e0b;
+            --gold-light: #fbbf24;
+            --gold-dim: rgba(245,158,11,0.15);
+            --green: #10b981;
+            --green-dark: #059669;
+            --bg-deep: #060a0f;
+            --bg-mid: #0d1520;
+            --bg-card: #111a27;
+            --bg-chat: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Barlow', sans-serif;
+            background: var(--bg-chat);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-dark);
+            overflow: hidden;
+        }
+
+        /* ─── LOGIN SCREEN ─── */
+        #loginScreen {
+            position: fixed; inset: 0; z-index: 100;
+            background: var(--bg-deep);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        .login-bg {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(245,158,11,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 80% at 80% 30%, rgba(16,185,129,0.04) 0%, transparent 50%);
+        }
+
+        .login-grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+
+        .login-card {
+            position: relative; z-index: 1;
+            width: 380px;
+            background: var(--bg-card);
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 20px;
+            padding: 40px 36px;
+            box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(245,158,11,0.05);
+            animation: cardIn 0.6s cubic-bezier(0.16,1,0.3,1) both;
+        }
+
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(24px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .login-brand {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 28px;
+        }
+
+        .brand-icon {
+            width: 36px; height: 36px;
+            background: var(--gold);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-weight: 700; font-size: 18px; color: #000;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-text {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 22px; font-weight: 700;
+            color: #fff; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .brand-text span { color: var(--gold); }
+
+        .login-title {
+            font-size: 22px; font-weight: 700;
+            color: #fff; margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .login-sub {
+            font-size: 13px; color: #64748b;
+            margin-bottom: 28px; font-weight: 400;
+        }
+
+        .field-group { margin-bottom: 14px; }
+
+        .field-group label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: #94a3b8; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 6px;
+        }
+
+        .field-group input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: #fff; font-size: 14px;
+            font-family: 'Barlow', sans-serif;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .field-group input:focus {
+            border-color: var(--gold);
+            background: rgba(245,158,11,0.05);
+        }
+
+        .field-group input::placeholder { color: #475569; }
+
+        .field-group input.error { border-color: #ef4444; }
+
+        #loginError {
+            font-size: 12px; color: #f87171;
+            margin-bottom: 12px; display: none;
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 8px; padding: 8px 12px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--gold);
+            color: #000;
+            border: none; border-radius: 10px;
+            padding: 12px;
+            font-size: 14px; font-weight: 700;
+            font-family: 'Barlow', sans-serif;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-secondary {
+            width: 100%;
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 11px;
+            font-size: 13px; font-weight: 500;
+            font-family: 'Barlow', sans-serif;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .btn-secondary:hover { border-color: rgba(255,255,255,0.25); color: #e2e8f0; }
+
+        .divider {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+        .divider span { font-size: 11px; color: #475569; font-weight: 500; }
+
+        .btn-google {
+            width: 100%;
+            background: rgba(255,255,255,0.06);
+            color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 11px;
+            font-size: 13px; font-weight: 500;
+            font-family: 'Barlow', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .btn-google:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
+
+        .google-icon {
+            width: 16px; height: 16px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234285F4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334A853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23FBBC05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'/%3E%3Cpath fill='%23EA4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'/%3E%3C/svg%3E") center/contain no-repeat;
+        }
+
+        .login-toggle {
+            text-align: center; margin-top: 20px;
+            font-size: 13px; color: #64748b;
+        }
+
+        .login-toggle a {
+            color: var(--gold); text-decoration: none;
+            font-weight: 600; cursor: pointer;
+        }
+
+        .login-toggle a:hover { text-decoration: underline; }
+
+        .login-spinner {
+            width: 16px; height: 16px;
+            border: 2px solid rgba(0,0,0,0.3);
+            border-top-color: #000;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block; vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── MAIN APP ─── */
+        #mainApp { display: none; flex-direction: column; height: 100vh; }
+
+        .header {
+            background: var(--surface);
+            padding: 14px 18px;
+            display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            flex-shrink: 0;
+        }
+
+        .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px; flex-shrink: 0;
+        }
+
+        .coach-avatar { background: var(--gold); color: #000; }
+        .client-avatar { background: var(--green); color: #fff; }
+
+        .header-info { flex: 1; min-width: 0; }
+        .header-info h2 { font-size: 15px; font-weight: 700; letter-spacing: -0.2px; }
+        .header-info p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+
+        .btn-video {
+            background: var(--green);
+            color: #fff; border: none;
+            border-radius: 20px;
+            padding: 7px 14px;
+            font-size: 12px; font-weight: 700;
+            font-family: 'Barlow', sans-serif;
+            cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            transition: background 0.2s, transform 0.1s;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-video:hover { background: var(--green-dark); transform: scale(1.02); }
+        .btn-video svg { width: 14px; height: 14px; }
+
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--green);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+        .btn-logout {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-muted); font-size: 12px;
+            font-family: 'Barlow', sans-serif;
+            padding: 4px 8px; border-radius: 6px;
+            transition: background 0.15s, color 0.15s;
+        }
+
+        .btn-logout:hover { background: #f1f5f9; color: var(--text-dark); }
+
+        .chat-area {
+            flex: 1; overflow-y: auto;
+            padding: 20px 16px;
+            display: flex; flex-direction: column; gap: 10px;
+            background: #f1f5f9;
+        }
+
+        .message {
+            max-width: 72%; padding: 10px 14px;
+            border-radius: 16px;
+            font-size: 14px; line-height: 1.55;
+            word-wrap: break-word;
+            animation: msgIn 0.2s ease both;
+        }
+
+        @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+        .message.sent {
+            align-self: flex-end;
+            background: var(--green);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+            font-weight: 500;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background: var(--surface);
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message .meta { font-size: 10px; margin-top: 4px; opacity: 0.65; }
+
+        .system-msg {
+            align-self: center; color: #94a3b8;
+            font-size: 11px; font-weight: 500;
+            margin: 4px 0;
+            background: rgba(148,163,184,0.12);
+            padding: 4px 12px; border-radius: 20px;
+        }
+
+        .input-area {
+            background: var(--surface);
+            padding: 12px 14px;
+            display: flex; gap: 8px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .input-area input {
+            flex: 1;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 10px 16px;
+            color: var(--text-dark);
+            font-size: 14px; font-family: 'Barlow', sans-serif;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .input-area input:focus { border-color: var(--green); background: #fff; }
+
+        .input-area button {
+            background: var(--green); color: #fff;
+            border: none; border-radius: 50%;
+            width: 40px; height: 40px;
+            cursor: pointer; font-size: 17px;
+            transition: background 0.2s, transform 0.1s;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .input-area button:hover { background: var(--green-dark); transform: scale(1.05); }
+
+        /* ─── VIDEO CALL MODAL ─── */
+        #videoModal {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: #060a0f;
+            flex-direction: column;
+        }
+
+        #videoModal.active { display: flex; }
+
+        .video-header {
+            position: absolute; top: 0; left: 0; right: 0;
+            padding: 16px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(to bottom, rgba(6,10,15,0.95) 0%, transparent 100%);
+            z-index: 10;
+        }
+
+        .video-title {
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .video-title .call-brand {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px; font-weight: 700;
+            color: #fff; letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .call-status-pill {
+            background: rgba(16,185,129,0.2);
+            border: 1px solid rgba(16,185,129,0.4);
+            color: #10b981;
+            font-size: 11px; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .call-status-pill.connecting { color: var(--gold); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.1); }
+
+        .video-main { flex: 1; position: relative; overflow: hidden; }
+
+        #remoteVideo {
+            width: 100%; height: 100%;
+            background: #0d1520;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #remoteVideo video { width: 100%; height: 100%; object-fit: cover; }
+
+        .remote-placeholder {
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+
+        .remote-placeholder .big-avatar {
+            width: 88px; height: 88px; border-radius: 50%;
+            background: rgba(245,158,11,0.15);
+            border: 2px solid rgba(245,158,11,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 700; color: var(--gold);
+            font-family: 'Barlow Condensed', sans-serif;
+        }
+
+        .remote-placeholder p { color: #64748b; font-size: 14px; }
+
+        #localVideo {
+            position: absolute; bottom: 100px; right: 16px;
+            width: 120px; height: 170px;
+            background: #1a2638;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #localVideo video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        .local-placeholder {
+            color: #475569; font-size: 11px; text-align: center; padding: 8px;
+        }
+
+        .video-controls {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 24px;
+            display: flex; align-items: center; justify-content: center; gap: 14px;
+            background: linear-gradient(to top, rgba(6,10,15,0.95) 0%, transparent 100%);
+        }
+
+        .ctrl-btn {
+            width: 52px; height: 52px;
+            border-radius: 50%; border: none;
+            cursor: pointer; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.15s, background 0.2s;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        .ctrl-btn:hover { transform: scale(1.08); background: rgba(255,255,255,0.18); }
+        .ctrl-btn.muted { background: rgba(239,68,68,0.25); }
+        .ctrl-btn.end-call { background: #ef4444; width: 60px; height: 60px; font-size: 22px; }
+        .ctrl-btn.end-call:hover { background: #dc2626; }
+
+        .ctrl-label {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+        }
+
+        .ctrl-label span { font-size: 10px; color: #94a3b8; font-weight: 500; }
+
+        #callTimer {
+            color: #94a3b8; font-size: 13px;
+            font-family: 'Barlow Condensed', sans-serif;
+            letter-spacing: 1px;
+            position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+        }
+
+        .connecting-overlay {
+            position: absolute; inset: 0;
+            background: var(--bg-mid);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 16px; z-index: 5;
+        }
+
+        .connecting-overlay.hidden { display: none; }
+
+        .connecting-spinner {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(245,158,11,0.2);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.9s linear infinite;
+        }
+
+        .connecting-overlay p { color: #94a3b8; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<!-- ─── LOGIN SCREEN ─── -->
+<div id="loginScreen">
+    <div class="login-bg"></div>
+    <div class="login-grid"></div>
+    <div class="login-card">
+        <div class="login-brand">
+            <div class="brand-icon">EV</div>
+            <div class="brand-text">Evolve <span>Chat</span></div>
+        </div>
+        <div class="login-title" id="loginTitle">Welcome back</div>
+        <div class="login-sub" id="loginSub">Sign in to your client portal</div>
+
+        <div id="loginError"></div>
+
+        <div class="field-group">
+            <label>Email</label>
+            <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <div class="field-group">
+            <label>Password</label>
+            <input type="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <button class="btn-primary" id="authBtn" onclick="handleAuth()">Sign In</button>
+        <button class="btn-secondary" id="toggleModeBtn" onclick="toggleMode()">Create an Account</button>
+
+        <div class="divider"><div class="divider-line"></div><span>or</span><div class="divider-line"></div></div>
+
+        <button class="btn-google" onclick="signInWithGoogle()">
+            <div class="google-icon"></div>
+            Continue with Google
+        </button>
+
+        <div class="login-toggle">
+            <span id="toggleText">Already have an account?</span>
+            <a onclick="toggleMode()" id="toggleLink"> Sign in</a>
+        </div>
+    </div>
+</div>
+
+<!-- ─── MAIN APP ─── -->
+<div id="mainApp">
+    <div class="header">
+        <div class="avatar coach-avatar">H</div>
+        <div class="header-info">
+            <h2>Coach</h2>
+            <p id="userLabel">Your Professional Coach</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn-video" onclick="startVideoCall()">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 8h8a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"/></svg>
+                Video Call
+            </button>
+            <div class="status-dot"></div>
+            <button class="btn-logout" onclick="logout()">Sign out</button>
+        </div>
+    </div>
+
+    <div class="chat-area" id="chatArea">
+        <div class="system-msg">Connected to coaching session. Say hello! 👋</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="msgInput" placeholder="Type a message…" autocomplete="off">
+        <button onclick="sendMessage()">➤</button>
+    </div>
+</div>
+
+<!-- ─── VIDEO CALL MODAL ─── -->
+<div id="videoModal">
+    <div class="video-header">
+        <div class="video-title">
+            <span class="call-brand">Evolve Session</span>
+            <span class="call-status-pill connecting" id="callStatusPill">Connecting…</span>
+        </div>
+        <span id="callTimer" style="position:relative;transform:none;left:auto;top:auto;"></span>
+    </div>
+
+    <div class="video-main">
+        <div class="connecting-overlay" id="connectingOverlay">
+            <div class="connecting-spinner"></div>
+            <p>Connecting to your coach…</p>
+        </div>
+
+        <div id="remoteVideo">
+            <div class="remote-placeholder" id="remotePlaceholder">
+                <div class="big-avatar">H</div>
+                <p>Waiting for coach to join…</p>
+            </div>
+        </div>
+
+        <div id="localVideo">
+            <div class="local-placeholder" id="localPlaceholder">📷<br>Camera off</div>
+        </div>
+    </div>
+
+    <div class="video-controls">
+        <div class="ctrl-label">
+            <button class="ctrl-btn" id="micBtn" onclick="toggleMic()" title="Mute">🎤</button>
+            <span>Mic</span>
+        </div>
+        <div class="ctrl-label">
+            <button class="ctrl-btn" id="camBtn" onclick="toggleCam()" title="Camera">📷</button>
+            <span>Camera</span>
+        </div>
+        <div class="ctrl-label">
+            <button class="ctrl-btn end-call" onclick="endCall()" title="End Call">📵</button>
+            <span style="color:#f87171">End</span>
+        </div>
+    </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<!-- LiveKit Client -->
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+
+<script>
+// ─── FIREBASE CONFIG ───
+const firebaseConfig = {
+    apiKey: "AIzaSyAaLdOjRndgq3fw9QfluTW5gmF7VZ26Vag",
+    authDomain: "evolvechat-21d6f.firebaseapp.com",
+    projectId: "evolvechat-21d6f",
+    storageBucket: "evolvechat-21d6f.firebasestorage.app",
+    messagingSenderId: "229550101540",
+    appId: "1:229550101540:web:2d671f6b3a2809570674b1",
+    measurementId: "G-RK177F33Q9"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+// ─── LIVEKIT CONFIG ───
+const LK_URL    = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
+const LK_KEY    = 'APINy8wg8sjumEe';
+const LK_SECRET = 'Gt6UJZQxNBNeKau7FaoJ2ffJHFdeKJhrhKOkQZv3hcxB';
+const ROOM_NAME = 'evolve-coaching-room';
+
+// ─── LOGIN STATE ───
+let isRegisterMode = false;
+let currentUser = null;
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        currentUser = user;
+        showApp(user);
+    } else {
+        currentUser = null;
+        showLogin();
+    }
+});
+
+function showLogin() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'none';
+}
+
+function showApp(user) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'flex';
+    const name = user.displayName || user.email.split('@')[0];
+    document.getElementById('userLabel').textContent = `Signed in as ${name}`;
+    channel.postMessage({ type: 'join', name: 'Client', time: Date.now() });
+}
+
+function toggleMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById('loginTitle').textContent = isRegisterMode ? 'Create Account' : 'Welcome back';
+    document.getElementById('loginSub').textContent = isRegisterMode ? 'Join your coaching session' : 'Sign in to your client portal';
+    document.getElementById('authBtn').textContent = isRegisterMode ? 'Create Account' : 'Sign In';
+    document.getElementById('toggleModeBtn').textContent = isRegisterMode ? 'I have an account' : 'Create an Account';
+    document.getElementById('toggleText').textContent = isRegisterMode ? 'Already have an account?' : "Don't have an account?";
+    document.getElementById('toggleLink').textContent = isRegisterMode ? ' Sign in' : ' Register';
+    clearError();
+}
+
+function showError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg; el.style.display = 'block';
+}
+
+function clearError() {
+    const el = document.getElementById('loginError');
+    el.style.display = 'none'; el.textContent = '';
+}
+
+async function handleAuth() {
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    const btn = document.getElementById('authBtn');
+    if (!email || !password) { showError('Please fill in all fields.'); return; }
+    clearError();
+    btn.disabled = true;
+    btn.innerHTML = '<span class="login-spinner"></span>' + (isRegisterMode ? 'Creating…' : 'Signing in…');
+    try {
+        if (isRegisterMode) {
+            await auth.createUserWithEmailAndPassword(email, password);
+        } else {
+            await auth.signInWithEmailAndPassword(email, password);
+        }
+    } catch(e) {
+        showError(friendlyError(e.code));
+        btn.disabled = false;
+        btn.textContent = isRegisterMode ? 'Create Account' : 'Sign In';
+    }
+}
+
+async function signInWithGoogle() {
+    clearError();
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try {
+        await auth.signInWithPopup(provider);
+    } catch(e) {
+        showError(friendlyError(e.code));
+    }
+}
+
+async function logout() {
+    endCall();
+    await auth.signOut();
+}
+
+function friendlyError(code) {
+    const map = {
+        'auth/user-not-found': 'No account found with this email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/email-already-in-use': 'An account already exists with this email.',
+        'auth/invalid-email': 'Please enter a valid email address.',
+        'auth/weak-password': 'Password must be at least 6 characters.',
+        'auth/popup-closed-by-user': 'Sign-in popup was closed.',
+        'auth/invalid-credential': 'Invalid email or password.'
+    };
+    return map[code] || 'Authentication failed. Please try again.';
+}
+
+document.getElementById('passwordInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') handleAuth();
+});
+
+// ─── BROADCAST CHANNEL (CHAT) ───
+const channel = new BroadcastChannel('coach_client_chat');
+const chatArea = document.getElementById('chatArea');
+const myName = 'Client';
+
+channel.onmessage = (event) => {
+    const data = event.data;
+    if (data.type === 'chat' && data.sender !== myName) {
+        appendMessage(data.text, 'received', data.sender, data.time);
+    } else if (data.type === 'join' && data.name !== myName) {
+        appendSystem(`${data.name} joined the session`);
+    } else if (data.type === 'video_invite') {
+        appendSystem('📹 Coach started a video call — click Video Call to join');
+    }
+};
+
+function appendMessage(text, type, sender, time) {
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    const date = time ? new Date(time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+    div.innerHTML = `${escapeHtml(text)}<div class="meta">${sender} · ${date}</div>`;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function appendSystem(text) {
+    const div = document.createElement('div');
+    div.className = 'system-msg';
+    div.textContent = text;
+    chatArea.appendChild(div);
+    chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function sendMessage() {
+    const input = document.getElementById('msgInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const time = Date.now();
+    appendMessage(text, 'sent', myName, time);
+    channel.postMessage({ type: 'chat', text, sender: myName, time });
+    input.value = '';
+    input.focus();
+}
+
+document.getElementById('msgInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendMessage();
+});
+
+window.addEventListener('beforeunload', () => {
+    channel.postMessage({ type: 'leave', name: myName });
+});
+
+// ─── LIVEKIT VIDEO CALL ───
+let room = null;
+let micEnabled = true;
+let camEnabled = true;
+let callTimerInterval = null;
+let callStartTime = null;
+
+async function generateToken(identity) {
+    // Build JWT using Web Crypto API (HS256)
+    const header = { alg: 'HS256', typ: 'JWT' };
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+        iss: LK_KEY,
+        sub: identity,
+        iat: now,
+        exp: now + 7200,
+        video: {
+            room: ROOM_NAME,
+            roomJoin: true,
+            canPublish: true,
+            canSubscribe: true,
+            canPublishData: true
+        }
+    };
+    const b64url = obj =>
+        btoa(JSON.stringify(obj))
+            .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    const sigInput = `${b64url(header)}.${b64url(payload)}`;
+    const key = await crypto.subtle.importKey(
+        'raw', new TextEncoder().encode(LK_SECRET),
+        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    );
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(sigInput));
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
+        .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+    return `${sigInput}.${sigB64}`;
+}
+
+async function startVideoCall() {
+    if (!currentUser) { alert('Please sign in first.'); return; }
+    channel.postMessage({ type: 'video_invite', sender: myName });
+    const modal = document.getElementById('videoModal');
+    modal.classList.add('active');
+    document.getElementById('connectingOverlay').classList.remove('hidden');
+    document.getElementById('callStatusPill').textContent = 'Connecting…';
+    document.getElementById('callStatusPill').className = 'call-status-pill connecting';
+
+    try {
+        const identity = `client-${currentUser.uid}`;
+        const token = await generateToken(identity);
+
+        room = new LivekitClient.Room({
+            adaptiveStream: true,
+            dynacast: true,
+        });
+
+        room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
+            if (track.kind === LivekitClient.Track.Kind.Video) {
+                const el = track.attach();
+                el.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+                const container = document.getElementById('remoteVideo');
+                document.getElementById('remotePlaceholder').style.display = 'none';
+                container.appendChild(el);
+            }
+        });
+
+        room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
+            track.detach();
+        });
+
+        room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => {
+            appendSystem(`Coach joined the video call`);
+            document.getElementById('callStatusPill').textContent = 'Live';
+            document.getElementById('callStatusPill').className = 'call-status-pill';
+            startCallTimer();
+        });
+
+        room.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => {
+            appendSystem('Coach left the video call');
+        });
+
+        room.on(LivekitClient.RoomEvent.Disconnected, () => {
+            cleanupVideo();
+        });
+
+        await room.connect(LK_URL, token);
+
+        document.getElementById('connectingOverlay').classList.add('hidden');
+        document.getElementById('callStatusPill').textContent = 'Connected';
+        document.getElementById('callStatusPill').className = 'call-status-pill';
+
+        // Enable camera and mic
+        await room.localParticipant.enableCameraAndMicrophone();
+        const camTrack = room.localParticipant.getTrack(LivekitClient.Track.Source.Camera);
+        if (camTrack && camTrack.track) {
+            const localEl = camTrack.track.attach();
+            localEl.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
+            const localContainer = document.getElementById('localVideo');
+            document.getElementById('localPlaceholder').style.display = 'none';
+            localContainer.appendChild(localEl);
+        }
+
+        startCallTimer();
+
+    } catch(e) {
+        console.error('LiveKit error:', e);
+        document.getElementById('connectingOverlay').querySelector('p').textContent = 'Connection failed. Try again.';
+    }
+}
+
+function startCallTimer() {
+    if (callTimerInterval) return;
+    callStartTime = Date.now();
+    callTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const m = String(Math.floor(elapsed / 60)).padStart(2,'0');
+        const s = String(elapsed % 60).padStart(2,'0');
+        document.getElementById('callTimer').textContent = `${m}:${s}`;
+    }, 1000);
+}
+
+async function toggleMic() {
+    if (!room) return;
+    micEnabled = !micEnabled;
+    await room.localParticipant.setMicrophoneEnabled(micEnabled);
+    const btn = document.getElementById('micBtn');
+    btn.textContent = micEnabled ? '🎤' : '🔇';
+    btn.classList.toggle('muted', !micEnabled);
+}
+
+async function toggleCam() {
+    if (!room) return;
+    camEnabled = !camEnabled;
+    await room.localParticipant.setCameraEnabled(camEnabled);
+    const btn = document.getElementById('camBtn');
+    btn.textContent = camEnabled ? '📷' : '🚫';
+    btn.classList.toggle('muted', !camEnabled);
+}
+
+async function endCall() {
+    if (room) {
+        await room.disconnect();
+        room = null;
+    }
+    cleanupVideo();
+}
+
+function cleanupVideo() {
+    document.getElementById('videoModal').classList.remove('active');
+    if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
+    document.getElementById('callTimer').textContent = '';
+    // Reset remote video
+    const remoteVideo = document.getElementById('remoteVideo');
+    remoteVideo.querySelectorAll('video').forEach(v => v.remove());
+    document.getElementById('remotePlaceholder').style.display = 'flex';
+    // Reset local video
+    const localVideo = document.getElementById('localVideo');
+    localVideo.querySelectorAll('video').forEach(v => v.remove());
+    document.getElementById('localPlaceholder').style.display = 'block';
+    // Reset buttons
+    micEnabled = true; camEnabled = true;
+    document.getElementById('micBtn').textContent = '🎤';
+    document.getElementById('camBtn').textContent = '📷';
+    document.getElementById('micBtn').classList.remove('muted');
+    document.getElementById('camBtn').classList.remove('muted');
+}
+</script>
+</body>
+</html>
