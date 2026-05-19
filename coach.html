@@ -60,16 +60,54 @@ window._fb = {
 //    3. If found → bootApp.
 // ══════════════════════════════════════════════════════════════
 
-// ── Auth state observer (fires on page load & after every sign-in/out) ──
+// ── Auto-provision coach account on first run ──
+// Checks Firestore for config/coach. If missing, creates a Firebase Auth
+// account (coach@coachapp.app / admin123) and stores credentials in Firestore.
+// Password is never hard-coded after this — it lives only in Firebase Auth.
+async function ensureCoachAccount(){
+  const cfgRef = doc(db, 'config', 'coach');
+  const cfgSnap = await getDoc(cfgRef).catch(()=>null);
+  if(cfgSnap && cfgSnap.exists()) return; // already set up
+
+  const DEFAULT_EMAIL = 'coach@coachapp.app';
+  const DEFAULT_PASS  = 'admin123';
+
+  try {
+    // Create Firebase Auth account
+    const cred = await createUserWithEmailAndPassword(auth, DEFAULT_EMAIL, DEFAULT_PASS);
+    const uid  = cred.user.uid;
+
+    // Write coach profile to Firestore
+    await setDoc(doc(db, 'coaches', uid), {
+      first: 'Coach', last: '', email: DEFAULT_EMAIL,
+      role: 'coach', createdAt: Date.now()
+    });
+
+    // Store email in config so login can find it (password stays in Firebase Auth only)
+    await setDoc(cfgRef, { email: DEFAULT_EMAIL });
+
+    // Sign back out so the login page is shown
+    await signOut(auth);
+  } catch(e){
+    // auth/email-already-in-use = account exists from a previous run, just write config
+    if(e.code === 'auth/email-already-in-use'){
+      await setDoc(cfgRef, { email: DEFAULT_EMAIL }).catch(()=>{});
+    }
+  }
+}
+
+// ── Auth state observer ──
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window._fbUser = null;
+    // Ensure account exists before showing login
+    await ensureCoachAccount();
     document.getElementById('app').style.display = 'none';
     showAuth('loginPage');
     return;
   }
 
-  // Check coach doc
+  // Verify coach doc exists
   const coachSnap = await getDoc(doc(db, 'coaches', user.uid));
   if (coachSnap.exists()) {
     window._fbUser    = user;
@@ -78,13 +116,6 @@ onAuthStateChanged(auth, async (user) => {
   } else {
     await signOut(auth);
     showAuth('loginPage');
-    const clientSnap = await getDoc(doc(db, 'users', user.uid)).catch(()=>null);
-    const isClient   = clientSnap && clientSnap.exists();
-    const err = document.getElementById('loginErr');
-    err.textContent = isClient
-      ? '⚠️ This email is registered as a client account. Use the Client Portal instead.'
-      : 'No coach account found. Please sign up first.';
-    err.classList.add('on');
   }
 });
 </script>
@@ -137,7 +168,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .auth-alert.e{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
 .auth-alert.s{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e}
 .auth-alert.on{display:block}
-.ps-bars{display:flex;gap:4px;margin-top:6px}
 .psb{height:3px;border-radius:2px;flex:1;background:var(--border2);transition:background .3s}
 .psb.w{background:#ef4444}.psb.f{background:#f59e0b}.psb.g{background:#22c55e}.psb.st{background:#4f7cff}
 .pslbl{font-size:11px;color:var(--muted);margin-top:5px}
@@ -409,36 +439,6 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
       <span class="al" onclick="showAuth('forgotPage')">Forgot password?</span>
     </div>
     <button class="btn-auth" onclick="doLogin()">Sign In</button>
-    <div class="auth-sw" style="margin-top:8px;font-size:12px;color:var(--muted)">First time? <span class="al" onclick="showAuth('signupPage')">Create your coach account</span></div>
-  </div>
-</div>
-
-<!-- ════════════ SIGN UP ════════════ -->
-<div class="auth-page" id="signupPage">
-  <div class="auth-bg"></div><div class="auth-grid"></div>
-  <div class="auth-card">
-    <div class="brand-row">
-      <div class="brand-ico">C</div>
-      <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
-    </div>
-    <div class="auth-title">Create your account</div>
-    <div class="auth-sub">Start managing your clients professionally — free forever.</div>
-    <div class="auth-alert e" id="suErr"></div>
-    <div class="auth-alert s" id="suOk"></div>
-    <div class="frow">
-      <div class="fw"><label class="fl">First Name</label><input class="fi" type="text" id="suFirst" placeholder="Alex" autocomplete="given-name"/></div>
-      <div class="fw"><label class="fl">Last Name</label><input class="fi" type="text" id="suLast" placeholder="Carter" autocomplete="family-name"/></div>
-    </div>
-    <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="suEmail" placeholder="you@example.com" autocomplete="email"/></div>
-    <div class="fw">
-      <label class="fl">Password</label>
-      <input class="fi" type="password" id="suPass" placeholder="Min. 8 characters" autocomplete="new-password" oninput="pStrength(this.value)"/>
-      <div class="ps-bars"><div class="psb" id="ps1"></div><div class="psb" id="ps2"></div><div class="psb" id="ps3"></div><div class="psb" id="ps4"></div></div>
-      <div class="pslbl" id="psLbl">Enter a password</div>
-    </div>
-    <div class="fw"><label class="fl">Confirm Password</label><input class="fi" type="password" id="suPass2" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()"/></div>
-    <button class="btn-auth" id="suBtn" onclick="doSignup()">Create Account</button>
-    <div class="auth-sw">Already have an account? <span class="al" onclick="showAuth('loginPage')">Sign in</span></div>
   </div>
 </div>
 
@@ -451,11 +451,10 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
       <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
     </div>
     <div class="auth-title">Reset your password</div>
-    <div class="auth-sub">Enter your registered email and we'll locate your account.</div>
+    <div class="auth-sub">We'll send a password reset link to your registered email address.</div>
     <div class="auth-alert e" id="fgErr"></div>
     <div class="auth-alert s" id="fgOk"></div>
-    <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="fgEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doForgot()"/></div>
-    <button class="btn-auth" onclick="doForgot()">Find My Account</button>
+    <button class="btn-auth" onclick="doForgot()">Send Reset Link</button>
     <div class="auth-sw">Remembered it? <span class="al" onclick="showAuth('loginPage')">Back to sign in</span></div>
   </div>
 </div>
@@ -986,7 +985,7 @@ let CU=null, clients=[], savedProgs=[], nextId=1, curTab='active', ctxId=null, c
 // AUTH PAGE ROUTING
 // ══════════════════════════════════════════
 function showAuth(page){
-  ['loginPage','signupPage','forgotPage'].forEach(p=>document.getElementById(p).classList.toggle('on',p===page));
+  ['loginPage','forgotPage'].forEach(p=>document.getElementById(p).classList.toggle('on',p===page));
   document.querySelectorAll('.auth-alert').forEach(a=>a.classList.remove('on'));
 }
 
@@ -1014,90 +1013,6 @@ window.bootApp = async function(fbUser, profile, fresh){
 };
 
 // ══════════════════════════════════════════
-// SIGN UP  — role-aware, handles shared Firebase Auth
-// ══════════════════════════════════════════
-async function doSignup(){
-  const first=v('suFirst'), last=v('suLast'),
-        email=v('suEmail').toLowerCase(),
-        pass=v('suPass'), pass2=v('suPass2');
-  const err=id('suErr'), ok=id('suOk');
-  err.classList.remove('on'); ok.classList.remove('on');
-
-  if(!first||!last)   return alert_(err,'Please enter your first and last name.');
-  if(!email.includes('@')) return alert_(err,'Please enter a valid email address.');
-  if(pass.length<8)   return alert_(err,'Password must be at least 8 characters.');
-  if(pass!==pass2)    return alert_(err,'Passwords do not match.');
-
-  const btn = id('suBtn');
-  btn.disabled = true;
-  btn.textContent = 'Creating account…';
-
-  try {
-    let fbUser;
-
-    // Step 1 — try to create a new Firebase Auth account
-    try {
-      const cred = await fb().createUserWithEmailAndPassword(fb().auth, email, pass);
-      fbUser = cred.user;
-    } catch(e) {
-      if (e.code === 'auth/email-already-in-use') {
-        // Email exists in Auth. Try to sign them in to get their UID,
-        // then check whether they're a client-only account.
-        try {
-          const cred = await fb().signInWithEmailAndPassword(fb().auth, email, pass);
-          fbUser = cred.user;
-        } catch(e2) {
-          // Wrong password for existing account
-          btn.disabled = false; btn.textContent = 'Create Account';
-          return alert_(err, e2.code === 'auth/wrong-password' || e2.code === 'auth/invalid-credential'
-            ? 'This email is already registered. The password you entered is incorrect.'
-            : 'This email is already registered. Please sign in instead.');
-        }
-      } else {
-        btn.disabled = false; btn.textContent = 'Create Account';
-        return alert_(err, e.message || 'Sign up failed. Please try again.');
-      }
-    }
-
-    // Step 2 — check if a coach doc already exists (re-signup)
-    const coachSnap = await fb().getDoc(fb().doc(fb().db, 'coaches', fbUser.uid));
-    if (coachSnap.exists()) {
-      // Already a coach — just boot them in
-      btn.disabled = false; btn.textContent = 'Create Account';
-      alert_(ok, 'Coach account already exists. Signing you in…');
-      return; // onAuthStateChanged will fire and call bootApp
-    }
-
-    // Step 3 — check if this UID belongs to a client-only account
-    const clientSnap = await fb().getDoc(fb().doc(fb().db, 'users', fbUser.uid)).catch(()=>null);
-    const isClientOnly = clientSnap && clientSnap.exists() && !coachSnap.exists();
-
-    if (isClientOnly) {
-      // Block — sign them back out and explain clearly
-      await fb().signOut(fb().auth);
-      btn.disabled = false; btn.textContent = 'Create Account';
-      return alert_(err,
-        '⚠️ This email is already registered as a client account in the Client Portal. ' +
-        'Please use a different email address to create a coach account.');
-    }
-
-    // Step 4 — safe to create the coach profile in Firestore
-    await fb().setDoc(fb().doc(fb().db, 'coaches', fbUser.uid), {
-      first, last, email, role: 'coach', createdAt: Date.now()
-    });
-
-    // Store the coach email so the password-only login can find it
-    await fb().setDoc(fb().doc(fb().db, 'config', 'coach'), { email }, { merge: true });
-
-    alert_(ok, 'Coach account created! Signing you in…');
-    // onAuthStateChanged fires automatically → bootApp
-  } catch(e) {
-    btn.disabled = false; btn.textContent = 'Create Account';
-    alert_(err, e.message || 'Sign up failed. Please try again.');
-  }
-}
-
-// ══════════════════════════════════════════
 // LOGIN  — password-only (email from Firestore config/coach)
 // Default password on first signup: admin123
 // ══════════════════════════════════════════
@@ -1115,7 +1030,7 @@ async function doLogin(){
   } catch(e){}
 
   if(!coachEmail){
-    return alert_(err,'No coach account set up yet. Please create your account first.');
+    return alert_(err,'Account not set up yet. Please contact your administrator.');
   }
 
   try {
@@ -1141,38 +1056,20 @@ async function doLogout(){
 }
 
 // ══════════════════════════════════════════
-// FORGOT PASSWORD  (real Firebase reset email)
+// FORGOT PASSWORD
 // ══════════════════════════════════════════
 async function doForgot(){
-  const email=v('fgEmail').toLowerCase();
   const err=id('fgErr'), ok=id('fgOk');
   err.classList.remove('on'); ok.classList.remove('on');
-  if(!email) return alert_(err,'Please enter your email address.');
   try{
+    const cfgSnap = await fb().getDoc(fb().doc(fb().db, 'config', 'coach'));
+    const email = cfgSnap.exists() ? cfgSnap.data().email : null;
+    if(!email) return alert_(err,'No account found. Please contact your administrator.');
     await fb().sendPasswordResetEmail(fb().auth, email);
-    alert_(ok,'Password reset email sent! Check your inbox.');
+    alert_(ok,'Reset link sent! Check your email inbox.');
   } catch(e){
-    alert_(err, e.code==='auth/user-not-found'
-      ? 'No account found with that email.'
-      : 'Failed to send reset email. Try again.');
+    alert_(err,'Failed to send reset email. Please try again.');
   }
-}
-
-// ══════════════════════════════════════════
-// PASSWORD STRENGTH
-// ══════════════════════════════════════════
-function pStrength(val){
-  let s=0;
-  if(val.length>=8)s++;
-  if(/[A-Z]/.test(val))s++;
-  if(/[0-9]/.test(val))s++;
-  if(/[^A-Za-z0-9]/.test(val))s++;
-  const cls=['','w','f','g','st'], lbl=['','Weak','Fair','Good','Strong'];
-  for(let i=1;i<=4;i++){
-    const b=id('ps'+i);
-    b.className='psb'+(i<=s?' '+cls[s]:'');
-  }
-  id('psLbl').textContent=val?lbl[s]||'Weak':'Enter a password';
 }
 
 // ══════════════════════════════════════════
