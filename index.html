@@ -524,6 +524,10 @@
 
         <div id="loginError"></div>
 
+        <div class="field-group" id="nameField" style="display:none;">
+            <label>Full Name</label>
+            <input type="text" id="nameInput" placeholder="e.g. Jake Cruz" autocomplete="name">
+        </div>
         <div class="field-group">
             <label>Email</label>
             <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email">
@@ -659,7 +663,12 @@ auth.onAuthStateChanged(async user => {
         currentUser = user;
         // Tag this UID as a client in Firestore — fire and forget, never blocks login
         db.collection('users').doc(user.uid).set(
-          { role: 'client', email: user.email, lastSeen: Date.now() },
+          {
+            role: 'client',
+            email: user.email,
+            displayName: user.displayName || '',
+            lastSeen: Date.now()
+          },
           { merge: true }
         ).catch(() => {});
         showApp(user);
@@ -692,6 +701,7 @@ function toggleMode() {
     document.getElementById('toggleModeBtn').textContent = isRegisterMode ? 'I have an account' : 'Create an Account';
     document.getElementById('toggleText').textContent = isRegisterMode ? 'Already have an account?' : "Don't have an account?";
     document.getElementById('toggleLink').textContent = isRegisterMode ? ' Sign in' : ' Register';
+    document.getElementById('nameField').style.display = isRegisterMode ? 'block' : 'none';
     clearError();
 }
 
@@ -715,7 +725,11 @@ async function handleAuth() {
     btn.innerHTML = '<span class="login-spinner"></span>' + (isRegisterMode ? 'Creating…' : 'Signing in…');
     try {
         if (isRegisterMode) {
-            await auth.createUserWithEmailAndPassword(email, password);
+            const cred = await auth.createUserWithEmailAndPassword(email, password);
+            const name = document.getElementById('nameInput').value.trim();
+            if (name) {
+                await cred.user.updateProfile({ displayName: name });
+            }
         } else {
             await auth.signInWithEmailAndPassword(email, password);
         }
