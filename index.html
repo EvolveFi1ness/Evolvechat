@@ -565,7 +565,6 @@
             </button>
             <div class="status-dot"></div>
             <button class="btn-logout" onclick="logout()">Sign out</button>
-            <a href="CoachApp.html" target="_blank" style="font-size:11px;color:var(--text-muted);text-decoration:none;padding:4px 8px;border-radius:6px;border:1px solid var(--border);transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">Coach App ↗</a>
         </div>
     </div>
 
@@ -680,9 +679,9 @@ function showApp(user) {
     document.getElementById('mainApp').style.display = 'flex';
     const name = user.displayName || user.email.split('@')[0];
     document.getElementById('userLabel').textContent = `Signed in as ${name}`;
-    chatArea.innerHTML = '';
-    appendSystem('Connected to coaching session. Say hello! 👋');
-    initConversation(user);
+    channel.postMessage({ type: 'join', name: 'Client', time: Date.now() });
+    // Start listening to Firestore messages for this client
+    listenToMessages(user.uid);
 }
 
 function toggleMode() {
@@ -772,86 +771,44 @@ document.getElementById('passwordInput').addEventListener('keypress', e => {
     if (e.key === 'Enter') handleAuth();
 });
 
-// ─── FIRESTORE REAL-TIME MESSAGING ───
+// ─── BROADCAST CHANNEL (kept as fallback for same-browser usage) ───
+const channel = new BroadcastChannel('coach_client_chat');
 const chatArea = document.getElementById('chatArea');
-let myName = 'Client';
-let conversationId = null;
-let unsubMessages = null;
-let unsubConvDoc = null;
-let _seenMsgIds = new Set();
+const myName = 'Client';
 
-async function initConversation(user) {
-    conversationId = user.uid;
-    myName = user.displayName || user.email.split('@')[0] || 'Client';
+// ─── FIRESTORE REAL-TIME CHAT ───
+let _chatUnsub = null;
 
-    const convRef = db.collection('conversations').doc(conversationId);
-    // Use set without merge first time so lastTime/createdAt are always present
-    const existing = await convRef.get();
-    if (!existing.exists()) {
-        await convRef.set({
-            clientUID: user.uid,
-            clientEmail: user.email,
-            clientName: myName,
-            lastMessage: '',
-            unreadCoach: 0,
-            videoCallActive: false,
-            lastTime: firebase.firestore.FieldValue.serverTimestamp(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    } else {
-        // Update mutable fields but preserve timestamps
-        await convRef.set({
-            clientUID: user.uid,
-            clientEmail: user.email,
-            clientName: myName,
-            videoCallActive: false
-        }, { merge: true });
-        // Backfill lastTime/createdAt if missing (fixes legacy docs)
-        const data = existing.data();
-        if (!data.lastTime) {
-            await convRef.update({ lastTime: firebase.firestore.FieldValue.serverTimestamp(), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-    }
-
-    // Listen to messages in real time
-    if (unsubMessages) unsubMessages();
-    _seenMsgIds = new Set();
-    unsubMessages = convRef.collection('messages')
-        .onSnapshot(snapshot => {
-            // Collect, sort by timestamp client-side
-            const added = [];
-            snapshot.docChanges().forEach(change => {
-                if (change.type === 'added' && !_seenMsgIds.has(change.doc.id)) {
-                    _seenMsgIds.add(change.doc.id);
-                    const msg = change.doc.data();
-                    if (msg.timestamp) added.push(msg);
-                }
-            });
-            // Re-render all messages sorted (handles out-of-order delivery)
-            if (added.length > 0) {
-                const allMsgs = [];
-                snapshot.forEach(d => { const m = d.data(); if (m.timestamp) allMsgs.push(m); });
-                allMsgs.sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0));
-                chatArea.innerHTML = '';
-                appendSystem('Connected to coaching session. Say hello! 👋');
-                allMsgs.forEach(msg => {
-                    appendMessage(msg.text, msg.sender === 'client' ? 'sent' : 'received', msg.senderName, msg.timestamp?.toMillis?.() || Date.now());
-                });
-            }
-        });
-
-    // Listen to conversation doc for video call invites from coach
-    if (unsubConvDoc) unsubConvDoc();
-    let prevVideoState = false;
-    unsubConvDoc = convRef.onSnapshot(snap => {
-        const data = snap.data();
-        if (!data) return;
-        if (data.videoCallActive && !prevVideoState) {
-            appendSystem('📹 Coach started a video call — click Video Call to join');
-        }
-        prevVideoState = !!data.videoCallActive;
-    });
+function listenToMessages(uid) {
+    if (_chatUnsub) { _chatUnsub(); _chatUnsub = null; }
+    // Listen to users/{uid}/messages ordered by ts
+    db.collection('users').doc(uid).collection('messages')
+      .orderBy('ts', 'asc')
+      .onSnapshot(snap => {
+          // Rebuild chat from Firestore snapshot
+          chatArea.innerHTML = '<div class="system-msg">Connected to coaching session. Say hello! 👋</div>';
+          snap.docs.forEach(d => {
+              const msg = d.data();
+              if (msg.from === 'client') {
+                  appendMessage(msg.text, 'sent', 'Me', msg.ts);
+              } else if (msg.from === 'coach') {
+                  appendMessage(msg.text, 'received', 'Coach', msg.ts);
+              }
+          });
+      }, err => console.warn('Chat listener error:', err));
 }
+
+channel.onmessage = (event) => {
+    const data = event.data;
+    // Only handle system/join/leave events via BroadcastChannel now
+    if (data.type === 'join' && data.name !== myName) {
+        appendSystem(`${data.name} joined the session`);
+    } else if (data.type === 'leave' && data.name !== myName) {
+        appendSystem(`${data.name} left the session`);
+    } else if (data.type === 'video_invite') {
+        appendSystem('📹 Coach started a video call — click Video Call to join');
+    }
+};
 
 function appendMessage(text, type, sender, time) {
     const div = document.createElement('div');
@@ -874,30 +831,33 @@ function escapeHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-async function sendMessage() {
+function sendMessage() {
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
-    if (!text || !conversationId) return;
+    if (!text || !currentUser) return;
+    const ts = Date.now();
     input.value = '';
     input.focus();
-
-    await db.collection('conversations').doc(conversationId)
-        .collection('messages').add({
-            text,
-            sender: 'client',
-            senderName: myName,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-    db.collection('conversations').doc(conversationId).set({
-        lastMessage: text,
-        lastTime: firebase.firestore.FieldValue.serverTimestamp(),
-        unreadCoach: firebase.firestore.FieldValue.increment(1)
-    }, { merge: true });
+    // Write to Firestore — coach app will see it in real-time via onSnapshot
+    db.collection('users').doc(currentUser.uid).collection('messages').add({
+        from: 'client',
+        text: text,
+        ts: ts
+    }).catch(err => {
+        // Fallback: show locally if Firestore write fails
+        appendMessage(text, 'sent', 'Me', ts);
+        console.warn('Firestore write failed:', err);
+    });
+    // Also broadcast so same-browser coach tab hears it instantly
+    channel.postMessage({ type: 'chat', text, sender: myName, time: ts });
 }
 
 document.getElementById('msgInput').addEventListener('keypress', e => {
     if (e.key === 'Enter') sendMessage();
+});
+
+window.addEventListener('beforeunload', () => {
+    channel.postMessage({ type: 'leave', name: myName });
 });
 
 // ─── LIVEKIT VIDEO CALL ───
@@ -940,13 +900,7 @@ async function generateToken(identity) {
 
 async function startVideoCall() {
     if (!currentUser) { alert('Please sign in first.'); return; }
-    // Notify coach via Firestore
-    if (conversationId) {
-        db.collection('conversations').doc(conversationId).update({
-            videoCallActive: true,
-            videoCallTime: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(() => {});
-    }
+    channel.postMessage({ type: 'video_invite', sender: myName });
     const modal = document.getElementById('videoModal');
     modal.classList.add('active');
     document.getElementById('connectingOverlay').classList.remove('hidden');
@@ -1057,10 +1011,6 @@ function cleanupVideo() {
     document.getElementById('videoModal').classList.remove('active');
     if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
     document.getElementById('callTimer').textContent = '';
-    // Clear Firestore video call flag
-    if (conversationId) {
-        db.collection('conversations').doc(conversationId).update({ videoCallActive: false }).catch(() => {});
-    }
     // Reset remote video
     const remoteVideo = document.getElementById('remoteVideo');
     remoteVideo.querySelectorAll('video').forEach(v => v.remove());
