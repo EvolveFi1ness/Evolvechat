@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evolve Fitness – Login</title>
+  <title>Evolve Fitness</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
@@ -11,26 +11,33 @@
     body {
       min-height: 100vh;
       background: #0a0a0a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       font-family: 'DM Sans', sans-serif;
-      padding: 2rem;
+      color: #e8e8e8;
     }
 
     /* ── SCREENS ── */
-    .screen { display: none; width: 100%; max-width: 460px; animation: fadeUp 0.35s ease; }
+    .screen { display: none; animation: fadeUp 0.35s ease; }
     .screen.active { display: block; }
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(18px); }
+      from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+
+    /* ── AUTH & ONBOARDING WRAPPER ── */
+    .center-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .card { width: 100%; max-width: 460px; }
 
     /* ── BRAND ── */
     .logo { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 4px; color: #c9a84c; margin-bottom: 4px; }
     .tagline { font-size: 11px; color: #555; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 2.5rem; }
 
-    /* ── ONBOARDING PROGRESS ── */
+    /* ── PROGRESS ── */
     .progress-wrap { margin-bottom: 2rem; }
     .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
     .progress-bar { height: 2px; background: #1e1e1e; border-radius: 2px; }
@@ -58,235 +65,566 @@
     .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
     .field .hint { font-size: 11px; color: #444; margin-top: 5px; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 
     /* ── UNIT TOGGLE ── */
-    .unit-toggle { display: flex; gap: 0; margin-bottom: 1rem; }
-    .unit-btn {
-      flex: 1; padding: 9px; text-align: center; font-size: 11px; letter-spacing: 1px;
-      text-transform: uppercase; cursor: pointer; background: #111; color: #555;
-      border: 1px solid #2a2a2a; transition: all 0.15s;
-    }
+    .unit-toggle { display: flex; margin-bottom: 1rem; }
+    .unit-btn { flex: 1; padding: 9px; text-align: center; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; background: #111; color: #555; border: 1px solid #2a2a2a; transition: all 0.15s; }
     .unit-btn:first-child { border-radius: 6px 0 0 6px; }
     .unit-btn:last-child  { border-radius: 0 6px 6px 0; }
     .unit-btn.active { background: #1e1800; color: #c9a84c; border-color: #c9a84c; }
 
-    /* ── CHECKBOX PILLS ── */
+    /* ── PILLS ── */
     .pill-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
-    .pill { padding: 7px 14px; border-radius: 20px; font-size: 12px; letter-spacing: 0.5px; cursor: pointer; border: 1px solid #2a2a2a; color: #555; background: #111; transition: all 0.15s; user-select: none; }
+    .pill { padding: 7px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #2a2a2a; color: #555; background: #111; transition: all 0.15s; user-select: none; }
     .pill.selected { background: #1e1800; color: #c9a84c; border-color: #c9a84c; }
 
     /* ── BUTTONS ── */
-    .btn {
-      width: 100%; background: #c9a84c; color: #0a0a0a; border: none; border-radius: 6px;
-      padding: 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
-      letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-top: 0.5rem;
-      transition: opacity 0.2s, transform 0.1s;
-    }
+    .btn { width: 100%; background: #c9a84c; color: #0a0a0a; border: none; border-radius: 6px; padding: 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.2s, transform 0.1s; }
     .btn:hover { opacity: 0.88; }
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn-ghost {
-      width: 100%; background: transparent; color: #555; border: 1px solid #2a2a2a; border-radius: 6px;
-      padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 1.5px;
-      text-transform: uppercase; cursor: pointer; margin-top: 8px; transition: color 0.2s, border-color 0.2s;
-    }
+    .btn-ghost { width: 100%; background: transparent; color: #555; border: 1px solid #2a2a2a; border-radius: 6px; padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-top: 8px; transition: color 0.2s, border-color 0.2s; }
     .btn-ghost:hover { color: #c9a84c; border-color: #c9a84c; }
 
     /* ── STATUS ── */
     .status { margin-top: 1.25rem; padding: 11px 14px; border-radius: 6px; font-size: 13px; display: none; line-height: 1.5; }
     .status.success { background: rgba(29,158,117,0.1); border: 1px solid rgba(29,158,117,0.3); color: #5dcaa5; display: block; }
-    .status.error   { background: rgba(226,75,74,0.1);  border: 1px solid rgba(226,75,74,0.25);  color: #f09595; display: block; }
+    .status.error   { background: rgba(226,75,74,0.1); border: 1px solid rgba(226,75,74,0.25); color: #f09595; display: block; }
 
-    /* ── DIVIDER / LINK ── */
+    /* ── MISC ── */
     .divider { display: flex; align-items: center; gap: 12px; margin: 1.5rem 0; color: #333; font-size: 11px; }
     .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #222; }
     .switch-link { text-align: center; font-size: 13px; color: #555; }
     .switch-link span { color: #c9a84c; cursor: pointer; }
 
-    /* ── WELCOME CARD ── */
-    .welcome-icon { width: 64px; height: 64px; border-radius: 50%; background: #1e1800; border: 1px solid #c9a84c33; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
-    .welcome-icon svg { width: 30px; height: 30px; fill: #c9a84c; }
-    .welcome-name { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 3px; color: #e8e8e8; margin-bottom: 6px; }
-    .welcome-sub { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 2rem; }
-    .profile-summary { background: #111; border: 1px solid #1e1e1e; border-radius: 8px; padding: 1rem 1.25rem; }
-    .profile-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
-    .profile-row:last-child { border-bottom: none; }
-    .profile-row .lbl { color: #555; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
-    .profile-row .val { color: #e8e8e8; font-weight: 500; }
-    .profile-row .val.gold { color: #c9a84c; }
+    /* ════════════════════════════════════════
+       HOME SCREEN
+    ════════════════════════════════════════ */
+    #screen-home {
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: 100px;
+    }
+
+    /* top bar */
+    .home-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.5rem 1.25rem 1rem;
+      border-bottom: 1px solid #161616;
+    }
+    .home-topbar .brand { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #c9a84c; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #1e1800; border: 1px solid #c9a84c44;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 500; color: #c9a84c; cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* greeting */
+    .greeting-section { padding: 1.5rem 1.25rem 0; }
+    .greeting-time { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #555; margin-bottom: 4px; }
+    .greeting-name { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; color: #e8e8e8; line-height: 1; }
+    .greeting-sub  { font-size: 13px; color: #555; margin-top: 6px; }
+
+    /* stat strip */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 1.25rem 1.25rem 0;
+    }
+    .stat-box {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .stat-box .s-val { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 1px; color: #c9a84c; line-height: 1; }
+    .stat-box .s-lbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #444; margin-top: 4px; }
+
+    /* section label */
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #444;
+      padding: 1.5rem 1.25rem 0.75rem;
+    }
+
+    /* today's workout card */
+    .workout-card {
+      margin: 0 1.25rem;
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .workout-card-header {
+      background: #1a1500;
+      border-bottom: 1px solid #c9a84c22;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .workout-day { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #c9a84c88; }
+    .workout-name { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: #c9a84c; margin-top: 2px; }
+    .workout-badge { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; background: #c9a84c22; color: #c9a84c; padding: 4px 10px; border-radius: 20px; border: 1px solid #c9a84c33; }
+    .exercise-list { padding: 8px 0; }
+    .exercise-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 16px;
+      border-bottom: 1px solid #171717;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    .exercise-row:last-child { border-bottom: none; }
+    .exercise-row:hover { background: #161616; }
+    .ex-left { display: flex; align-items: center; gap: 12px; }
+    .ex-num { width: 24px; height: 24px; border-radius: 50%; background: #1a1a1a; border: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #555; flex-shrink: 0; }
+    .ex-name { font-size: 14px; font-weight: 500; color: #d8d8d8; }
+    .ex-detail { font-size: 11px; color: #555; margin-top: 2px; }
+    .ex-sets { font-size: 12px; color: #c9a84c; font-weight: 500; }
+    .workout-card-footer { padding: 12px 16px; border-top: 1px solid #171717; }
+    .start-btn {
+      width: 100%; background: #c9a84c; color: #0a0a0a; border: none; border-radius: 8px;
+      padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s;
+    }
+    .start-btn:hover { opacity: 0.88; }
+
+    /* quick actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 0 1.25rem;
+    }
+    .qa-btn {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 10px;
+      padding: 14px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .qa-btn:hover { border-color: #c9a84c44; background: #141200; }
+    .qa-icon { font-size: 22px; }
+    .qa-label { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: #555; text-align: center; line-height: 1.3; }
+
+    /* activity feed */
+    .activity-feed { margin: 0 1.25rem; background: #111; border: 1px solid #1e1e1e; border-radius: 12px; overflow: hidden; }
+    .activity-row { display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid #171717; }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-gold { background: #c9a84c; }
+    .dot-green { background: #5dcaa5; }
+    .dot-blue { background: #4a9edd; }
+    .activity-text { font-size: 13px; color: #aaa; flex: 1; }
+    .activity-text strong { color: #e8e8e8; font-weight: 500; }
+    .activity-time { font-size: 11px; color: #444; }
+
+    /* bmi card */
+    .bmi-card {
+      margin: 0 1.25rem;
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+    }
+    .bmi-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .bmi-val { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 2px; color: #c9a84c; }
+    .bmi-category { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; }
+    .bmi-normal  { background: rgba(29,158,117,0.15); color: #5dcaa5; border: 1px solid rgba(29,158,117,0.3); }
+    .bmi-under   { background: rgba(74,158,221,0.15); color: #4a9edd; border: 1px solid rgba(74,158,221,0.3); }
+    .bmi-over    { background: rgba(201,168,76,0.15); color: #c9a84c; border: 1px solid rgba(201,168,76,0.3); }
+    .bmi-obese   { background: rgba(226,75,74,0.15); color: #f09595; border: 1px solid rgba(226,75,74,0.3); }
+    .bmi-bar-wrap { height: 6px; background: #1e1e1e; border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+    .bmi-bar-fill { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #4a9edd, #5dcaa5, #c9a84c, #f09595); }
+    .bmi-bar-marker-wrap { position: relative; height: 14px; }
+    .bmi-marker { position: absolute; transform: translateX(-50%); font-size: 10px; color: #c9a84c; }
+    .bmi-labels { display: flex; justify-content: space-between; font-size: 10px; color: #333; margin-top: 4px; }
+    .bmi-detail { font-size: 12px; color: #555; margin-top: 8px; }
+
+    /* bottom nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      background: #0e0e0e;
+      border-top: 1px solid #1a1a1a;
+      display: flex;
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 8px 16px;
+      cursor: pointer;
+      transition: color 0.15s;
+      color: #444;
+    }
+    .nav-item.active { color: #c9a84c; }
+    .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .nav-item span { font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* profile panel */
+    .profile-panel { padding: 1.5rem 1.25rem; }
+    .pp-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; }
+    .pp-avatar { width: 60px; height: 60px; border-radius: 50%; background: #1e1800; border: 1px solid #c9a84c44; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 500; color: #c9a84c; }
+    .pp-name { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: #e8e8e8; }
+    .pp-email { font-size: 12px; color: #555; margin-top: 2px; }
+    .pp-section { margin-bottom: 1.5rem; }
+    .pp-section-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #444; margin-bottom: 10px; }
+    .pp-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid #161616; font-size: 13px; }
+    .pp-row:last-child { border-bottom: none; }
+    .pp-row .lbl { color: #555; }
+    .pp-row .val { color: #e8e8e8; font-weight: 500; }
+    .pp-row .val.gold { color: #c9a84c; }
+    .logout-btn { width: 100%; background: transparent; border: 1px solid #2a2a2a; color: #555; padding: 13px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; margin-top: 1rem; transition: color 0.2s, border-color 0.2s; }
+    .logout-btn:hover { color: #f09595; border-color: #f09595; }
   </style>
 </head>
 <body>
 
 <!-- ══════════════ SCREEN 1: AUTH ══════════════ -->
 <div class="screen active" id="screen-auth">
-  <div class="logo">EVOLVE</div>
-  <div class="tagline">Fitness · Performance · Results</div>
-  <div class="tabs">
-    <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
-    <div class="tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
-  </div>
-
-  <div id="form-login">
-    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
-    <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
-    <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
-    <div class="divider">or</div>
-    <div class="switch-link">No account? <span onclick="switchTab('signup')">Create one →</span></div>
-  </div>
-
-  <div id="form-signup" style="display:none">
-    <div class="row2">
-      <div class="field"><label>First Name</label><input type="text" id="su-first" placeholder="Jake"></div>
-      <div class="field"><label>Last Name</label><input type="text" id="su-last" placeholder="Cruz"></div>
+  <div class="center-wrap">
+    <div class="card">
+      <div class="logo">EVOLVE</div>
+      <div class="tagline">Fitness · Performance · Results</div>
+      <div class="tabs">
+        <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+        <div class="tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+      </div>
+      <div id="form-login">
+        <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
+        <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+        <div class="divider">or</div>
+        <div class="switch-link">No account? <span onclick="switchTab('signup')">Create one →</span></div>
+      </div>
+      <div id="form-signup" style="display:none">
+        <div class="row2">
+          <div class="field"><label>First Name</label><input type="text" id="su-first" placeholder="Jake"></div>
+          <div class="field"><label>Last Name</label><input type="text" id="su-last" placeholder="Cruz"></div>
+        </div>
+        <div class="field"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"></div>
+        <div class="field"><label>Password</label><input type="password" id="su-pass" placeholder="Min. 6 characters"></div>
+        <div class="field">
+          <label>Primary Goal</label>
+          <select id="su-goal">
+            <option value="">Select your goal</option>
+            <option value="weight_loss">Weight Loss</option>
+            <option value="muscle_gain">Muscle Gain</option>
+            <option value="endurance">Endurance</option>
+            <option value="general_fitness">General Fitness</option>
+          </select>
+        </div>
+        <button class="btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
+        <div class="divider">or</div>
+        <div class="switch-link">Already a member? <span onclick="switchTab('login')">Sign in →</span></div>
+      </div>
+      <div class="status" id="auth-status"></div>
     </div>
-    <div class="field"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"></div>
-    <div class="field"><label>Password</label><input type="password" id="su-pass" placeholder="Min. 6 characters"></div>
-    <div class="field">
-      <label>Primary Goal</label>
-      <select id="su-goal">
-        <option value="">Select your goal</option>
-        <option value="weight_loss">Weight Loss</option>
-        <option value="muscle_gain">Muscle Gain</option>
-        <option value="endurance">Endurance</option>
-        <option value="general_fitness">General Fitness</option>
-      </select>
-    </div>
-    <button class="btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
-    <div class="divider">or</div>
-    <div class="switch-link">Already a member? <span onclick="switchTab('login')">Sign in →</span></div>
   </div>
-  <div class="status" id="auth-status"></div>
 </div>
 
-<!-- ══════════════ SCREEN 2: ONBOARDING STEP 1 — BODY STATS ══════════════ -->
+<!-- ══════════════ SCREEN 2: ONBOARDING STEP 1 ══════════════ -->
 <div class="screen" id="screen-step1">
-  <div class="logo">EVOLVE</div>
-  <div class="progress-wrap">
-    <div class="progress-label"><span>Profile Setup</span><span>Step 1 of 2</span></div>
-    <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
-  </div>
-  <div class="step-title">Your Body Stats</div>
-  <div class="step-sub">Helps us personalize your workout and nutrition plans.</div>
-
-  <div class="field"><label>Date of Birth</label><input type="date" id="ob-dob"></div>
-
-  <div class="field">
-    <label>Height Unit</label>
-    <div class="unit-toggle">
-      <div class="unit-btn active" id="unit-cm" onclick="setHeightUnit('cm')">cm</div>
-      <div class="unit-btn" id="unit-ft" onclick="setHeightUnit('ft')">ft / in</div>
+  <div class="center-wrap">
+    <div class="card">
+      <div class="logo">EVOLVE</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Profile Setup</span><span>Step 1 of 2</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+      </div>
+      <div class="step-title">Your Body Stats</div>
+      <div class="step-sub">Helps us personalize your workout and nutrition plans.</div>
+      <div class="field"><label>Date of Birth</label><input type="date" id="ob-dob"></div>
+      <div class="field">
+        <label>Height Unit</label>
+        <div class="unit-toggle">
+          <div class="unit-btn active" id="unit-cm" onclick="setHeightUnit('cm')">cm</div>
+          <div class="unit-btn" id="unit-ft" onclick="setHeightUnit('ft')">ft / in</div>
+        </div>
+      </div>
+      <div id="height-cm-wrap" class="field">
+        <label>Height (cm)</label><input type="number" id="ob-height-cm" placeholder="e.g. 175" min="100" max="250">
+      </div>
+      <div id="height-ft-wrap" style="display:none">
+        <div class="row2">
+          <div class="field"><label>Feet</label><input type="number" id="ob-height-ft" placeholder="5" min="3" max="8"></div>
+          <div class="field"><label>Inches</label><input type="number" id="ob-height-in" placeholder="9" min="0" max="11"></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Weight Unit</label>
+        <div class="unit-toggle">
+          <div class="unit-btn active" id="unit-kg" onclick="setWeightUnit('kg')">kg</div>
+          <div class="unit-btn" id="unit-lb" onclick="setWeightUnit('lb')">lbs</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Weight (<span id="weight-unit-label">kg</span>)</label>
+        <input type="number" id="ob-weight" placeholder="e.g. 70" min="20" max="500">
+      </div>
+      <div class="field">
+        <label>Biological Sex</label>
+        <select id="ob-sex">
+          <option value="">Prefer not to say</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <button class="btn" onclick="goToStep2()">Next →</button>
+      <div class="status" id="step1-status"></div>
     </div>
   </div>
-
-  <div id="height-cm-wrap" class="field">
-    <label>Height (cm)</label>
-    <input type="number" id="ob-height-cm" placeholder="e.g. 175" min="100" max="250">
-  </div>
-  <div id="height-ft-wrap" style="display:none">
-    <div class="row2">
-      <div class="field"><label>Feet</label><input type="number" id="ob-height-ft" placeholder="5" min="3" max="8"></div>
-      <div class="field"><label>Inches</label><input type="number" id="ob-height-in" placeholder="9" min="0" max="11"></div>
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Weight Unit</label>
-    <div class="unit-toggle">
-      <div class="unit-btn active" id="unit-kg" onclick="setWeightUnit('kg')">kg</div>
-      <div class="unit-btn" id="unit-lb" onclick="setWeightUnit('lb')">lbs</div>
-    </div>
-  </div>
-  <div class="field">
-    <label>Weight (<span id="weight-unit-label">kg</span>)</label>
-    <input type="number" id="ob-weight" placeholder="e.g. 70" min="20" max="500">
-  </div>
-
-  <div class="field">
-    <label>Biological Sex <span style="color:#444;font-size:10px">(for health calculations)</span></label>
-    <select id="ob-sex">
-      <option value="">Prefer not to say</option>
-      <option value="male">Male</option>
-      <option value="female">Female</option>
-    </select>
-  </div>
-
-  <button class="btn" onclick="goToStep2()">Next →</button>
-  <div class="status" id="step1-status"></div>
 </div>
 
-<!-- ══════════════ SCREEN 3: ONBOARDING STEP 2 — HEALTH INFO ══════════════ -->
+<!-- ══════════════ SCREEN 3: ONBOARDING STEP 2 ══════════════ -->
 <div class="screen" id="screen-step2">
-  <div class="logo">EVOLVE</div>
-  <div class="progress-wrap">
-    <div class="progress-label"><span>Profile Setup</span><span>Step 2 of 2</span></div>
-    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
-  </div>
-  <div class="step-title">Health Information</div>
-  <div class="step-sub">Kept private and used only to keep you safe during training.</div>
-
-  <div class="field">
-    <label>Known Allergies</label>
-    <div class="pill-group" id="allergy-pills">
-      <div class="pill" onclick="togglePill(this,'allergy')">Nuts</div>
-      <div class="pill" onclick="togglePill(this,'allergy')">Dairy</div>
-      <div class="pill" onclick="togglePill(this,'allergy')">Gluten</div>
-      <div class="pill" onclick="togglePill(this,'allergy')">Shellfish</div>
-      <div class="pill" onclick="togglePill(this,'allergy')">Soy</div>
-      <div class="pill" onclick="togglePill(this,'allergy')">Eggs</div>
-      <div class="pill" onclick="togglePill(this,'allergy')">Latex</div>
-      <div class="pill" onclick="togglePill(this,'allergy')">None</div>
+  <div class="center-wrap">
+    <div class="card">
+      <div class="logo">EVOLVE</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Profile Setup</span><span>Step 2 of 2</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      </div>
+      <div class="step-title">Health Information</div>
+      <div class="step-sub">Kept private. Used only to keep you safe during training.</div>
+      <div class="field">
+        <label>Known Allergies</label>
+        <div class="pill-group" id="allergy-pills">
+          <div class="pill" onclick="togglePill(this,'allergy')">Nuts</div>
+          <div class="pill" onclick="togglePill(this,'allergy')">Dairy</div>
+          <div class="pill" onclick="togglePill(this,'allergy')">Gluten</div>
+          <div class="pill" onclick="togglePill(this,'allergy')">Shellfish</div>
+          <div class="pill" onclick="togglePill(this,'allergy')">Soy</div>
+          <div class="pill" onclick="togglePill(this,'allergy')">Eggs</div>
+          <div class="pill" onclick="togglePill(this,'allergy')">Latex</div>
+          <div class="pill" onclick="togglePill(this,'allergy')">None</div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <input type="text" id="ob-allergy-other" placeholder="Other allergies (optional)">
+        </div>
+      </div>
+      <div class="field">
+        <label>Current Medications or Supplements</label>
+        <textarea id="ob-meds" placeholder="e.g. Metformin, Vitamin D — or leave blank if none"></textarea>
+        <div class="hint">Helps trainers avoid contraindicated exercises or nutrition advice.</div>
+      </div>
+      <div class="field">
+        <label>Medical Conditions <span style="color:#444;font-size:10px">(optional)</span></label>
+        <div class="pill-group" id="condition-pills">
+          <div class="pill" onclick="togglePill(this,'condition')">Hypertension</div>
+          <div class="pill" onclick="togglePill(this,'condition')">Diabetes</div>
+          <div class="pill" onclick="togglePill(this,'condition')">Asthma</div>
+          <div class="pill" onclick="togglePill(this,'condition')">Heart Condition</div>
+          <div class="pill" onclick="togglePill(this,'condition')">Joint Issues</div>
+          <div class="pill" onclick="togglePill(this,'condition')">Back Pain</div>
+          <div class="pill" onclick="togglePill(this,'condition')">None</div>
+        </div>
+      </div>
+      <div class="field"><label>Emergency Contact Name</label><input type="text" id="ob-ec-name" placeholder="e.g. Maria Cruz"></div>
+      <div class="field"><label>Emergency Contact Number</label><input type="tel" id="ob-ec-phone" placeholder="e.g. +63 912 345 6789"></div>
+      <button class="btn" id="finish-btn" onclick="handleFinish()">Complete Profile</button>
+      <button class="btn-ghost" onclick="showScreen('screen-step1')">← Back</button>
+      <div class="status" id="step2-status"></div>
     </div>
-    <div class="field" style="margin-top:10px">
-      <input type="text" id="ob-allergy-other" placeholder="Other allergies (optional)">
-    </div>
   </div>
-
-  <div class="field" style="margin-top:0.5rem">
-    <label>Current Medications or Supplements</label>
-    <textarea id="ob-meds" placeholder="e.g. Metformin, Vitamin D, Protein powder — or leave blank if none"></textarea>
-    <div class="hint">This helps trainers avoid contraindicated exercises or nutritional advice.</div>
-  </div>
-
-  <div class="field">
-    <label>Medical Conditions <span style="color:#444;font-size:10px">(optional)</span></label>
-    <div class="pill-group" id="condition-pills">
-      <div class="pill" onclick="togglePill(this,'condition')">Hypertension</div>
-      <div class="pill" onclick="togglePill(this,'condition')">Diabetes</div>
-      <div class="pill" onclick="togglePill(this,'condition')">Asthma</div>
-      <div class="pill" onclick="togglePill(this,'condition')">Heart Condition</div>
-      <div class="pill" onclick="togglePill(this,'condition')">Joint Issues</div>
-      <div class="pill" onclick="togglePill(this,'condition')">Back Pain</div>
-      <div class="pill" onclick="togglePill(this,'condition')">None</div>
-    </div>
-  </div>
-
-  <div class="field">
-    <label>Emergency Contact Name</label>
-    <input type="text" id="ob-ec-name" placeholder="e.g. Maria Cruz">
-  </div>
-  <div class="field">
-    <label>Emergency Contact Number</label>
-    <input type="tel" id="ob-ec-phone" placeholder="e.g. +63 912 345 6789">
-  </div>
-
-  <button class="btn" id="finish-btn" onclick="handleFinish()">Complete Profile</button>
-  <button class="btn-ghost" onclick="showScreen('screen-step1')">← Back</button>
-  <div class="status" id="step2-status"></div>
 </div>
 
-<!-- ══════════════ SCREEN 4: WELCOME ══════════════ -->
-<div class="screen" id="screen-welcome">
-  <div class="welcome-icon">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
-    </svg>
+<!-- ══════════════ SCREEN 4: HOME ══════════════ -->
+<div class="screen" id="screen-home">
+  <div id="screen-home">
+
+    <!-- Top bar -->
+    <div class="home-topbar">
+      <div class="brand">EVOLVE</div>
+      <div class="avatar" id="home-avatar" onclick="setTab('profile')">JC</div>
+    </div>
+
+    <!-- TAB PANELS -->
+    <div id="tab-home-panel">
+      <!-- Greeting -->
+      <div class="greeting-section">
+        <div class="greeting-time" id="greeting-time">Good Morning</div>
+        <div class="greeting-name" id="greeting-name">Welcome back</div>
+        <div class="greeting-sub" id="greeting-sub">Ready to crush today's session?</div>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="stat-strip">
+        <div class="stat-box">
+          <div class="s-val" id="stat-streak">0</div>
+          <div class="s-lbl">Day Streak</div>
+        </div>
+        <div class="stat-box">
+          <div class="s-val" id="stat-sessions">0</div>
+          <div class="s-lbl">Sessions</div>
+        </div>
+        <div class="stat-box">
+          <div class="s-val" id="stat-plan">Free</div>
+          <div class="s-lbl">Plan</div>
+        </div>
+      </div>
+
+      <!-- Today's Workout -->
+      <div class="section-label">Today's Workout</div>
+      <div class="workout-card">
+        <div class="workout-card-header">
+          <div>
+            <div class="workout-day" id="workout-day">Monday</div>
+            <div class="workout-name" id="workout-name">Push Day</div>
+          </div>
+          <div class="workout-badge" id="workout-badge">4 exercises</div>
+        </div>
+        <div class="exercise-list" id="exercise-list">
+          <div class="exercise-row">
+            <div class="ex-left"><div class="ex-num">1</div><div><div class="ex-name">Bench Press</div><div class="ex-detail">Chest · Compound</div></div></div>
+            <div class="ex-sets">4×8</div>
+          </div>
+          <div class="exercise-row">
+            <div class="ex-left"><div class="ex-num">2</div><div><div class="ex-name">Overhead Press</div><div class="ex-detail">Shoulders · Compound</div></div></div>
+            <div class="ex-sets">3×10</div>
+          </div>
+          <div class="exercise-row">
+            <div class="ex-left"><div class="ex-num">3</div><div><div class="ex-name">Incline Dumbbell</div><div class="ex-detail">Chest · Isolation</div></div></div>
+            <div class="ex-sets">3×12</div>
+          </div>
+          <div class="exercise-row">
+            <div class="ex-left"><div class="ex-num">4</div><div><div class="ex-name">Tricep Pushdown</div><div class="ex-detail">Triceps · Isolation</div></div></div>
+            <div class="ex-sets">3×15</div>
+          </div>
+        </div>
+        <div class="workout-card-footer">
+          <button class="start-btn">Start Workout</button>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section-label">Quick Actions</div>
+      <div class="quick-actions">
+        <div class="qa-btn"><div class="qa-icon">📊</div><div class="qa-label">Log Weight</div></div>
+        <div class="qa-btn"><div class="qa-icon">🍽️</div><div class="qa-label">Nutrition</div></div>
+        <div class="qa-btn"><div class="qa-icon">📅</div><div class="qa-label">Schedule</div></div>
+        <div class="qa-btn"><div class="qa-icon">💧</div><div class="qa-label">Hydration</div></div>
+      </div>
+
+      <!-- BMI Card -->
+      <div class="section-label">Body Mass Index</div>
+      <div class="bmi-card" id="bmi-card">
+        <div class="bmi-row">
+          <div>
+            <div class="bmi-val" id="bmi-value">—</div>
+            <div style="font-size:11px;color:#555;margin-top:2px">BMI Score</div>
+          </div>
+          <div class="bmi-category" id="bmi-category">—</div>
+        </div>
+        <div class="bmi-bar-wrap">
+          <div class="bmi-bar-fill" style="width:100%"></div>
+        </div>
+        <div class="bmi-labels">
+          <span>Under 18.5</span><span>18.5–24.9</span><span>25–29.9</span><span>30+</span>
+        </div>
+        <div class="bmi-detail" id="bmi-detail">Complete your profile to see your BMI.</div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="section-label">Recent Activity</div>
+      <div class="activity-feed">
+        <div class="activity-row">
+          <div class="activity-dot dot-gold"></div>
+          <div class="activity-text"><strong>Account created</strong> — welcome to Evolve!</div>
+          <div class="activity-time">Just now</div>
+        </div>
+        <div class="activity-row">
+          <div class="activity-dot dot-green"></div>
+          <div class="activity-text"><strong>Profile set up</strong> — health info saved</div>
+          <div class="activity-time">Today</div>
+        </div>
+        <div class="activity-row">
+          <div class="activity-dot dot-blue"></div>
+          <div class="activity-text">First workout <strong>scheduled</strong> for today</div>
+          <div class="activity-time">Today</div>
+        </div>
+      </div>
+      <div style="height:1.5rem"></div>
+    </div>
+
+    <!-- PROFILE PANEL -->
+    <div id="tab-profile-panel" style="display:none">
+      <div class="profile-panel">
+        <div class="pp-header">
+          <div class="pp-avatar" id="pp-avatar">JC</div>
+          <div>
+            <div class="pp-name" id="pp-name">Jake Cruz</div>
+            <div class="pp-email" id="pp-email">jake@example.com</div>
+          </div>
+        </div>
+        <div class="pp-section">
+          <div class="pp-section-title">Body Stats</div>
+          <div id="pp-body-rows">
+            <div class="pp-row"><span class="lbl">Age</span><span class="val" id="pp-age">—</span></div>
+            <div class="pp-row"><span class="lbl">Height</span><span class="val" id="pp-height">—</span></div>
+            <div class="pp-row"><span class="lbl">Weight</span><span class="val" id="pp-weight">—</span></div>
+            <div class="pp-row"><span class="lbl">BMI</span><span class="val gold" id="pp-bmi">—</span></div>
+          </div>
+        </div>
+        <div class="pp-section">
+          <div class="pp-section-title">Health Info</div>
+          <div id="pp-health-rows">
+            <div class="pp-row"><span class="lbl">Allergies</span><span class="val" id="pp-allergies">—</span></div>
+            <div class="pp-row"><span class="lbl">Medications</span><span class="val" id="pp-meds">—</span></div>
+            <div class="pp-row"><span class="lbl">Conditions</span><span class="val" id="pp-conditions">—</span></div>
+          </div>
+        </div>
+        <div class="pp-section">
+          <div class="pp-section-title">Account</div>
+          <div class="pp-row"><span class="lbl">Plan</span><span class="val gold" id="pp-plan">Free</span></div>
+          <div class="pp-row"><span class="lbl">Member Since</span><span class="val" id="pp-since">—</span></div>
+          <div class="pp-row"><span class="lbl">Goal</span><span class="val" id="pp-goal">—</span></div>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+      <div class="nav-item active" id="nav-home" onclick="setTab('home')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
+      </div>
+      <div class="nav-item" id="nav-workouts" onclick="setTab('workouts')">
+        <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M3 6.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM3 20.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 6.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 20.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
+        <span>Workouts</span>
+      </div>
+      <div class="nav-item" id="nav-nutrition" onclick="setTab('nutrition')">
+        <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+        <span>Nutrition</span>
+      </div>
+      <div class="nav-item" id="nav-profile" onclick="setTab('profile')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Profile</span>
+      </div>
+    </div>
   </div>
-  <div class="welcome-name" id="wc-name">Welcome, Jake!</div>
-  <div class="welcome-sub">Your profile is set up. Your trainer can now build a plan tailored exactly to you.</div>
-  <div class="profile-summary" id="profile-summary"></div>
-  <button class="btn" style="margin-top:1.5rem" onclick="alert('Navigating to dashboard…')">Go to Dashboard →</button>
 </div>
 
 <!-- Firebase SDKs -->
@@ -308,149 +646,124 @@
   const auth = firebase.auth();
   const db   = firebase.firestore();
 
-  // ── State ─────────────────────────────────────────────────────
   let currentUid = null;
-  let step1Data  = {};
   let heightUnit = 'cm';
   let weightUnit = 'kg';
+  let step1Data  = {};
 
-  // ── Screen navigation ─────────────────────────────────────────
+  // ── SCREEN ────────────────────────────────────────────────────
   function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ── Status helpers ────────────────────────────────────────────
-  function showStatus(id, msg, type) {
-    const el = document.getElementById(id);
-    el.textContent = msg; el.className = 'status ' + type;
-  }
-  function clearStatus(id) {
-    const el = document.getElementById(id);
-    el.className = 'status'; el.textContent = '';
-  }
+  // ── STATUS ────────────────────────────────────────────────────
+  function showStatus(id, msg, type) { const el=document.getElementById(id); el.textContent=msg; el.className='status '+type; }
+  function clearStatus(id) { const el=document.getElementById(id); el.className='status'; el.textContent=''; }
 
-  // ── Auth tab switch ───────────────────────────────────────────
+  // ── AUTH TAB ──────────────────────────────────────────────────
   function switchTab(tab) {
-    document.getElementById('form-login').style.display  = tab === 'login'  ? 'block' : 'none';
-    document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
-    document.getElementById('tab-login').className  = 'tab' + (tab === 'login'  ? ' active' : '');
-    document.getElementById('tab-signup').className = 'tab' + (tab === 'signup' ? ' active' : '');
+    document.getElementById('form-login').style.display  = tab==='login'  ? 'block' : 'none';
+    document.getElementById('form-signup').style.display = tab==='signup' ? 'block' : 'none';
+    document.getElementById('tab-login').className  = 'tab'+(tab==='login'  ? ' active' : '');
+    document.getElementById('tab-signup').className = 'tab'+(tab==='signup' ? ' active' : '');
     clearStatus('auth-status');
   }
 
-  // ── Unit toggles ──────────────────────────────────────────────
+  // ── UNITS ─────────────────────────────────────────────────────
   function setHeightUnit(u) {
     heightUnit = u;
-    document.getElementById('unit-cm').className = 'unit-btn' + (u==='cm' ? ' active' : '');
-    document.getElementById('unit-ft').className = 'unit-btn' + (u==='ft' ? ' active' : '');
-    document.getElementById('height-cm-wrap').style.display = u==='cm' ? 'block' : 'none';
-    document.getElementById('height-ft-wrap').style.display = u==='ft' ? 'block' : 'none';
+    document.getElementById('unit-cm').className = 'unit-btn'+(u==='cm'?' active':'');
+    document.getElementById('unit-ft').className = 'unit-btn'+(u==='ft'?' active':'');
+    document.getElementById('height-cm-wrap').style.display = u==='cm'?'block':'none';
+    document.getElementById('height-ft-wrap').style.display = u==='ft'?'block':'none';
   }
   function setWeightUnit(u) {
     weightUnit = u;
-    document.getElementById('unit-kg').className = 'unit-btn' + (u==='kg' ? ' active' : '');
-    document.getElementById('unit-lb').className = 'unit-btn' + (u==='lb' ? ' active' : '');
+    document.getElementById('unit-kg').className = 'unit-btn'+(u==='kg'?' active':'');
+    document.getElementById('unit-lb').className = 'unit-btn'+(u==='lb'?' active':'');
     document.getElementById('weight-unit-label').textContent = u;
   }
 
-  // ── Allergy / Condition pills ─────────────────────────────────
+  // ── PILLS ─────────────────────────────────────────────────────
   function togglePill(el, group) {
-    if (el.textContent === 'None') {
-      document.querySelectorAll('#' + (group==='allergy' ? 'allergy' : 'condition') + '-pills .pill')
-        .forEach(p => p.classList.remove('selected'));
-      el.classList.toggle('selected');
-      return;
+    const containerId = group==='allergy' ? 'allergy-pills' : 'condition-pills';
+    if (el.textContent==='None') {
+      document.querySelectorAll('#'+containerId+' .pill').forEach(p=>p.classList.remove('selected'));
+      el.classList.toggle('selected'); return;
     }
-    document.querySelectorAll('#' + (group==='allergy' ? 'allergy' : 'condition') + '-pills .pill')
-      .forEach(p => { if (p.textContent === 'None') p.classList.remove('selected'); });
+    document.querySelectorAll('#'+containerId+' .pill').forEach(p=>{ if(p.textContent==='None') p.classList.remove('selected'); });
     el.classList.toggle('selected');
   }
   function getSelectedPills(containerId) {
-    return Array.from(document.querySelectorAll('#' + containerId + ' .pill.selected'))
-      .map(p => p.textContent);
+    return Array.from(document.querySelectorAll('#'+containerId+' .pill.selected')).map(p=>p.textContent);
   }
 
   // ── LOGIN ─────────────────────────────────────────────────────
   async function handleLogin() {
     const email = document.getElementById('login-email').value.trim();
     const pass  = document.getElementById('login-password').value;
-    if (!email || !pass) { showStatus('auth-status','Please fill in all fields.','error'); return; }
+    if (!email||!pass) { showStatus('auth-status','Please fill in all fields.','error'); return; }
     const btn = document.getElementById('login-btn');
-    btn.disabled = true; btn.textContent = 'Signing in…';
-    clearStatus('auth-status');
+    btn.disabled=true; btn.textContent='Signing in…'; clearStatus('auth-status');
     try {
       const cred = await auth.signInWithEmailAndPassword(email, pass);
-      showStatus('auth-status', 'Welcome back, ' + (cred.user.displayName || cred.user.email) + '!', 'success');
-    } catch(e) {
-      showStatus('auth-status', e.message, 'error');
-    } finally {
-      btn.disabled = false; btn.textContent = 'Sign In';
-    }
+      currentUid = cred.user.uid;
+      const doc = await db.collection('members').doc(currentUid).get();
+      loadHomeScreen(doc.exists ? doc.data() : {});
+    } catch(e) { showStatus('auth-status', e.message, 'error'); }
+    finally { btn.disabled=false; btn.textContent='Sign In'; }
   }
 
   // ── SIGN UP ───────────────────────────────────────────────────
   async function handleSignup() {
-    const first = document.getElementById('su-first').value.trim();
-    const last  = document.getElementById('su-last').value.trim();
-    const email = document.getElementById('su-email').value.trim();
-    const pass  = document.getElementById('su-pass').value;
-    const goal  = document.getElementById('su-goal').value;
-    if (!first || !last || !email || !pass) { showStatus('auth-status','Please fill in all fields.','error'); return; }
-    if (pass.length < 6) { showStatus('auth-status','Password must be at least 6 characters.','error'); return; }
-    const btn = document.getElementById('signup-btn');
-    btn.disabled = true; btn.textContent = 'Creating account…';
-    clearStatus('auth-status');
+    const first=document.getElementById('su-first').value.trim();
+    const last=document.getElementById('su-last').value.trim();
+    const email=document.getElementById('su-email').value.trim();
+    const pass=document.getElementById('su-pass').value;
+    const goal=document.getElementById('su-goal').value;
+    if (!first||!last||!email||!pass) { showStatus('auth-status','Please fill in all fields.','error'); return; }
+    if (pass.length<6) { showStatus('auth-status','Password must be at least 6 characters.','error'); return; }
+    const btn=document.getElementById('signup-btn');
+    btn.disabled=true; btn.textContent='Creating account…'; clearStatus('auth-status');
     try {
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
       currentUid = cred.user.uid;
       await db.collection('members').doc(currentUid).set({
         uid: currentUid, firstName: first, lastName: last, email: email,
-        goal: goal || null, memberSince: firebase.firestore.FieldValue.serverTimestamp(),
+        goal: goal||null, memberSince: firebase.firestore.FieldValue.serverTimestamp(),
         plan: 'free', attendanceCount: 0, profileComplete: false
       });
-      await cred.user.updateProfile({ displayName: first + ' ' + last });
-      // store name for later screens
-      window._newUserName = first;
+      await cred.user.updateProfile({ displayName: first+' '+last });
+      window._newFirst = first;
       showScreen('screen-step1');
-    } catch(e) {
-      showStatus('auth-status', e.message, 'error');
-    } finally {
-      btn.disabled = false; btn.textContent = 'Create Account';
-    }
+    } catch(e) { showStatus('auth-status', e.message, 'error'); }
+    finally { btn.disabled=false; btn.textContent='Create Account'; }
   }
 
   // ── STEP 1 → STEP 2 ──────────────────────────────────────────
   function goToStep2() {
-    const dob    = document.getElementById('ob-dob').value;
-    const weight = document.getElementById('ob-weight').value;
-    let heightCm = null;
-    if (heightUnit === 'cm') {
-      heightCm = parseFloat(document.getElementById('ob-height-cm').value) || null;
+    const dob=document.getElementById('ob-dob').value;
+    const weight=document.getElementById('ob-weight').value;
+    let heightCm=null;
+    if (heightUnit==='cm') {
+      heightCm=parseFloat(document.getElementById('ob-height-cm').value)||null;
     } else {
-      const ft = parseFloat(document.getElementById('ob-height-ft').value) || 0;
-      const inches = parseFloat(document.getElementById('ob-height-in').value) || 0;
-      heightCm = ft ? Math.round((ft * 30.48) + (inches * 2.54)) : null;
+      const ft=parseFloat(document.getElementById('ob-height-ft').value)||0;
+      const ins=parseFloat(document.getElementById('ob-height-in').value)||0;
+      heightCm=ft?Math.round(ft*30.48+ins*2.54):null;
     }
-    if (!dob || !heightCm || !weight) {
-      showStatus('step1-status', 'Please enter your date of birth, height, and weight.', 'error');
-      return;
-    }
-    // Calculate age
-    const today = new Date();
-    const birthDate = new Date(dob);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-
+    if (!dob||!heightCm||!weight) { showStatus('step1-status','Please enter your date of birth, height, and weight.','error'); return; }
+    const today=new Date(); const bd=new Date(dob);
+    let age=today.getFullYear()-bd.getFullYear();
+    const m=today.getMonth()-bd.getMonth();
+    if (m<0||(m===0&&today.getDate()<bd.getDate())) age--;
     step1Data = {
-      dateOfBirth: dob,
-      age: age,
-      heightCm: heightCm,
-      weightKg: weightUnit === 'kg' ? parseFloat(weight) : Math.round(parseFloat(weight) * 0.453592 * 10) / 10,
-      weightDisplay: parseFloat(weight) + ' ' + weightUnit,
-      sex: document.getElementById('ob-sex').value || null
+      dateOfBirth: dob, age: age, heightCm: heightCm,
+      weightKg: weightUnit==='kg' ? parseFloat(weight) : Math.round(parseFloat(weight)*0.453592*10)/10,
+      weightDisplay: parseFloat(weight)+' '+weightUnit,
+      sex: document.getElementById('ob-sex').value||null
     };
     clearStatus('step1-status');
     showScreen('screen-step2');
@@ -458,64 +771,147 @@
 
   // ── FINISH PROFILE ────────────────────────────────────────────
   async function handleFinish() {
-    const allergies    = getSelectedPills('allergy-pills');
-    const conditions   = getSelectedPills('condition-pills');
-    const allergyOther = document.getElementById('ob-allergy-other').value.trim();
-    const meds         = document.getElementById('ob-meds').value.trim();
-    const ecName       = document.getElementById('ob-ec-name').value.trim();
-    const ecPhone      = document.getElementById('ob-ec-phone').value.trim();
-
-    const btn = document.getElementById('finish-btn');
-    btn.disabled = true; btn.textContent = 'Saving profile…';
-    clearStatus('step2-status');
-
+    const allergies=getSelectedPills('allergy-pills');
+    const conditions=getSelectedPills('condition-pills');
+    const allergyOther=document.getElementById('ob-allergy-other').value.trim();
+    const meds=document.getElementById('ob-meds').value.trim();
+    const ecName=document.getElementById('ob-ec-name').value.trim();
+    const ecPhone=document.getElementById('ob-ec-phone').value.trim();
+    const btn=document.getElementById('finish-btn');
+    btn.disabled=true; btn.textContent='Saving profile…'; clearStatus('step2-status');
     try {
-      const uid = currentUid || firebase.auth().currentUser?.uid;
+      const uid=currentUid||auth.currentUser?.uid;
       if (!uid) throw new Error('Session expired. Please sign in again.');
-
       const healthData = {
         ...step1Data,
-        allergies: allergyOther
-          ? [...allergies, allergyOther]
-          : allergies,
-        medications: meds || null,
+        allergies: allergyOther?[...allergies,allergyOther]:allergies,
+        medications: meds||null,
         medicalConditions: conditions,
-        emergencyContact: {
-          name:  ecName  || null,
-          phone: ecPhone || null
-        },
+        emergencyContact: { name: ecName||null, phone: ecPhone||null },
         profileComplete: true,
         profileCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-
       await db.collection('members').doc(uid).update(healthData);
+      const doc = await db.collection('members').doc(uid).get();
+      loadHomeScreen(doc.data());
+    } catch(e) { showStatus('step2-status', e.message, 'error'); }
+    finally { btn.disabled=false; btn.textContent='Complete Profile'; }
+  }
 
-      // Build welcome summary
-      buildWelcomeSummary(healthData);
-      showScreen('screen-welcome');
-    } catch(e) {
-      showStatus('step2-status', e.message, 'error');
-    } finally {
-      btn.disabled = false; btn.textContent = 'Complete Profile';
+  // ── LOAD HOME SCREEN ──────────────────────────────────────────
+  function loadHomeScreen(data) {
+    const first = data.firstName || (auth.currentUser?.displayName?.split(' ')[0]) || 'Athlete';
+    const last  = data.lastName  || '';
+    const initials = (first[0]||'E') + (last[0]||'');
+
+    // greeting
+    const h = new Date().getHours();
+    const greet = h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
+    document.getElementById('greeting-time').textContent = greet;
+    document.getElementById('greeting-name').textContent = first + ' ' + last;
+    document.getElementById('greeting-sub').textContent  = 'Ready to crush today\'s session?';
+
+    // avatar
+    document.getElementById('home-avatar').textContent = initials.toUpperCase();
+    document.getElementById('pp-avatar').textContent   = initials.toUpperCase();
+
+    // stats
+    document.getElementById('stat-sessions').textContent = data.attendanceCount || 0;
+    document.getElementById('stat-plan').textContent     = (data.plan||'free').charAt(0).toUpperCase()+(data.plan||'free').slice(1);
+
+    // workout by day
+    const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const workouts = {
+      Monday:    { name:'Push Day',    badge:'4 exercises', exercises:[['Bench Press','Chest · Compound','4×8'],['Overhead Press','Shoulders · Compound','3×10'],['Incline Dumbbell','Chest · Isolation','3×12'],['Tricep Pushdown','Triceps · Isolation','3×15']] },
+      Tuesday:   { name:'Pull Day',    badge:'4 exercises', exercises:[['Deadlift','Back · Compound','4×5'],['Pull-Ups','Back · Compound','3×8'],['Barbell Row','Back · Compound','3×10'],['Bicep Curl','Biceps · Isolation','3×12']] },
+      Wednesday: { name:'Leg Day',     badge:'4 exercises', exercises:[['Squat','Quads · Compound','4×8'],['Romanian Deadlift','Hamstrings · Compound','3×10'],['Leg Press','Quads · Compound','3×12'],['Calf Raise','Calves · Isolation','4×15']] },
+      Thursday:  { name:'Push Day B',  badge:'4 exercises', exercises:[['Dumbbell Press','Chest · Compound','4×10'],['Lateral Raise','Shoulders · Isolation','3×15'],['Cable Fly','Chest · Isolation','3×12'],['Skull Crusher','Triceps · Isolation','3×12']] },
+      Friday:    { name:'Pull Day B',  badge:'4 exercises', exercises:[['Weighted Pull-Up','Back · Compound','3×6'],['Seated Row','Back · Compound','3×10'],['Face Pull','Rear Delt · Isolation','3×15'],['Hammer Curl','Biceps · Isolation','3×12']] },
+      Saturday:  { name:'Cardio Day',  badge:'3 exercises', exercises:[['Treadmill Run','Cardio · Steady State','30 min'],['Battle Ropes','Cardio · HIIT','3×30s'],['Box Jumps','Plyometric','3×10']] },
+      Sunday:    { name:'Rest Day',    badge:'Active Recovery', exercises:[['Foam Rolling','Recovery','10 min'],['Stretching','Flexibility','15 min'],['Light Walk','Active Recovery','20 min']] }
+    };
+    const todayName = days[new Date().getDay()];
+    const w = workouts[todayName];
+    document.getElementById('workout-day').textContent  = todayName;
+    document.getElementById('workout-name').textContent = w.name;
+    document.getElementById('workout-badge').textContent = w.badge;
+    document.getElementById('exercise-list').innerHTML  = w.exercises.map((ex,i)=>
+      `<div class="exercise-row"><div class="ex-left"><div class="ex-num">${i+1}</div><div><div class="ex-name">${ex[0]}</div><div class="ex-detail">${ex[1]}</div></div></div><div class="ex-sets">${ex[2]}</div></div>`
+    ).join('');
+
+    // BMI
+    if (data.heightCm && data.weightKg) {
+      const bmi = Math.round((data.weightKg / Math.pow(data.heightCm/100, 2)) * 10) / 10;
+      let cat='', cls='';
+      if      (bmi<18.5) { cat='Underweight'; cls='bmi-under'; }
+      else if (bmi<25)   { cat='Normal';       cls='bmi-normal'; }
+      else if (bmi<30)   { cat='Overweight';   cls='bmi-over'; }
+      else               { cat='Obese';         cls='bmi-obese'; }
+      document.getElementById('bmi-value').textContent    = bmi;
+      document.getElementById('bmi-category').textContent = cat;
+      document.getElementById('bmi-category').className   = 'bmi-category '+cls;
+      document.getElementById('bmi-detail').textContent   = `Height: ${data.heightCm} cm · Weight: ${data.weightKg} kg`;
+      document.getElementById('pp-bmi').textContent       = bmi + ' — ' + cat;
+    }
+
+    // Profile panel
+    document.getElementById('pp-name').textContent      = first + ' ' + last;
+    document.getElementById('pp-email').textContent     = data.email || auth.currentUser?.email || '';
+    document.getElementById('pp-age').textContent       = data.age ? data.age + ' years old' : '—';
+    document.getElementById('pp-height').textContent    = data.heightCm ? data.heightCm + ' cm' : '—';
+    document.getElementById('pp-weight').textContent    = data.weightDisplay || (data.weightKg ? data.weightKg+' kg' : '—');
+    document.getElementById('pp-allergies').textContent = (data.allergies&&data.allergies.length) ? data.allergies.join(', ') : 'None';
+    document.getElementById('pp-meds').textContent      = data.medications || 'None';
+    document.getElementById('pp-conditions').textContent= (data.medicalConditions&&data.medicalConditions.length) ? data.medicalConditions.join(', ') : 'None';
+    document.getElementById('pp-plan').textContent      = (data.plan||'free').charAt(0).toUpperCase()+(data.plan||'free').slice(1);
+    document.getElementById('pp-goal').textContent      = data.goal ? data.goal.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—';
+    if (data.memberSince?.toDate) {
+      document.getElementById('pp-since').textContent = data.memberSince.toDate().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+    }
+
+    showScreen('screen-home');
+    setTab('home');
+  }
+
+  // ── BOTTOM NAV TABS ───────────────────────────────────────────
+  function setTab(tab) {
+    ['home','workouts','nutrition','profile'].forEach(t => {
+      document.getElementById('nav-'+t).className = 'nav-item'+(t===tab?' active':'');
+    });
+    document.getElementById('tab-home-panel').style.display    = tab==='home'    ? 'block' : 'none';
+    document.getElementById('tab-profile-panel').style.display = tab==='profile' ? 'block' : 'none';
+    if (tab==='workouts'||tab==='nutrition') {
+      document.getElementById('tab-home-panel').style.display = 'none';
+      document.getElementById('tab-profile-panel').style.display = 'none';
     }
   }
 
-  // ── WELCOME SUMMARY ───────────────────────────────────────────
-  function buildWelcomeSummary(data) {
-    document.getElementById('wc-name').textContent =
-      'Welcome, ' + (window._newUserName || 'Athlete') + '!';
-    const rows = [
-      ['Age',        data.age + ' years old'],
-      ['Height',     data.heightCm + ' cm'],
-      ['Weight',     data.weightDisplay],
-      ['Allergies',  data.allergies.length ? data.allergies.join(', ') : 'None listed'],
-      ['Conditions', data.medicalConditions.length ? data.medicalConditions.join(', ') : 'None listed'],
-      ['Medications',data.medications || 'None listed'],
-    ];
-    document.getElementById('profile-summary').innerHTML = rows.map(([lbl, val]) =>
-      `<div class="profile-row"><span class="lbl">${lbl}</span><span class="val">${val}</span></div>`
-    ).join('');
+  // ── LOGOUT ────────────────────────────────────────────────────
+  async function handleLogout() {
+    await auth.signOut();
+    currentUid = null; step1Data = {};
+    showScreen('screen-auth');
+    switchTab('login');
   }
+
+  // ── AUTH STATE OBSERVER ───────────────────────────────────────
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      currentUid = user.uid;
+      const doc = await db.collection('members').doc(user.uid).get();
+      if (doc.exists) {
+        const data = doc.data();
+        if (data.profileComplete) {
+          loadHomeScreen(data);
+        } else {
+          window._newFirst = data.firstName;
+          showScreen('screen-step1');
+        }
+      } else {
+        loadHomeScreen({});
+      }
+    }
+  });
 </script>
 </body>
 </html>
