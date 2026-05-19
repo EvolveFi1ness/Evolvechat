@@ -1,633 +1,1890 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evolve — Coach Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --gold: #f59e0b;
-            --gold-light: #fbbf24;
-            --gold-dim: rgba(245,158,11,0.12);
-            --green: #10b981;
-            --bg-deep: #060a0f;
-            --bg-mid: #0d1520;
-            --bg-card: #111a27;
-            --bg-surface: #1a2638;
-            --border: #1e3048;
-            --text: #e2e8f0;
-            --text-muted: #64748b;
-        }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CoachApp – Pro Coaching Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+         onAuthStateChanged, updatePassword, reauthenticateWithCredential,
+         EmailAuthProvider, sendPasswordResetEmail, deleteUser }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection,
+         getDocs, deleteDoc, writeBatch, onSnapshot, query, orderBy, addDoc, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+const firebaseConfig = {
+  apiKey: "AIzaSyAaLdOjRndgq3fw9QfluTW5gmF7VZ26Vag",
+  authDomain: "evolvechat-21d6f.firebaseapp.com",
+  projectId: "evolvechat-21d6f",
+  storageBucket: "evolvechat-21d6f.firebasestorage.app",
+  messagingSenderId: "229550101540",
+  appId: "1:229550101540:web:2d671f6b3a2809570674b1",
+  measurementId: "G-RK177F33Q9"
+};
 
-        body {
-            font-family: 'Barlow', sans-serif;
-            background: var(--bg-deep);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            color: var(--text);
-            overflow: hidden;
-        }
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
-        /* ─── HEADER ─── */
-        .header {
-            background: var(--bg-card);
-            padding: 14px 18px;
-            display: flex; align-items: center; gap: 12px;
-            border-bottom: 1px solid var(--border);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.4);
-            flex-shrink: 0;
-        }
+// ── Expose everything to global scope ──
+window._fb = {
+  auth, db,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
+  onAuthStateChanged, updatePassword, reauthenticateWithCredential,
+  EmailAuthProvider, sendPasswordResetEmail, deleteUser,
+  doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, writeBatch,
+  onSnapshot, query, orderBy, addDoc, serverTimestamp
+};
 
-        .avatar {
-            width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 15px; flex-shrink: 0;
-            font-family: 'Barlow Condensed', sans-serif;
-        }
+// ══════════════════════════════════════════════════════════════
+//  HOW ROLE SEPARATION WORKS
+//  ─────────────────────────────────────────────────────────────
+//  Firebase Auth is shared (one account per email across all apps).
+//  Roles live in Firestore:
+//    • coaches/{uid}         → exists only for coaches
+//    • users/{uid}.role      → 'client' set by Client.html
+//
+//  Signup in CoachApp:
+//    1. Try createUser. If email-already-in-use → try signIn instead.
+//    2. After getting a UID, check if coaches/{uid} already exists → ok.
+//    3. Also check users/{uid}.role — if 'client' ONLY, block them with
+//       a clear message: "This email is registered as a client account."
+//    4. Otherwise, write coaches/{uid} and boot the app.
+//
+//  Login in CoachApp:
+//    1. signIn with Firebase Auth.
+//    2. Check coaches/{uid} — if missing → signed-out + error.
+//    3. If found → bootApp.
+// ══════════════════════════════════════════════════════════════
 
-        .coach-avatar { background: var(--gold); color: #000; }
-        .client-avatar { background: var(--green); color: #fff; }
+// ── Auth state observer (fires on page load & after every sign-in/out) ──
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window._fbUser = null;
+    document.getElementById('app').style.display = 'none';
+    showAuth('loginPage');
+    return;
+  }
 
-        .header-info { flex: 1; min-width: 0; }
+  // Check coach doc
+  const coachSnap = await getDoc(doc(db, 'coaches', user.uid));
+  if (coachSnap.exists()) {
+    // ✅ Confirmed coach — boot the app
+    window._fbUser    = user;
+    window._fbProfile = coachSnap.data();
+    bootApp(user, coachSnap.data(), false);
+  } else {
+    // ❌ No coach doc — sign out silently, show specific error
+    await signOut(auth);
+    showAuth('loginPage');
+    // Peek at users/{uid} to give a better message
+    const clientSnap = await getDoc(doc(db, 'users', user.uid)).catch(()=>null);
+    const isClient   = clientSnap && clientSnap.exists();
+    const err = document.getElementById('loginErr');
+    err.textContent = isClient
+      ? '⚠️ This email is registered as a client account. Please sign up with a different email for CoachApp, or use the Client Portal.'
+      : 'No coach account found for this email. Please sign up below.';
+    err.classList.add('on');
+  }
+});
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c14;--surface:#111420;--surface2:#181c2e;--surface3:#1e2338;
+  --border:#252a42;--border2:#2e3550;--text:#e2e6f8;--muted:#5a6280;--muted2:#8890b0;
+  --accent:#4f7cff;--accent2:#7c55f5;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;
+  --sw:230px;--sc:62px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
 
-        .header-info h2 {
-            font-size: 15px; font-weight: 700;
-            letter-spacing: -0.2px; color: var(--text);
-        }
+/* ── AUTH ── */
+.auth-page{display:none;height:100vh;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
+.auth-page.on{display:flex}
+.auth-bg{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 20% 50%,rgba(79,124,255,.13) 0%,transparent 70%),
+             radial-gradient(ellipse 50% 60% at 80% 30%,rgba(124,85,245,.11) 0%,transparent 70%)}
+.auth-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%)}
+.auth-card{position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 42px;width:440px;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04) inset;animation:cardIn .3s ease}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.brand-row{display:flex;align-items:center;gap:12px;margin-bottom:30px}
+.brand-ico{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#fff;flex-shrink:0}
+.brand-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.5px}
+.brand-tag{font-size:11px;color:var(--muted2);margin-top:1px}
+.auth-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;letter-spacing:-.4px;margin-bottom:5px}
+.auth-sub{color:var(--muted2);font-size:13px;margin-bottom:26px;line-height:1.5}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
+.fw{margin-bottom:16px}
+.fi{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;padding:11px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,124,255,.15)}
+.fi::placeholder{color:var(--muted)}
+.fi.err{border-color:var(--red)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.auth-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:13px}
+.rem{display:flex;align-items:center;gap:8px;cursor:pointer}
+.rem input{accent-color:var(--accent)}
+.al{color:var(--accent);cursor:pointer;font-size:13px}
+.al:hover{text-decoration:underline}
+.btn-auth{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;padding:13px;cursor:pointer;letter-spacing:.2px;transition:filter .2s,transform .1s;margin-bottom:18px}
+.btn-auth:hover{filter:brightness(1.1)}
+.btn-auth:active{transform:scale(.99)}
+.auth-sw{text-align:center;font-size:13px;color:var(--muted2)}
+.auth-alert{border-radius:8px;font-size:13px;padding:10px 14px;margin-bottom:14px;display:none;line-height:1.5}
+.auth-alert.e{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+.auth-alert.s{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e}
+.auth-alert.on{display:block}
+.ps-bars{display:flex;gap:4px;margin-top:6px}
+.psb{height:3px;border-radius:2px;flex:1;background:var(--border2);transition:background .3s}
+.psb.w{background:#ef4444}.psb.f{background:#f59e0b}.psb.g{background:#22c55e}.psb.st{background:#4f7cff}
+.pslbl{font-size:11px;color:var(--muted);margin-top:5px}
 
-        .header-info p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+/* ── APP LAYOUT ── */
+#app{display:none;height:100vh;flex-direction:row;overflow:hidden}
 
-        .header-badge {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 10px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 1px;
-            background: var(--gold-dim);
-            color: var(--gold);
-            border: 1px solid rgba(245,158,11,0.25);
-            padding: 2px 8px; border-radius: 20px;
-        }
+/* SIDEBAR */
+.sb{width:var(--sw);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s ease;overflow:hidden}
+.sb.col{width:var(--sc)}
+.sb-top{display:flex;align-items:center;gap:10px;padding:18px 14px;border-bottom:1px solid var(--border);min-height:64px}
+.logo-ico{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff}
+.logo-txt{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;letter-spacing:-.2px}
+.col-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:color .15s,background .15s}
+.col-btn:hover{color:var(--text);background:var(--surface2)}
+.nav{flex:1;padding:10px 0;overflow-y:auto;overflow-x:hidden}
+.nav-sec{padding:14px 14px 4px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.sb.col .nav-sec{display:none}
+.ni{display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;color:var(--muted2);font-size:14px;font-weight:500;white-space:nowrap;position:relative;transition:color .15s,background .15s;text-decoration:none}
+.ni:hover{color:var(--text);background:var(--surface2)}
+.ni.on{color:var(--accent);background:rgba(79,124,255,.08)}
+.ni.on::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--accent);border-radius:0 3px 3px 0}
+.nico{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;flex-shrink:0}
+.sb.col .badge{display:none}
+.sb-bot{border-top:1px solid var(--border);padding:10px 0}
+.av-row{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;white-space:nowrap;transition:background .15s}
+.av-row:hover{background:var(--surface2)}
+.ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--red));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid var(--border2)}
+.av-inf{flex:1;min-width:0}
+.av-name{font-size:13px;font-weight:600;line-height:1.2}
+.av-role{font-size:11px;color:var(--muted)}
+.lo-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s,background .15s}
+.lo-btn:hover{color:var(--red);background:rgba(239,68,68,.1)}
+.sb.col .av-inf,.sb.col .lo-btn{display:none}
 
-        .header-actions { display: flex; align-items: center; gap: 10px; }
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
+.tb-l{display:flex;align-items:center;gap:16px}
+.pg-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.3px}
+.tb-r{display:flex;align-items:center;gap:10px}
+.btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:filter .15s,transform .1s;white-space:nowrap}
+.btn:hover{filter:brightness(1.1)}
+.btn:active{transform:scale(.98)}
+.btn-p{background:var(--accent);color:#fff}
+.btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.btn-d{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.ico-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;transition:color .15s,background .15s}
+.ico-btn:hover{background:var(--surface2);color:var(--text)}
+.ndot{width:7px;height:7px;border-radius:50%;background:var(--red);position:absolute;top:3px;right:3px;border:2px solid var(--surface)}
+.content{flex:1;overflow-y:auto;padding:28px 32px}
+.sec{display:none}
+.sec.on{display:block}
 
-        .btn-video {
-            background: var(--gold);
-            color: #000; border: none;
-            border-radius: 20px;
-            padding: 7px 14px;
-            font-size: 12px; font-weight: 700;
-            font-family: 'Barlow', sans-serif;
-            cursor: pointer;
-            display: flex; align-items: center; gap: 6px;
-            transition: background 0.2s, transform 0.1s;
-            letter-spacing: 0.2px;
-        }
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s}
+.sc:hover{border-color:var(--border2)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.sc.bl::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.sc.gr::before{background:linear-gradient(90deg,#22c55e,#16a34a)}
+.sc.or::before{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+.sc.pu::before{background:linear-gradient(90deg,var(--accent2),#a855f7)}
+.sl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.sv{font-family:'Syne',sans-serif;font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:8px}
+.sch{font-size:12px;color:var(--muted2)}
+.sch.up{color:var(--green)}
+.sch.dn{color:var(--red)}
 
-        .btn-video:hover { background: var(--gold-light); transform: scale(1.02); }
-        .btn-video svg { width: 14px; height: 14px; }
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--text);border-bottom-color:var(--accent)}
+.tc{background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:11px;font-weight:600;padding:1px 7px}
 
-        .status-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: var(--green);
-            box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--green);
-            animation: pulse 2s infinite;
-            flex-shrink: 0;
-        }
+/* SEARCH ROW */
+.sfr{display:flex;gap:10px;margin-bottom:20px;align-items:center}
+.sw{position:relative;flex:1}
+.sw svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.si{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;padding:9px 14px 9px 38px;outline:none;transition:border-color .15s}
+.si:focus{border-color:var(--accent)}
+.si::placeholder{color:var(--muted)}
+.fsel{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;outline:none;cursor:pointer}
+.fsel:focus{border-color:var(--accent)}
 
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+/* TABLE */
+.tw{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--surface2);border-bottom:1px solid var(--border)}
+th{text-align:left;padding:11px 16px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+td{padding:13px 16px;font-size:14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.cb{width:36px}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.cc{display:flex;align-items:center;gap:12px}
+.cav{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;position:relative}
+.cav .star{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px}
+.cn{font-weight:500}
+.ce{font-size:12px;color:var(--muted2);margin-top:2px}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.pg{background:rgba(34,197,94,.15);color:#22c55e}
+.po{background:rgba(245,158,11,.15);color:#f59e0b}
+.pb{background:rgba(79,124,255,.15);color:#4f7cff}
+.pr{background:rgba(239,68,68,.15);color:#ef4444}
+.py{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
+.cbw{display:flex;gap:4px}
+.cbar{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.cbar.hi{background:rgba(34,197,94,.15);color:#22c55e}
+.cbar.mi{background:rgba(245,158,11,.15);color:#f59e0b}
+.cbar.lo{background:rgba(239,68,68,.15);color:#ef4444}
+.tagw{display:flex;gap:5px;flex-wrap:wrap}
+.tag{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-size:11px;font-weight:500;padding:2px 8px;color:var(--muted2)}
+.mb{background:none;border:none;cursor:pointer;color:var(--muted);padding:6px 8px;border-radius:6px;transition:background .15s,color .15s}
+.mb:hover{background:var(--surface2);color:var(--text)}
+.ac{text-align:right}
 
-        /* ─── CHAT AREA ─── */
-        .chat-area {
-            flex: 1; overflow-y: auto;
-            padding: 20px 16px;
-            display: flex; flex-direction: column; gap: 10px;
-            background: var(--bg-mid);
-        }
+/* CARDS */
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.pc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s;cursor:pointer}
+.pc:hover{border-color:var(--accent);transform:translateY(-2px)}
+.pch{padding:20px 20px 14px}
+.pci{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
+.pct{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px}
+.pcm{font-size:12px;color:var(--muted2)}
+.pcb{padding:14px 20px 18px;border-top:1px solid var(--border)}
+.pcs{display:flex;gap:20px}
+.ps{text-align:center}
+.psv{font-family:'Syne',sans-serif;font-size:20px;font-weight:700}
+.psl{font-size:11px;color:var(--muted2);margin-top:2px}
 
-        .chat-area::-webkit-scrollbar { width: 4px; }
-        .chat-area::-webkit-scrollbar-track { background: transparent; }
-        .chat-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+/* LIBRARY */
+.rl{display:flex;flex-direction:column;gap:12px}
+.ri{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px;transition:border-color .2s;cursor:pointer}
+.ri:hover{border-color:var(--border2)}
+.rico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
+.rinf{flex:1;min-width:0}
+.rtit{font-weight:600;margin-bottom:3px}
+.rdesc{font-size:12px;color:var(--muted2)}
+.ract{display:flex;gap:8px;flex-shrink:0}
 
-        .message {
-            max-width: 72%; padding: 10px 14px;
-            border-radius: 16px;
-            font-size: 14px; line-height: 1.55;
-            word-wrap: break-word;
-            animation: msgIn 0.2s ease both;
-        }
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.st{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+.ss{font-size:13px;color:var(--muted2);margin-top:2px}
 
-        @keyframes msgIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+/* DASHBOARD */
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.dc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.dct{font-size:13px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px}
+.al-list{display:flex;flex-direction:column;gap:10px}
+.ali{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.ali:last-child{border-bottom:none}
+.adot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.atxt{font-size:13px;line-height:1.5}
+.atm{font-size:11px;color:var(--muted);margin-top:3px}
+.dl{display:flex;flex-direction:column;gap:8px}
+.di{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border-radius:8px}
+.dav{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.dii{flex:1}
+.dn{font-size:13px;font-weight:600}
+.dp{font-size:11px;color:var(--muted2)}
+.dd{font-size:11px;font-weight:600}
 
-        .message.sent {
-            align-self: flex-end;
-            background: var(--gold);
-            color: #0f172a;
-            border-bottom-right-radius: 4px;
-            font-weight: 600;
-        }
+/* MODAL */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center}
+.mo.on{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;width:480px;max-height:82vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 18px;border-bottom:1px solid var(--border)}
+.mt{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.mc{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;padding:4px 8px;border-radius:6px;transition:color .15s,background .15s}
+.mc:hover{color:var(--text);background:var(--surface2)}
+.mb2{padding:22px 24px}
+.mf{display:flex;gap:10px;justify-content:flex-end;padding:16px 24px;border-top:1px solid var(--border)}
 
-        .message.received {
-            align-self: flex-start;
-            background: var(--bg-surface);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 4px;
-        }
+/* CALENDAR */
+.calg{display:grid;grid-template-columns:1fr 300px;gap:20px}
+.calw{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
+.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.calt{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
+.calnb{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:14px;transition:border-color .15s}
+.calnb:hover{border-color:var(--accent)}
+.cal-dh{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px}
+.cal-dn{text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cday{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;cursor:pointer;position:relative;transition:background .15s}
+.cday:hover{background:var(--surface2)}
+.cday.tod{background:rgba(79,124,255,.15);color:var(--accent);font-weight:700}
+.cday.hev::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;bottom:3px}
+.cday.om{color:var(--muted)}
+.schl{display:flex;flex-direction:column;gap:10px}
+.schi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;gap:12px}
+.scht{font-size:11px;font-weight:700;color:var(--accent);min-width:52px}
+.schn{font-size:13px;font-weight:600;margin-bottom:2px}
+.schc{font-size:12px;color:var(--muted2)}
 
-        .message .meta { font-size: 10px; margin-top: 4px; opacity: 0.6; }
+/* SETTINGS */
+.stg{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.stsec{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px}
+.stsec.full{grid-column:1/-1}
+.stt{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.str{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.str:last-child{border-bottom:none}
+.strl{font-size:13px;font-weight:500}
+.strd{font-size:11px;color:var(--muted2);margin-top:2px}
+.tgl{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0}
+.tgl input{display:none}
+.tgl-tr{width:40px;height:22px;border-radius:11px;background:var(--border2);transition:background .2s;position:absolute;inset:0}
+.tgl input:checked~.tgl-tr{background:var(--accent)}
+.tgl-kn{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.tgl input:checked~.tgl-tr~.tgl-kn{left:21px}
 
-        .system-msg {
-            align-self: center; color: #475569;
-            font-size: 11px; font-weight: 500;
-            background: rgba(71,85,105,0.15);
-            padding: 4px 12px; border-radius: 20px;
-            margin: 4px 0;
-        }
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9999}
+#toast.on{opacity:1}
 
-        /* ─── INPUT ─── */
-        .input-area {
-            background: var(--bg-card);
-            padding: 12px 14px;
-            display: flex; gap: 8px;
-            border-top: 1px solid var(--border);
-            flex-shrink: 0;
-        }
+/* CTX */
+#ctx{position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:6px;min-width:170px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:none;z-index:999}
+.ci{padding:9px 12px;cursor:pointer;color:var(--text);font-size:13px;border-radius:6px;display:flex;align-items:center;gap:10px;transition:background .1s}
+.ci:hover{background:var(--surface2)}
+.ci.danger{color:var(--red)}
+.cdiv{height:1px;background:var(--border);margin:4px 0}
 
-        .input-area input {
-            flex: 1;
-            background: var(--bg-mid);
-            border: 1px solid var(--border);
-            border-radius: 22px;
-            padding: 10px 16px;
-            color: var(--text);
-            font-size: 14px; font-family: 'Barlow', sans-serif;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.ei{font-size:40px;margin-bottom:12px}
+.et{font-size:16px;font-weight:600;color:var(--muted2);margin-bottom:6px}
+.es{font-size:13px}
 
-        .input-area input:focus { border-color: var(--gold); }
-        .input-area input::placeholder { color: #334155; }
+/* AVATAR COLORS */
+.avi{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.avb{background:linear-gradient(135deg,#3b82f6,#06b6d4)}
+.avg{background:linear-gradient(135deg,#22c55e,#10b981)}
+.avr{background:linear-gradient(135deg,#f43f5e,#ec4899)}
+.ava2{background:linear-gradient(135deg,#f59e0b,#ef4444)}
+.avt{background:linear-gradient(135deg,#14b8a6,#3b82f6)}
 
-        .input-area button {
-            background: var(--gold); color: #000;
-            border: none; border-radius: 50%;
-            width: 40px; height: 40px;
-            cursor: pointer; font-size: 17px;
-            transition: background 0.2s, transform 0.1s;
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0;
-        }
+/* PRO TIP */
+.ptip{text-align:center;color:var(--muted);font-size:13px;margin-top:24px}
+.ptip kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-family:inherit;font-size:12px}
 
-        .input-area button:hover { background: var(--gold-light); transform: scale(1.05); }
-
-        /* ─── VIDEO CALL MODAL ─── */
-        #videoModal {
-            display: none; position: fixed; inset: 0; z-index: 200;
-            background: var(--bg-deep);
-            flex-direction: column;
-        }
-
-        #videoModal.active { display: flex; }
-
-        .video-header {
-            position: absolute; top: 0; left: 0; right: 0;
-            padding: 16px 20px;
-            display: flex; align-items: center; justify-content: space-between;
-            background: linear-gradient(to bottom, rgba(6,10,15,0.96) 0%, transparent 100%);
-            z-index: 10;
-        }
-
-        .video-title {
-            display: flex; align-items: center; gap: 10px;
-        }
-
-        .video-title .call-brand {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 16px; font-weight: 700;
-            color: #fff; letter-spacing: 1.5px;
-            text-transform: uppercase;
-        }
-
-        .call-status-pill {
-            background: rgba(16,185,129,0.2);
-            border: 1px solid rgba(16,185,129,0.4);
-            color: #10b981;
-            font-size: 11px; font-weight: 700;
-            padding: 3px 10px; border-radius: 20px;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-
-        .call-status-pill.connecting {
-            color: var(--gold);
-            border-color: rgba(245,158,11,0.4);
-            background: rgba(245,158,11,0.1);
-        }
-
-        .video-main { flex: 1; position: relative; overflow: hidden; }
-
-        #remoteVideo {
-            width: 100%; height: 100%;
-            background: #080e18;
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        #remoteVideo video { width: 100%; height: 100%; object-fit: cover; }
-
-        .remote-placeholder {
-            display: flex; flex-direction: column; align-items: center; gap: 16px;
-        }
-
-        .remote-placeholder .big-avatar {
-            width: 88px; height: 88px; border-radius: 50%;
-            background: rgba(16,185,129,0.12);
-            border: 2px solid rgba(16,185,129,0.3);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 36px; font-weight: 700;
-            color: var(--green);
-            font-family: 'Barlow Condensed', sans-serif;
-        }
-
-        .remote-placeholder p { color: #475569; font-size: 14px; font-weight: 500; }
-
-        #localVideo {
-            position: absolute; bottom: 100px; right: 16px;
-            width: 120px; height: 170px;
-            background: #1a2638;
-            border-radius: 12px; overflow: hidden;
-            border: 2px solid rgba(245,158,11,0.25);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-            display: flex; align-items: center; justify-content: center;
-        }
-
-        #localVideo video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-
-        .local-placeholder { color: #475569; font-size: 11px; text-align: center; padding: 8px; }
-
-        .video-controls {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            padding: 24px;
-            display: flex; align-items: center; justify-content: center; gap: 14px;
-            background: linear-gradient(to top, rgba(6,10,15,0.96) 0%, transparent 100%);
-        }
-
-        .ctrl-btn {
-            width: 52px; height: 52px;
-            border-radius: 50%; border: none;
-            cursor: pointer; font-size: 20px;
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.15s, background 0.2s;
-            background: rgba(255,255,255,0.08);
-            color: #fff;
-        }
-
-        .ctrl-btn:hover { transform: scale(1.08); background: rgba(255,255,255,0.15); }
-        .ctrl-btn.muted { background: rgba(239,68,68,0.22); }
-        .ctrl-btn.end-call { background: #ef4444; width: 60px; height: 60px; font-size: 22px; }
-        .ctrl-btn.end-call:hover { background: #dc2626; }
-
-        .ctrl-label {
-            display: flex; flex-direction: column; align-items: center; gap: 6px;
-        }
-
-        .ctrl-label span { font-size: 10px; color: #64748b; font-weight: 500; }
-
-        #callTimer {
-            color: #64748b; font-size: 13px;
-            font-family: 'Barlow Condensed', sans-serif;
-            letter-spacing: 1px;
-        }
-
-        .connecting-overlay {
-            position: absolute; inset: 0;
-            background: var(--bg-mid);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 16px; z-index: 5;
-        }
-
-        .connecting-overlay.hidden { display: none; }
-
-        .connecting-spinner {
-            width: 48px; height: 48px;
-            border: 3px solid rgba(245,158,11,0.15);
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            animation: spin 0.9s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .connecting-overlay p { color: #475569; font-size: 14px; font-weight: 500; }
-
-        /* Coach watermark */
-        .coach-watermark {
-            position: absolute; top: 18px; right: 20px;
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: rgba(245,158,11,0.35);
-            z-index: 11;
-        }
-    </style>
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+</style>
 </head>
 <body>
 
-<div class="header">
-    <div class="avatar client-avatar">C</div>
-    <div class="header-info">
-        <h2>Client</h2>
-        <p>Professional Coaching Session</p>
+<!-- ════════════ LOGIN ════════════ -->
+<div class="auth-page on" id="loginPage">
+  <div class="auth-bg"></div><div class="auth-grid"></div>
+  <div class="auth-card">
+    <div class="brand-row">
+      <div class="brand-ico">C</div>
+      <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
     </div>
-    <div class="header-actions">
-        <span class="header-badge">Coach View</span>
-        <button class="btn-video" onclick="startVideoCall()">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 8h8a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"/></svg>
-            Video Call
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-sub">Sign in to your coaching dashboard</div>
+    <div class="auth-alert e" id="loginErr"></div>
+    <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"/></div>
+    <div class="fw"><label class="fl">Password</label><input class="fi" type="password" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="auth-meta">
+      <label class="rem"><input type="checkbox" id="remMe" checked/> Remember me</label>
+      <span class="al" onclick="showAuth('forgotPage')">Forgot password?</span>
+    </div>
+    <button class="btn-auth" onclick="doLogin()">Sign In</button>
+    <div class="auth-sw">Don't have an account? <span class="al" onclick="showAuth('signupPage')">Create one free</span></div>
+  </div>
+</div>
+
+<!-- ════════════ SIGN UP ════════════ -->
+<div class="auth-page" id="signupPage">
+  <div class="auth-bg"></div><div class="auth-grid"></div>
+  <div class="auth-card">
+    <div class="brand-row">
+      <div class="brand-ico">C</div>
+      <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
+    </div>
+    <div class="auth-title">Create your account</div>
+    <div class="auth-sub">Start managing your clients professionally — free forever.</div>
+    <div class="auth-alert e" id="suErr"></div>
+    <div class="auth-alert s" id="suOk"></div>
+    <div class="frow">
+      <div class="fw"><label class="fl">First Name</label><input class="fi" type="text" id="suFirst" placeholder="Alex" autocomplete="given-name"/></div>
+      <div class="fw"><label class="fl">Last Name</label><input class="fi" type="text" id="suLast" placeholder="Carter" autocomplete="family-name"/></div>
+    </div>
+    <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="suEmail" placeholder="you@example.com" autocomplete="email"/></div>
+    <div class="fw">
+      <label class="fl">Password</label>
+      <input class="fi" type="password" id="suPass" placeholder="Min. 8 characters" autocomplete="new-password" oninput="pStrength(this.value)"/>
+      <div class="ps-bars"><div class="psb" id="ps1"></div><div class="psb" id="ps2"></div><div class="psb" id="ps3"></div><div class="psb" id="ps4"></div></div>
+      <div class="pslbl" id="psLbl">Enter a password</div>
+    </div>
+    <div class="fw"><label class="fl">Confirm Password</label><input class="fi" type="password" id="suPass2" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()"/></div>
+    <button class="btn-auth" id="suBtn" onclick="doSignup()">Create Account</button>
+    <div class="auth-sw">Already have an account? <span class="al" onclick="showAuth('loginPage')">Sign in</span></div>
+  </div>
+</div>
+
+<!-- ════════════ FORGOT ════════════ -->
+<div class="auth-page" id="forgotPage">
+  <div class="auth-bg"></div><div class="auth-grid"></div>
+  <div class="auth-card">
+    <div class="brand-row">
+      <div class="brand-ico">C</div>
+      <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
+    </div>
+    <div class="auth-title">Reset your password</div>
+    <div class="auth-sub">Enter your registered email and we'll locate your account.</div>
+    <div class="auth-alert e" id="fgErr"></div>
+    <div class="auth-alert s" id="fgOk"></div>
+    <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="fgEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doForgot()"/></div>
+    <button class="btn-auth" onclick="doForgot()">Find My Account</button>
+    <div class="auth-sw">Remembered it? <span class="al" onclick="showAuth('loginPage')">Back to sign in</span></div>
+  </div>
+</div>
+
+<!-- ════════════ APP ════════════ -->
+<div id="app" style="display:none;flex-direction:row;height:100vh;overflow:hidden;">
+
+  <!-- SIDEBAR -->
+  <aside class="sb" id="sb">
+    <div class="sb-top">
+      <div class="logo-ico">C</div>
+      <span class="logo-txt">CoachApp</span>
+      <button class="col-btn" onclick="toggleSB()">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+    <nav class="nav">
+      <div class="nav-sec">Main</div>
+      <a class="ni" data-s="dashboard" onclick="goSec('dashboard')">
+        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>Dashboard
+      </a>
+      <a class="ni on" data-s="clients" onclick="goSec('clients')">
+        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Clients
+        <span class="badge" id="cBadge">0</span>
+      </a>
+      <a class="ni" data-s="programs" onclick="goSec('programs')">
+        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>Programs
+      </a>
+      <a class="ni" data-s="library" onclick="goSec('library')">
+        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Library
+      </a>
+      <div class="nav-sec">Schedule</div>
+      <a class="ni" data-s="calendar" onclick="goSec('calendar')">
+        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Calendar
+      </a>
+      <a class="ni" data-s="messages" onclick="goSec('messages')">
+        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Messages
+        <span class="badge">3</span>
+      </a>
+      <div class="nav-sec">Account</div>
+      <a class="ni" data-s="settings" onclick="goSec('settings')">
+        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>Settings
+      </a>
+    </nav>
+    <div class="sb-bot">
+      <a href="ClientPortal.html" target="_blank" style="display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:12px;color:var(--muted2);text-decoration:none;border-bottom:1px solid var(--border);transition:background .15s;" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span style="white-space:nowrap">Client Portal ↗</span>
+      </a>
+      <div class="av-row" onclick="goSec('settings')">
+        <div class="ava" id="sbAva">—</div>
+        <div class="av-inf">
+          <div class="av-name" id="sbName">—</div>
+          <div class="av-role" id="sbEmail" style="font-size:11px;color:var(--muted)">—</div>
+        </div>
+        <button class="lo-btn" onclick="event.stopPropagation();doLogout()" title="Sign out">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         </button>
-        <div class="status-dot"></div>
+      </div>
     </div>
-</div>
+  </aside>
 
-<div class="chat-area" id="chatArea">
-    <div class="system-msg">Session started. Waiting for client messages…</div>
-</div>
-
-<div class="input-area">
-    <input type="text" id="msgInput" placeholder="Type a message as Coach…" autocomplete="off">
-    <button onclick="sendMessage()">➤</button>
-</div>
-
-<!-- ─── VIDEO CALL MODAL ─── -->
-<div id="videoModal">
-    <div class="video-header">
-        <div class="video-title">
-            <span class="call-brand">Evolve Session</span>
-            <span class="call-status-pill connecting" id="callStatusPill">Connecting…</span>
-        </div>
-        <span id="callTimer"></span>
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="tb-l"><h1 class="pg-title" id="pgTitle">Clients</h1></div>
+      <div class="tb-r">
+        <button class="ico-btn" onclick="toast('No new notifications','ℹ️')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="ndot"></span>
+        </button>
+        <button class="ico-btn" onclick="goSec('messages')">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </button>
+        <button class="btn btn-p" id="topBtn" onclick="openAddModal()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          Add Client
+        </button>
+      </div>
     </div>
-    <span class="coach-watermark">Coach Mode</span>
 
-    <div class="video-main">
-        <div class="connecting-overlay" id="connectingOverlay">
-            <div class="connecting-spinner"></div>
-            <p>Starting video session…</p>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="sec" id="sec-dashboard">
+        <div class="sg">
+          <div class="sc bl"><div class="sl">Total Clients</div><div class="sv" id="stC">0</div><div class="sch up" id="stCh">—</div></div>
+          <div class="sc gr"><div class="sl">Avg. Compliance</div><div class="sv" id="stComp">—<span style="font-size:18px">%</span></div><div class="sch">Across active clients</div></div>
+          <div class="sc or"><div class="sl">Active Programs</div><div class="sv">5</div><div class="sch">Available templates</div></div>
+          <div class="sc pu"><div class="sl">Check-ins Due</div><div class="sv" id="stDue">0</div><div class="sch">This week</div></div>
+        </div>
+        <div class="dg">
+          <div class="dc"><div class="dct">Recent Activity</div><div class="al-list" id="actList"></div></div>
+          <div class="dc"><div class="dct">Upcoming Check-ins</div><div class="dl" id="dueList"></div></div>
+        </div>
+      </div>
+
+      <!-- CLIENTS -->
+      <div class="sec on" id="sec-clients">
+        <div class="tabs" id="cTabs">
+          <div class="tab on" onclick="setTab('active',this)">Active <span class="tc" id="acCnt">0</span></div>
+          <div class="tab" onclick="setTab('archived',this)">Archived <span class="tc" id="arCnt">0</span></div>
+        </div>
+        <div class="sfr">
+          <div class="sw">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input class="si" type="text" placeholder="Search clients…" id="cSearch" oninput="renderClients()"/>
+          </div>
+          <select class="fsel" id="gFilter" onchange="renderClients()">
+            <option value="">All groups</option>
+            <option>Strength</option><option>Endurance</option><option>Weight Loss</option><option>Rehab</option>
+          </select>
+          <select class="fsel" id="sFilter" onchange="renderClients()">
+            <option value="name">Sort: Name</option>
+            <option value="compliance">Sort: Compliance</option>
+            <option value="due">Sort: Due day</option>
+          </select>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr>
+              <th class="cb"><input type="checkbox" onchange="toggleAll(this)"/></th>
+              <th>Name</th><th>Status</th><th>Check-in Due</th><th>Compliance</th><th>Program</th><th>Groups</th><th></th>
+            </tr></thead>
+            <tbody id="cBody"></tbody>
+          </table>
+        </div>
+        <p class="ptip"><strong>Pro tip!</strong> Press <kbd>N</kbd> to add a client · <kbd>D</kbd> Dashboard · <kbd>M</kbd> Messages · <kbd>?</kbd> Shortcuts</p>
+      </div>
+
+      <!-- PROGRAMS -->
+      <div class="sec" id="sec-programs">
+        <div class="sh">
+          <div><div class="st">Programs</div><div class="ss">AI-powered coaching program builder</div></div>
+          <button class="btn btn-p" id="createProgBtn" onclick="showProgForm()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New Program
+          </button>
         </div>
 
-        <div id="remoteVideo">
-            <div class="remote-placeholder" id="remotePlaceholder">
-                <div class="big-avatar">C</div>
-                <p>Waiting for client to join…</p>
+        <!-- Program Builder Form -->
+        <div id="progForm" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px;margin-bottom:24px;animation:mIn .2s ease">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">✨</div>
+            <div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px">AI Program Builder</div>
+              <div style="font-size:12px;color:var(--muted2)">Describe your program and Claude will build it for you</div>
             </div>
+            <button onclick="hideProgForm()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px 8px;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">×</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+            <div class="fw"><label class="fl">Program Name</label><input class="fi" type="text" id="pName" placeholder="e.g. Summer Shred 8-Week"/></div>
+            <div class="fw"><label class="fl">Duration</label>
+              <select class="fi" id="pWeeks">
+                <option value="4">4 Weeks</option><option value="6">6 Weeks</option><option value="8" selected>8 Weeks</option>
+                <option value="12">12 Weeks</option><option value="16">16 Weeks</option><option value="20">20 Weeks</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+            <div class="fw"><label class="fl">Goal / Focus</label>
+              <select class="fi" id="pGoal">
+                <option>Fat Loss</option><option>Muscle Gain</option><option>Strength</option><option>Endurance</option>
+                <option>Athletic Performance</option><option>Rehab & Recovery</option><option>General Fitness</option>
+              </select>
+            </div>
+            <div class="fw"><label class="fl">Training Days / Week</label>
+              <select class="fi" id="pDays">
+                <option value="2">2 days</option><option value="3">3 days</option><option value="4" selected>4 days</option>
+                <option value="5">5 days</option><option value="6">6 days</option>
+              </select>
+            </div>
+          </div>
+          <div class="fw" style="margin-bottom:14px"><label class="fl">Target Client / Extra Details (optional)</label>
+            <textarea class="fi" id="pDetails" rows="2" placeholder="e.g. Intermediate lifters, access to full gym, focus on compound movements + cardio finishers" style="resize:vertical;line-height:1.5"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button class="btn btn-s" onclick="hideProgForm()">Cancel</button>
+            <button class="btn btn-p" id="genBtn" onclick="generateProgram()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+              Generate with AI
+            </button>
+          </div>
         </div>
 
-        <div id="localVideo">
-            <div class="local-placeholder" id="localPlaceholder">📷<br>Camera off</div>
+        <!-- Generated Program Preview -->
+        <div id="progPreview" style="display:none;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:28px;margin-bottom:24px;animation:mIn .2s ease">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+            <div style="flex:1">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px" id="prevTitle"></div>
+              <div style="font-size:12px;color:var(--muted2);margin-top:3px" id="prevMeta"></div>
+            </div>
+            <button class="btn btn-s" onclick="discardProgram()" style="font-size:12px;padding:6px 12px">Discard</button>
+            <button class="btn btn-p" onclick="saveProgram()" style="font-size:12px;padding:6px 12px">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+              Save Program
+            </button>
+          </div>
+          <div id="prevContent" style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;background:var(--surface2);border-radius:10px;padding:18px;max-height:400px;overflow-y:auto"></div>
         </div>
-    </div>
 
-    <div class="video-controls">
-        <div class="ctrl-label">
-            <button class="ctrl-btn" id="micBtn" onclick="toggleMic()">🎤</button>
-            <span>Mic</span>
+        <!-- Loading state -->
+        <div id="progLoading" style="display:none;text-align:center;padding:60px 20px">
+          <div style="width:48px;height:48px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px"></div>
+          <div style="font-size:14px;font-weight:600;color:var(--muted2)" id="loadingMsg">Building your program…</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">Claude is designing a custom plan for you</div>
         </div>
-        <div class="ctrl-label">
-            <button class="ctrl-btn" id="camBtn" onclick="toggleCam()">📷</button>
-            <span>Camera</span>
+
+        <!-- Saved Programs Grid -->
+        <div id="progEmpty" style="display:none;text-align:center;padding:70px 20px">
+          <div style="font-size:44px;margin-bottom:14px">🏋️</div>
+          <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--muted2);margin-bottom:8px">No programs yet</div>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Click "New Program" and let AI build your first coaching program.</div>
+          <button class="btn btn-p" onclick="showProgForm()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create First Program
+          </button>
         </div>
-        <div class="ctrl-label">
-            <button class="ctrl-btn end-call" onclick="endCall()">📵</button>
-            <span style="color:#f87171">End</span>
+        <div class="cg" id="progGrid"></div>
+      </div>
+
+      <!-- LIBRARY -->
+      <div class="sec" id="sec-library">
+        <div class="sh">
+          <div><div class="st">Resource Library</div><div class="ss">Templates, guides, and workout files</div></div>
+          <button class="btn btn-p" onclick="toast('Upload started','📁')">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload
+          </button>
         </div>
+        <div class="sfr">
+          <div class="sw">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input class="si" type="text" placeholder="Search library…"/>
+          </div>
+          <select class="fsel"><option>All types</option><option>Workouts</option><option>Nutrition</option><option>Templates</option><option>Videos</option></select>
+        </div>
+        <div class="rl" id="libList"></div>
+      </div>
+
+      <!-- CALENDAR -->
+      <div class="sec" id="sec-calendar">
+        <div class="calg">
+          <div class="calw">
+            <div class="calh">
+              <button class="calnb" onclick="chMonth(-1)">‹</button>
+              <div class="calt" id="calTitle"></div>
+              <button class="calnb" onclick="chMonth(1)">›</button>
+            </div>
+            <div class="cal-dh">
+              <div class="cal-dn">Su</div><div class="cal-dn">Mo</div><div class="cal-dn">Tu</div>
+              <div class="cal-dn">We</div><div class="cal-dn">Th</div><div class="cal-dn">Fr</div><div class="cal-dn">Sa</div>
+            </div>
+            <div class="cal-days" id="calDays"></div>
+          </div>
+          <div class="dc"><div class="dct">Today's Schedule</div><div class="schl" id="schList"></div></div>
+        </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div class="sec" id="sec-messages">
+        <div style="display:flex;gap:20px;height:calc(100vh - 160px)">
+          <div style="width:280px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-shrink:0">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+              <div class="sw"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              <input class="si" type="text" placeholder="Search messages…" style="font-size:13px;padding:8px 12px 8px 34px"/></div>
+            </div>
+            <div id="msgList" style="overflow-y:auto;height:calc(100% - 66px)"></div>
+          </div>
+          <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden">
+            <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+              <div class="cav avi" style="width:36px;height:36px;font-size:12px;font-family:'Syne',sans-serif;font-weight:800" id="msgAva">?</div>
+              <div style="flex:1"><div style="font-weight:600;font-size:14px" id="msgName">Select a conversation</div><div style="font-size:12px;color:var(--green)">● Online</div></div>
+              <button onclick="startCoachVideoCall()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--green,#22c55e);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:filter .15s;" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 8h8a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"/></svg>
+                Video Call
+              </button>
+            </div>
+            <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px" id="chatMsgs"></div>
+            <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px">
+              <input class="si" type="text" placeholder="Type a message…" id="msgInp" style="flex:1" onkeydown="if(event.key==='Enter')sendMsg()"/>
+              <button class="btn btn-p" onclick="sendMsg()">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="sec" id="sec-settings">
+        <div class="stg">
+          <div class="stsec">
+            <div class="stt">👤 Profile</div>
+            <div class="frow"><div class="fw"><label class="fl">First Name</label><input class="fi" type="text" id="stFirst"/></div><div class="fw"><label class="fl">Last Name</label><input class="fi" type="text" id="stLast"/></div></div>
+            <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="stEmail" disabled style="opacity:.6;cursor:not-allowed"/></div>
+            <div class="fw"><label class="fl">Title / Role</label><input class="fi" type="text" id="stRole" placeholder="e.g. Head Coach"/></div>
+            <button class="btn btn-p" style="width:100%" onclick="saveProfile()">Save Changes</button>
+          </div>
+          <div class="stsec">
+            <div class="stt">🔔 Notifications</div>
+            <div class="str"><div><div class="strl">Check-in reminders</div><div class="strd">Alert when clients miss check-ins</div></div><label class="tgl"><input type="checkbox" checked/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
+            <div class="str"><div><div class="strl">New messages</div><div class="strd">Push notification for incoming messages</div></div><label class="tgl"><input type="checkbox" checked/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
+            <div class="str"><div><div class="strl">Weekly summary email</div><div class="strd">Monday morning digest</div></div><label class="tgl"><input type="checkbox"/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
+            <div class="str"><div><div class="strl">Client milestones</div><div class="strd">Celebrate PRs and goal achievements</div></div><label class="tgl"><input type="checkbox" checked/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
+          </div>
+          <div class="stsec">
+            <div class="stt">🔒 Change Password</div>
+            <div class="fw"><label class="fl">Current Password</label><input class="fi" type="password" id="cPass" placeholder="••••••••"/></div>
+            <div class="fw"><label class="fl">New Password</label><input class="fi" type="password" id="nPass" placeholder="Min. 8 characters"/></div>
+            <div class="fw"><label class="fl">Confirm New Password</label><input class="fi" type="password" id="nPass2" placeholder="••••••••"/></div>
+            <div class="auth-alert e" id="passErr" style="margin-bottom:10px"></div>
+            <button class="btn btn-s" style="width:100%" onclick="changePass()">Update Password</button>
+          </div>
+          <div class="stsec">
+            <div class="stt">⚙️ Preferences</div>
+            <div class="str"><div><div class="strl">Default check-in day</div></div><select class="fsel" style="font-size:13px;padding:6px 10px"><option>Sunday</option><option>Monday</option><option>Friday</option></select></div>
+            <div class="str"><div><div class="strl">Compliance window</div></div><select class="fsel" style="font-size:13px;padding:6px 10px"><option>4 weeks</option><option>8 weeks</option><option>12 weeks</option></select></div>
+            <div class="str"><div><div class="strl">Auto-archive inactive</div><div class="strd">After 60 days without activity</div></div><label class="tgl"><input type="checkbox"/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
+          </div>
+          <div class="stsec full">
+            <div class="stt">🗑️ Danger Zone</div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><div class="strl">Delete account</div><div class="strd">Permanently delete your account and all client data. This cannot be undone.</div></div>
+              <button class="btn btn-d" onclick="deleteAccount()">Delete Account</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+<!-- ADD CLIENT MODAL -->
+<div class="mo" id="addModal">
+  <div class="modal">
+    <div class="mh"><div class="mt">Add New Client</div><button class="mc" onclick="closeModal('addModal')">×</button></div>
+    <div class="mb2">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="fw"><label class="fl">First Name</label><input class="fi" type="text" id="nFirst" placeholder="First"/></div>
+        <div class="fw"><label class="fl">Last Name</label><input class="fi" type="text" id="nLast" placeholder="Last"/></div>
+      </div>
+      <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="nEmail" placeholder="client@example.com"/></div>
+      <div class="fw"><label class="fl">Program</label>
+        <select class="fi" id="nProg">
+          <option value="">No program</option>
+        </select>
+      </div>
+      <div class="fw"><label class="fl">Group</label>
+        <select class="fi" id="nGroup">
+          <option value="">No group</option>
+          <option>Strength</option><option>Endurance</option><option>Weight Loss</option><option>Rehab</option>
+        </select>
+      </div>
+      <div class="fw"><label class="fl">Check-in Due</label>
+        <select class="fi" id="nDue">
+          <option>Sunday</option><option>Monday</option><option>Tuesday</option>
+          <option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
+        </select>
+      </div>
+      <div class="fw"><label class="fl">Notes (optional)</label><input class="fi" type="text" id="nNotes" placeholder="Any relevant notes…"/></div>
     </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeModal('addModal')">Cancel</button>
+      <button class="btn btn-p" onclick="addClient()">Add Client</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><span id="tIco">✅</span><span id="tMsg">Done!</span></div>
+
+<div id="ctx">
+  <div class="ci" onclick="ctxAct('profile')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>View Profile</div>
+  <div class="ci" onclick="ctxAct('message')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Send Message</div>
+  <div class="ci" onclick="ctxAct('star')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Toggle Star</div>
+  <div class="cdiv"></div>
+  <div class="ci" onclick="ctxAct('archive')">Archive / Restore</div>
+  <div class="cdiv"></div>
+  <div class="ci danger" onclick="ctxAct('delete')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Delete Client</div>
 </div>
 
 <!-- LiveKit Client -->
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
 
 <script>
-// ─── LIVEKIT CONFIG ───
+// ══════════════════════════════════════════
+// FIREBASE HELPERS
+// ══════════════════════════════════════════
+// Shortcut to _fb references (set by module script above)
+const fb = ()=> window._fb;
+
+// Firestore path helpers
+const coachDoc   = (uid)    => fb().doc(fb().db, 'coaches', uid);
+const clientsCol = (uid)    => fb().collection(fb().db, 'coaches', uid, 'clients');
+const clientDoc  = (uid,cid)=> fb().doc(fb().db, 'coaches', uid, 'clients', String(cid));
+const progsCol   = (uid)    => fb().collection(fb().db, 'coaches', uid, 'programs');
+const progDoc    = (uid,pid)=> fb().doc(fb().db, 'coaches', uid, 'programs', String(pid));
+const actDoc     = (uid)    => fb().doc(fb().db, 'coaches', uid, 'meta', 'activity');
+
+// ── Clients ──
+async function fsLoadClients(){
+  const snap = await fb().getDocs(clientsCol(CU));
+  clients = snap.docs.map(d=>({...d.data(), id: parseInt(d.id)}));
+  nextId = clients.length ? Math.max(...clients.map(c=>c.id))+1 : 1;
+}
+async function fsSaveClient(c){
+  await fb().setDoc(clientDoc(CU, c.id), c);
+}
+async function fsDeleteClient(cid){
+  await fb().deleteDoc(clientDoc(CU, cid));
+}
+
+// ── Programs ──
+async function fsLoadProgs(){
+  const snap = await fb().getDocs(progsCol(CU));
+  savedProgs = snap.docs.map(d=>({...d.data(), _fid: d.id}));
+}
+async function fsSaveProg(p){
+  const ref = fb().doc(progsCol(CU)); // auto-id
+  await fb().setDoc(ref, {...p, _fid: ref.id});
+  p._fid = ref.id;
+  return p;
+}
+async function fsDeleteProg(fid){
+  await fb().deleteDoc(progDoc(CU, fid));
+}
+
+// ── Activity ──
+async function fsLoadActivity(){
+  try{
+    const snap = await fb().getDoc(actDoc(CU));
+    return snap.exists() ? (snap.data().log||[]) : [];
+  }catch{ return []; }
+}
+async function fsPushActivity(text){
+  const log = await fsLoadActivity();
+  log.unshift({text, time:'Just now'});
+  if(log.length>12) log.pop();
+  await fb().setDoc(actDoc(CU), {log}, {merge:true});
+}
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let CU=null, clients=[], savedProgs=[], nextId=1, curTab='active', ctxId=null, calMo, calYr;
+
+// ══════════════════════════════════════════
+// AUTH PAGE ROUTING
+// ══════════════════════════════════════════
+function showAuth(page){
+  ['loginPage','signupPage','forgotPage'].forEach(p=>document.getElementById(p).classList.toggle('on',p===page));
+  document.querySelectorAll('.auth-alert').forEach(a=>a.classList.remove('on'));
+}
+
+// Called from Firebase onAuthStateChanged after coach doc verified
+window.bootApp = async function(fbUser, profile, fresh){
+  CU = fbUser.uid;
+  await fsLoadClients();
+
+  const first = profile.first, last = profile.last, email = fbUser.email;
+  id('sbAva').textContent  = (first[0]+last[0]).toUpperCase();
+  id('sbName').textContent = `${first} ${last}`;
+  id('sbEmail').textContent= email;
+  id('stFirst').value = first;
+  id('stLast').value  = last;
+  id('stEmail').value = email;
+  id('stRole').value  = profile.role||'';
+
+  showAuth('none');
+  id('app').style.display='flex';
+  initApp();
+  if(fresh) toast(`Welcome, ${first}!`,'🎉');
+};
+
+// ══════════════════════════════════════════
+// SIGN UP  — role-aware, handles shared Firebase Auth
+// ══════════════════════════════════════════
+async function doSignup(){
+  const first=v('suFirst'), last=v('suLast'),
+        email=v('suEmail').toLowerCase(),
+        pass=v('suPass'), pass2=v('suPass2');
+  const err=id('suErr'), ok=id('suOk');
+  err.classList.remove('on'); ok.classList.remove('on');
+
+  if(!first||!last)   return alert_(err,'Please enter your first and last name.');
+  if(!email.includes('@')) return alert_(err,'Please enter a valid email address.');
+  if(pass.length<8)   return alert_(err,'Password must be at least 8 characters.');
+  if(pass!==pass2)    return alert_(err,'Passwords do not match.');
+
+  const btn = id('suBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating account…';
+
+  try {
+    let fbUser;
+
+    // Step 1 — try to create a new Firebase Auth account
+    try {
+      const cred = await fb().createUserWithEmailAndPassword(fb().auth, email, pass);
+      fbUser = cred.user;
+    } catch(e) {
+      if (e.code === 'auth/email-already-in-use') {
+        // Email exists in Auth. Try to sign them in to get their UID,
+        // then check whether they're a client-only account.
+        try {
+          const cred = await fb().signInWithEmailAndPassword(fb().auth, email, pass);
+          fbUser = cred.user;
+        } catch(e2) {
+          // Wrong password for existing account
+          btn.disabled = false; btn.textContent = 'Create Account';
+          return alert_(err, e2.code === 'auth/wrong-password' || e2.code === 'auth/invalid-credential'
+            ? 'This email is already registered. The password you entered is incorrect.'
+            : 'This email is already registered. Please sign in instead.');
+        }
+      } else {
+        btn.disabled = false; btn.textContent = 'Create Account';
+        return alert_(err, e.message || 'Sign up failed. Please try again.');
+      }
+    }
+
+    // Step 2 — check if a coach doc already exists (re-signup)
+    const coachSnap = await fb().getDoc(fb().doc(fb().db, 'coaches', fbUser.uid));
+    if (coachSnap.exists()) {
+      // Already a coach — just boot them in
+      btn.disabled = false; btn.textContent = 'Create Account';
+      alert_(ok, 'Coach account already exists. Signing you in…');
+      return; // onAuthStateChanged will fire and call bootApp
+    }
+
+    // Step 3 — check if this UID belongs to a client-only account
+    const clientSnap = await fb().getDoc(fb().doc(fb().db, 'users', fbUser.uid)).catch(()=>null);
+    const isClientOnly = clientSnap && clientSnap.exists() && !coachSnap.exists();
+
+    if (isClientOnly) {
+      // Block — sign them back out and explain clearly
+      await fb().signOut(fb().auth);
+      btn.disabled = false; btn.textContent = 'Create Account';
+      return alert_(err,
+        '⚠️ This email is already registered as a client account in the Client Portal. ' +
+        'Please use a different email address to create a coach account.');
+    }
+
+    // Step 4 — safe to create the coach profile in Firestore
+    await fb().setDoc(fb().doc(fb().db, 'coaches', fbUser.uid), {
+      first, last, email, role: 'coach', createdAt: Date.now()
+    });
+
+    alert_(ok, 'Coach account created! Signing you in…');
+    // onAuthStateChanged fires automatically → bootApp
+  } catch(e) {
+    btn.disabled = false; btn.textContent = 'Create Account';
+    alert_(err, e.message || 'Sign up failed. Please try again.');
+  }
+}
+
+// ══════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════
+async function doLogin(){
+  const email=v('lEmail').toLowerCase(), pass=v('lPass');
+  const err=id('loginErr');
+  err.classList.remove('on');
+  if(!email||!pass) return alert_(err,'Please enter your email and password.');
+
+  try{
+    await fb().signInWithEmailAndPassword(fb().auth, email, pass);
+    // onAuthStateChanged verifies coach role and calls bootApp
+  } catch(e){
+    const msg = (e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')
+      ? 'Incorrect email or password. Please try again.'
+      : (e.message||'Login failed.');
+    alert_(err, msg);
+  }
+}
+
+// ══════════════════════════════════════════
+// LOGOUT
+// ══════════════════════════════════════════
+async function doLogout(){
+  await fb().signOut(fb().auth);
+  CU=null; clients=[]; savedProgs=[];
+  id('app').style.display='none';
+  curTab='active'; goSec('clients');
+  toast('Signed out successfully','👋');
+}
+
+// ══════════════════════════════════════════
+// FORGOT PASSWORD  (real Firebase reset email)
+// ══════════════════════════════════════════
+async function doForgot(){
+  const email=v('fgEmail').toLowerCase();
+  const err=id('fgErr'), ok=id('fgOk');
+  err.classList.remove('on'); ok.classList.remove('on');
+  if(!email) return alert_(err,'Please enter your email address.');
+  try{
+    await fb().sendPasswordResetEmail(fb().auth, email);
+    alert_(ok,'Password reset email sent! Check your inbox.');
+  } catch(e){
+    alert_(err, e.code==='auth/user-not-found'
+      ? 'No account found with that email.'
+      : 'Failed to send reset email. Try again.');
+  }
+}
+
+// ══════════════════════════════════════════
+// PASSWORD STRENGTH
+// ══════════════════════════════════════════
+function pStrength(val){
+  let s=0;
+  if(val.length>=8)s++;
+  if(/[A-Z]/.test(val))s++;
+  if(/[0-9]/.test(val))s++;
+  if(/[^A-Za-z0-9]/.test(val))s++;
+  const cls=['','w','f','g','st'], lbl=['','Weak','Fair','Good','Strong'];
+  for(let i=1;i<=4;i++){
+    const b=id('ps'+i);
+    b.className='psb'+(i<=s?' '+cls[s]:'');
+  }
+  id('psLbl').textContent=val?lbl[s]||'Weak':'Enter a password';
+}
+
+// ══════════════════════════════════════════
+// SAVE PROFILE  (Firestore)
+// ══════════════════════════════════════════
+async function saveProfile(){
+  const first=v('stFirst'), last=v('stLast'), role=v('stRole');
+  if(!first||!last) return toast('Name cannot be empty','⚠️');
+  await fb().updateDoc(coachDoc(CU), {first, last, role});
+  window._fbProfile = {...window._fbProfile, first, last, role};
+  id('sbAva').textContent=(first[0]+last[0]).toUpperCase();
+  id('sbName').textContent=`${first} ${last}`;
+  toast('Profile saved!','✅');
+}
+
+// ══════════════════════════════════════════
+// CHANGE PASSWORD  (Firebase reauthenticate)
+// ══════════════════════════════════════════
+async function changePass(){
+  const cur=v('cPass'), np=v('nPass'), np2=v('nPass2');
+  const err=id('passErr'); err.classList.remove('on');
+  if(np.length<8) return alert_(err,'New password must be at least 8 characters.');
+  if(np!==np2) return alert_(err,'Passwords do not match.');
+  try{
+    const cred = fb().EmailAuthProvider.credential(window._fbUser.email, cur);
+    await fb().reauthenticateWithCredential(window._fbUser, cred);
+    await fb().updatePassword(window._fbUser, np);
+    id('cPass').value=''; id('nPass').value=''; id('nPass2').value='';
+    toast('Password updated!','🔒');
+  } catch(e){
+    alert_(err, e.code==='auth/wrong-password'?'Current password is incorrect.':'Failed to update password.');
+  }
+}
+
+// ══════════════════════════════════════════
+// DELETE ACCOUNT  (Firestore + Firebase Auth)
+// ══════════════════════════════════════════
+async function deleteAccount(){
+  if(!confirm('Delete your account and ALL client data permanently?')) return;
+  try{
+    // Delete all subcollections
+    const cSnap = await fb().getDocs(clientsCol(CU));
+    const pSnap = await fb().getDocs(progsCol(CU));
+    const batch = fb().writeBatch(fb().db);
+    cSnap.docs.forEach(d=>batch.delete(d.ref));
+    pSnap.docs.forEach(d=>batch.delete(d.ref));
+    batch.delete(actDoc(CU));
+    batch.delete(coachDoc(CU));
+    await batch.commit();
+    await fb().deleteUser(window._fbUser);
+    toast('Account deleted.','🗑️');
+  } catch(e){ toast('Delete failed: '+e.message,'❌'); }
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+function id(i){return document.getElementById(i)}
+function v(i){return id(i).value.trim()}
+function alert_(el,msg){el.textContent=msg;el.classList.add('on')}
+
+// ══════════════════════════════════════════
+// APP INIT
+// ══════════════════════════════════════════
+async function initApp(){
+  await fsLoadProgs();
+  renderClients(); renderPrograms(); renderLibrary();
+  initMessaging(); // real-time Firestore chat
+  renderCalendar(); renderDashboard();
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+const titles={dashboard:'Dashboard',clients:'Clients',programs:'Programs',library:'Library',calendar:'Calendar',messages:'Messages',settings:'Settings'};
+const topDefs={
+  dashboard:null,
+  clients:{lbl:'Add Client',fn:'openAddModal()'},
+  programs:{lbl:'New Program',fn:"toast('New program created','✅')"},
+  library:{lbl:'Upload File',fn:"toast('Upload started','📁')"},
+  calendar:{lbl:'New Event',fn:"toast('Event created','📅')"},
+  messages:{lbl:'New Message',fn:"toast('New conversation','💬')"},
+  settings:{lbl:'Save Profile',fn:'saveProfile()'},
+};
+
+function goSec(s){
+  document.querySelectorAll('.sec').forEach(x=>x.classList.remove('on'));
+  id('sec-'+s).classList.add('on');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('on',n.dataset.s===s));
+  id('pgTitle').textContent=titles[s]||s;
+  const btn=id('topBtn'), def=topDefs[s];
+  if(def){ btn.style.display=''; btn.innerHTML=`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>${def.lbl}`; btn.setAttribute('onclick',def.fn); }
+  else btn.style.display='none';
+  if(s==='dashboard') renderDashboard();
+  if(s==='programs')  renderPrograms();
+}
+
+function toggleSB(){ id('sb').classList.toggle('col'); }
+
+// ══════════════════════════════════════════
+// CLIENTS
+// ══════════════════════════════════════════
+const AVCOLS=['avi','avb','avg','avr','ava2','avt'];
+const gi=c=>(c.first[0]+c.last[0]).toUpperCase();
+const gc=c=>AVCOLS[(c.first.charCodeAt(0)+c.last.charCodeAt(0))%AVCOLS.length];
+const cc=v=>v>=85?'hi':v>=65?'mi':'lo';
+
+function setTab(tab,el){
+  curTab=tab;
+  document.querySelectorAll('#cTabs .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  renderClients();
+}
+
+function renderClients(){
+  const q=(v('cSearch')||'').toLowerCase();
+  const gf=id('gFilter').value, sf=id('sFilter').value;
+  let list=clients.filter(c=>c.status===curTab);
+  if(q) list=list.filter(c=>(c.first+' '+c.last).toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q));
+  if(gf) list=list.filter(c=>c.groups.includes(gf));
+  if(sf==='compliance') list.sort((a,b)=>b.comp[0]-a.comp[0]);
+  else if(sf==='due') list.sort((a,b)=>a.due.localeCompare(b.due));
+  else list.sort((a,b)=>a.last.localeCompare(b.last));
+
+  const body=id('cBody');
+  if(!list.length){
+    body.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="ei">${curTab==='active'?'👥':'📦'}</div><div class="et">${curTab==='active'?'No active clients yet':'No archived clients'}</div><div class="es">${curTab==='active'?'Click "Add Client" to get started.':'Archived clients appear here.'}</div></div></td></tr>`;
+  } else {
+    body.innerHTML=list.map(c=>{
+      const comps=c.comp.map(vv=>`<div class="cbar ${cc(vv)}">${vv}</div>`).join('');
+      const tags=c.groups.map(g=>`<span class="tag">${g}</span>`).join('')||'<span style="color:var(--muted);font-size:12px">—</span>';
+      const star=c.starred?'<span class="star">★</span>':'';
+      const due=c.due==='—'?'<span style="color:var(--muted)">—</span>':`<span class="pill pg" style="font-size:11px">${c.due}</span>`;
+      return `<tr>
+        <td class="cb"><input type="checkbox"/></td>
+        <td><div class="cc"><div class="cav ${gc(c)}">${gi(c)}${star}</div><div><div class="cn">${c.first} ${c.last}</div><div class="ce">${c.email||''}</div></div></div></td>
+        <td><span class="pill ${c.status==='active'?'pg':'py'}">${c.status}</span></td>
+        <td>${due}</td>
+        <td><div class="cbw">${comps}</div></td>
+        <td><span style="font-size:13px">${c.program||'<span style="color:var(--muted)">None</span>'}</span></td>
+        <td><div class="tagw">${tags}</div></td>
+        <td class="ac"><button class="mb" onclick="showCtx(event,${c.id})"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></td>
+      </tr>`;
+    }).join('');
+  }
+  const ac=clients.filter(c=>c.status==='active').length;
+  const ar=clients.filter(c=>c.status==='archived').length;
+  id('acCnt').textContent=ac; id('arCnt').textContent=ar;
+  id('cBadge').textContent=ac; id('stC').textContent=ac; id('stDue').textContent=ac;
+  const avg=ac?Math.round(clients.filter(c=>c.status==='active').reduce((s,c)=>s+c.comp[0],0)/ac):0;
+  id('stComp').innerHTML=ac?`${avg}<span style="font-size:18px">%</span>`:`—<span style="font-size:18px">%</span>`;
+}
+
+function toggleAll(cb){ document.querySelectorAll('#cBody input[type=checkbox]').forEach(c=>c.checked=cb.checked); }
+
+// ══════════════════════════════════════════
+// ADD CLIENT
+// ══════════════════════════════════════════
+function openAddModal(){
+  loadProgs();
+  const sel=id('nProg');
+  sel.innerHTML='<option value="">No program</option>'+savedProgs.map(p=>'<option>'+p.name+'</option>').join('');
+  id('addModal').classList.add('on');
+}
+function closeModal(i){ id(i).classList.remove('on'); }
+
+async function addClient(){
+  const first=v('nFirst'), last=v('nLast'), email=v('nEmail'),
+        prog=v('nProg'), group=v('nGroup'), due=v('nDue'), notes=v('nNotes');
+  if(!first||!last) return toast('Please enter first and last name','⚠️');
+  const c={
+    id:nextId++, first, last,
+    email:email||`${first.toLowerCase()}.${last.toLowerCase()}@client.com`,
+    starred:false, status:'active', due, notes, program:id('nProg').value,
+    comp:[Math.floor(70+Math.random()*30),Math.floor(70+Math.random()*30),Math.floor(70+Math.random()*30)],
+    groups:group?[group]:[],
+    createdAt:Date.now()
+  };
+  clients.push(c);
+  await fsSaveClient(c);
+  await fsPushActivity(`New client <strong>${first} ${last}</strong> added`);
+  ['nFirst','nLast','nEmail','nNotes'].forEach(x=>id(x).value='');
+  id('nProg').value=''; id('nGroup').value=''; id('nDue').value='Sunday';
+  closeModal('addModal');
+  renderClients(); renderDashboard();
+  toast(`${first} ${last} added!`,'✅');
+}
+
+// ══════════════════════════════════════════
+// CONTEXT MENU
+// ══════════════════════════════════════════
+function showCtx(e,i){
+  e.stopPropagation(); ctxId=i;
+  const m=id('ctx'); m.style.display='block';
+  let x=e.clientX-180, y=e.clientY;
+  if(x<0)x=e.clientX; if(y+220>window.innerHeight)y=window.innerHeight-220;
+  m.style.left=x+'px'; m.style.top=y+'px';
+}
+function closeCtx(){ id('ctx').style.display='none'; }
+document.addEventListener('click',closeCtx);
+
+async function ctxAct(action){
+  const c=clients.find(x=>x.id===ctxId); if(!c)return closeCtx(); closeCtx();
+  if(action==='profile') toast(`Viewing ${c.first} ${c.last}'s profile`,'👤');
+  else if(action==='message'){ goSec('messages'); toast(`Opening chat with ${c.first}`,'💬'); }
+  else if(action==='star'){
+    c.starred=!c.starred;
+    await fsSaveClient(c);
+    renderClients();
+    toast(c.starred?'Client starred ⭐':'Star removed','✏️');
+  }
+  else if(action==='archive'){
+    c.status=c.status==='active'?'archived':'active';
+    await fsSaveClient(c);
+    await fsPushActivity(`${c.first} ${c.last} ${c.status==='archived'?'archived':'restored'}`);
+    renderClients(); renderDashboard();
+    toast(`${c.first} ${c.last} ${c.status==='archived'?'archived':'restored'}`,'📦');
+  }
+  else if(action==='delete'){
+    if(!confirm(`Delete ${c.first} ${c.last}? This cannot be undone.`))return;
+    await fsDeleteClient(c.id);
+    clients=clients.filter(x=>x.id!==ctxId);
+    await fsPushActivity(`Client <strong>${c.first} ${c.last}</strong> deleted`);
+    renderClients(); renderDashboard();
+    toast(`${c.first} ${c.last} deleted`,'🗑️');
+  }
+}
+
+// ══════════════════════════════════════════
+// PROGRAMS — AI Builder
+// ══════════════════════════════════════════
+const PROG_ICONS={
+  'Fat Loss':'🔥','Muscle Gain':'💪','Strength':'🏋️','Endurance':'🏃',
+  'Athletic Performance':'🏆','Rehab & Recovery':'🧘','General Fitness':'⭐'
+};
+const PROG_COLORS={
+  'Fat Loss':'rgba(239,68,68,.15)','Muscle Gain':'rgba(79,124,255,.15)',
+  'Strength':'rgba(245,158,11,.15)','Endurance':'rgba(34,197,94,.15)',
+  'Athletic Performance':'rgba(239,68,68,.15)','Rehab & Recovery':'rgba(124,85,245,.15)',
+  'General Fitness':'rgba(79,124,255,.15)'
+};
+
+let pendingProg=null;
+
+function loadProgs(){ /* loaded from Firestore via fsLoadProgs() at boot */ }
+function saveProgs(){ /* handled per-op via fsSaveProg / fsDeleteProg */ }
+
+function showProgForm(){
+  id('progForm').style.display='block';
+  id('progPreview').style.display='none';
+  id('progLoading').style.display='none';
+  id('pName').focus();
+}
+function hideProgForm(){
+  id('progForm').style.display='none';
+}
+function discardProgram(){
+  pendingProg=null;
+  id('progPreview').style.display='none';
+  renderPrograms();
+}
+
+async function generateProgram(){
+  const name=v('pName'), weeks=v('pWeeks'), goal=id('pGoal').value,
+        days=v('pDays'), details=v('pDetails');
+  if(!name) return toast('Please enter a program name','⚠️');
+
+  hideProgForm();
+  id('progLoading').style.display='block';
+  id('progGrid').style.display='none';
+  id('progEmpty').style.display='none';
+
+  const msgs=[
+    'Designing your program structure…',
+    'Planning weekly progressions…',
+    'Writing session breakdowns…',
+    'Adding coaching notes…'
+  ];
+  let mi=0;
+  const ticker=setInterval(()=>{ id('loadingMsg').textContent=msgs[++mi%msgs.length]; },1600);
+
+  const prompt=`You are an expert fitness coach. Create a detailed coaching program with these specs:
+Name: ${name}
+Goal: ${goal}
+Duration: ${weeks} weeks
+Training days per week: ${days}
+${details?'Additional details: '+details:''}
+
+Write a complete program outline with:
+1. Program Overview (2-3 sentences)
+2. Weekly Structure (what each training day focuses on)
+3. Week-by-Week Progression (brief summary per phase, e.g. weeks 1-4, 5-8, etc.)
+4. Key Exercises / Methods
+5. Coaching Tips (2-3 actionable tips)
+
+Be specific, practical, and motivating. Keep it under 500 words.`;
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    clearInterval(ticker);
+    id('progLoading').style.display='none';
+
+    const content=data.content?.map(b=>b.text||'').join('')||'Could not generate program.';
+    pendingProg={name,weeks:parseInt(weeks),goal,days:parseInt(days),desc:`${weeks}-week ${goal.toLowerCase()} program`,content,icon:PROG_ICONS[goal]||'📋',bg:PROG_COLORS[goal]||'rgba(79,124,255,.15)',createdAt:Date.now()};
+
+    id('prevTitle').textContent=name;
+    id('prevMeta').textContent=`${weeks} weeks · ${days} days/week · ${goal}`;
+    id('prevContent').textContent=content;
+    id('progPreview').style.display='block';
+    id('progGrid').style.display='grid';
+    renderPrograms();
+  } catch(e) {
+    clearInterval(ticker);
+    id('progLoading').style.display='none';
+    id('progGrid').style.display='grid';
+    renderPrograms();
+    toast('Error generating program. Try again.','❌');
+  }
+}
+
+async function saveProgram(){
+  if(!pendingProg)return;
+  const saved = await fsSaveProg(pendingProg);
+  savedProgs.unshift(saved);
+  pendingProg=null;
+  id('progPreview').style.display='none';
+  renderPrograms();
+  toast(`"${savedProgs[0].name}" saved!`,'✅');
+}
+
+async function deleteProgram(fid){
+  if(!confirm('Delete this program?'))return;
+  await fsDeleteProg(fid);
+  savedProgs=savedProgs.filter(p=>p._fid!==fid);
+  renderPrograms();
+  toast('Program deleted','🗑️');
+}
+
+function viewProgram(fid){
+  const p=savedProgs.find(x=>x._fid===fid);
+  if(!p)return;
+  id('prevTitle').textContent=p.name;
+  id('prevMeta').textContent=`${p.weeks} weeks · ${p.days} days/week · ${p.goal}`;
+  id('prevContent').textContent=p.content;
+  id('progPreview').style.display='block';
+  pendingProg=null;
+}
+
+function renderPrograms(){
+  const grid=id('progGrid');
+  const showEmpty=!savedProgs.length&&!pendingProg;
+  id('progEmpty').style.display=showEmpty?'block':'none';
+  grid.style.display=savedProgs.length?'grid':'none';
+  if(!savedProgs.length){grid.innerHTML='';return;}
+  grid.innerHTML=savedProgs.map((p)=>{
+    const enrolled=clients.filter(c=>c.program===p.name&&c.status==='active').length;
+    const avg=enrolled?Math.round(clients.filter(c=>c.program===p.name&&c.status==='active').reduce((s,c)=>s+c.comp[0],0)/enrolled):0;
+    return `<div class="pc" onclick="viewProgram('${p._fid}')" style="position:relative">
+      <div style="position:absolute;top:12px;right:12px;z-index:1">
+        <button onclick="event.stopPropagation();deleteProgram('${p._fid}')" style="background:rgba(239,68,68,.12);border:none;color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:600" onmouseover="this.style.background='rgba(239,68,68,.25)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">✕</button>
+      </div>
+      <div class="pch"><div class="pci" style="background:${p.bg}">${p.icon||'📋'}</div><div class="pct">${p.name}</div><div class="pcm">${p.desc}</div></div>
+      <div class="pcb"><div class="pcs">
+        <div class="ps"><div class="psv">${p.weeks}</div><div class="psl">Weeks</div></div>
+        <div class="ps"><div class="psv">${enrolled}</div><div class="psl">Clients</div></div>
+        <div class="ps"><div class="psv">${enrolled?avg+'%':'—'}</div><div class="psl">Avg Comp.</div></div>
+      </div></div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// LIBRARY
+// ══════════════════════════════════════════
+const RES=[
+  {icon:'📄',bg:'rgba(79,124,255,.15)',title:'Client Intake Form',desc:'Onboarding questionnaire template',type:'Template',size:'42 KB'},
+  {icon:'🏋️',bg:'rgba(34,197,94,.15)',title:'Strength Phase 1 Workouts',desc:'Weeks 1–4 of Strength Foundations',type:'Workout',size:'1.2 MB'},
+  {icon:'🥗',bg:'rgba(245,158,11,.15)',title:'Macro Tracking Guide',desc:'Beginner nutrition guide PDF',type:'Nutrition',size:'580 KB'},
+  {icon:'🎬',bg:'rgba(124,85,245,.15)',title:'Squat Form Tutorial',desc:'Video breakdown for clients',type:'Video',size:'48 MB'},
+  {icon:'📊',bg:'rgba(239,68,68,.15)',title:'Progress Tracker Sheet',desc:'Monthly measurements spreadsheet',type:'Template',size:'78 KB'},
+  {icon:'🧘',bg:'rgba(34,197,94,.15)',title:'Mobility Warmup Routine',desc:'10-minute pre-workout warmup PDF',type:'Workout',size:'340 KB'},
+];
+function renderLibrary(){
+  id('libList').innerHTML=RES.map(r=>`
+    <div class="ri" onclick="toast('Opening ${r.title}','📂')">
+      <div class="rico" style="background:${r.bg}">${r.icon}</div>
+      <div class="rinf"><div class="rtit">${r.title}</div><div class="rdesc">${r.desc} · <span class="pill py" style="padding:1px 6px;font-size:10px">${r.type}</span> · ${r.size}</div></div>
+      <div class="ract">
+        <button class="btn btn-s" style="padding:6px 12px;font-size:12px" onclick="event.stopPropagation();toast('Assigned to client','✅')">Assign</button>
+        <button class="btn btn-s" style="padding:6px 12px;font-size:12px" onclick="event.stopPropagation();toast('Download started','⬇️')">Download</button>
+      </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// CALENDAR
+// ══════════════════════════════════════════
+const EVDAYS=[3,7,10,12,15,19,22,26];
+function renderCalendar(){
+  const now=new Date();
+  calMo=calMo??now.getMonth(); calYr=calYr??now.getFullYear();
+  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  id('calTitle').textContent=`${MN[calMo]} ${calYr}`;
+  const first=new Date(calYr,calMo,1).getDay();
+  const dim=new Date(calYr,calMo+1,0).getDate();
+  const dip=new Date(calYr,calMo,0).getDate();
+  const today=new Date();
+  let html='';
+  for(let i=first-1;i>=0;i--) html+=`<div class="cday om">${dip-i}</div>`;
+  for(let d=1;d<=dim;d++){
+    const isTod=d===today.getDate()&&calMo===today.getMonth()&&calYr===today.getFullYear();
+    html+=`<div class="cday ${isTod?'tod':''} ${EVDAYS.includes(d)?'hev':''}" onclick="toast('Day ${d} selected','📅')">${d}</div>`;
+  }
+  id('calDays').innerHTML=html;
+  const active=clients.filter(c=>c.status==='active').slice(0,4);
+  const times=['9:00 AM','11:30 AM','2:00 PM','4:30 PM'];
+  const types=['Check-in Call','Program Review','Nutrition Check','Goal Setting'];
+  id('schList').innerHTML=active.length
+    ?active.map((c,i)=>`<div class="schi"><div class="scht">${times[i]}</div><div><div class="schn">${types[i]}</div><div class="schc">${c.first} ${c.last}</div></div></div>`).join('')
+    :`<div class="empty" style="padding:30px 20px"><div class="ei">📅</div><div class="et">No sessions today</div><div class="es">Add clients to auto-populate schedule.</div></div>`;
+}
+function chMonth(d){ calMo+=d; if(calMo>11){calMo=0;calYr++} if(calMo<0){calMo=11;calYr--} renderCalendar(); }
+
+// ══════════════════════════════════════════
+// MESSAGES — Firestore real-time
+// ══════════════════════════════════════════
+let allConversations = [];
+let activeConvoId = null;
+let unsubConvos = null;
+let unsubChatMsgs = null;
+
+function initMessaging() {
+  if (unsubConvos) unsubConvos();
+  const { db, collection, query, orderBy, onSnapshot } = fb();
+  try {
+    const q = query(collection(db, 'conversations'), orderBy('lastTime', 'desc'));
+    unsubConvos = onSnapshot(q, snapshot => {
+      allConversations = [];
+      snapshot.forEach(d => allConversations.push({ id: d.id, ...d.data() }));
+      renderConversationList();
+    }, () => {
+      // No conversations yet — show empty state
+      allConversations = [];
+      renderConversationList();
+    });
+  } catch(e) {
+    allConversations = [];
+    renderConversationList();
+  }
+}
+
+function _convColor(name) {
+  const COLORS = ['avi','avb','avg','avr','ava2','avt'];
+  return COLORS[(name||'?').charCodeAt(0) % COLORS.length];
+}
+function _convInitials(name) {
+  return (name||'?').split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2) || '??';
+}
+function _formatConvTime(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const diff = Date.now() - d;
+  if (diff < 60000) return 'now';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'm';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h';
+  return Math.floor(diff/86400000) + 'd';
+}
+
+function renderConversationList() {
+  const el = id('msgList');
+  if (!allConversations.length) {
+    el.innerHTML = `<div style="padding:30px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7">
+      <div style="font-size:28px;margin-bottom:10px">💬</div>
+      No conversations yet.<br>Clients appear here after they sign in<br>to the Client Portal.
+    </div>`;
+    return;
+  }
+  el.innerHTML = allConversations.map(c => {
+    const name = c.clientName || c.clientEmail || 'Unknown Client';
+    const ini  = _convInitials(name);
+    const col  = _convColor(name);
+    const time = _formatConvTime(c.lastTime);
+    const unread = c.unreadCoach || 0;
+    const isAct  = activeConvoId === c.id;
+    const vcBadge = c.videoCallActive ? `<div style="font-size:10px;color:var(--green);font-weight:700">● Live</div>` : '';
+    return `<div onclick="openConvo('${c.id}',${JSON.stringify(name)},${JSON.stringify(ini)},${JSON.stringify(col)})"
+      style="padding:14px 16px;display:flex;gap:12px;align-items:center;cursor:pointer;border-bottom:1px solid var(--border);background:${isAct?'var(--surface2)':'transparent'};transition:background .15s"
+      onmouseenter="this.style.background='var(--surface2)'"
+      onmouseleave="this.style.background='${isAct?'var(--surface2)':'transparent'}'">
+      <div class="cav ${col}" style="width:38px;height:38px;font-size:12px;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0">${ini}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span style="font-size:13px;font-weight:600">${name}</span>
+          <span style="font-size:11px;color:var(--muted)">${time}</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${c.lastMessage||'No messages yet'}</div>
+        ${vcBadge}
+      </div>
+      ${unread?`<div style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${unread}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openConvo(convoId, name, ini, col) {
+  activeConvoId = convoId;
+  id('msgAva').textContent = ini;
+  id('msgAva').className = `cav ${col}`;
+  id('msgName').textContent = name;
+
+  // Clear unread counter
+  const { db, doc, setDoc, serverTimestamp: st } = fb();
+  setDoc(doc(db, 'conversations', convoId), { unreadCoach: 0 }, { merge: true }).catch(()=>{});
+
+  // Subscribe to this conversation's messages
+  if (unsubChatMsgs) unsubChatMsgs();
+  id('chatMsgs').innerHTML = '';
+  const { collection, query, orderBy, onSnapshot } = fb();
+  const msgsQ = query(collection(db, 'conversations', convoId, 'messages'), orderBy('timestamp', 'asc'));
+  unsubChatMsgs = onSnapshot(msgsQ, snapshot => {
+    id('chatMsgs').innerHTML = '';
+    snapshot.forEach(d => {
+      const msg = d.data();
+      const isCoach = msg.sender === 'coach';
+      const div = document.createElement('div');
+      div.style.cssText = `display:flex;justify-content:${isCoach?'flex-end':'flex-start'}`;
+      div.innerHTML = `<div style="max-width:70%;background:${isCoach?'var(--accent)':'var(--surface2)'};
+        border:1px solid ${isCoach?'transparent':'var(--border2)'};
+        border-radius:${isCoach?'14px 14px 4px 14px':'14px 14px 14px 4px'};
+        padding:10px 14px;font-size:13px;line-height:1.5">${escMsg(msg.text)}</div>`;
+      id('chatMsgs').appendChild(div);
+    });
+    const el = id('chatMsgs'); el.scrollTop = el.scrollHeight;
+  });
+
+  renderConversationList(); // highlight active
+}
+
+function escMsg(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function sendMsg() {
+  const inp = id('msgInp'), txt = inp.value.trim();
+  if (!txt || !activeConvoId) { if(!activeConvoId) toast('Select a conversation first','💬'); return; }
+  inp.value = '';
+
+  const { db, collection, addDoc, doc, setDoc, serverTimestamp } = fb();
+  const coachName = window._fbProfile ? `${window._fbProfile.first} ${window._fbProfile.last}`.trim() : 'Coach';
+
+  addDoc(collection(db, 'conversations', activeConvoId, 'messages'), {
+    text: txt, sender: 'coach', senderName: coachName,
+    timestamp: serverTimestamp()
+  });
+  setDoc(doc(db, 'conversations', activeConvoId), {
+    lastMessage: txt, lastTime: serverTimestamp()
+  }, { merge: true });
+}
+
+// Replace old renderMessages stub (kept for nav compatibility)
+function renderMessages() { /* handled by initMessaging + renderConversationList */ }
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+async function renderDashboard(){
+  const activity = await fsLoadActivity();
+  const acols=['#4f7cff','#22c55e','#f59e0b','#ef4444','#7c55f5'];
+  const actEl=id('actList');
+  if(!activity.length){
+    actEl.innerHTML=`<div class="empty" style="padding:30px 20px"><div class="ei">📋</div><div class="et">No activity yet</div><div class="es">Actions like adding clients will appear here.</div></div>`;
+  } else {
+    actEl.innerHTML=activity.map((a,i)=>`
+      <div class="ali">
+        <div class="adot" style="background:${acols[i%acols.length]}"></div>
+        <div><div class="atxt">${a.text}</div><div class="atm">${a.time}</div></div>
+      </div>`).join('');
+  }
+  const due=clients.filter(c=>c.status==='active').slice(0,6);
+  const dueEl=id('dueList');
+  dueEl.innerHTML=due.length
+    ?due.map(c=>`<div class="di"><div class="dav ${gc(c)}">${gi(c)}</div><div class="dii"><div class="dn">${c.first} ${c.last}</div><div class="dp">${c.program||'No program'}</div></div><div class="dd" style="color:var(--accent)">${c.due}</div></div>`).join('')
+    :`<div class="empty" style="padding:30px 20px"><div class="ei">👥</div><div class="et">No clients yet</div><div class="es">Add clients to see check-ins here.</div></div>`;
+  renderPrograms();
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+let tT;
+function toast(msg,ico='✅'){
+  id('tMsg').textContent=msg; id('tIco').textContent=ico;
+  id('toast').classList.add('on');
+  clearTimeout(tT); tT=setTimeout(()=>id('toast').classList.remove('on'),2600);
+}
+
+// ══════════════════════════════════════════
+// MODALS — click outside
+// ══════════════════════════════════════════
+document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on')}));
+
+// ══════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||!CU)return;
+  if(e.key==='?') toast('N=New client · D=Dashboard · C=Clients · M=Messages · Esc=Close','ℹ️');
+  if(e.key==='n'||e.key==='N'){goSec('clients');openAddModal();}
+  if(e.key==='d'||e.key==='D') goSec('dashboard');
+  if(e.key==='c'||e.key==='C') goSec('clients');
+  if(e.key==='m'||e.key==='M') goSec('messages');
+  if(e.key==='Escape'){closeCtx();document.querySelectorAll('.mo').forEach(o=>o.classList.remove('on'));if(coachRoom)coachEndCall();}
+});
+
+// ══════════════════════════════════════════
+// VIDEO CALL — LiveKit (Coach side)
+// ══════════════════════════════════════════
 const LK_URL    = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
 const LK_KEY    = 'APINy8wg8sjumEe';
 const LK_SECRET = 'Gt6UJZQxNBNeKau7FaoJ2ffJHFdeKJhrhKOkQZv3hcxB';
 const ROOM_NAME = 'evolve-coaching-room';
 
-// ─── CHAT ───
-const channel = new BroadcastChannel('coach_client_chat');
-const chatArea = document.getElementById('chatArea');
-const myName = 'Coach';
+let coachRoom = null;
+let coachMicOn = true;
+let coachCamOn = true;
+let coachTimerInterval = null;
+let coachCallStart = null;
 
-channel.postMessage({ type: 'join', name: myName, time: Date.now() });
+async function coachGenerateToken(identity) {
+  const header = { alg: 'HS256', typ: 'JWT' };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: LK_KEY, sub: identity, iat: now, exp: now + 7200,
+    video: { room: ROOM_NAME, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true }
+  };
+  const b64 = obj => btoa(JSON.stringify(obj)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  const sig = `${b64(header)}.${b64(payload)}`;
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(LK_SECRET), { name:'HMAC',hash:'SHA-256' }, false, ['sign']);
+  const s = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(sig));
+  return `${sig}.${btoa(String.fromCharCode(...new Uint8Array(s))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')}`;
+}
 
-channel.onmessage = (event) => {
-    const data = event.data;
-    if (data.type === 'chat' && data.sender !== myName) {
-        appendMessage(data.text, 'received', data.sender, data.time);
-    } else if (data.type === 'join' && data.name !== myName) {
-        appendSystem(`${data.name} joined the session`);
-    } else if (data.type === 'video_invite') {
-        appendSystem('📹 Client started a video call — click Video Call to join');
+async function startCoachVideoCall() {
+  if (!CU) { toast('Not signed in','⚠️'); return; }
+  if (!activeConvoId) { toast('Select a client conversation first','💬'); return; }
+
+  // Notify client via Firestore
+  const { db, doc, setDoc, serverTimestamp } = fb();
+  setDoc(doc(db, 'conversations', activeConvoId), { videoCallActive: true, videoCallTime: serverTimestamp() }, { merge: true });
+
+  const modal = id('coachVideoModal');
+  modal.style.display = 'flex';
+  id('coachConnectingOverlay').style.display = 'flex';
+  id('coachCallPill').textContent = 'Connecting…';
+  id('coachCallPill').style.color = '#f59e0b';
+
+  // Set remote avatar initials from active convo
+  const c = allConversations.find(x => x.id === activeConvoId);
+  if (c) id('coachRemoteAva').textContent = _convInitials(c.clientName || c.clientEmail || '?');
+
+  try {
+    const identity = `coach-${CU}`;
+    const token = await coachGenerateToken(identity);
+    coachRoom = new LivekitClient.Room({ adaptiveStream: true, dynacast: true });
+
+    coachRoom.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
+      if (track.kind === LivekitClient.Track.Kind.Video) {
+        const el = track.attach();
+        el.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+        id('coachRemotePlaceholder').style.display = 'none';
+        id('coachRemoteVideo').appendChild(el);
+      }
+    });
+    coachRoom.on(LivekitClient.RoomEvent.TrackUnsubscribed, track => track.detach());
+    coachRoom.on(LivekitClient.RoomEvent.ParticipantConnected, () => {
+      id('coachCallPill').textContent = 'Live';
+      id('coachCallPill').style.color = '#22c55e';
+      toast('Client joined the call! 📹','📹');
+      startCoachTimer();
+    });
+    coachRoom.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => {
+      toast('Client left the call','📵');
+    });
+    coachRoom.on(LivekitClient.RoomEvent.Disconnected, coachCleanupVideo);
+
+    await coachRoom.connect(LK_URL, token);
+    id('coachConnectingOverlay').style.display = 'none';
+    id('coachCallPill').textContent = 'Connected';
+    id('coachCallPill').style.color = '#22c55e';
+
+    await coachRoom.localParticipant.enableCameraAndMicrophone();
+    const camTrack = coachRoom.localParticipant.getTrack(LivekitClient.Track.Source.Camera);
+    if (camTrack && camTrack.track) {
+      const localEl = camTrack.track.attach();
+      localEl.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
+      id('coachLocalPlaceholder').style.display = 'none';
+      id('coachLocalVideo').appendChild(localEl);
     }
-};
+    startCoachTimer();
 
-function appendMessage(text, type, sender, time) {
-    const div = document.createElement('div');
-    div.className = `message ${type}`;
-    const date = time ? new Date(time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
-    div.innerHTML = `${escapeHtml(text)}<div class="meta">${sender} · ${date}</div>`;
-    chatArea.appendChild(div);
-    chatArea.scrollTop = chatArea.scrollHeight;
+  } catch(e) {
+    console.error('LiveKit error:', e);
+    id('coachConnMsg').textContent = 'Connection failed. Try again.';
+  }
 }
 
-function appendSystem(text) {
-    const div = document.createElement('div');
-    div.className = 'system-msg';
-    div.textContent = text;
-    chatArea.appendChild(div);
-    chatArea.scrollTop = chatArea.scrollHeight;
+function startCoachTimer() {
+  if (coachTimerInterval) return;
+  coachCallStart = Date.now();
+  coachTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - coachCallStart) / 1000);
+    const m = String(Math.floor(elapsed/60)).padStart(2,'0');
+    const s = String(elapsed%60).padStart(2,'0');
+    id('coachCallTimer').textContent = `${m}:${s}`;
+  }, 1000);
 }
 
-function escapeHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+async function coachToggleMic() {
+  if (!coachRoom) return;
+  coachMicOn = !coachMicOn;
+  await coachRoom.localParticipant.setMicrophoneEnabled(coachMicOn);
+  const btn = id('coachMicBtn');
+  btn.textContent = coachMicOn ? '🎤' : '🔇';
+  btn.style.background = coachMicOn ? 'rgba(255,255,255,.1)' : 'rgba(239,68,68,.25)';
 }
 
-function sendMessage() {
-    const input = document.getElementById('msgInput');
-    const text = input.value.trim();
-    if (!text) return;
-    const time = Date.now();
-    appendMessage(text, 'sent', myName, time);
-    channel.postMessage({ type: 'chat', text, sender: myName, time });
-    input.value = '';
-    input.focus();
+async function coachToggleCam() {
+  if (!coachRoom) return;
+  coachCamOn = !coachCamOn;
+  await coachRoom.localParticipant.setCameraEnabled(coachCamOn);
+  const btn = id('coachCamBtn');
+  btn.textContent = coachCamOn ? '📷' : '🚫';
+  btn.style.background = coachCamOn ? 'rgba(255,255,255,.1)' : 'rgba(239,68,68,.25)';
 }
 
-document.getElementById('msgInput').addEventListener('keypress', e => {
-    if (e.key === 'Enter') sendMessage();
-});
-
-window.addEventListener('beforeunload', () => {
-    channel.postMessage({ type: 'leave', name: myName });
-});
-
-// ─── LIVEKIT VIDEO CALL ───
-let room = null;
-let micEnabled = true;
-let camEnabled = true;
-let callTimerInterval = null;
-
-async function generateToken(identity) {
-    const header = { alg: 'HS256', typ: 'JWT' };
-    const now = Math.floor(Date.now() / 1000);
-    const payload = {
-        iss: LK_KEY,
-        sub: identity,
-        iat: now,
-        exp: now + 7200,
-        video: {
-            room: ROOM_NAME,
-            roomJoin: true,
-            canPublish: true,
-            canSubscribe: true,
-            canPublishData: true
-        }
-    };
-    const b64url = obj =>
-        btoa(JSON.stringify(obj))
-            .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-    const sigInput = `${b64url(header)}.${b64url(payload)}`;
-    const key = await crypto.subtle.importKey(
-        'raw', new TextEncoder().encode(LK_SECRET),
-        { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-    );
-    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(sigInput));
-    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)))
-        .replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-    return `${sigInput}.${sigB64}`;
+async function coachEndCall() {
+  if (coachRoom) { await coachRoom.disconnect(); coachRoom = null; }
+  coachCleanupVideo();
 }
 
-async function startVideoCall() {
-    channel.postMessage({ type: 'video_invite', sender: myName });
-    const modal = document.getElementById('videoModal');
-    modal.classList.add('active');
-    document.getElementById('connectingOverlay').classList.remove('hidden');
-    document.getElementById('callStatusPill').textContent = 'Connecting…';
-    document.getElementById('callStatusPill').className = 'call-status-pill connecting';
-
-    try {
-        const token = await generateToken('coach-host');
-
-        room = new LivekitClient.Room({
-            adaptiveStream: true,
-            dynacast: true,
-        });
-
-        room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
-            if (track.kind === LivekitClient.Track.Kind.Video) {
-                const el = track.attach();
-                el.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-                const container = document.getElementById('remoteVideo');
-                document.getElementById('remotePlaceholder').style.display = 'none';
-                container.appendChild(el);
-            }
-        });
-
-        room.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
-            track.detach();
-        });
-
-        room.on(LivekitClient.RoomEvent.ParticipantConnected, (participant) => {
-            appendSystem(`Client joined the video call`);
-            document.getElementById('callStatusPill').textContent = 'Live';
-            document.getElementById('callStatusPill').className = 'call-status-pill';
-            startCallTimer();
-        });
-
-        room.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => {
-            appendSystem('Client left the video call');
-        });
-
-        room.on(LivekitClient.RoomEvent.Disconnected, () => {
-            cleanupVideo();
-        });
-
-        await room.connect(LK_URL, token);
-
-        document.getElementById('connectingOverlay').classList.add('hidden');
-        document.getElementById('callStatusPill').textContent = 'Connected';
-        document.getElementById('callStatusPill').className = 'call-status-pill';
-
-        await room.localParticipant.enableCameraAndMicrophone();
-        const camTrack = room.localParticipant.getTrack(LivekitClient.Track.Source.Camera);
-        if (camTrack && camTrack.track) {
-            const localEl = camTrack.track.attach();
-            localEl.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
-            const localContainer = document.getElementById('localVideo');
-            document.getElementById('localPlaceholder').style.display = 'none';
-            localContainer.appendChild(localEl);
-        }
-
-        startCallTimer();
-
-    } catch(e) {
-        console.error('LiveKit error:', e);
-        document.getElementById('connectingOverlay').querySelector('p').textContent = 'Connection failed. Please try again.';
-    }
-}
-
-function startCallTimer() {
-    if (callTimerInterval) return;
-    const start = Date.now();
-    callTimerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - start) / 1000);
-        const m = String(Math.floor(elapsed / 60)).padStart(2,'0');
-        const s = String(elapsed % 60).padStart(2,'0');
-        document.getElementById('callTimer').textContent = `${m}:${s}`;
-    }, 1000);
-}
-
-async function toggleMic() {
-    if (!room) return;
-    micEnabled = !micEnabled;
-    await room.localParticipant.setMicrophoneEnabled(micEnabled);
-    const btn = document.getElementById('micBtn');
-    btn.textContent = micEnabled ? '🎤' : '🔇';
-    btn.classList.toggle('muted', !micEnabled);
-}
-
-async function toggleCam() {
-    if (!room) return;
-    camEnabled = !camEnabled;
-    await room.localParticipant.setCameraEnabled(camEnabled);
-    const btn = document.getElementById('camBtn');
-    btn.textContent = camEnabled ? '📷' : '🚫';
-    btn.classList.toggle('muted', !camEnabled);
-}
-
-async function endCall() {
-    if (room) {
-        await room.disconnect();
-        room = null;
-    }
-    cleanupVideo();
-}
-
-function cleanupVideo() {
-    document.getElementById('videoModal').classList.remove('active');
-    if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
-    document.getElementById('callTimer').textContent = '';
-    document.getElementById('remoteVideo').querySelectorAll('video').forEach(v => v.remove());
-    document.getElementById('remotePlaceholder').style.display = 'flex';
-    document.getElementById('localVideo').querySelectorAll('video').forEach(v => v.remove());
-    document.getElementById('localPlaceholder').style.display = 'block';
-    micEnabled = true; camEnabled = true;
-    document.getElementById('micBtn').textContent = '🎤';
-    document.getElementById('camBtn').textContent = '📷';
-    document.getElementById('micBtn').classList.remove('muted');
-    document.getElementById('camBtn').classList.remove('muted');
+function coachCleanupVideo() {
+  id('coachVideoModal').style.display = 'none';
+  if (coachTimerInterval) { clearInterval(coachTimerInterval); coachTimerInterval = null; }
+  id('coachCallTimer').textContent = '';
+  // Clear Firestore video call flag
+  if (activeConvoId) {
+    const { db, doc, setDoc } = fb();
+    setDoc(doc(db, 'conversations', activeConvoId), { videoCallActive: false }, { merge: true }).catch(()=>{});
+  }
+  // Reset remote/local video
+  id('coachRemoteVideo').querySelectorAll('video').forEach(v => v.remove());
+  id('coachRemotePlaceholder').style.display = 'flex';
+  id('coachLocalVideo').querySelectorAll('video').forEach(v => v.remove());
+  id('coachLocalPlaceholder').style.display = 'block';
+  coachMicOn = true; coachCamOn = true;
+  id('coachMicBtn').textContent = '🎤';
+  id('coachCamBtn').textContent = '📷';
+  id('coachMicBtn').style.background = 'rgba(255,255,255,.1)';
+  id('coachCamBtn').style.background = 'rgba(255,255,255,.1)';
 }
 </script>
+</body>
+</html>
+<!-- VIDEO CALL MODAL -->
+<div id="coachVideoModal" style="display:none;position:fixed;inset:0;z-index:2000;background:#060a0f;flex-direction:column;">
+  <div style="position:absolute;top:0;left:0;right:0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(6,10,15,.95) 0%,transparent 100%);z-index:10;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase">Coach Session</span>
+      <span id="coachCallPill" style="background:rgba(79,124,255,.2);border:1px solid rgba(79,124,255,.4);color:#4f7cff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;">Connecting…</span>
+    </div>
+    <span id="coachCallTimer" style="color:#94a3b8;font-size:13px;font-family:'Syne',sans-serif;letter-spacing:1px;"></span>
+  </div>
+  <div style="flex:1;position:relative;overflow:hidden;">
+    <div id="coachConnectingOverlay" style="position:absolute;inset:0;background:#0d1520;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:5;">
+      <div style="width:48px;height:48px;border:3px solid rgba(79,124,255,.2);border-top-color:#4f7cff;border-radius:50%;animation:spin .9s linear infinite;"></div>
+      <p style="color:#94a3b8;font-size:14px;" id="coachConnMsg">Connecting to session…</p>
+    </div>
+    <div id="coachRemoteVideo" style="width:100%;height:100%;background:#0d1520;display:flex;align-items:center;justify-content:center;">
+      <div id="coachRemotePlaceholder" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <div id="coachRemoteAva" style="width:88px;height:88px;border-radius:50%;background:rgba(79,124,255,.15);border:2px solid rgba(79,124,255,.3);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#4f7cff;font-family:'Syne',sans-serif;"></div>
+        <p style="color:#64748b;font-size:14px;">Waiting for client to join…</p>
+      </div>
+    </div>
+    <div id="coachLocalVideo" style="position:absolute;bottom:100px;right:16px;width:120px;height:170px;background:#1a2638;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
+      <div id="coachLocalPlaceholder" style="color:#475569;font-size:11px;text-align:center;padding:8px;">📷<br>Camera off</div>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:24px;display:flex;align-items:center;justify-content:center;gap:14px;background:linear-gradient(to top,rgba(6,10,15,.95) 0%,transparent 100%);">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <button id="coachMicBtn" onclick="coachToggleMic()" style="width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;font-size:20px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .15s,background .2s;">🎤</button>
+      <span style="font-size:10px;color:#94a3b8;font-weight:500;">Mic</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <button id="coachCamBtn" onclick="coachToggleCam()" style="width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;font-size:20px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .15s,background .2s;">📷</button>
+      <span style="font-size:10px;color:#94a3b8;font-weight:500;">Camera</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+      <button onclick="coachEndCall()" style="width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;font-size:22px;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;">📵</button>
+      <span style="font-size:10px;color:#f87171;font-weight:500;">End</span>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
