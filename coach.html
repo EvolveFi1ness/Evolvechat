@@ -13,7 +13,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
          EmailAuthProvider, sendPasswordResetEmail, deleteUser }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection,
-         getDocs, deleteDoc, writeBatch, onSnapshot, query, orderBy, addDoc, serverTimestamp }
+         getDocs, deleteDoc, writeBatch }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -36,8 +36,7 @@ window._fb = {
   createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
   onAuthStateChanged, updatePassword, reauthenticateWithCredential,
   EmailAuthProvider, sendPasswordResetEmail, deleteUser,
-  doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, writeBatch,
-  onSnapshot, query, orderBy, addDoc, serverTimestamp
+  doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, writeBatch
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -386,6 +385,8 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
 /* PRO TIP */
 .ptip{text-align:center;color:var(--muted);font-size:13px;margin-top:24px}
 .ptip kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-family:inherit;font-size:12px}
+/* PORTAL BADGE */
+.portal-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:rgba(124,85,245,.2);color:#a78bfa;border:1px solid rgba(124,85,245,.3);margin-left:5px;vertical-align:middle;letter-spacing:.3px;text-transform:uppercase}
 
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -505,10 +506,6 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
       </a>
     </nav>
     <div class="sb-bot">
-      <a href="ClientPortal.html" target="_blank" style="display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:12px;color:var(--muted2);text-decoration:none;border-bottom:1px solid var(--border);transition:background .15s;" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        <span style="white-space:nowrap">Client Portal ↗</span>
-      </a>
       <div class="av-row" onclick="goSec('settings')">
         <div class="ava" id="sbAva">—</div>
         <div class="av-inf">
@@ -729,9 +726,9 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
           <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden">
             <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
               <div class="cav avi" style="width:36px;height:36px;font-size:12px;font-family:'Syne',sans-serif;font-weight:800" id="msgAva">?</div>
-              <div style="flex:1"><div style="font-weight:600;font-size:14px" id="msgName">Select a conversation</div><div style="font-size:12px;color:var(--green)">● Online</div></div>
-              <button onclick="startCoachVideoCall()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--green,#22c55e);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:filter .15s;" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 8h8a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"/></svg>
+              <div><div style="font-weight:600;font-size:14px" id="msgName">Select a conversation</div><div style="font-size:12px;color:var(--green)">● Online</div></div>
+              <button class="btn btn-s" style="margin-left:auto;padding:7px 14px;font-size:12px;background:rgba(34,197,94,.12);color:var(--green);border-color:rgba(34,197,94,.3)" onclick="toast('Video call feature coming soon','📹')">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 8h8a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"/></svg>
                 Video Call
               </button>
             </div>
@@ -839,9 +836,6 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
   <div class="ci danger" onclick="ctxAct('delete')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Delete Client</div>
 </div>
 
-<!-- LiveKit Client -->
-<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
-
 <script>
 // ══════════════════════════════════════════
 // FIREBASE HELPERS
@@ -859,9 +853,45 @@ const actDoc     = (uid)    => fb().doc(fb().db, 'coaches', uid, 'meta', 'activi
 
 // ── Clients ──
 async function fsLoadClients(){
+  // Load manually-added clients from the coach's own subcollection
   const snap = await fb().getDocs(clientsCol(CU));
-  clients = snap.docs.map(d=>({...d.data(), id: parseInt(d.id)}));
-  nextId = clients.length ? Math.max(...clients.map(c=>c.id))+1 : 1;
+  const manualClients = snap.docs.map(d=>({...d.data(), id: parseInt(d.id)}));
+  nextId = manualClients.length ? Math.max(...manualClients.map(c=>c.id).filter(x=>x>0))+1 : 1;
+
+  // Also load clients who self-registered via the Client Portal (users/{uid} with role:'client')
+  let portalClients = [];
+  try {
+    const usersSnap = await fb().getDocs(fb().collection(fb().db, 'users'));
+    let portalIdx = -1;
+    usersSnap.docs.forEach(d => {
+      const data = d.data();
+      if (data.role !== 'client') return;
+      // Skip if this email is already in the manually-added list (avoid duplicates)
+      if (manualClients.find(c => c.email && c.email.toLowerCase() === (data.email||'').toLowerCase())) return;
+      // Derive a display name from the email address
+      const emailName = (data.email||'').split('@')[0];
+      const parts = emailName.split('.');
+      const first = parts[0] ? parts[0].charAt(0).toUpperCase()+parts[0].slice(1) : 'Portal';
+      const last  = parts[1] ? parts[1].charAt(0).toUpperCase()+parts[1].slice(1) : 'User';
+      portalClients.push({
+        id: portalIdx--,
+        first, last,
+        email: data.email||'',
+        starred: false,
+        status: 'active',
+        due: '—',
+        comp: [0, 0, 0],
+        groups: [],
+        program: '',
+        notes: '',
+        createdAt: data.lastSeen||Date.now(),
+        isPortalUser: true,  // flag so we can badge these differently
+        uid: d.id
+      });
+    });
+  } catch(e){ console.warn('Could not load portal users:', e); }
+
+  clients = [...manualClients, ...portalClients];
 }
 async function fsSaveClient(c){
   await fb().setDoc(clientDoc(CU, c.id), c);
@@ -1144,8 +1174,7 @@ function alert_(el,msg){el.textContent=msg;el.classList.add('on')}
 async function initApp(){
   await fsLoadProgs();
   renderClients(); renderPrograms(); renderLibrary();
-  initMessaging(); // real-time Firestore chat
-  renderCalendar(); renderDashboard();
+  renderMessages(); renderCalendar(); renderDashboard();
 }
 
 // ══════════════════════════════════════════
@@ -1212,7 +1241,7 @@ function renderClients(){
       const due=c.due==='—'?'<span style="color:var(--muted)">—</span>':`<span class="pill pg" style="font-size:11px">${c.due}</span>`;
       return `<tr>
         <td class="cb"><input type="checkbox"/></td>
-        <td><div class="cc"><div class="cav ${gc(c)}">${gi(c)}${star}</div><div><div class="cn">${c.first} ${c.last}</div><div class="ce">${c.email||''}</div></div></div></td>
+        <td><div class="cc"><div class="cav ${gc(c)}">${gi(c)}${star}</div><div><div class="cn">${c.first} ${c.last}${c.isPortalUser?'<span class="portal-badge">Portal</span>':''}</div><div class="ce">${c.email||''}</div></div></div></td>
         <td><span class="pill ${c.status==='active'?'pg':'py'}">${c.status}</span></td>
         <td>${due}</td>
         <td><div class="cbw">${comps}</div></td>
@@ -1510,159 +1539,137 @@ function renderCalendar(){
 function chMonth(d){ calMo+=d; if(calMo>11){calMo=0;calYr++} if(calMo<0){calMo=11;calYr--} renderCalendar(); }
 
 // ══════════════════════════════════════════
-// MESSAGES — Firestore real-time
+// MESSAGES  — real Firestore-backed chat
 // ══════════════════════════════════════════
-let allConversations = [];
-let activeConvoId = null;
-let unsubConvos = null;
-let unsubChatMsgs = null;
+let chatHist=[];
+let activeConvo=null;
+let _msgUnsub=null; // Firestore onSnapshot unsubscribe handle
 
-function initMessaging() {
-  if (unsubConvos) unsubConvos();
-  const { db, collection, onSnapshot } = fb();
+// Firestore path: users/{clientUID}/messages
+const chatCol = (clientUID) => fb().collection(fb().db, 'users', clientUID, 'messages');
 
-  const handleSnapshot = snapshot => {
-    allConversations = [];
-    snapshot.forEach(d => allConversations.push({ id: d.id, ...d.data() }));
-    // Sort client-side — works even when lastTime is null/missing on some docs
-    allConversations.sort((a, b) => {
-      const aT = a.lastTime?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
-      const bT = b.lastTime?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
-      return bT - aT;
-    });
-    renderConversationList();
-  };
-
-  // Listen to whole collection — no orderBy = no composite index required,
-  // works immediately even on a fresh Firebase project
-  unsubConvos = onSnapshot(
-    collection(db, 'conversations'),
-    handleSnapshot,
-    err => {
-      console.warn('Conversations listener error:', err);
-      allConversations = [];
-      renderConversationList();
-    }
-  );
+// Build the conversation list from real portal clients + manually-added clients that have UIDs
+function getConvoClients(){
+  // Portal users have .uid (their Firebase auth UID); manually-added clients may not have .uid
+  return clients.filter(c => c.uid || c.isPortalUser).slice(0, 20);
 }
 
-function _convColor(name) {
-  const COLORS = ['avi','avb','avg','avr','ava2','avt'];
-  return COLORS[(name||'?').charCodeAt(0) % COLORS.length];
-}
-function _convInitials(name) {
-  return (name||'?').split(' ').map(w=>w[0]||'').join('').toUpperCase().slice(0,2) || '??';
-}
-function _formatConvTime(ts) {
-  if (!ts) return '';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  const diff = Date.now() - d;
-  if (diff < 60000) return 'now';
-  if (diff < 3600000) return Math.floor(diff/60000) + 'm';
-  if (diff < 86400000) return Math.floor(diff/3600000) + 'h';
-  return Math.floor(diff/86400000) + 'd';
-}
-
-function renderConversationList() {
-  const el = id('msgList');
-  if (!allConversations.length) {
-    el.innerHTML = `<div style="padding:30px 16px;text-align:center;color:var(--muted);font-size:13px;line-height:1.7">
-      <div style="font-size:28px;margin-bottom:10px">💬</div>
-      No conversations yet.<br>Clients appear here after they sign in<br>to the Client Portal.
+function renderMessages(){
+  const convoList = getConvoClients();
+  if(!convoList.length){
+    id('msgList').innerHTML=`<div style="padding:24px 16px;text-align:center;color:var(--muted)">
+      <div style="font-size:30px;margin-bottom:10px">💬</div>
+      <div style="font-size:13px;font-weight:600;color:var(--muted2);margin-bottom:6px">No conversations yet</div>
+      <div style="font-size:12px;line-height:1.5">Clients appear here after they sign in to the Client Portal.</div>
     </div>`;
+    id('msgAva').textContent='?';
+    id('msgName').textContent='Select a conversation';
+    id('chatMsgs').innerHTML='';
     return;
   }
-  el.innerHTML = allConversations.map(c => {
-    const name = c.clientName || c.clientEmail || 'Unknown Client';
-    const ini  = _convInitials(name);
-    const col  = _convColor(name);
-    const time = _formatConvTime(c.lastTime);
-    const unread = c.unreadCoach || 0;
-    const isAct  = activeConvoId === c.id;
-    const vcBadge = c.videoCallActive ? `<div style="font-size:10px;color:var(--green);font-weight:700">● Live</div>` : '';
-    return `<div onclick="openConvo('${c.id}',${JSON.stringify(name)},${JSON.stringify(ini)},${JSON.stringify(col)})"
-      style="padding:14px 16px;display:flex;gap:12px;align-items:center;cursor:pointer;border-bottom:1px solid var(--border);background:${isAct?'var(--surface2)':'transparent'};transition:background .15s"
+
+  id('msgList').innerHTML=convoList.map(c=>{
+    const isActive = activeConvo && activeConvo.uid === c.uid;
+    const unread = c._unread || 0;
+    return `
+    <div onclick="openConvo('${c.uid||''}','${c.first} ${c.last}','${gc(c)}')"
+      style="padding:14px 16px;display:flex;gap:12px;align-items:center;cursor:pointer;border-bottom:1px solid var(--border);background:${isActive?'var(--surface2)':'transparent'};transition:background .15s"
       onmouseenter="this.style.background='var(--surface2)'"
-      onmouseleave="this.style.background='${isAct?'var(--surface2)':'transparent'}'">
-      <div class="cav ${col}" style="width:38px;height:38px;font-size:12px;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0">${ini}</div>
+      onmouseleave="this.style.background='${isActive?'var(--surface2)':'transparent'}'">
+      <div class="cav ${gc(c)}" style="width:38px;height:38px;font-size:12px;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0">${gi(c)}</div>
       <div style="flex:1;min-width:0">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-          <span style="font-size:13px;font-weight:600">${name}</span>
-          <span style="font-size:11px;color:var(--muted)">${time}</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:13px;font-weight:600">${c.first} ${c.last}${c.isPortalUser?'<span class="portal-badge">Portal</span>':''}</span>
         </div>
-        <div style="font-size:12px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${c.lastMessage||'No messages yet'}</div>
-        ${vcBadge}
+        <div style="font-size:12px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${c.email||''}</div>
       </div>
       ${unread?`<div style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${unread}</div>`:''}
     </div>`;
   }).join('');
+
+  if(!activeConvo && convoList.length){
+    const first = convoList[0];
+    openConvo(first.uid||'', `${first.first} ${first.last}`, gc(first));
+  } else {
+    renderChat();
+  }
 }
 
-function openConvo(convoId, name, ini, col) {
-  activeConvoId = convoId;
-  id('msgAva').textContent = ini;
+async function openConvo(uid, name, col){
+  if(!uid){ toast('This client has no portal account yet','ℹ️'); return; }
+
+  // Unsubscribe previous listener
+  if(_msgUnsub){ _msgUnsub(); _msgUnsub=null; }
+
+  const c = clients.find(x=>x.uid===uid) || {uid};
+  activeConvo = {uid, name, col};
+  c._unread = 0;
+
+  id('msgAva').textContent = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
   id('msgAva').className = `cav ${col}`;
   id('msgName').textContent = name;
+  chatHist = [];
+  renderChat();
+  renderMessages();
 
-  // Clear unread counter
-  const { db, doc, setDoc, serverTimestamp: st } = fb();
-  setDoc(doc(db, 'conversations', convoId), { unreadCoach: 0 }, { merge: true }).catch(()=>{});
+  // Subscribe to real-time messages from Firestore
+  const { onSnapshot, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').catch(()=>({}));
+  if(!onSnapshot){
+    // Fallback: one-time load
+    const snap = await fb().getDocs(chatCol(uid));
+    chatHist = snap.docs.map(d=>d.data()).sort((a,b)=>a.ts-b.ts);
+    renderChat();
+    return;
+  }
 
-  // Subscribe to this conversation's messages
-  if (unsubChatMsgs) unsubChatMsgs();
-  id('chatMsgs').innerHTML = '';
-  const { collection, onSnapshot } = fb();
-
-  unsubChatMsgs = onSnapshot(
-    collection(db, 'conversations', convoId, 'messages'),
-    snapshot => {
-      // Collect all msgs, sort by timestamp client-side (no index needed)
-      const msgs = [];
-      snapshot.forEach(d => msgs.push(d.data()));
-      msgs.sort((a, b) => {
-        const aT = a.timestamp?.toMillis?.() || 0;
-        const bT = b.timestamp?.toMillis?.() || 0;
-        return aT - bT;
-      });
-      id('chatMsgs').innerHTML = '';
-      msgs.forEach(msg => {
-        const isCoach = msg.sender === 'coach';
-        const div = document.createElement('div');
-        div.style.cssText = `display:flex;justify-content:${isCoach?'flex-end':'flex-start'}`;
-        div.innerHTML = `<div style="max-width:70%;background:${isCoach?'var(--accent)':'var(--surface2)'};
-          border:1px solid ${isCoach?'transparent':'var(--border2)'};
-          border-radius:${isCoach?'14px 14px 4px 14px':'14px 14px 14px 4px'};
-          padding:10px 14px;font-size:13px;line-height:1.5">${escMsg(msg.text)}</div>`;
-        id('chatMsgs').appendChild(div);
-      });
-      const el = id('chatMsgs'); el.scrollTop = el.scrollHeight;
-    }
+  _msgUnsub = onSnapshot(
+    query(chatCol(uid), orderBy('ts','asc')),
+    snap => {
+      chatHist = snap.docs.map(d=>d.data());
+      renderChat();
+    },
+    err => console.warn('Chat listener error:', err)
   );
-
-  renderConversationList(); // highlight active
 }
 
-function escMsg(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function sendMsg() {
-  const inp = id('msgInp'), txt = inp.value.trim();
-  if (!txt || !activeConvoId) { if(!activeConvoId) toast('Select a conversation first','💬'); return; }
-  inp.value = '';
-
-  const { db, collection, addDoc, doc, setDoc, serverTimestamp } = fb();
-  const coachName = window._fbProfile ? `${window._fbProfile.first} ${window._fbProfile.last}`.trim() : 'Coach';
-
-  addDoc(collection(db, 'conversations', activeConvoId, 'messages'), {
-    text: txt, sender: 'coach', senderName: coachName,
-    timestamp: serverTimestamp()
-  });
-  setDoc(doc(db, 'conversations', activeConvoId), {
-    lastMessage: txt, lastTime: serverTimestamp()
-  }, { merge: true });
+function renderChat(){
+  if(!chatHist.length){
+    id('chatMsgs').innerHTML=`<div style="text-align:center;color:var(--muted);padding:40px 20px">
+      <div style="font-size:32px;margin-bottom:10px">👋</div>
+      <div style="font-size:13px">No messages yet. Say hello!</div>
+    </div>`;
+    return;
+  }
+  id('chatMsgs').innerHTML=chatHist.map(m=>`
+    <div style="display:flex;justify-content:${m.from==='coach'?'flex-end':'flex-start'}">
+      <div style="max-width:70%;background:${m.from==='coach'?'var(--accent)':'var(--surface2)'};
+        border:1px solid ${m.from==='coach'?'transparent':'var(--border2)'};
+        border-radius:${m.from==='coach'?'14px 14px 4px 14px':'14px 14px 14px 4px'};
+        padding:10px 14px;font-size:13px;line-height:1.5">
+        ${m.text}
+        <div style="font-size:10px;opacity:.5;margin-top:4px;text-align:right">${m.ts?new Date(m.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div>
+      </div>
+    </div>`).join('');
+  const el=id('chatMsgs'); el.scrollTop=el.scrollHeight;
 }
 
-// Replace old renderMessages stub (kept for nav compatibility)
-function renderMessages() { /* handled by initMessaging + renderConversationList */ }
+async function sendMsg(){
+  const inp=id('msgInp'), txt=inp.value.trim();
+  if(!txt) return;
+  if(!activeConvo?.uid){ toast('Select a client to message first','ℹ️'); return; }
+  inp.value='';
+  const msg = { from:'coach', text:txt, ts:Date.now() };
+  // Write to Firestore → the client's portal will see it in real-time
+  try {
+    const { addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    await addDoc(chatCol(activeConvo.uid), msg);
+  } catch(e){
+    // Fallback: show locally only
+    chatHist.push(msg);
+    renderChat();
+    console.warn('Firestore write failed, showing locally:', e);
+  }
+}
 
 // ══════════════════════════════════════════
 // DASHBOARD
@@ -1713,197 +1720,8 @@ document.addEventListener('keydown',e=>{
   if(e.key==='d'||e.key==='D') goSec('dashboard');
   if(e.key==='c'||e.key==='C') goSec('clients');
   if(e.key==='m'||e.key==='M') goSec('messages');
-  if(e.key==='Escape'){closeCtx();document.querySelectorAll('.mo').forEach(o=>o.classList.remove('on'));if(coachRoom)coachEndCall();}
+  if(e.key==='Escape'){closeCtx();document.querySelectorAll('.mo').forEach(o=>o.classList.remove('on'));}
 });
-
-// ══════════════════════════════════════════
-// VIDEO CALL — LiveKit (Coach side)
-// ══════════════════════════════════════════
-const LK_URL    = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
-const LK_KEY    = 'APINy8wg8sjumEe';
-const LK_SECRET = 'Gt6UJZQxNBNeKau7FaoJ2ffJHFdeKJhrhKOkQZv3hcxB';
-const ROOM_NAME = 'evolve-coaching-room';
-
-let coachRoom = null;
-let coachMicOn = true;
-let coachCamOn = true;
-let coachTimerInterval = null;
-let coachCallStart = null;
-
-async function coachGenerateToken(identity) {
-  const header = { alg: 'HS256', typ: 'JWT' };
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: LK_KEY, sub: identity, iat: now, exp: now + 7200,
-    video: { room: ROOM_NAME, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true }
-  };
-  const b64 = obj => btoa(JSON.stringify(obj)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
-  const sig = `${b64(header)}.${b64(payload)}`;
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(LK_SECRET), { name:'HMAC',hash:'SHA-256' }, false, ['sign']);
-  const s = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(sig));
-  return `${sig}.${btoa(String.fromCharCode(...new Uint8Array(s))).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')}`;
-}
-
-async function startCoachVideoCall() {
-  if (!CU) { toast('Not signed in','⚠️'); return; }
-  if (!activeConvoId) { toast('Select a client conversation first','💬'); return; }
-
-  // Notify client via Firestore
-  const { db, doc, setDoc, serverTimestamp } = fb();
-  setDoc(doc(db, 'conversations', activeConvoId), { videoCallActive: true, videoCallTime: serverTimestamp() }, { merge: true });
-
-  const modal = id('coachVideoModal');
-  modal.style.display = 'flex';
-  id('coachConnectingOverlay').style.display = 'flex';
-  id('coachCallPill').textContent = 'Connecting…';
-  id('coachCallPill').style.color = '#f59e0b';
-
-  // Set remote avatar initials from active convo
-  const c = allConversations.find(x => x.id === activeConvoId);
-  if (c) id('coachRemoteAva').textContent = _convInitials(c.clientName || c.clientEmail || '?');
-
-  try {
-    const identity = `coach-${CU}`;
-    const token = await coachGenerateToken(identity);
-    coachRoom = new LivekitClient.Room({ adaptiveStream: true, dynacast: true });
-
-    coachRoom.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
-      if (track.kind === LivekitClient.Track.Kind.Video) {
-        const el = track.attach();
-        el.style.cssText = 'width:100%;height:100%;object-fit:cover;';
-        id('coachRemotePlaceholder').style.display = 'none';
-        id('coachRemoteVideo').appendChild(el);
-      }
-    });
-    coachRoom.on(LivekitClient.RoomEvent.TrackUnsubscribed, track => track.detach());
-    coachRoom.on(LivekitClient.RoomEvent.ParticipantConnected, () => {
-      id('coachCallPill').textContent = 'Live';
-      id('coachCallPill').style.color = '#22c55e';
-      toast('Client joined the call! 📹','📹');
-      startCoachTimer();
-    });
-    coachRoom.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => {
-      toast('Client left the call','📵');
-    });
-    coachRoom.on(LivekitClient.RoomEvent.Disconnected, coachCleanupVideo);
-
-    await coachRoom.connect(LK_URL, token);
-    id('coachConnectingOverlay').style.display = 'none';
-    id('coachCallPill').textContent = 'Connected';
-    id('coachCallPill').style.color = '#22c55e';
-
-    await coachRoom.localParticipant.enableCameraAndMicrophone();
-    const camTrack = coachRoom.localParticipant.getTrack(LivekitClient.Track.Source.Camera);
-    if (camTrack && camTrack.track) {
-      const localEl = camTrack.track.attach();
-      localEl.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);';
-      id('coachLocalPlaceholder').style.display = 'none';
-      id('coachLocalVideo').appendChild(localEl);
-    }
-    startCoachTimer();
-
-  } catch(e) {
-    console.error('LiveKit error:', e);
-    id('coachConnMsg').textContent = 'Connection failed. Try again.';
-  }
-}
-
-function startCoachTimer() {
-  if (coachTimerInterval) return;
-  coachCallStart = Date.now();
-  coachTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - coachCallStart) / 1000);
-    const m = String(Math.floor(elapsed/60)).padStart(2,'0');
-    const s = String(elapsed%60).padStart(2,'0');
-    id('coachCallTimer').textContent = `${m}:${s}`;
-  }, 1000);
-}
-
-async function coachToggleMic() {
-  if (!coachRoom) return;
-  coachMicOn = !coachMicOn;
-  await coachRoom.localParticipant.setMicrophoneEnabled(coachMicOn);
-  const btn = id('coachMicBtn');
-  btn.textContent = coachMicOn ? '🎤' : '🔇';
-  btn.style.background = coachMicOn ? 'rgba(255,255,255,.1)' : 'rgba(239,68,68,.25)';
-}
-
-async function coachToggleCam() {
-  if (!coachRoom) return;
-  coachCamOn = !coachCamOn;
-  await coachRoom.localParticipant.setCameraEnabled(coachCamOn);
-  const btn = id('coachCamBtn');
-  btn.textContent = coachCamOn ? '📷' : '🚫';
-  btn.style.background = coachCamOn ? 'rgba(255,255,255,.1)' : 'rgba(239,68,68,.25)';
-}
-
-async function coachEndCall() {
-  if (coachRoom) { await coachRoom.disconnect(); coachRoom = null; }
-  coachCleanupVideo();
-}
-
-function coachCleanupVideo() {
-  id('coachVideoModal').style.display = 'none';
-  if (coachTimerInterval) { clearInterval(coachTimerInterval); coachTimerInterval = null; }
-  id('coachCallTimer').textContent = '';
-  // Clear Firestore video call flag
-  if (activeConvoId) {
-    const { db, doc, setDoc } = fb();
-    setDoc(doc(db, 'conversations', activeConvoId), { videoCallActive: false }, { merge: true }).catch(()=>{});
-  }
-  // Reset remote/local video
-  id('coachRemoteVideo').querySelectorAll('video').forEach(v => v.remove());
-  id('coachRemotePlaceholder').style.display = 'flex';
-  id('coachLocalVideo').querySelectorAll('video').forEach(v => v.remove());
-  id('coachLocalPlaceholder').style.display = 'block';
-  coachMicOn = true; coachCamOn = true;
-  id('coachMicBtn').textContent = '🎤';
-  id('coachCamBtn').textContent = '📷';
-  id('coachMicBtn').style.background = 'rgba(255,255,255,.1)';
-  id('coachCamBtn').style.background = 'rgba(255,255,255,.1)';
-}
 </script>
-</body>
-</html>
-<!-- VIDEO CALL MODAL -->
-<div id="coachVideoModal" style="display:none;position:fixed;inset:0;z-index:2000;background:#060a0f;flex-direction:column;">
-  <div style="position:absolute;top:0;left:0;right:0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(6,10,15,.95) 0%,transparent 100%);z-index:10;">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase">Coach Session</span>
-      <span id="coachCallPill" style="background:rgba(79,124,255,.2);border:1px solid rgba(79,124,255,.4);color:#4f7cff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px;">Connecting…</span>
-    </div>
-    <span id="coachCallTimer" style="color:#94a3b8;font-size:13px;font-family:'Syne',sans-serif;letter-spacing:1px;"></span>
-  </div>
-  <div style="flex:1;position:relative;overflow:hidden;">
-    <div id="coachConnectingOverlay" style="position:absolute;inset:0;background:#0d1520;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:5;">
-      <div style="width:48px;height:48px;border:3px solid rgba(79,124,255,.2);border-top-color:#4f7cff;border-radius:50%;animation:spin .9s linear infinite;"></div>
-      <p style="color:#94a3b8;font-size:14px;" id="coachConnMsg">Connecting to session…</p>
-    </div>
-    <div id="coachRemoteVideo" style="width:100%;height:100%;background:#0d1520;display:flex;align-items:center;justify-content:center;">
-      <div id="coachRemotePlaceholder" style="display:flex;flex-direction:column;align-items:center;gap:16px;">
-        <div id="coachRemoteAva" style="width:88px;height:88px;border-radius:50%;background:rgba(79,124,255,.15);border:2px solid rgba(79,124,255,.3);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#4f7cff;font-family:'Syne',sans-serif;"></div>
-        <p style="color:#64748b;font-size:14px;">Waiting for client to join…</p>
-      </div>
-    </div>
-    <div id="coachLocalVideo" style="position:absolute;bottom:100px;right:16px;width:120px;height:170px;background:#1a2638;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.15);box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
-      <div id="coachLocalPlaceholder" style="color:#475569;font-size:11px;text-align:center;padding:8px;">📷<br>Camera off</div>
-    </div>
-  </div>
-  <div style="position:absolute;bottom:0;left:0;right:0;padding:24px;display:flex;align-items:center;justify-content:center;gap:14px;background:linear-gradient(to top,rgba(6,10,15,.95) 0%,transparent 100%);">
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <button id="coachMicBtn" onclick="coachToggleMic()" style="width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;font-size:20px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .15s,background .2s;">🎤</button>
-      <span style="font-size:10px;color:#94a3b8;font-weight:500;">Mic</span>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <button id="coachCamBtn" onclick="coachToggleCam()" style="width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;font-size:20px;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;transition:transform .15s,background .2s;">📷</button>
-      <span style="font-size:10px;color:#94a3b8;font-weight:500;">Camera</span>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-      <button onclick="coachEndCall()" style="width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;font-size:22px;background:#ef4444;color:#fff;display:flex;align-items:center;justify-content:center;">📵</button>
-      <span style="font-size:10px;color:#f87171;font-weight:500;">End</span>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
