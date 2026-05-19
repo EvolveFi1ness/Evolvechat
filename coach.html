@@ -72,21 +72,18 @@ onAuthStateChanged(auth, async (user) => {
   // Check coach doc
   const coachSnap = await getDoc(doc(db, 'coaches', user.uid));
   if (coachSnap.exists()) {
-    // ✅ Confirmed coach — boot the app
     window._fbUser    = user;
     window._fbProfile = coachSnap.data();
     bootApp(user, coachSnap.data(), false);
   } else {
-    // ❌ No coach doc — sign out silently, show specific error
     await signOut(auth);
     showAuth('loginPage');
-    // Peek at users/{uid} to give a better message
     const clientSnap = await getDoc(doc(db, 'users', user.uid)).catch(()=>null);
     const isClient   = clientSnap && clientSnap.exists();
     const err = document.getElementById('loginErr');
     err.textContent = isClient
-      ? '⚠️ This email is registered as a client account. Please sign up with a different email for CoachApp, or use the Client Portal.'
-      : 'No coach account found for this email. Please sign up below.';
+      ? '⚠️ This email is registered as a client account. Use the Client Portal instead.'
+      : 'No coach account found. Please sign up first.';
     err.classList.add('on');
   }
 });
@@ -405,16 +402,14 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
       <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
     </div>
     <div class="auth-title">Welcome back</div>
-    <div class="auth-sub">Sign in to your coaching dashboard</div>
+    <div class="auth-sub">Enter your password to access the coaching dashboard</div>
     <div class="auth-alert e" id="loginErr"></div>
-    <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"/></div>
     <div class="fw"><label class="fl">Password</label><input class="fi" type="password" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
-    <div class="auth-meta">
-      <label class="rem"><input type="checkbox" id="remMe" checked/> Remember me</label>
+    <div class="auth-meta" style="justify-content:flex-end">
       <span class="al" onclick="showAuth('forgotPage')">Forgot password?</span>
     </div>
     <button class="btn-auth" onclick="doLogin()">Sign In</button>
-    <div class="auth-sw">Don't have an account? <span class="al" onclick="showAuth('signupPage')">Create one free</span></div>
+    <div class="auth-sw" style="margin-top:8px;font-size:12px;color:var(--muted)">First time? <span class="al" onclick="showAuth('signupPage')">Create your coach account</span></div>
   </div>
 </div>
 
@@ -761,12 +756,13 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
             <div class="str"><div><div class="strl">Client milestones</div><div class="strd">Celebrate PRs and goal achievements</div></div><label class="tgl"><input type="checkbox" checked/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
           </div>
           <div class="stsec">
-            <div class="stt">🔒 Change Password</div>
+            <div class="stt">🔒 Change Login Password</div>
             <div class="fw"><label class="fl">Current Password</label><input class="fi" type="password" id="cPass" placeholder="••••••••"/></div>
-            <div class="fw"><label class="fl">New Password</label><input class="fi" type="password" id="nPass" placeholder="Min. 8 characters"/></div>
+            <div class="fw"><label class="fl">New Password</label><input class="fi" type="password" id="nPass" placeholder="Min. 6 characters"/></div>
             <div class="fw"><label class="fl">Confirm New Password</label><input class="fi" type="password" id="nPass2" placeholder="••••••••"/></div>
             <div class="auth-alert e" id="passErr" style="margin-bottom:10px"></div>
-            <button class="btn btn-s" style="width:100%" onclick="changePass()">Update Password</button>
+            <div class="auth-alert s" id="passOk" style="margin-bottom:10px"></div>
+            <button class="btn btn-s" style="width:100%" onclick="changeLocalPass()">Update Password</button>
           </div>
           <div class="stsec">
             <div class="stt">⚙️ Preferences</div>
@@ -891,6 +887,11 @@ const actDoc     = (uid)    => fb().doc(fb().db, 'coaches', uid, 'meta', 'activi
 
 // ── Clients ──
 async function fsLoadClients(){
+  if(CU === 'local-coach'){
+    clients = JSON.parse(localStorage.getItem('localClients')||'[]');
+    nextId  = clients.length ? Math.max(...clients.map(c=>c.id).filter(x=>x>0),0)+1 : 1;
+    return;
+  }
   // Load manually-added clients from the coach's own subcollection
   const snap = await fb().getDocs(clientsCol(CU));
   const manualClients = snap.docs.map(d=>({...d.data(), id: parseInt(d.id)}));
@@ -946,35 +947,72 @@ async function fsLoadClients(){
   clients = [...manualClients, ...portalClients];
 }
 async function fsSaveClient(c){
+  if(CU === 'local-coach'){
+    const idx = clients.findIndex(x=>x.id===c.id);
+    if(idx>=0) clients[idx]=c; else clients.push(c);
+    localStorage.setItem('localClients', JSON.stringify(clients));
+    return;
+  }
   await fb().setDoc(clientDoc(CU, c.id), c);
 }
 async function fsDeleteClient(cid){
+  if(CU === 'local-coach'){
+    clients = clients.filter(c=>c.id!==cid);
+    localStorage.setItem('localClients', JSON.stringify(clients));
+    return;
+  }
   await fb().deleteDoc(clientDoc(CU, cid));
 }
 
 // ── Programs ──
 async function fsLoadProgs(){
+  if(CU === 'local-coach'){
+    savedProgs = JSON.parse(localStorage.getItem('localProgs')||'[]');
+    return;
+  }
   const snap = await fb().getDocs(progsCol(CU));
   savedProgs = snap.docs.map(d=>({...d.data(), _fid: d.id}));
 }
 async function fsSaveProg(p){
+  if(CU === 'local-coach'){
+    if(!p._fid) p._fid = 'local-'+Date.now();
+    const idx = savedProgs.findIndex(x=>x._fid===p._fid);
+    if(idx>=0) savedProgs[idx]=p; else savedProgs.push(p);
+    localStorage.setItem('localProgs', JSON.stringify(savedProgs));
+    return p;
+  }
   const ref = fb().doc(progsCol(CU)); // auto-id
   await fb().setDoc(ref, {...p, _fid: ref.id});
   p._fid = ref.id;
   return p;
 }
 async function fsDeleteProg(fid){
+  if(CU === 'local-coach'){
+    savedProgs = savedProgs.filter(p=>p._fid!==fid);
+    localStorage.setItem('localProgs', JSON.stringify(savedProgs));
+    return;
+  }
   await fb().deleteDoc(progDoc(CU, fid));
 }
 
 // ── Activity ──
 async function fsLoadActivity(){
+  if(CU === 'local-coach'){
+    return JSON.parse(localStorage.getItem('localActivity')||'[]');
+  }
   try{
     const snap = await fb().getDoc(actDoc(CU));
     return snap.exists() ? (snap.data().log||[]) : [];
   }catch{ return []; }
 }
 async function fsPushActivity(text){
+  if(CU === 'local-coach'){
+    const log = await fsLoadActivity();
+    log.unshift({text, time:'Just now'});
+    if(log.length>12) log.pop();
+    localStorage.setItem('localActivity', JSON.stringify(log));
+    return;
+  }
   const log = await fsLoadActivity();
   log.unshift({text, time:'Just now'});
   if(log.length>12) log.pop();
@@ -994,14 +1032,25 @@ function showAuth(page){
   document.querySelectorAll('.auth-alert').forEach(a=>a.classList.remove('on'));
 }
 
-// Called from Firebase onAuthStateChanged after coach doc verified
+// Called after login (local or Firebase) — boots the main app UI
 window.bootApp = async function(fbUser, profile, fresh){
   CU = fbUser.uid;
-  await fsLoadClients();
 
-  const first = profile.first, last = profile.last, email = fbUser.email;
-  id('sbAva').textContent  = (first[0]+last[0]).toUpperCase();
-  id('sbName').textContent = `${first} ${last}`;
+  // For local auth, use localStorage for client/program data (no Firestore)
+  if(CU === 'local-coach'){
+    clients = JSON.parse(localStorage.getItem('localClients')||'[]');
+    nextId  = clients.length ? Math.max(...clients.map(c=>c.id).filter(x=>x>0),0)+1 : 1;
+    savedProgs = JSON.parse(localStorage.getItem('localProgs')||'[]');
+  } else {
+    await fsLoadClients();
+  }
+
+  const first = profile.first || 'Coach';
+  const last  = profile.last  || '';
+  const email = fbUser.email  || '';
+  const ava   = last ? (first[0]+last[0]).toUpperCase() : first.slice(0,2).toUpperCase();
+  id('sbAva').textContent  = ava;
+  id('sbName').textContent = last ? `${first} ${last}` : first;
   id('sbEmail').textContent= email;
   id('stFirst').value = first;
   id('stLast').value  = last;
@@ -1096,33 +1145,37 @@ async function doSignup(){
 }
 
 // ══════════════════════════════════════════
-// LOGIN
+// LOGIN  (local password — no Firebase Auth)
 // ══════════════════════════════════════════
-async function doLogin(){
-  const email=v('lEmail').toLowerCase(), pass=v('lPass');
-  const err=id('loginErr');
-  err.classList.remove('on');
-  if(!email||!pass) return alert_(err,'Please enter your email and password.');
+function getLocalPassword(){
+  return localStorage.getItem('coachPassword') || 'admin123';
+}
 
-  try{
-    await fb().signInWithEmailAndPassword(fb().auth, email, pass);
-    // onAuthStateChanged verifies coach role and calls bootApp
-  } catch(e){
-    const msg = (e.code==='auth/user-not-found'||e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')
-      ? 'Incorrect email or password. Please try again.'
-      : (e.message||'Login failed.');
-    alert_(err, msg);
+function doLogin(){
+  const pass = id('lPass').value;
+  const err  = id('loginErr');
+  err.classList.remove('on');
+  if(!pass) return alert_(err,'Please enter your password.');
+
+  if(pass !== getLocalPassword()){
+    return alert_(err,'Incorrect password. Please try again.');
   }
+
+  sessionStorage.setItem('coachLoggedIn','1');
+  window._fbUser    = { uid: 'local-coach', email: 'coach@local' };
+  window._fbProfile = { first: 'Coach', last: '', role: 'Coach' };
+  bootApp(window._fbUser, window._fbProfile, false);
 }
 
 // ══════════════════════════════════════════
 // LOGOUT
 // ══════════════════════════════════════════
-async function doLogout(){
-  await fb().signOut(fb().auth);
+function doLogout(){
+  sessionStorage.removeItem('coachLoggedIn');
   CU=null; clients=[]; savedProgs=[];
   id('app').style.display='none';
   curTab='active'; goSec('clients');
+  showAuth('loginPage');
   toast('Signed out successfully','👋');
 }
 
@@ -1166,31 +1219,33 @@ function pStrength(val){
 // ══════════════════════════════════════════
 async function saveProfile(){
   const first=v('stFirst'), last=v('stLast'), role=v('stRole');
-  if(!first||!last) return toast('Name cannot be empty','⚠️');
-  await fb().updateDoc(coachDoc(CU), {first, last, role});
+  if(!first) return toast('Name cannot be empty','⚠️');
+  if(CU !== 'local-coach'){
+    await fb().updateDoc(coachDoc(CU), {first, last, role});
+  }
   window._fbProfile = {...window._fbProfile, first, last, role};
-  id('sbAva').textContent=(first[0]+last[0]).toUpperCase();
-  id('sbName').textContent=`${first} ${last}`;
+  const ava = last ? (first[0]+last[0]).toUpperCase() : first.slice(0,2).toUpperCase();
+  id('sbAva').textContent = ava;
+  id('sbName').textContent = last ? `${first} ${last}` : first;
   toast('Profile saved!','✅');
 }
 
 // ══════════════════════════════════════════
-// CHANGE PASSWORD  (Firebase reauthenticate)
+// CHANGE LOCAL PASSWORD
 // ══════════════════════════════════════════
-async function changePass(){
+function changeLocalPass(){
   const cur=v('cPass'), np=v('nPass'), np2=v('nPass2');
-  const err=id('passErr'); err.classList.remove('on');
-  if(np.length<8) return alert_(err,'New password must be at least 8 characters.');
+  const err=id('passErr'), ok=id('passOk');
+  err.classList.remove('on'); ok.classList.remove('on');
+  if(!cur) return alert_(err,'Please enter your current password.');
+  if(cur !== getLocalPassword()) return alert_(err,'Current password is incorrect.');
+  if(np.length<6) return alert_(err,'New password must be at least 6 characters.');
   if(np!==np2) return alert_(err,'Passwords do not match.');
-  try{
-    const cred = fb().EmailAuthProvider.credential(window._fbUser.email, cur);
-    await fb().reauthenticateWithCredential(window._fbUser, cred);
-    await fb().updatePassword(window._fbUser, np);
-    id('cPass').value=''; id('nPass').value=''; id('nPass2').value='';
-    toast('Password updated!','🔒');
-  } catch(e){
-    alert_(err, e.code==='auth/wrong-password'?'Current password is incorrect.':'Failed to update password.');
-  }
+  localStorage.setItem('coachPassword', np);
+  id('cPass').value=''; id('nPass').value=''; id('nPass2').value='';
+  ok.textContent='Password updated successfully!'; ok.classList.add('on');
+  setTimeout(()=>ok.classList.remove('on'), 3000);
+  toast('Password updated!','🔒');
 }
 
 // ══════════════════════════════════════════
