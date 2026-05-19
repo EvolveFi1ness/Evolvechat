@@ -565,6 +565,7 @@
             </button>
             <div class="status-dot"></div>
             <button class="btn-logout" onclick="logout()">Sign out</button>
+            <a href="CoachApp.html" target="_blank" style="font-size:11px;color:var(--text-muted);text-decoration:none;padding:4px 8px;border-radius:6px;border:1px solid var(--border);transition:background .15s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background=''">Coach App ↗</a>
         </div>
     </div>
 
@@ -679,7 +680,9 @@ function showApp(user) {
     document.getElementById('mainApp').style.display = 'flex';
     const name = user.displayName || user.email.split('@')[0];
     document.getElementById('userLabel').textContent = `Signed in as ${name}`;
-    channel.postMessage({ type: 'join', name: 'Client', time: Date.now() });
+    chatArea.innerHTML = '';
+    appendSystem('Connected to coaching session. Say hello! 👋');
+    initConversation(user);
 }
 
 function toggleMode() {
@@ -769,21 +772,58 @@ document.getElementById('passwordInput').addEventListener('keypress', e => {
     if (e.key === 'Enter') handleAuth();
 });
 
-// ─── BROADCAST CHANNEL (CHAT) ───
-const channel = new BroadcastChannel('coach_client_chat');
+// ─── FIRESTORE REAL-TIME MESSAGING ───
 const chatArea = document.getElementById('chatArea');
-const myName = 'Client';
+let myName = 'Client';
+let conversationId = null;
+let unsubMessages = null;
+let unsubConvDoc = null;
+let _seenMsgIds = new Set();
 
-channel.onmessage = (event) => {
-    const data = event.data;
-    if (data.type === 'chat' && data.sender !== myName) {
-        appendMessage(data.text, 'received', data.sender, data.time);
-    } else if (data.type === 'join' && data.name !== myName) {
-        appendSystem(`${data.name} joined the session`);
-    } else if (data.type === 'video_invite') {
-        appendSystem('📹 Coach started a video call — click Video Call to join');
-    }
-};
+async function initConversation(user) {
+    conversationId = user.uid;
+    myName = user.displayName || user.email.split('@')[0] || 'Client';
+
+    const convRef = db.collection('conversations').doc(conversationId);
+    await convRef.set({
+        clientUID: user.uid,
+        clientEmail: user.email,
+        clientName: myName,
+        lastMessage: '',
+        unreadCoach: 0,
+        videoCallActive: false
+    }, { merge: true });
+
+    // Listen to messages in real time
+    if (unsubMessages) unsubMessages();
+    _seenMsgIds = new Set();
+    unsubMessages = convRef.collection('messages')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                    const msg = change.doc.data();
+                    if (_seenMsgIds.has(change.doc.id)) return;
+                    _seenMsgIds.add(change.doc.id);
+                    if (!msg.timestamp) return; // skip optimistic writes
+                    const isOwn = msg.sender === 'client';
+                    appendMessage(msg.text, isOwn ? 'sent' : 'received', msg.senderName, msg.timestamp?.toMillis?.() || Date.now());
+                }
+            });
+        });
+
+    // Listen to conversation doc for video call invites from coach
+    if (unsubConvDoc) unsubConvDoc();
+    let prevVideoState = false;
+    unsubConvDoc = convRef.onSnapshot(snap => {
+        const data = snap.data();
+        if (!data) return;
+        if (data.videoCallActive && !prevVideoState) {
+            appendSystem('📹 Coach started a video call — click Video Call to join');
+        }
+        prevVideoState = !!data.videoCallActive;
+    });
+}
 
 function appendMessage(text, type, sender, time) {
     const div = document.createElement('div');
@@ -806,23 +846,30 @@ function escapeHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
-    if (!text) return;
-    const time = Date.now();
-    appendMessage(text, 'sent', myName, time);
-    channel.postMessage({ type: 'chat', text, sender: myName, time });
+    if (!text || !conversationId) return;
     input.value = '';
     input.focus();
+
+    await db.collection('conversations').doc(conversationId)
+        .collection('messages').add({
+            text,
+            sender: 'client',
+            senderName: myName,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+    db.collection('conversations').doc(conversationId).set({
+        lastMessage: text,
+        lastTime: firebase.firestore.FieldValue.serverTimestamp(),
+        unreadCoach: firebase.firestore.FieldValue.increment(1)
+    }, { merge: true });
 }
 
 document.getElementById('msgInput').addEventListener('keypress', e => {
     if (e.key === 'Enter') sendMessage();
-});
-
-window.addEventListener('beforeunload', () => {
-    channel.postMessage({ type: 'leave', name: myName });
 });
 
 // ─── LIVEKIT VIDEO CALL ───
@@ -865,7 +912,13 @@ async function generateToken(identity) {
 
 async function startVideoCall() {
     if (!currentUser) { alert('Please sign in first.'); return; }
-    channel.postMessage({ type: 'video_invite', sender: myName });
+    // Notify coach via Firestore
+    if (conversationId) {
+        db.collection('conversations').doc(conversationId).update({
+            videoCallActive: true,
+            videoCallTime: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(() => {});
+    }
     const modal = document.getElementById('videoModal');
     modal.classList.add('active');
     document.getElementById('connectingOverlay').classList.remove('hidden');
@@ -976,6 +1029,10 @@ function cleanupVideo() {
     document.getElementById('videoModal').classList.remove('active');
     if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
     document.getElementById('callTimer').textContent = '';
+    // Clear Firestore video call flag
+    if (conversationId) {
+        db.collection('conversations').doc(conversationId).update({ videoCallActive: false }).catch(() => {});
+    }
     // Reset remote video
     const remoteVideo = document.getElementById('remoteVideo');
     remoteVideo.querySelectorAll('video').forEach(v => v.remove());
