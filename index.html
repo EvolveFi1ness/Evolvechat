@@ -785,31 +785,59 @@ async function initConversation(user) {
     myName = user.displayName || user.email.split('@')[0] || 'Client';
 
     const convRef = db.collection('conversations').doc(conversationId);
-    await convRef.set({
-        clientUID: user.uid,
-        clientEmail: user.email,
-        clientName: myName,
-        lastMessage: '',
-        unreadCoach: 0,
-        videoCallActive: false
-    }, { merge: true });
+    // Use set without merge first time so lastTime/createdAt are always present
+    const existing = await convRef.get();
+    if (!existing.exists()) {
+        await convRef.set({
+            clientUID: user.uid,
+            clientEmail: user.email,
+            clientName: myName,
+            lastMessage: '',
+            unreadCoach: 0,
+            videoCallActive: false,
+            lastTime: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } else {
+        // Update mutable fields but preserve timestamps
+        await convRef.set({
+            clientUID: user.uid,
+            clientEmail: user.email,
+            clientName: myName,
+            videoCallActive: false
+        }, { merge: true });
+        // Backfill lastTime/createdAt if missing (fixes legacy docs)
+        const data = existing.data();
+        if (!data.lastTime) {
+            await convRef.update({ lastTime: firebase.firestore.FieldValue.serverTimestamp(), createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        }
+    }
 
     // Listen to messages in real time
     if (unsubMessages) unsubMessages();
     _seenMsgIds = new Set();
     unsubMessages = convRef.collection('messages')
-        .orderBy('timestamp', 'asc')
         .onSnapshot(snapshot => {
+            // Collect, sort by timestamp client-side
+            const added = [];
             snapshot.docChanges().forEach(change => {
-                if (change.type === 'added') {
-                    const msg = change.doc.data();
-                    if (_seenMsgIds.has(change.doc.id)) return;
+                if (change.type === 'added' && !_seenMsgIds.has(change.doc.id)) {
                     _seenMsgIds.add(change.doc.id);
-                    if (!msg.timestamp) return; // skip optimistic writes
-                    const isOwn = msg.sender === 'client';
-                    appendMessage(msg.text, isOwn ? 'sent' : 'received', msg.senderName, msg.timestamp?.toMillis?.() || Date.now());
+                    const msg = change.doc.data();
+                    if (msg.timestamp) added.push(msg);
                 }
             });
+            // Re-render all messages sorted (handles out-of-order delivery)
+            if (added.length > 0) {
+                const allMsgs = [];
+                snapshot.forEach(d => { const m = d.data(); if (m.timestamp) allMsgs.push(m); });
+                allMsgs.sort((a, b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0));
+                chatArea.innerHTML = '';
+                appendSystem('Connected to coaching session. Say hello! 👋');
+                allMsgs.forEach(msg => {
+                    appendMessage(msg.text, msg.sender === 'client' ? 'sent' : 'received', msg.senderName, msg.timestamp?.toMillis?.() || Date.now());
+                });
+            }
         });
 
     // Listen to conversation doc for video call invites from coach
