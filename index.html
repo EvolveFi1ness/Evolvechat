@@ -1,1211 +1,342 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Evolve — Client Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --gold:#f59e0b;--gold-l:#fbbf24;--gold-dim:rgba(245,158,11,.15);
-  --green:#10b981;--green-d:#059669;
-  --blue:#3b82f6;--red:#ef4444;--purple:#8b5cf6;
-  --bg:#060a0f;--bg2:#0d1520;--bg3:#111a27;--bg4:#16202f;
-  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.12);
-  --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
-}
-body{font-family:'Barlow',sans-serif;background:var(--bg2);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column}
-
-/* ── LOGIN ── */
-#loginScreen{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden}
-.l-bg{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 20% 50%,rgba(245,158,11,.07),transparent 65%),radial-gradient(ellipse 50% 70% at 80% 30%,rgba(16,185,129,.04),transparent 55%)}
-.l-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(245,158,11,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,.035) 1px,transparent 1px);background-size:48px 48px}
-.l-card{position:relative;z-index:1;width:380px;background:var(--bg3);border:1px solid rgba(245,158,11,.2);border-radius:20px;padding:40px 36px;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:cardIn .5s cubic-bezier(.16,1,.3,1) both}
-@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
-.l-brand{display:flex;align-items:center;gap:10px;margin-bottom:28px}
-.l-ico{width:36px;height:36px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;color:#000}
-.l-name{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
-.l-name span{color:var(--gold)}
-.l-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:-.3px}
-.l-sub{font-size:13px;color:var(--muted2);margin-bottom:26px}
-.fg{margin-bottom:14px}
-.fg label{display:block;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.fg input{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 14px;color:#fff;font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s,background .2s}
-.fg input:focus{border-color:var(--gold);background:rgba(245,158,11,.05)}
-.fg input::placeholder{color:var(--muted)}
-.fg input.err{border-color:var(--red)}
-#loginError{font-size:12px;color:#f87171;margin-bottom:12px;display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:8px 12px}
-.btn-auth{width:100%;background:var(--gold);color:#000;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;font-family:'Barlow',sans-serif;letter-spacing:.3px;cursor:pointer;transition:background .2s,transform .1s;margin-bottom:10px}
-.btn-auth:hover{background:var(--gold-l);transform:translateY(-1px)}
-.btn-auth:active{transform:translateY(0)}
-.btn-auth:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.btn-sec{width:100%;background:transparent;color:var(--muted2);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px;font-size:13px;font-weight:500;font-family:'Barlow',sans-serif;cursor:pointer;transition:border-color .2s,color .2s;margin-bottom:14px}
-.btn-sec:hover{border-color:rgba(255,255,255,.25);color:#e2e8f0}
-.l-toggle{text-align:center;font-size:13px;color:var(--muted)}
-.l-toggle a{color:var(--gold);text-decoration:none;font-weight:600;cursor:pointer}
-.l-toggle a:hover{text-decoration:underline}
-.spin{width:14px;height:14px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:rot .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
-@keyframes rot{to{transform:rotate(360deg)}}
-
-/* ── APP SHELL ── */
-#app{display:none;flex-direction:column;height:100vh}
-
-/* TOP NAV */
-.topnav{background:var(--bg3);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:0;flex-shrink:0;height:58px}
-.nav-brand{display:flex;align-items:center;gap:9px;margin-right:28px;text-decoration:none}
-.nav-ico{width:30px;height:30px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;color:#000}
-.nav-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase}
-.nav-name span{color:var(--gold)}
-.nav-tabs{display:flex;align-items:center;flex:1;height:100%}
-.ntab{display:flex;align-items:center;gap:7px;padding:0 16px;height:100%;font-size:13px;font-weight:600;color:var(--muted2);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
-.ntab svg{width:15px;height:15px;flex-shrink:0}
-.ntab:hover{color:var(--text)}
-.ntab.on{color:var(--gold);border-bottom-color:var(--gold)}
-.nav-right{display:flex;align-items:center;gap:10px;margin-left:auto}
-.ava-btn{display:flex;align-items:center;gap:9px;cursor:pointer;padding:6px 10px;border-radius:9px;transition:background .15s}
-.ava-btn:hover{background:rgba(255,255,255,.06)}
-.ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#f97316);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:#000;flex-shrink:0}
-.ava-name{font-size:13px;font-weight:600}
-.btn-out{background:none;border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--muted2);font-size:12px;font-family:'Barlow',sans-serif;padding:6px 12px;cursor:pointer;transition:border-color .15s,color .15s}
-.btn-out:hover{border-color:rgba(239,68,68,.4);color:var(--red)}
-
-/* CONTENT */
-.content{flex:1;overflow-y:auto;background:var(--bg2)}
-.sec{display:none;padding:28px 28px}
-.sec.on{display:block}
-
-/* ── DASHBOARD ── */
-.pg-hd{margin-bottom:24px}
-.pg-hd h2{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;letter-spacing:.3px;margin-bottom:4px}
-.pg-hd p{font-size:14px;color:var(--muted2)}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.stat-c{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden}
-.stat-c::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.stat-c.s1::before{background:linear-gradient(90deg,var(--gold),var(--gold-l))}
-.stat-c.s2::before{background:linear-gradient(90deg,var(--green),#34d399)}
-.stat-c.s3::before{background:linear-gradient(90deg,var(--blue),#60a5fa)}
-.stat-c.s4::before{background:linear-gradient(90deg,var(--purple),#a78bfa)}
-.stat-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-.stat-val{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;letter-spacing:-.5px;line-height:1;margin-bottom:5px}
-.stat-sub{font-size:12px;color:var(--muted2)}
-.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.card-hd{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-hd h3{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--muted2)}
-.card-body{padding:16px 18px}
-
-/* NEXT WORKOUT */
-.nw-banner{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(249,115,22,.08));border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px}
-.nw-ico{width:44px;height:44px;background:rgba(245,158,11,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.nw-info h3{font-size:15px;font-weight:700;margin-bottom:3px}
-.nw-info p{font-size:12px;color:var(--muted2)}
-.btn-g{background:var(--gold);color:#000;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;font-family:'Barlow',sans-serif;cursor:pointer;margin-left:auto;flex-shrink:0;transition:background .15s,transform .1s}
-.btn-g:hover{background:var(--gold-l);transform:translateY(-1px)}
-.btn-p{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;font-family:'Barlow',sans-serif;cursor:pointer;transition:background .15s}
-.btn-p:hover{background:rgba(16,185,129,.25)}
-
-/* PROGRESS BAR */
-.prog-row{margin-bottom:14px}
-.prog-lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
-.prog-lbl span:last-child{color:var(--muted2)}
-.prog-track{height:6px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
-.prog-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.pf-gold{background:linear-gradient(90deg,var(--gold),var(--gold-l))}
-.pf-green{background:linear-gradient(90deg,var(--green),#34d399)}
-.pf-blue{background:linear-gradient(90deg,var(--blue),#60a5fa)}
-
-/* ACTIVITY FEED */
-.act-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--border)}
-.act-item:last-child{border-bottom:none}
-.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.act-txt{font-size:13px;line-height:1.4}
-.act-time{font-size:11px;color:var(--muted);margin-top:2px}
-
-/* ── PROGRAMS / WORKOUTS ── */
-.prog-empty{text-align:center;padding:60px 20px;color:var(--muted2)}
-.prog-empty .ei{font-size:40px;margin-bottom:12px}
-.prog-empty .et{font-size:15px;font-weight:600;color:var(--muted2);margin-bottom:6px}
-.prog-empty .es{font-size:13px;color:var(--muted)}
-.prog-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
-.prog-card-hd{padding:20px;background:linear-gradient(135deg,var(--bg4),var(--bg3));border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px}
-.prog-ico{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.prog-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:.2px;margin-bottom:3px}
-.prog-meta{font-size:12px;color:var(--muted2)}
-.prog-body{padding:20px}
-.week-hd{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--gold);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;margin-top:16px}
-.week-hd:first-child{margin-top:0}
-.day-row{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .15s}
-.day-row:hover{background:rgba(255,255,255,.06)}
-.day-row.done{opacity:.55}
-.day-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--gold);min-width:32px}
-.day-name{font-weight:600;font-size:13px;margin-bottom:3px}
-.day-desc{font-size:12px;color:var(--muted2);line-height:1.4}
-.day-chk{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--green);font-size:12px;transition:all .2s}
-.day-chk.done{background:var(--green);border-color:var(--green);color:#fff}
-.day-modal-body{max-height:60vh;overflow-y:auto}
-.ex-item{padding:12px 0;border-bottom:1px solid var(--border)}
-.ex-item:last-child{border-bottom:none}
-.ex-name{font-weight:600;font-size:14px;margin-bottom:4px}
-.ex-sets{font-size:13px;color:var(--muted2)}
-.ex-note{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
-
-/* ── PROGRESS / CHECK-IN ── */
-.checkin-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
-.ci-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:.3px;margin-bottom:4px}
-.ci-sub{font-size:13px;color:var(--muted2);margin-bottom:20px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-group.full{grid-column:1/-1}
-.form-group label{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}
-.form-group input,.form-group textarea,.form-group select{background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s}
-.form-group input:focus,.form-group textarea:focus{border-color:var(--gold)}
-.form-group textarea{resize:vertical;min-height:80px}
-.rating-row{display:flex;gap:8px;flex-wrap:wrap}
-.rating-btn{padding:7px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border2);border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--muted2);font-family:'Barlow',sans-serif}
-.rating-btn:hover{border-color:var(--gold);color:var(--gold)}
-.rating-btn.sel{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
-.history-item{padding:14px;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
-.hi-date{font-size:11px;color:var(--muted);margin-bottom:6px}
-.hi-row{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:4px}
-.hi-stat{font-size:12px;color:var(--muted2)}
-.hi-stat strong{color:var(--text)}
-.hi-note{font-size:12px;color:var(--muted2);font-style:italic;margin-top:4px}
-
-/* ── CHAT ── */
-.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 58px)}
-.chat-hd{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--bg3);flex-shrink:0}
-.coach-av{width:40px;height:40px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px;color:#000;flex-shrink:0}
-.coach-info h3{font-size:14px;font-weight:700}
-.coach-info p{font-size:11px;color:var(--green)}
-.online-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px var(--bg3),0 0 0 4px var(--green);animation:pulse 2s infinite;margin-left:auto;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.chat-msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--bg2)}
-.msg{max-width:68%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.55;word-break:break-word;animation:msgIn .2s ease both}
-@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.msg.sent{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px;font-weight:500}
-.msg.recv{align-self:flex-start;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:4px}
-.msg-meta{font-size:10px;opacity:.55;margin-top:4px;text-align:right}
-.sys-msg{align-self:center;color:var(--muted2);font-size:11px;font-weight:500;background:rgba(255,255,255,.05);padding:4px 12px;border-radius:20px}
-.chat-input{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:10px;background:var(--bg3);flex-shrink:0}
-.chat-input input{flex:1;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:22px;padding:10px 16px;color:var(--text);font-size:14px;font-family:'Barlow',sans-serif;outline:none;transition:border-color .2s}
-.chat-input input:focus{border-color:var(--green)}
-.chat-input input::placeholder{color:var(--muted)}
-.send-btn{background:var(--green);color:#fff;border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,transform .1s}
-.send-btn:hover{background:var(--green-d);transform:scale(1.05)}
-
-/* ── PROFILE ── */
-.profile-wrap{max-width:640px}
-.profile-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px}
-.profile-top{display:flex;align-items:center;gap:16px;margin-bottom:24px}
-.big-ava{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#f97316);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;color:#000;flex-shrink:0}
-.profile-hd h3{font-size:18px;font-weight:700;margin-bottom:3px}
-.profile-hd p{font-size:13px;color:var(--muted2)}
-.pf-section{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;margin-top:20px;border-bottom:1px solid var(--border);padding-bottom:6px}
-.pf-section:first-child{margin-top:0}
-.save-btn{background:var(--gold);color:#000;border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:700;font-family:'Barlow',sans-serif;cursor:pointer;margin-top:16px;transition:background .15s}
-.save-btn:hover{background:var(--gold-l)}
-
-/* ── MODALS ── */
-.mo{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center}
-.mo.on{display:flex}
-.mo-box{background:var(--bg3);border:1px solid var(--border2);border-radius:16px;padding:28px;width:480px;max-height:90vh;overflow-y:auto;animation:moIn .2s ease}
-.mo-box.lg{width:620px}
-@keyframes moIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
-.mo-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.mo-hd h3{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;letter-spacing:.2px}
-.mo-close{background:none;border:none;cursor:pointer;color:var(--muted2);font-size:20px;line-height:1;padding:2px 6px;border-radius:6px;transition:color .15s}
-.mo-close:hover{color:var(--text)}
-
-/* TOAST */
-#toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.4);transform:translateY(10px);opacity:0;transition:all .25s;pointer-events:none}
-#toast.on{opacity:1;transform:translateY(0)}
-
-/* COLOR AVS */
-.avi{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
-.avb{background:linear-gradient(135deg,#3b82f6,#0ea5e9)}
-.avg{background:linear-gradient(135deg,#10b981,#059669)}
-.avr{background:linear-gradient(135deg,#ef4444,#f97316)}
-.ava2{background:linear-gradient(135deg,#f59e0b,#fbbf24)}
-.avt{background:linear-gradient(135deg,#06b6d4,#3b82f6)}
-
-/* RESPONSIVE */
-@media(max-width:768px){
-  .stats-row{grid-template-columns:1fr 1fr}
-  .dash-grid{grid-template-columns:1fr}
-  .form-row{grid-template-columns:1fr}
-  .sec{padding:16px}
-}
-@media(max-width:540px){
-  .stats-row{grid-template-columns:1fr}
-  .ntab span.ntab-txt{display:none}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evolve Fitness – Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: #0a0a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Sans', sans-serif;
+      padding: 2rem;
+    }
+    .card {
+      width: 100%;
+      max-width: 420px;
+    }
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px;
+      letter-spacing: 4px;
+      color: #c9a84c;
+      margin-bottom: 4px;
+    }
+    .tagline {
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #222;
+      margin-bottom: 2rem;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #555;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tab.active {
+      color: #c9a84c;
+      border-bottom-color: #c9a84c;
+    }
+    .field { margin-bottom: 1rem; }
+    .field label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .field input,
+    .field select {
+      width: 100%;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      padding: 12px 14px;
+      color: #e8e8e8;
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      appearance: none;
+    }
+    .field input:focus,
+    .field select:focus {
+      border-color: #c9a84c;
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+    }
+    .field input::placeholder { color: #333; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .btn {
+      width: 100%;
+      background: #c9a84c;
+      color: #0a0a0a;
+      border: none;
+      border-radius: 6px;
+      padding: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 1.5rem 0;
+      color: #333;
+      font-size: 11px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #222;
+    }
+    .switch-link {
+      text-align: center;
+      font-size: 13px;
+      color: #555;
+    }
+    .switch-link span {
+      color: #c9a84c;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 1.25rem;
+      padding: 11px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      display: none;
+      line-height: 1.5;
+    }
+    .status.success {
+      background: rgba(29, 158, 117, 0.1);
+      border: 1px solid rgba(29, 158, 117, 0.3);
+      color: #5dcaa5;
+      display: block;
+    }
+    .status.error {
+      background: rgba(226, 75, 74, 0.1);
+      border: 1px solid rgba(226, 75, 74, 0.25);
+      color: #f09595;
+      display: block;
+    }
+    .status.loading {
+      background: rgba(201, 168, 76, 0.08);
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      color: #c9a84c;
+      display: block;
+    }
+  </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="loginScreen">
-  <div class="l-bg"></div>
-  <div class="l-grid"></div>
-  <div class="l-card">
-    <div class="l-brand">
-      <div class="l-ico">EV</div>
-      <div class="l-name">Evolve <span>Fit</span></div>
-    </div>
-    <div class="l-title" id="lt">Welcome back</div>
-    <div class="l-sub" id="ls">Sign in to your client portal</div>
-    <div id="loginError"></div>
+<div class="card">
+  <div class="logo">EVOLVE</div>
+  <div class="tagline">Fitness · Performance · Results</div>
 
-    <!-- Name field — sign-up only -->
-    <div class="fg" id="nameField" style="display:none">
-      <label>Full Name</label>
-      <input type="text" id="nameInp" placeholder="e.g. Jake Cruz" autocomplete="name" onkeydown="if(event.key==='Enter')handleAuth()"/>
-    </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+    <div class="tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
+  </div>
 
-    <div class="fg">
+  <!-- LOGIN FORM -->
+  <div id="form-login">
+    <div class="field">
       <label>Email</label>
-      <input type="email" id="emailInp" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')handleAuth()"/>
+      <input type="email" id="login-email" placeholder="you@example.com">
     </div>
-    <div class="fg">
+    <div class="field">
       <label>Password</label>
-      <input type="password" id="passInp" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleAuth()"/>
+      <input type="password" id="login-password" placeholder="••••••••">
     </div>
-
-    <!-- Confirm password — sign-up only -->
-    <div class="fg" id="confirmField" style="display:none">
-      <label>Confirm Password</label>
-      <input type="password" id="passConfirm" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()"/>
-    </div>
-
-    <button class="btn-auth" id="authBtn" onclick="handleAuth()">Sign In</button>
-
-    <div class="l-toggle" style="margin-top:14px">
-      <span id="toggleTxt">Don't have an account?</span>
-      <a onclick="toggleMode()" id="toggleLnk"> Create one</a>
-    </div>
+    <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+    <div class="divider">or</div>
+    <div class="switch-link">No account? <span onclick="switchTab('signup')">Create one →</span></div>
   </div>
+
+  <!-- SIGNUP FORM -->
+  <div id="form-signup" style="display:none">
+    <div class="row2">
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" id="su-first" placeholder="Jake">
+      </div>
+      <div class="field">
+        <label>Last Name</label>
+        <input type="text" id="su-last" placeholder="Cruz">
+      </div>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="su-email" placeholder="you@example.com">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="su-pass" placeholder="Min. 6 characters">
+    </div>
+    <div class="field">
+      <label>Primary Goal</label>
+      <select id="su-goal">
+        <option value="">Select your goal</option>
+        <option value="weight_loss">Weight Loss</option>
+        <option value="muscle_gain">Muscle Gain</option>
+        <option value="endurance">Endurance</option>
+        <option value="general_fitness">General Fitness</option>
+      </select>
+    </div>
+    <button class="btn" id="signup-btn" onclick="handleSignup()">Create Account</button>
+    <div class="divider">or</div>
+    <div class="switch-link">Already a member? <span onclick="switchTab('login')">Sign in →</span></div>
+  </div>
+
+  <div class="status" id="status-msg"></div>
 </div>
 
-<!-- APP -->
-<div id="app">
-  <!-- TOP NAV -->
-  <nav class="topnav">
-    <div class="nav-brand">
-      <div class="nav-ico">EV</div>
-      <div class="nav-name">Evolve <span>Fit</span></div>
-    </div>
-    <div class="nav-tabs">
-      <div class="ntab on" data-s="dashboard" onclick="goSec('dashboard')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        <span class="ntab-txt">Dashboard</span>
-      </div>
-      <div class="ntab" data-s="program" onclick="goSec('program')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-        <span class="ntab-txt">My Program</span>
-      </div>
-      <div class="ntab" data-s="checkin" onclick="goSec('checkin')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span class="ntab-txt">Progress</span>
-      </div>
-      <div class="ntab" data-s="chat" onclick="goSec('chat')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        <span class="ntab-txt">Messages</span>
-        <span id="msgBadge" style="display:none;width:16px;height:16px;background:var(--red);border-radius:50%;font-size:9px;font-weight:700;color:#fff;display:none;align-items:center;justify-content:center;flex-shrink:0"></span>
-      </div>
-      <div class="ntab" data-s="profile" onclick="goSec('profile')">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span class="ntab-txt">Profile</span>
-      </div>
-    </div>
-    <div class="nav-right">
-      <div class="ava-btn" onclick="goSec('profile')">
-        <div class="ava" id="navAva">?</div>
-        <span class="ava-name" id="navName">Loading…</span>
-      </div>
-      <button class="btn-out" onclick="logout()">Sign out</button>
-    </div>
-  </nav>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-  <!-- CONTENT AREA -->
-  <div class="content">
-
-    <!-- DASHBOARD -->
-    <div class="sec on" id="sec-dashboard">
-      <div class="pg-hd">
-        <h2 id="dashGreet">Good morning! 👋</h2>
-        <p id="dashSub">Here's your fitness overview</p>
-      </div>
-
-      <!-- NEXT WORKOUT BANNER -->
-      <div class="nw-banner" id="nwBanner" style="display:none">
-        <div class="nw-ico">🏋️</div>
-        <div class="nw-info">
-          <h3 id="nwTitle">Today's Workout</h3>
-          <p id="nwDesc">Loading your program…</p>
-        </div>
-        <button class="btn-g" onclick="goSec('program')">Start →</button>
-      </div>
-
-      <!-- STATS -->
-      <div class="stats-row">
-        <div class="stat-c s1">
-          <div class="stat-lbl">Program Week</div>
-          <div class="stat-val" id="stWeek">—</div>
-          <div class="stat-sub" id="stProgName">No program assigned</div>
-        </div>
-        <div class="stat-c s2">
-          <div class="stat-lbl">Workouts Done</div>
-          <div class="stat-val" id="stDone">0</div>
-          <div class="stat-sub">This week</div>
-        </div>
-        <div class="stat-c s3">
-          <div class="stat-lbl">Check-ins</div>
-          <div class="stat-val" id="stCheckins">0</div>
-          <div class="stat-sub">Total submitted</div>
-        </div>
-        <div class="stat-c s4">
-          <div class="stat-lbl">Compliance</div>
-          <div class="stat-val" id="stComp">—<span style="font-size:16px">%</span></div>
-          <div class="stat-sub">Overall</div>
-        </div>
-      </div>
-
-      <div class="dash-grid">
-        <!-- Progress -->
-        <div class="card">
-          <div class="card-hd"><h3>Your Goals</h3></div>
-          <div class="card-body" id="goalsList">
-            <div class="prog-row">
-              <div class="prog-lbl"><span>Workout Consistency</span><span id="gComp">0%</span></div>
-              <div class="prog-track"><div class="prog-fill pf-gold" id="gCompFill" style="width:0%"></div></div>
-            </div>
-            <div class="prog-row">
-              <div class="prog-lbl"><span>Check-in Rate</span><span id="gCI">0%</span></div>
-              <div class="prog-track"><div class="prog-fill pf-green" id="gCIFill" style="width:0%"></div></div>
-            </div>
-            <div class="prog-row">
-              <div class="prog-lbl"><span>Program Progress</span><span id="gProg">0%</span></div>
-              <div class="prog-track"><div class="prog-fill pf-blue" id="gProgFill" style="width:0%"></div></div>
-            </div>
-          </div>
-        </div>
-        <!-- Activity -->
-        <div class="card">
-          <div class="card-hd"><h3>Recent Activity</h3></div>
-          <div class="card-body" id="actFeed">
-            <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No activity yet</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROGRAM -->
-    <div class="sec" id="sec-program">
-      <div class="pg-hd">
-        <h2>My Training Program</h2>
-        <p>Your personalized workout plan from your coach</p>
-      </div>
-      <div id="programContent">
-        <div class="prog-empty">
-          <div class="ei">🏋️</div>
-          <div class="et">No Program Assigned Yet</div>
-          <div class="es">Your coach will assign a program to you soon. Check back later or message your coach.</div>
-          <button class="btn-g" style="margin:16px auto 0;display:block" onclick="goSec('chat')">Message Coach</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- CHECK-IN / PROGRESS -->
-    <div class="sec" id="sec-checkin">
-      <div class="pg-hd">
-        <h2>Progress Check-In</h2>
-        <p>Track your body metrics and how you're feeling</p>
-      </div>
-
-      <div class="checkin-card">
-        <div class="ci-title">Submit Weekly Check-In</div>
-        <div class="ci-sub">Log your stats each week so your coach can track your progress</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Weight (kg / lbs)</label>
-            <input type="number" id="ciWeight" placeholder="e.g. 75" step="0.1"/>
-          </div>
-          <div class="form-group">
-            <label>Body Fat % (optional)</label>
-            <input type="number" id="ciBf" placeholder="e.g. 18" step="0.1"/>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Sleep Quality</label>
-            <div class="rating-row" id="sleepRating">
-              <button class="rating-btn" data-val="1" onclick="setRating('sleep',1)">😴 Poor</button>
-              <button class="rating-btn" data-val="2" onclick="setRating('sleep',2)">😐 OK</button>
-              <button class="rating-btn" data-val="3" onclick="setRating('sleep',3)">😊 Good</button>
-              <button class="rating-btn" data-val="4" onclick="setRating('sleep',4)">🌟 Great</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Energy Level</label>
-            <div class="rating-row" id="energyRating">
-              <button class="rating-btn" data-val="1" onclick="setRating('energy',1)">🪫 Low</button>
-              <button class="rating-btn" data-val="2" onclick="setRating('energy',2)">😐 OK</button>
-              <button class="rating-btn" data-val="3" onclick="setRating('energy',3)">⚡ High</button>
-              <button class="rating-btn" data-val="4" onclick="setRating('energy',4)">🔥 Peak</button>
-            </div>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Stress Level</label>
-            <div class="rating-row" id="stressRating">
-              <button class="rating-btn" data-val="1" onclick="setRating('stress',1)">😤 High</button>
-              <button class="rating-btn" data-val="2" onclick="setRating('stress',2)">😕 Moderate</button>
-              <button class="rating-btn" data-val="3" onclick="setRating('stress',3)">😌 Low</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>Workouts Completed</label>
-            <input type="number" id="ciWorkouts" placeholder="e.g. 4" min="0" max="14"/>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-group full">
-            <label>Notes for your coach</label>
-            <textarea id="ciNotes" placeholder="How's training going? Any aches, wins, or questions for your coach…"></textarea>
-          </div>
-        </div>
-        <button class="btn-g" onclick="submitCheckin()">Submit Check-In ✓</button>
-      </div>
-
-      <!-- Check-in History -->
-      <div class="card">
-        <div class="card-hd"><h3>Check-in History</h3></div>
-        <div class="card-body" id="ciHistory">
-          <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No check-ins yet</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CHAT -->
-    <div class="sec" id="sec-chat" style="padding:0">
-      <div class="chat-wrap">
-        <div class="chat-hd">
-          <div class="coach-av" id="coachAv">C</div>
-          <div class="coach-info">
-            <h3 id="coachName">Your Coach</h3>
-            <p>Online</p>
-          </div>
-          <div class="online-dot"></div>
-        </div>
-        <div class="chat-msgs" id="chatArea">
-          <div class="sys-msg">Connected to coaching session. Say hello! 👋</div>
-        </div>
-        <div class="chat-input">
-          <input type="text" id="msgInput" placeholder="Message your coach…" autocomplete="off"/>
-          <button class="send-btn" onclick="sendMsg()">➤</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROFILE -->
-    <div class="sec" id="sec-profile">
-      <div class="pg-hd">
-        <h2>My Profile</h2>
-        <p>Your personal details and fitness goals</p>
-      </div>
-      <div class="profile-wrap">
-        <div class="profile-card">
-          <div class="profile-top">
-            <div class="big-ava" id="profAva">?</div>
-            <div class="profile-hd">
-              <h3 id="profName">Loading…</h3>
-              <p id="profEmail">—</p>
-            </div>
-          </div>
-
-          <div class="pf-section">Personal Info</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>First Name</label>
-              <input type="text" id="pfFirst" placeholder="First name"/>
-            </div>
-            <div class="form-group">
-              <label>Last Name</label>
-              <input type="text" id="pfLast" placeholder="Last name"/>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Age</label>
-              <input type="number" id="pfAge" placeholder="e.g. 28"/>
-            </div>
-            <div class="form-group">
-              <label>Gender</label>
-              <select id="pfGender">
-                <option value="">Prefer not to say</option>
-                <option>Male</option><option>Female</option><option>Non-binary</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="pf-section">Body Stats</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Height (cm)</label>
-              <input type="number" id="pfHeight" placeholder="e.g. 175"/>
-            </div>
-            <div class="form-group">
-              <label>Current Weight (kg)</label>
-              <input type="number" id="pfWeight" placeholder="e.g. 75" step="0.1"/>
-            </div>
-          </div>
-
-          <div class="pf-section">Fitness Goals</div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Primary Goal</label>
-              <select id="pfGoal">
-                <option value="">Select a goal</option>
-                <option>Fat Loss</option><option>Muscle Gain</option>
-                <option>Strength</option><option>Endurance</option>
-                <option>General Fitness</option><option>Rehab & Recovery</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Target Weight (kg)</label>
-              <input type="number" id="pfTarget" placeholder="e.g. 70" step="0.1"/>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group full">
-              <label>Health Notes (injuries, limitations)</label>
-              <textarea id="pfHealth" placeholder="Any injuries, conditions, or physical limitations your coach should know about…"></textarea>
-            </div>
-          </div>
-
-          <button class="save-btn" onclick="saveProfile()">Save Profile</button>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- /content -->
-</div><!-- /app -->
-
-<!-- Day Detail Modal -->
-<div class="mo" id="dayModal">
-  <div class="mo-box lg">
-    <div class="mo-hd">
-      <h3 id="dayTitle">Workout</h3>
-      <button class="mo-close" onclick="closeMo('dayModal')">✕</button>
-    </div>
-    <div id="dayModalBody" class="day-modal-body"></div>
-    <div style="margin-top:20px;display:flex;gap:10px">
-      <button class="btn-g" onclick="markDayDone()" style="flex:1">Mark as Complete ✓</button>
-      <button class="btn-sec" style="flex:0 0 auto;padding:9px 16px;font-size:13px" onclick="closeMo('dayModal')">Close</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"><span id="tIco">✅</span><span id="tMsg">Done!</span></div>
-
-<!-- Firebase compat (same version as coach.html) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
-// ─── FIREBASE ───
-const firebaseConfig={
-  apiKey:"AIzaSyAaLdOjRndgq3fw9QfluTW5gmF7VZ26Vag",
-  authDomain:"evolvechat-21d6f.firebaseapp.com",
-  projectId:"evolvechat-21d6f",
-  storageBucket:"evolvechat-21d6f.firebasestorage.app",
-  messagingSenderId:"229550101540",
-  appId:"1:229550101540:web:2d671f6b3a2809570674b1"
-};
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.firestore();
-
-// ─── STATE ───
-let CU=null, profile={}, checkinRatings={sleep:0,energy:0,stress:0};
-let programs=[], completedDays=[], checkinHistory=[];
-let chatUnsub=null, activeDayData=null;
-
-// ─── AUTH STATE ───
-auth.onAuthStateChanged(async user=>{
-  if(user){
-    CU=user;
-    // Mark as client in Firestore
-    await db.collection('users').doc(user.uid).set({
-      role:'client',email:user.email,
-      displayName:user.displayName||'',
-      lastSeen:Date.now()
-    },{merge:true}).catch(()=>{});
-    showApp(user);
-  } else {
-    CU=null;
-    showLogin();
-  }
-});
-
-function showLogin(){
-  document.getElementById('loginScreen').style.display='flex';
-  document.getElementById('app').style.display='none';
-  if(chatUnsub){chatUnsub();chatUnsub=null;}
-}
-
-async function showApp(user){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('app').style.display='flex';
-  // Load profile
-  const snap=await db.collection('users').doc(user.uid).get().catch(()=>null);
-  profile=snap&&snap.exists()?snap.data():{};
-  const name=profile.firstName||user.displayName||user.email.split('@')[0];
-  const initials=name.slice(0,2).toUpperCase();
-  id('navAva').textContent=initials;
-  id('navName').textContent=name;
-  id('profAva').textContent=initials;
-  id('profName').textContent=profile.firstName?`${profile.firstName} ${profile.lastName||''}`.trim():name;
-  id('profEmail').textContent=user.email;
-  // Fill profile form
-  if(profile.firstName) id('pfFirst').value=profile.firstName;
-  if(profile.lastName) id('pfLast').value=profile.lastName;
-  if(profile.age) id('pfAge').value=profile.age;
-  if(profile.gender) id('pfGender').value=profile.gender;
-  if(profile.height) id('pfHeight').value=profile.height;
-  if(profile.weight) id('pfWeight').value=profile.weight;
-  if(profile.goal) id('pfGoal').value=profile.goal;
-  if(profile.targetWeight) id('pfTarget').value=profile.targetWeight;
-  if(profile.healthNotes) id('pfHealth').value=profile.healthNotes;
-  // Set greeting
-  const h=new Date().getHours();
-  const greet=h<12?'Good morning':'h<17'?'Good afternoon':'Good evening';
-  id('dashGreet').textContent=`${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${name}! 👋`;
-  id('dashSub').textContent=`Here's your fitness overview for ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}`;
-  // Load everything
-  await loadProgram();
-  await loadCheckins();
-  startChat();
-  renderDashboard();
-}
-
-// ─── LOGIN / SIGNUP ───
-let isRegisterMode = false;
-
-function toggleMode() {
-  isRegisterMode = !isRegisterMode;
-  id('loginError').style.display = 'none';
-  id('lt').textContent        = isRegisterMode ? 'Create Account'              : 'Welcome back';
-  id('ls').textContent        = isRegisterMode ? 'Join your coaching session'  : 'Sign in to your client portal';
-  id('authBtn').textContent   = isRegisterMode ? 'Create Account'              : 'Sign In';
-  id('toggleTxt').textContent = isRegisterMode ? 'Already have an account?'    : "Don't have an account?";
-  id('toggleLnk').textContent = isRegisterMode ? ' Sign in'                    : ' Create one';
-  id('nameField').style.display    = isRegisterMode ? 'block' : 'none';
-  id('confirmField').style.display = isRegisterMode ? 'block' : 'none';
-  // swap autocomplete hint for password field
-  id('passInp').placeholder      = '••••••••';
-  id('passInp').autocomplete     = isRegisterMode ? 'new-password' : 'current-password';
-  if (!isRegisterMode) id('passConfirm').value = '';
-}
-
-function showErr(m) {
-  const e = id('loginError');
-  e.textContent = m;
-  e.style.display = 'block';
-}
-
-function friendly(code) {
-  const map = {
-    'auth/user-not-found'        : 'No account found with this email.',
-    'auth/wrong-password'        : 'Incorrect password. Please try again.',
-    'auth/invalid-credential'    : 'Incorrect email or password.',
-    'auth/email-already-in-use'  : 'An account already exists with this email. Sign in instead.',
-    'auth/invalid-email'         : 'Please enter a valid email address.',
-    'auth/weak-password'         : 'Password must be at least 6 characters.',
-    'auth/too-many-requests'     : 'Too many attempts. Please wait a moment and try again.',
-    'auth/network-request-failed': 'Network error. Check your connection.',
+  // ── Firebase Config ──────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyAaLdOjRndgq3fw9QfluTW5gmF7VZ26Vag",
+    authDomain: "evolvechat-21d6f.firebaseapp.com",
+    projectId: "evolvechat-21d6f",
+    storageBucket: "evolvechat-21d6f.firebasestorage.app",
+    messagingSenderId: "229550101540",
+    appId: "1:229550101540:web:2d671f6b3a2809570674b1",
+    measurementId: "G-RK177F33Q9"
   };
-  return map[code] || 'Something went wrong. Please try again.';
-}
 
-async function handleAuth() {
-  const email = id('emailInp').value.trim().toLowerCase();
-  const pass  = id('passInp').value;
-  const btn   = id('authBtn');
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db   = firebase.firestore();
 
-  id('loginError').style.display = 'none';
-
-  // ── Validation ──
-  if (!email || !pass) { showErr('Please fill in all fields.'); return; }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
-
-  if (isRegisterMode) {
-    const name    = id('nameInp').value.trim();
-    const confirm = id('passConfirm').value;
-    if (!name)           { showErr('Please enter your full name.'); return; }
-    if (pass.length < 6) { showErr('Password must be at least 6 characters.'); return; }
-    if (pass !== confirm) { showErr('Passwords do not match.'); return; }
+  // ── Helpers ──────────────────────────────────────────────────
+  function showStatus(msg, type) {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg;
+    el.className = 'status ' + type;
+  }
+  function clearStatus() {
+    const el = document.getElementById('status-msg');
+    el.className = 'status';
+    el.textContent = '';
+  }
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    if (btnId === 'login-btn') {
+      btn.textContent = loading ? 'Signing in…' : 'Sign In';
+    } else {
+      btn.textContent = loading ? 'Creating account…' : 'Create Account';
+    }
   }
 
-  // ── Fire ──
-  btn.disabled = true;
-  btn.innerHTML = `<span class="spin"></span>${isRegisterMode ? 'Creating account…' : 'Signing in…'}`;
+  // ── Tab Switch ───────────────────────────────────────────────
+  function switchTab(tab) {
+    document.getElementById('form-login').style.display  = tab === 'login'  ? 'block' : 'none';
+    document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
+    document.getElementById('tab-login').className  = 'tab' + (tab === 'login'  ? ' active' : '');
+    document.getElementById('tab-signup').className = 'tab' + (tab === 'signup' ? ' active' : '');
+    clearStatus();
+  }
 
-  try {
-    if (isRegisterMode) {
-      const name = id('nameInp').value.trim();
+  // ── Login ────────────────────────────────────────────────────
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-password').value;
+    if (!email || !pass) { showStatus('Please fill in all fields.', 'error'); return; }
+    setLoading('login-btn', true);
+    clearStatus();
+    try {
+      const cred = await auth.signInWithEmailAndPassword(email, pass);
+      showStatus('Welcome back, ' + cred.user.email + '!', 'success');
+    } catch (e) {
+      showStatus(e.message, 'error');
+    } finally {
+      setLoading('login-btn', false);
+    }
+  }
+
+  // ── Sign Up → saves to Firestore ─────────────────────────────
+  async function handleSignup() {
+    const first = document.getElementById('su-first').value.trim();
+    const last  = document.getElementById('su-last').value.trim();
+    const email = document.getElementById('su-email').value.trim();
+    const pass  = document.getElementById('su-pass').value;
+    const goal  = document.getElementById('su-goal').value;
+
+    if (!first || !last || !email || !pass) {
+      showStatus('Please fill in all required fields.', 'error');
+      return;
+    }
+    if (pass.length < 6) {
+      showStatus('Password must be at least 6 characters.', 'error');
+      return;
+    }
+
+    setLoading('signup-btn', true);
+    clearStatus();
+
+    try {
+      // 1. Create user in Firebase Auth
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
-      // Save display name to Firebase Auth profile
-      if (name) await cred.user.updateProfile({ displayName: name });
-      // onAuthStateChanged fires → showApp()
-    } else {
-      await auth.signInWithEmailAndPassword(email, pass);
-      // onAuthStateChanged fires → showApp()
-    }
-  } catch(e) {
-    showErr(friendly(e.code));
-    btn.disabled = false;
-    btn.textContent = isRegisterMode ? 'Create Account' : 'Sign In';
-  }
-}
 
-async function logout() {
-  await auth.signOut();
-  // Clear form state for next login
-  id('emailInp').value = '';
-  id('passInp').value  = '';
-  if (isRegisterMode) toggleMode(); // reset to sign-in mode
-}
+      // 2. Save member profile to Firestore → members/{uid}
+      await db.collection('members').doc(cred.user.uid).set({
+        uid:             cred.user.uid,
+        firstName:       first,
+        lastName:        last,
+        email:           email,
+        goal:            goal || null,
+        memberSince:     firebase.firestore.FieldValue.serverTimestamp(),
+        plan:            'free',
+        attendanceCount: 0
+      });
 
-// ─── NAVIGATION ───
-function goSec(s){
-  document.querySelectorAll('.sec').forEach(x=>x.classList.remove('on'));
-  id('sec-'+s).classList.add('on');
-  document.querySelectorAll('.ntab').forEach(n=>n.classList.toggle('on',n.dataset.s===s));
-  if(s==='chat') scrollChat();
-}
+      // 3. Update Auth display name
+      await cred.user.updateProfile({ displayName: first + ' ' + last });
 
-// ─── HELPERS ───
-function id(i){return document.getElementById(i)}
-let tT;
-function toast(m,ico='✅'){id('tMsg').textContent=m;id('tIco').textContent=ico;id('toast').classList.add('on');clearTimeout(tT);tT=setTimeout(()=>id('toast').classList.remove('on'),2600);}
-function closeMo(i){id(i).classList.remove('on');}
-document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on');}));
-
-// ─── PROGRAM ───
-async function loadProgram(){
-  // Look for a program assigned to this client's email by any coach
-  // Coaches store programs in coaches/{coachUid}/programs/{progId}
-  // Client's assigned program is stored in users/{clientUid}/assignedProgram
-  try{
-    const snap=await db.collection('users').doc(CU.uid).get();
-    const data=snap.data()||{};
-    if(data.assignedProgram){
-      programs=[data.assignedProgram];
-    } else {
-      // Also check if any coach has assigned a program to this email
-      // Coaches can set: users/{clientUid}/assignedProgram when they assign
-      programs=[];
-    }
-    // Load completed days
-    const cdSnap=await db.collection('users').doc(CU.uid).collection('completedDays').get().catch(()=>({docs:[]}));
-    completedDays=cdSnap.docs.map(d=>d.id);
-    renderProgram();
-  }catch(e){console.warn('loadProgram error:',e);}
-}
-
-function renderProgram(){
-  const cont=id('programContent');
-  if(!programs.length){
-    cont.innerHTML=`<div class="prog-empty">
-      <div class="ei">🏋️</div>
-      <div class="et">No Program Assigned Yet</div>
-      <div class="es">Your coach will assign a training program to you. Check back later or send them a message.</div>
-      <button class="btn-g" style="margin:16px auto 0;display:block" onclick="goSec('chat')">Message Coach →</button>
-    </div>`;
-    return;
-  }
-  const prog=programs[0];
-  const icon=prog.icon||'🏋️';
-  const color=prog.color||'rgba(245,158,11,.15)';
-  // Parse weeks from program content
-  let html=`<div class="prog-card">
-    <div class="prog-card-hd">
-      <div class="prog-ico" style="background:${color}">${icon}</div>
-      <div>
-        <div class="prog-title">${prog.name||'Training Program'}</div>
-        <div class="prog-meta">${prog.weeks||4} Weeks · ${prog.goal||'General Fitness'} · ${prog.days||3}x per week</div>
-      </div>
-    </div>
-    <div class="prog-body">`;
-
-  if(prog.content){
-    // Parse the AI-generated content into structured days
-    html+=renderProgramContent(prog.content,prog);
-  } else if(prog.weeks){
-    // Generate sample structure
-    for(let w=1;w<=Math.min(prog.weeks||4,4);w++){
-      html+=`<div class="week-hd">📅 Week ${w}</div>`;
-      const daysPerWeek=parseInt(prog.days)||3;
-      for(let d=1;d<=daysPerWeek;d++){
-        const dayId=`w${w}d${d}`;
-        const done=completedDays.includes(dayId);
-        html+=`<div class="day-row${done?' done':''}" onclick="openDay('${dayId}','Week ${w} · Day ${d}',${JSON.stringify({week:w,day:d,name:prog.name,goal:prog.goal}).replace(/"/g,'&quot;')})">
-          <span class="day-num">W${w}D${d}</span>
-          <div>
-            <div class="day-name">Day ${d} Training</div>
-            <div class="day-desc">${prog.goal||'General Fitness'} workout · ${30+d*5} min</div>
-          </div>
-          <div class="day-chk${done?' done':''}">${done?'✓':''}</div>
-        </div>`;
-      }
+      showStatus('Account created! Welcome to Evolve, ' + first + '!', 'success');
+    } catch (e) {
+      showStatus(e.message, 'error');
+    } finally {
+      setLoading('signup-btn', false);
     }
   }
-  html+=`</div></div>`;
-  cont.innerHTML=html;
-}
-
-function renderProgramContent(content,prog){
-  // Split content by weeks/sessions
-  const lines=content.split('\n');
-  let html='';
-  let inWeek=false;
-  lines.forEach((line,i)=>{
-    const trimmed=line.trim();
-    if(!trimmed)return;
-    if(/^week\s*\d+/i.test(trimmed)||/^\*{0,2}week\s*\d+/i.test(trimmed)){
-      const clean=trimmed.replace(/\*+/g,'').trim();
-      html+=`<div class="week-hd">📅 ${clean}</div>`;
-    } else if(/^day\s*\d+/i.test(trimmed)||/^session\s*\d+/i.test(trimmed)||/^-\s*day\s*\d+/i.test(trimmed)){
-      const clean=trimmed.replace(/^-\s*/,'').replace(/\*+/g,'').trim();
-      const dayIdx=(html.match(/class="day-row/g)||[]).length+1;
-      const weekMatch=html.match(/📅 Week (\d+)/g);
-      const weekNum=weekMatch?(parseInt(weekMatch[weekMatch.length-1].replace(/\D/g,''))||1):1;
-      const dayId=`w${weekNum}d${dayIdx}`;
-      const done=completedDays.includes(dayId);
-      const rest=lines.slice(i+1,i+6).filter(l=>l.trim()&&!/^week\s*\d+/i.test(l.trim())).slice(0,3).join(' | ').replace(/\*+/g,'').substring(0,120);
-      html+=`<div class="day-row${done?' done':''}" onclick="showDayDetail('${dayId}',${JSON.stringify(clean).replace(/'/g,"&#39;")},${JSON.stringify(content).replace(/'/g,"&#39;")})">
-        <span class="day-num">D${dayIdx}</span>
-        <div>
-          <div class="day-name">${clean}</div>
-          <div class="day-desc">${rest||'View exercises →'}</div>
-        </div>
-        <div class="day-chk${done?' done':''}">${done?'✓':''}</div>
-      </div>`;
-    }
-  });
-  return html||`<div style="font-size:13px;color:var(--muted2);line-height:1.8;white-space:pre-wrap">${content}</div>`;
-}
-
-function openDay(dayId,title,data){
-  activeDayData={dayId,title,data};
-  id('dayTitle').textContent=title;
-  const prog=data&&programs.length?programs[0]:null;
-  let html=`<div style="padding:12px;background:rgba(245,158,11,.1);border-radius:8px;margin-bottom:16px;font-size:13px;color:var(--muted2)">
-    <strong style="color:var(--gold)">Goal:</strong> ${prog&&prog.goal||'General Fitness'} · 
-    <strong style="color:var(--gold)">Duration:</strong> ~45 min
-  </div>`;
-  // Show sample exercises based on day
-  const exercises=getSampleExercises(data&&data.goal,data&&data.day);
-  exercises.forEach(ex=>{
-    html+=`<div class="ex-item">
-      <div class="ex-name">${ex.name}</div>
-      <div class="ex-sets">${ex.sets}</div>
-      ${ex.note?`<div class="ex-note">💡 ${ex.note}</div>`:''}
-    </div>`;
-  });
-  id('dayModalBody').innerHTML=html;
-  id('dayModal').classList.add('on');
-}
-
-function showDayDetail(dayId,title,content){
-  activeDayData={dayId,title,data:{}};
-  id('dayTitle').textContent=title.replace(/&quot;/g,'"');
-  // Parse exercises from full program content near this day
-  const lines=content.split('\n');
-  const cleanTitle=title.replace(/&quot;/g,'"').replace(/\*+/g,'').trim();
-  let idx=lines.findIndex(l=>l.includes(cleanTitle));
-  let html='<div style="font-size:13px;line-height:1.8">';
-  if(idx>=0){
-    let i=idx+1;
-    while(i<lines.length&&i<idx+20){
-      const l=lines[i].trim();
-      if(!l){i++;continue;}
-      if(/^week\s*\d+/i.test(l)||/^day\s*\d+/i.test(l)||/^session\s*\d+/i.test(l))break;
-      const clean=l.replace(/^\-\s*/,'').replace(/\*+/g,'').trim();
-      if(clean) html+=`<div class="ex-item"><div class="ex-name">${clean}</div></div>`;
-      i++;
-    }
-  } else {
-    html+=`<div style="color:var(--muted2)">Workout details for this session. Check your program for full details.</div>`;
-  }
-  html+='</div>';
-  id('dayModalBody').innerHTML=html;
-  id('dayModal').classList.add('on');
-}
-
-function getSampleExercises(goal,day){
-  const sets={
-    'Fat Loss':['3 sets × 15 reps','3 sets × 12 reps','4 sets × 20 reps','2 sets × 60 sec'],
-    'Muscle Gain':['4 sets × 8 reps','3 sets × 10 reps','4 sets × 6 reps','3 sets × 12 reps'],
-    'Strength':['5 sets × 5 reps','4 sets × 4 reps','3 sets × 3 reps','5 sets × 5 reps'],
-    'Endurance':['3 sets × 20 reps','2 sets × 60 sec','4 sets × 15 reps','3 sets × 45 sec'],
-  };
-  const exList={
-    'Fat Loss':[['Jump Squats','Burpees','Mountain Climbers','High Knees','Push-ups','Plank'],
-                ['Lunges','Step-ups','Box Jumps','Kettlebell Swings','Bicycle Crunches','Russian Twists'],
-                ['Sprint Intervals','Jump Rope','Bear Crawls','Tricep Dips','Sit-ups','Flutter Kicks']],
-    'Muscle Gain':[['Bench Press','Incline DB Press','Cable Flyes','Tricep Pushdown','Skull Crushers','Chest Dips'],
-                   ['Squat','Leg Press','Romanian Deadlift','Leg Curl','Calf Raise','Leg Extension'],
-                   ['Deadlift','Barbell Row','Pull-ups','Face Pulls','Barbell Curl','Hammer Curl']],
-    'Strength':[['Squat','Box Squat','Leg Press','Front Squat','Pause Squat','Hack Squat'],
-                ['Bench Press','Close-Grip Bench','Board Press','DB Press','Dips','Push-ups'],
-                ['Deadlift','Trap Bar DL','Romanian DL','Good Mornings','Back Extensions','Glute Ham Raise']],
-  };
-  const g=goal||'General Fitness';
-  const d=(day||1)-1;
-  const dayIdx=d%3;
-  const names=(exList[g]&&exList[g][dayIdx])||['Squats','Push-ups','Pull-ups','Plank','Lunges','Rows'];
-  const s=(sets[g]&&sets[g])||['3 sets × 10 reps','3 sets × 10 reps','3 sets × 60 sec','3 sets × 10 reps'];
-  return names.slice(0,5).map((name,i)=>({name,sets:s[i%s.length],note:i===0?'Focus on form first':''}));
-}
-
-async function markDayDone(){
-  if(!activeDayData||!CU)return;
-  const {dayId,title}=activeDayData;
-  if(!completedDays.includes(dayId)){
-    completedDays.push(dayId);
-    await db.collection('users').doc(CU.uid).collection('completedDays').doc(dayId).set({ts:Date.now(),title}).catch(()=>{});
-    addActivity(`Completed workout: ${title}`,'💪');
-    toast(`Workout complete! 💪`);
-  } else {
-    toast('Already marked as complete!','ℹ️');
-  }
-  closeMo('dayModal');
-  renderProgram();
-  renderDashboard();
-}
-
-// ─── CHECK-INS ───
-let ratings={sleep:0,energy:0,stress:0};
-function setRating(type,val){
-  ratings[type]=val;
-  document.querySelectorAll(`#${type}Rating .rating-btn`).forEach(b=>{
-    b.classList.toggle('sel',parseInt(b.dataset.val)===val);
-  });
-}
-
-async function loadCheckins(){
-  try{
-    const snap=await db.collection('users').doc(CU.uid).collection('checkins').orderBy('ts','desc').limit(10).get().catch(()=>({docs:[]}));
-    checkinHistory=snap.docs.map(d=>d.data());
-    renderCheckinHistory();
-  }catch(e){}
-}
-
-function renderCheckinHistory(){
-  const el=id('ciHistory');
-  if(!checkinHistory.length){
-    el.innerHTML=`<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No check-ins yet. Submit your first one above!</div>`;
-    return;
-  }
-  const sleepLbls=['','😴 Poor','😐 OK','😊 Good','🌟 Great'];
-  const energyLbls=['','🪫 Low','😐 OK','⚡ High','🔥 Peak'];
-  const stressLbls=['','😤 High','😕 Moderate','😌 Low'];
-  el.innerHTML=checkinHistory.map(c=>`
-    <div class="history-item">
-      <div class="hi-date">${new Date(c.ts).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</div>
-      <div class="hi-row">
-        ${c.weight?`<div class="hi-stat">⚖️ <strong>${c.weight} kg</strong></div>`:''}
-        ${c.bodyFat?`<div class="hi-stat">📊 <strong>${c.bodyFat}% BF</strong></div>`:''}
-        ${c.workoutsCompleted?`<div class="hi-stat">🏋️ <strong>${c.workoutsCompleted} workouts</strong></div>`:''}
-        ${c.sleep?`<div class="hi-stat">Sleep: <strong>${sleepLbls[c.sleep]||c.sleep}</strong></div>`:''}
-        ${c.energy?`<div class="hi-stat">Energy: <strong>${energyLbls[c.energy]||c.energy}</strong></div>`:''}
-        ${c.stress?`<div class="hi-stat">Stress: <strong>${stressLbls[c.stress]||c.stress}</strong></div>`:''}
-      </div>
-      ${c.notes?`<div class="hi-note">"${c.notes}"</div>`:''}
-    </div>`).join('');
-}
-
-async function submitCheckin(){
-  if(!CU)return;
-  const weight=parseFloat(id('ciWeight').value)||null;
-  const bodyFat=parseFloat(id('ciBf').value)||null;
-  const workoutsCompleted=parseInt(id('ciWorkouts').value)||null;
-  const notes=id('ciNotes').value.trim();
-  const entry={
-    ts:Date.now(),weight,bodyFat,workoutsCompleted,notes,
-    sleep:ratings.sleep,energy:ratings.energy,stress:ratings.stress
-  };
-  try{
-    await db.collection('users').doc(CU.uid).collection('checkins').add(entry);
-    // Also write to the top-level user doc so coach can see it
-    await db.collection('users').doc(CU.uid).set({latestCheckin:entry},{merge:true});
-    checkinHistory.unshift(entry);
-    renderCheckinHistory();
-    // Clear form
-    id('ciWeight').value='';id('ciBf').value='';id('ciWorkouts').value='';id('ciNotes').value='';
-    ratings={sleep:0,energy:0,stress:0};
-    document.querySelectorAll('.rating-btn').forEach(b=>b.classList.remove('sel'));
-    addActivity('Submitted weekly check-in','📋');
-    toast('Check-in submitted! Your coach will review it.','📋');
-    renderDashboard();
-  }catch(e){toast('Failed to submit. Please try again.','❌');}
-}
-
-// ─── PROFILE SAVE ───
-async function saveProfile(){
-  if(!CU)return;
-  const data={
-    firstName:id('pfFirst').value.trim(),
-    lastName:id('pfLast').value.trim(),
-    age:parseInt(id('pfAge').value)||null,
-    gender:id('pfGender').value,
-    height:parseFloat(id('pfHeight').value)||null,
-    weight:parseFloat(id('pfWeight').value)||null,
-    goal:id('pfGoal').value,
-    targetWeight:parseFloat(id('pfTarget').value)||null,
-    healthNotes:id('pfHealth').value.trim(),
-    updatedAt:Date.now()
-  };
-  try{
-    await db.collection('users').doc(CU.uid).set(data,{merge:true});
-    profile={...profile,...data};
-    const name=data.firstName||CU.displayName||CU.email.split('@')[0];
-    const initials=(data.firstName?data.firstName[0]:'?')+(data.lastName?data.lastName[0]:'');
-    id('navAva').textContent=initials.toUpperCase()||name.slice(0,2).toUpperCase();
-    id('navName').textContent=data.firstName?`${data.firstName} ${data.lastName||''}`.trim():name;
-    id('profAva').textContent=initials.toUpperCase()||name.slice(0,2).toUpperCase();
-    id('profName').textContent=data.firstName?`${data.firstName} ${data.lastName||''}`.trim():name;
-    toast('Profile saved!','✅');
-  }catch(e){toast('Failed to save profile.','❌');}
-}
-
-// ─── ACTIVITY LOG ───
-let actLog=[];
-async function addActivity(text,ico='📌'){
-  const item={text,ico,time:Date.now()};
-  actLog.unshift(item);
-  if(actLog.length>20)actLog=actLog.slice(0,20);
-  await db.collection('users').doc(CU.uid).set({activityLog:actLog.slice(0,10)},{merge:true}).catch(()=>{});
-  renderActivityFeed();
-}
-async function loadActivity(){
-  const snap=await db.collection('users').doc(CU.uid).get().catch(()=>null);
-  if(snap&&snap.exists()){
-    actLog=snap.data().activityLog||[];
-  }
-}
-
-// ─── DASHBOARD RENDER ───
-async function renderDashboard(){
-  // Load activity
-  await loadActivity();
-  // Stats
-  const prog=programs.length?programs[0]:null;
-  id('stWeek').textContent=prog?`Wk 1`:'—';
-  id('stProgName').textContent=prog?prog.name:'No program yet';
-  const thisWeekDone=completedDays.filter(d=>{
-    // all completedDays with a timestamp this week
-    return true; // simplified
-  }).length;
-  id('stDone').textContent=completedDays.length;
-  id('stCheckins').textContent=checkinHistory.length;
-  const totalDays=prog?(parseInt(prog.weeks||4)*parseInt(prog.days||3)):0;
-  const comp=totalDays?Math.round((completedDays.length/totalDays)*100):0;
-  id('stComp').innerHTML=`${comp}<span style="font-size:16px">%</span>`;
-  // Progress bars
-  const ciRate=checkinHistory.length?Math.min(100,checkinHistory.length*10):0;
-  const progPct=totalDays?Math.round((completedDays.length/totalDays)*100):0;
-  id('gComp').textContent=comp+'%'; id('gCompFill').style.width=comp+'%';
-  id('gCI').textContent=ciRate+'%'; id('gCIFill').style.width=ciRate+'%';
-  id('gProg').textContent=progPct+'%'; id('gProgFill').style.width=progPct+'%';
-  // Next workout banner
-  if(prog){
-    id('nwBanner').style.display='flex';
-    const nextDay=completedDays.length+1;
-    id('nwTitle').textContent=`Next: Week ${Math.ceil(nextDay/(parseInt(prog.days)||3))} · Day ${((nextDay-1)%(parseInt(prog.days)||3))+1}`;
-    id('nwDesc').textContent=`${prog.name} · ${prog.goal||'General Fitness'}`;
-  }
-  renderActivityFeed();
-}
-
-function renderActivityFeed(){
-  const el=id('actFeed');
-  const colors=['var(--gold)','var(--green)','var(--blue)','var(--purple)','var(--red)'];
-  if(!actLog.length){
-    el.innerHTML=`<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">No activity yet</div>`;
-    return;
-  }
-  el.innerHTML=actLog.slice(0,6).map((a,i)=>`
-    <div class="act-item">
-      <div class="act-dot" style="background:${colors[i%colors.length]}"></div>
-      <div>
-        <div class="act-txt">${a.ico||'📌'} ${a.text}</div>
-        <div class="act-time">${a.time?timeSince(a.time):'Just now'}</div>
-      </div>
-    </div>`).join('');
-}
-
-function timeSince(ts){
-  const s=Math.floor((Date.now()-ts)/1000);
-  if(s<60)return 'Just now';
-  if(s<3600)return Math.floor(s/60)+' min ago';
-  if(s<86400)return Math.floor(s/3600)+' hr ago';
-  return Math.floor(s/86400)+' days ago';
-}
-
-// ─── CHAT ───
-// Chat path: users/{clientUID}/messages  (same path coach.html uses)
-let chatHist=[];
-function startChat(){
-  if(!CU)return;
-  if(chatUnsub){chatUnsub();chatUnsub=null;}
-  chatUnsub=db.collection('users').doc(CU.uid).collection('messages')
-    .orderBy('ts','asc')
-    .onSnapshot(snap=>{
-      chatHist=snap.docs.map(d=>d.data());
-      renderChatMsgs();
-    },err=>console.warn('Chat error:',err));
-}
-
-function renderChatMsgs(){
-  const area=id('chatArea');
-  if(!chatHist.length){
-    area.innerHTML='<div class="sys-msg">Connected to coaching session. Say hello! 👋</div>';
-    return;
-  }
-  area.innerHTML=chatHist.map(m=>{
-    const type=m.from==='client'?'sent':'recv';
-    const time=m.ts?new Date(m.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
-    return `<div class="msg ${type}">${escHtml(m.text)}<div class="msg-meta">${time}</div></div>`;
-  }).join('');
-  scrollChat();
-}
-function scrollChat(){
-  const a=id('chatArea');if(a)a.scrollTop=a.scrollHeight;
-}
-async function sendMsg(){
-  const inp=id('msgInput');
-  const txt=inp.value.trim();
-  if(!txt||!CU)return;
-  inp.value='';
-  try{
-    await db.collection('users').doc(CU.uid).collection('messages').add({
-      from:'client',text:txt,ts:Date.now()
-    });
-    addActivity('Sent a message to coach','💬');
-  }catch(e){
-    // Show locally on failure
-    chatHist.push({from:'client',text:txt,ts:Date.now()});
-    renderChatMsgs();
-    console.warn('Firestore chat write failed:',e);
-  }
-}
-id('msgInput').addEventListener('keypress',e=>{if(e.key==='Enter')sendMsg();});
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 </script>
+
 </body>
 </html>
