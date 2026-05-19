@@ -625,6 +625,7 @@
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <!-- LiveKit Client -->
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
 
@@ -641,6 +642,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db   = firebase.firestore();
 
 // ─── LIVEKIT CONFIG ───
 const LK_URL    = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
@@ -652,9 +654,14 @@ const ROOM_NAME = 'evolve-coaching-room';
 let isRegisterMode = false;
 let currentUser = null;
 
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
     if (user) {
         currentUser = user;
+        // Tag this UID as a client in Firestore — fire and forget, never blocks login
+        db.collection('users').doc(user.uid).set(
+          { role: 'client', email: user.email, lastSeen: Date.now() },
+          { merge: true }
+        ).catch(() => {});
         showApp(user);
     } else {
         currentUser = null;
@@ -711,6 +718,7 @@ async function handleAuth() {
             await auth.signInWithEmailAndPassword(email, password);
         }
     } catch(e) {
+        console.error('Auth error:', e.code, e.message);
         showError(friendlyError(e.code));
         btn.disabled = false;
         btn.textContent = isRegisterMode ? 'Create Account' : 'Sign In';
@@ -723,6 +731,7 @@ async function signInWithGoogle() {
     try {
         await auth.signInWithPopup(provider);
     } catch(e) {
+        console.error('Google auth error:', e.code, e.message);
         showError(friendlyError(e.code));
     }
 }
@@ -734,15 +743,26 @@ async function logout() {
 
 function friendlyError(code) {
     const map = {
-        'auth/user-not-found': 'No account found with this email.',
-        'auth/wrong-password': 'Incorrect password.',
-        'auth/email-already-in-use': 'An account already exists with this email.',
-        'auth/invalid-email': 'Please enter a valid email address.',
-        'auth/weak-password': 'Password must be at least 6 characters.',
-        'auth/popup-closed-by-user': 'Sign-in popup was closed.',
-        'auth/invalid-credential': 'Invalid email or password.'
+        // Legacy codes
+        'auth/user-not-found':        'No account found with this email.',
+        'auth/wrong-password':        'Incorrect password. Please try again.',
+        'auth/email-already-in-use':  'An account already exists with this email.',
+        'auth/invalid-email':         'Please enter a valid email address.',
+        'auth/weak-password':         'Password must be at least 6 characters.',
+        'auth/popup-closed-by-user':  'Sign-in popup was closed.',
+        // Newer Firebase SDK codes (v10+)
+        'auth/invalid-credential':         'Incorrect email or password. Please try again.',
+        'auth/invalid-login-credentials':  'Incorrect email or password. Please try again.',
+        'auth/user-disabled':              'This account has been disabled.',
+        'auth/too-many-requests':          'Too many attempts. Please wait a moment and try again.',
+        'auth/network-request-failed':     'Network error. Please check your connection.',
+        'auth/popup-blocked':              'Popup was blocked by your browser.',
+        'auth/cancelled-popup-request':    'Sign-in was cancelled.',
+        'auth/operation-not-allowed':      'This sign-in method is not enabled.',
+        'auth/missing-password':           'Please enter your password.',
+        'auth/missing-email':              'Please enter your email address.',
     };
-    return map[code] || 'Authentication failed. Please try again.';
+    return map[code] || `Sign-in failed (${code || 'unknown error'}). Please try again.`;
 }
 
 document.getElementById('passwordInput').addEventListener('keypress', e => {
