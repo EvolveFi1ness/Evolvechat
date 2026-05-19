@@ -743,14 +743,45 @@ async function handleAuth() {
 
 async function signInWithGoogle() {
     clearError();
+    const btn = document.querySelector('.btn-google');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="login-spinner" style="border-color:rgba(255,255,255,.3);border-top-color:#fff"></span> Connecting…';
+
     const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('email');
+    provider.addScope('profile');
+
     try {
+        // Try popup first; if blocked, fall back to redirect
         await auth.signInWithPopup(provider);
     } catch(e) {
-        console.error('Google auth error:', e.code, e.message);
-        showError(friendlyError(e.code));
+        if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+            // Popup was blocked — use redirect instead (works everywhere)
+            try {
+                await auth.signInWithRedirect(provider);
+                return; // page will reload
+            } catch(e2) {
+                showError(friendlyError(e2.code));
+            }
+        } else {
+            showError(friendlyError(e.code));
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<div class="google-icon"></div> Continue with Google';
     }
 }
+
+// Handle the result when the page loads after a redirect sign-in
+auth.getRedirectResult().then(result => {
+    if (result && result.user) {
+        // onAuthStateChanged will handle the rest
+    }
+}).catch(e => {
+    if (e.code && e.code !== 'auth/no-current-user') {
+        document.getElementById('loginError').textContent = friendlyError(e.code);
+        document.getElementById('loginError').style.display = 'block';
+    }
+});
 
 async function logout() {
     endCall();
@@ -772,8 +803,9 @@ function friendlyError(code) {
         'auth/user-disabled':              'This account has been disabled.',
         'auth/too-many-requests':          'Too many attempts. Please wait a moment and try again.',
         'auth/network-request-failed':     'Network error. Please check your connection.',
-        'auth/popup-blocked':              'Popup was blocked by your browser.',
-        'auth/cancelled-popup-request':    'Sign-in was cancelled.',
+        'auth/popup-blocked':              'Sign-in popup was blocked by your browser. Trying redirect instead…',
+        'auth/cancelled-popup-request':    'Sign-in was cancelled. Please try again.',
+        'auth/account-exists-with-different-credential': 'An account already exists with this email using a different sign-in method. Please sign in with email/password instead.',
         'auth/operation-not-allowed':      'This sign-in method is not enabled.',
         'auth/missing-password':           'Please enter your password.',
         'auth/missing-email':              'Please enter your email address.',
