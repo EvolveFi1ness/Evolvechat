@@ -1519,22 +1519,31 @@ let unsubChatMsgs = null;
 
 function initMessaging() {
   if (unsubConvos) unsubConvos();
-  const { db, collection, query, orderBy, onSnapshot } = fb();
-  try {
-    const q = query(collection(db, 'conversations'), orderBy('lastTime', 'desc'));
-    unsubConvos = onSnapshot(q, snapshot => {
-      allConversations = [];
-      snapshot.forEach(d => allConversations.push({ id: d.id, ...d.data() }));
-      renderConversationList();
-    }, () => {
-      // No conversations yet — show empty state
-      allConversations = [];
-      renderConversationList();
-    });
-  } catch(e) {
+  const { db, collection, onSnapshot } = fb();
+
+  const handleSnapshot = snapshot => {
     allConversations = [];
+    snapshot.forEach(d => allConversations.push({ id: d.id, ...d.data() }));
+    // Sort client-side — works even when lastTime is null/missing on some docs
+    allConversations.sort((a, b) => {
+      const aT = a.lastTime?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
+      const bT = b.lastTime?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
+      return bT - aT;
+    });
     renderConversationList();
-  }
+  };
+
+  // Listen to whole collection — no orderBy = no composite index required,
+  // works immediately even on a fresh Firebase project
+  unsubConvos = onSnapshot(
+    collection(db, 'conversations'),
+    handleSnapshot,
+    err => {
+      console.warn('Conversations listener error:', err);
+      allConversations = [];
+      renderConversationList();
+    }
+  );
 }
 
 function _convColor(name) {
@@ -1602,23 +1611,33 @@ function openConvo(convoId, name, ini, col) {
   // Subscribe to this conversation's messages
   if (unsubChatMsgs) unsubChatMsgs();
   id('chatMsgs').innerHTML = '';
-  const { collection, query, orderBy, onSnapshot } = fb();
-  const msgsQ = query(collection(db, 'conversations', convoId, 'messages'), orderBy('timestamp', 'asc'));
-  unsubChatMsgs = onSnapshot(msgsQ, snapshot => {
-    id('chatMsgs').innerHTML = '';
-    snapshot.forEach(d => {
-      const msg = d.data();
-      const isCoach = msg.sender === 'coach';
-      const div = document.createElement('div');
-      div.style.cssText = `display:flex;justify-content:${isCoach?'flex-end':'flex-start'}`;
-      div.innerHTML = `<div style="max-width:70%;background:${isCoach?'var(--accent)':'var(--surface2)'};
-        border:1px solid ${isCoach?'transparent':'var(--border2)'};
-        border-radius:${isCoach?'14px 14px 4px 14px':'14px 14px 14px 4px'};
-        padding:10px 14px;font-size:13px;line-height:1.5">${escMsg(msg.text)}</div>`;
-      id('chatMsgs').appendChild(div);
-    });
-    const el = id('chatMsgs'); el.scrollTop = el.scrollHeight;
-  });
+  const { collection, onSnapshot } = fb();
+
+  unsubChatMsgs = onSnapshot(
+    collection(db, 'conversations', convoId, 'messages'),
+    snapshot => {
+      // Collect all msgs, sort by timestamp client-side (no index needed)
+      const msgs = [];
+      snapshot.forEach(d => msgs.push(d.data()));
+      msgs.sort((a, b) => {
+        const aT = a.timestamp?.toMillis?.() || 0;
+        const bT = b.timestamp?.toMillis?.() || 0;
+        return aT - bT;
+      });
+      id('chatMsgs').innerHTML = '';
+      msgs.forEach(msg => {
+        const isCoach = msg.sender === 'coach';
+        const div = document.createElement('div');
+        div.style.cssText = `display:flex;justify-content:${isCoach?'flex-end':'flex-start'}`;
+        div.innerHTML = `<div style="max-width:70%;background:${isCoach?'var(--accent)':'var(--surface2)'};
+          border:1px solid ${isCoach?'transparent':'var(--border2)'};
+          border-radius:${isCoach?'14px 14px 4px 14px':'14px 14px 14px 4px'};
+          padding:10px 14px;font-size:13px;line-height:1.5">${escMsg(msg.text)}</div>`;
+        id('chatMsgs').appendChild(div);
+      });
+      const el = id('chatMsgs'); el.scrollTop = el.scrollHeight;
+    }
+  );
 
   renderConversationList(); // highlight active
 }
