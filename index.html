@@ -256,23 +256,33 @@ body{font-family:'Barlow',sans-serif;background:var(--bg2);color:var(--text);hei
     <div class="l-title" id="lt">Welcome back</div>
     <div class="l-sub" id="ls">Sign in to your client portal</div>
     <div id="loginError"></div>
+
+    <!-- Name field — sign-up only -->
     <div class="fg" id="nameField" style="display:none">
       <label>Full Name</label>
-      <input type="text" id="nameInp" placeholder="e.g. Jake Cruz" autocomplete="name"/>
+      <input type="text" id="nameInp" placeholder="e.g. Jake Cruz" autocomplete="name" onkeydown="if(event.key==='Enter')handleAuth()"/>
     </div>
+
     <div class="fg">
       <label>Email</label>
-      <input type="email" id="emailInp" placeholder="you@example.com" autocomplete="email"/>
+      <input type="email" id="emailInp" placeholder="you@example.com" autocomplete="email" onkeydown="if(event.key==='Enter')handleAuth()"/>
     </div>
     <div class="fg">
       <label>Password</label>
-      <input type="password" id="passInp" placeholder="••••••••" autocomplete="current-password"/>
+      <input type="password" id="passInp" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleAuth()"/>
     </div>
+
+    <!-- Confirm password — sign-up only -->
+    <div class="fg" id="confirmField" style="display:none">
+      <label>Confirm Password</label>
+      <input type="password" id="passConfirm" placeholder="••••••••" autocomplete="new-password" onkeydown="if(event.key==='Enter')handleAuth()"/>
+    </div>
+
     <button class="btn-auth" id="authBtn" onclick="handleAuth()">Sign In</button>
-    <button class="btn-sec" id="toggleBtn" onclick="toggleMode()">Create an Account</button>
-    <div class="l-toggle">
-      <span id="toggleTxt">Already have an account?</span>
-      <a onclick="toggleMode()" id="toggleLnk"> Sign in</a>
+
+    <div class="l-toggle" style="margin-top:14px">
+      <span id="toggleTxt">Don't have an account?</span>
+      <a onclick="toggleMode()" id="toggleLnk"> Create one</a>
     </div>
   </div>
 </div>
@@ -622,7 +632,6 @@ const db=firebase.firestore();
 let CU=null, profile={}, checkinRatings={sleep:0,energy:0,stress:0};
 let programs=[], completedDays=[], checkinHistory=[];
 let chatUnsub=null, activeDayData=null;
-let isRegMode=false;
 
 // ─── AUTH STATE ───
 auth.onAuthStateChanged(async user=>{
@@ -683,56 +692,92 @@ async function showApp(user){
 }
 
 // ─── LOGIN / SIGNUP ───
-let isRegisterMode=false;
-function toggleMode(){
-  isRegisterMode=!isRegisterMode;
-  id('lt').textContent=isRegisterMode?'Create Account':'Welcome back';
-  id('ls').textContent=isRegisterMode?'Join your coaching session':'Sign in to your client portal';
-  id('authBtn').textContent=isRegisterMode?'Create Account':'Sign In';
-  id('toggleBtn').textContent=isRegisterMode?'I have an account':'Create an Account';
-  id('toggleTxt').textContent=isRegisterMode?'Already have an account?':"Don't have an account?";
-  id('toggleLnk').textContent=isRegisterMode?' Sign in':' Register';
-  id('nameField').style.display=isRegisterMode?'block':'none';
-  id('loginError').style.display='none';
+let isRegisterMode = false;
+
+function toggleMode() {
+  isRegisterMode = !isRegisterMode;
+  id('loginError').style.display = 'none';
+  id('lt').textContent        = isRegisterMode ? 'Create Account'              : 'Welcome back';
+  id('ls').textContent        = isRegisterMode ? 'Join your coaching session'  : 'Sign in to your client portal';
+  id('authBtn').textContent   = isRegisterMode ? 'Create Account'              : 'Sign In';
+  id('toggleTxt').textContent = isRegisterMode ? 'Already have an account?'    : "Don't have an account?";
+  id('toggleLnk').textContent = isRegisterMode ? ' Sign in'                    : ' Create one';
+  id('nameField').style.display    = isRegisterMode ? 'block' : 'none';
+  id('confirmField').style.display = isRegisterMode ? 'block' : 'none';
+  // swap autocomplete hint for password field
+  id('passInp').placeholder      = '••••••••';
+  id('passInp').autocomplete     = isRegisterMode ? 'new-password' : 'current-password';
+  if (!isRegisterMode) id('passConfirm').value = '';
 }
-function showErr(m){const e=id('loginError');e.textContent=m;e.style.display='block';}
-async function handleAuth(){
-  const email=id('emailInp').value.trim();
-  const pass=id('passInp').value;
-  const btn=id('authBtn');
-  if(!email||!pass){showErr('Please fill in all fields.');return;}
-  id('loginError').style.display='none';
-  btn.disabled=true;
-  btn.innerHTML=`<span class="spin"></span>${isRegisterMode?'Creating…':'Signing in…'}`;
-  try{
-    if(isRegisterMode){
-      const cred=await auth.createUserWithEmailAndPassword(email,pass);
-      const name=id('nameInp').value.trim();
-      if(name) await cred.user.updateProfile({displayName:name});
+
+function showErr(m) {
+  const e = id('loginError');
+  e.textContent = m;
+  e.style.display = 'block';
+}
+
+function friendly(code) {
+  const map = {
+    'auth/user-not-found'        : 'No account found with this email.',
+    'auth/wrong-password'        : 'Incorrect password. Please try again.',
+    'auth/invalid-credential'    : 'Incorrect email or password.',
+    'auth/email-already-in-use'  : 'An account already exists with this email. Sign in instead.',
+    'auth/invalid-email'         : 'Please enter a valid email address.',
+    'auth/weak-password'         : 'Password must be at least 6 characters.',
+    'auth/too-many-requests'     : 'Too many attempts. Please wait a moment and try again.',
+    'auth/network-request-failed': 'Network error. Check your connection.',
+  };
+  return map[code] || 'Something went wrong. Please try again.';
+}
+
+async function handleAuth() {
+  const email = id('emailInp').value.trim().toLowerCase();
+  const pass  = id('passInp').value;
+  const btn   = id('authBtn');
+
+  id('loginError').style.display = 'none';
+
+  // ── Validation ──
+  if (!email || !pass) { showErr('Please fill in all fields.'); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
+
+  if (isRegisterMode) {
+    const name    = id('nameInp').value.trim();
+    const confirm = id('passConfirm').value;
+    if (!name)           { showErr('Please enter your full name.'); return; }
+    if (pass.length < 6) { showErr('Password must be at least 6 characters.'); return; }
+    if (pass !== confirm) { showErr('Passwords do not match.'); return; }
+  }
+
+  // ── Fire ──
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spin"></span>${isRegisterMode ? 'Creating account…' : 'Signing in…'}`;
+
+  try {
+    if (isRegisterMode) {
+      const name = id('nameInp').value.trim();
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      // Save display name to Firebase Auth profile
+      if (name) await cred.user.updateProfile({ displayName: name });
+      // onAuthStateChanged fires → showApp()
     } else {
-      await auth.signInWithEmailAndPassword(email,pass);
+      await auth.signInWithEmailAndPassword(email, pass);
+      // onAuthStateChanged fires → showApp()
     }
-  }catch(e){
+  } catch(e) {
     showErr(friendly(e.code));
-    btn.disabled=false;
-    btn.textContent=isRegisterMode?'Create Account':'Sign In';
+    btn.disabled = false;
+    btn.textContent = isRegisterMode ? 'Create Account' : 'Sign In';
   }
 }
-function friendly(code){
-  const m={
-    'auth/user-not-found':'No account found with this email.',
-    'auth/wrong-password':'Incorrect password.',
-    'auth/invalid-credential':'Incorrect email or password.',
-    'auth/email-already-in-use':'An account already exists with this email.',
-    'auth/invalid-email':'Please enter a valid email.',
-    'auth/weak-password':'Password must be at least 6 characters.',
-    'auth/too-many-requests':'Too many attempts. Please wait a moment.',
-    'auth/network-request-failed':'Network error. Check your connection.',
-  };
-  return m[code]||`Sign-in failed. Please try again.`;
+
+async function logout() {
+  await auth.signOut();
+  // Clear form state for next login
+  id('emailInp').value = '';
+  id('passInp').value  = '';
+  if (isRegisterMode) toggleMode(); // reset to sign-in mode
 }
-id('passInp').addEventListener('keypress',e=>{if(e.key==='Enter')handleAuth();});
-async function logout(){await auth.signOut();}
 
 // ─── NAVIGATION ───
 function goSec(s){
