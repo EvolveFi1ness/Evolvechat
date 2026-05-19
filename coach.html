@@ -758,7 +758,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
           <div class="stsec">
             <div class="stt">🔒 Change Login Password</div>
             <div class="fw"><label class="fl">Current Password</label><input class="fi" type="password" id="cPass" placeholder="••••••••"/></div>
-            <div class="fw"><label class="fl">New Password</label><input class="fi" type="password" id="nPass" placeholder="Min. 6 characters"/></div>
+            <div class="fw"><label class="fl">New Password</label><input class="fi" type="password" id="nPass" placeholder="Min. 8 characters"/></div>
             <div class="fw"><label class="fl">Confirm New Password</label><input class="fi" type="password" id="nPass2" placeholder="••••••••"/></div>
             <div class="auth-alert e" id="passErr" style="margin-bottom:10px"></div>
             <div class="auth-alert s" id="passOk" style="margin-bottom:10px"></div>
@@ -887,11 +887,6 @@ const actDoc     = (uid)    => fb().doc(fb().db, 'coaches', uid, 'meta', 'activi
 
 // ── Clients ──
 async function fsLoadClients(){
-  if(CU === 'local-coach'){
-    clients = JSON.parse(localStorage.getItem('localClients')||'[]');
-    nextId  = clients.length ? Math.max(...clients.map(c=>c.id).filter(x=>x>0),0)+1 : 1;
-    return;
-  }
   // Load manually-added clients from the coach's own subcollection
   const snap = await fb().getDocs(clientsCol(CU));
   const manualClients = snap.docs.map(d=>({...d.data(), id: parseInt(d.id)}));
@@ -947,72 +942,35 @@ async function fsLoadClients(){
   clients = [...manualClients, ...portalClients];
 }
 async function fsSaveClient(c){
-  if(CU === 'local-coach'){
-    const idx = clients.findIndex(x=>x.id===c.id);
-    if(idx>=0) clients[idx]=c; else clients.push(c);
-    localStorage.setItem('localClients', JSON.stringify(clients));
-    return;
-  }
   await fb().setDoc(clientDoc(CU, c.id), c);
 }
 async function fsDeleteClient(cid){
-  if(CU === 'local-coach'){
-    clients = clients.filter(c=>c.id!==cid);
-    localStorage.setItem('localClients', JSON.stringify(clients));
-    return;
-  }
   await fb().deleteDoc(clientDoc(CU, cid));
 }
 
 // ── Programs ──
 async function fsLoadProgs(){
-  if(CU === 'local-coach'){
-    savedProgs = JSON.parse(localStorage.getItem('localProgs')||'[]');
-    return;
-  }
   const snap = await fb().getDocs(progsCol(CU));
   savedProgs = snap.docs.map(d=>({...d.data(), _fid: d.id}));
 }
 async function fsSaveProg(p){
-  if(CU === 'local-coach'){
-    if(!p._fid) p._fid = 'local-'+Date.now();
-    const idx = savedProgs.findIndex(x=>x._fid===p._fid);
-    if(idx>=0) savedProgs[idx]=p; else savedProgs.push(p);
-    localStorage.setItem('localProgs', JSON.stringify(savedProgs));
-    return p;
-  }
-  const ref = fb().doc(progsCol(CU)); // auto-id
+  const ref = fb().doc(progsCol(CU));
   await fb().setDoc(ref, {...p, _fid: ref.id});
   p._fid = ref.id;
   return p;
 }
 async function fsDeleteProg(fid){
-  if(CU === 'local-coach'){
-    savedProgs = savedProgs.filter(p=>p._fid!==fid);
-    localStorage.setItem('localProgs', JSON.stringify(savedProgs));
-    return;
-  }
   await fb().deleteDoc(progDoc(CU, fid));
 }
 
 // ── Activity ──
 async function fsLoadActivity(){
-  if(CU === 'local-coach'){
-    return JSON.parse(localStorage.getItem('localActivity')||'[]');
-  }
   try{
     const snap = await fb().getDoc(actDoc(CU));
     return snap.exists() ? (snap.data().log||[]) : [];
   }catch{ return []; }
 }
 async function fsPushActivity(text){
-  if(CU === 'local-coach'){
-    const log = await fsLoadActivity();
-    log.unshift({text, time:'Just now'});
-    if(log.length>12) log.pop();
-    localStorage.setItem('localActivity', JSON.stringify(log));
-    return;
-  }
   const log = await fsLoadActivity();
   log.unshift({text, time:'Just now'});
   if(log.length>12) log.pop();
@@ -1032,18 +990,10 @@ function showAuth(page){
   document.querySelectorAll('.auth-alert').forEach(a=>a.classList.remove('on'));
 }
 
-// Called after login (local or Firebase) — boots the main app UI
+// Called from Firebase onAuthStateChanged after coach doc verified
 window.bootApp = async function(fbUser, profile, fresh){
   CU = fbUser.uid;
-
-  // For local auth, use localStorage for client/program data (no Firestore)
-  if(CU === 'local-coach'){
-    clients = JSON.parse(localStorage.getItem('localClients')||'[]');
-    nextId  = clients.length ? Math.max(...clients.map(c=>c.id).filter(x=>x>0),0)+1 : 1;
-    savedProgs = JSON.parse(localStorage.getItem('localProgs')||'[]');
-  } else {
-    await fsLoadClients();
-  }
+  await fsLoadClients();
 
   const first = profile.first || 'Coach';
   const last  = profile.last  || '';
@@ -1136,6 +1086,9 @@ async function doSignup(){
       first, last, email, role: 'coach', createdAt: Date.now()
     });
 
+    // Store the coach email so the password-only login can find it
+    await fb().setDoc(fb().doc(fb().db, 'config', 'coach'), { email }, { merge: true });
+
     alert_(ok, 'Coach account created! Signing you in…');
     // onAuthStateChanged fires automatically → bootApp
   } catch(e) {
@@ -1145,37 +1098,45 @@ async function doSignup(){
 }
 
 // ══════════════════════════════════════════
-// LOGIN  (local password — no Firebase Auth)
+// LOGIN  — password-only (email from Firestore config/coach)
+// Default password on first signup: admin123
 // ══════════════════════════════════════════
-function getLocalPassword(){
-  return localStorage.getItem('coachPassword') || 'admin123';
-}
-
-function doLogin(){
-  const pass = id('lPass').value;
+async function doLogin(){
+  const pass = v('lPass');
   const err  = id('loginErr');
   err.classList.remove('on');
   if(!pass) return alert_(err,'Please enter your password.');
 
-  if(pass !== getLocalPassword()){
-    return alert_(err,'Incorrect password. Please try again.');
+  // Fetch the stored coach email from Firestore
+  let coachEmail = null;
+  try {
+    const cfgSnap = await fb().getDoc(fb().doc(fb().db, 'config', 'coach'));
+    if(cfgSnap.exists()) coachEmail = cfgSnap.data().email;
+  } catch(e){}
+
+  if(!coachEmail){
+    return alert_(err,'No coach account set up yet. Please create your account first.');
   }
 
-  sessionStorage.setItem('coachLoggedIn','1');
-  window._fbUser    = { uid: 'local-coach', email: 'coach@local' };
-  window._fbProfile = { first: 'Coach', last: '', role: 'Coach' };
-  bootApp(window._fbUser, window._fbProfile, false);
+  try {
+    await fb().signInWithEmailAndPassword(fb().auth, coachEmail, pass);
+    // onAuthStateChanged fires → verifies coaches/{uid} → bootApp
+  } catch(e){
+    const msg = (e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')
+      ? 'Incorrect password. Please try again.'
+      : (e.message||'Login failed. Please try again.');
+    alert_(err, msg);
+  }
 }
 
 // ══════════════════════════════════════════
 // LOGOUT
 // ══════════════════════════════════════════
-function doLogout(){
-  sessionStorage.removeItem('coachLoggedIn');
+async function doLogout(){
+  await fb().signOut(fb().auth);
   CU=null; clients=[]; savedProgs=[];
   id('app').style.display='none';
   curTab='active'; goSec('clients');
-  showAuth('loginPage');
   toast('Signed out successfully','👋');
 }
 
@@ -1219,33 +1180,37 @@ function pStrength(val){
 // ══════════════════════════════════════════
 async function saveProfile(){
   const first=v('stFirst'), last=v('stLast'), role=v('stRole');
-  if(!first) return toast('Name cannot be empty','⚠️');
-  if(CU !== 'local-coach'){
-    await fb().updateDoc(coachDoc(CU), {first, last, role});
-  }
+  if(!first||!last) return toast('Name cannot be empty','⚠️');
+  await fb().updateDoc(coachDoc(CU), {first, last, role});
   window._fbProfile = {...window._fbProfile, first, last, role};
-  const ava = last ? (first[0]+last[0]).toUpperCase() : first.slice(0,2).toUpperCase();
-  id('sbAva').textContent = ava;
-  id('sbName').textContent = last ? `${first} ${last}` : first;
+  id('sbAva').textContent=(first[0]+last[0]).toUpperCase();
+  id('sbName').textContent=`${first} ${last}`;
   toast('Profile saved!','✅');
 }
 
 // ══════════════════════════════════════════
-// CHANGE LOCAL PASSWORD
+// CHANGE PASSWORD  (Firebase reauthenticate)
 // ══════════════════════════════════════════
-function changeLocalPass(){
+async function changeLocalPass(){
   const cur=v('cPass'), np=v('nPass'), np2=v('nPass2');
   const err=id('passErr'), ok=id('passOk');
   err.classList.remove('on'); ok.classList.remove('on');
   if(!cur) return alert_(err,'Please enter your current password.');
-  if(cur !== getLocalPassword()) return alert_(err,'Current password is incorrect.');
-  if(np.length<6) return alert_(err,'New password must be at least 6 characters.');
+  if(np.length<8) return alert_(err,'New password must be at least 8 characters.');
   if(np!==np2) return alert_(err,'Passwords do not match.');
-  localStorage.setItem('coachPassword', np);
-  id('cPass').value=''; id('nPass').value=''; id('nPass2').value='';
-  ok.textContent='Password updated successfully!'; ok.classList.add('on');
-  setTimeout(()=>ok.classList.remove('on'), 3000);
-  toast('Password updated!','🔒');
+  try{
+    const cred = fb().EmailAuthProvider.credential(window._fbUser.email, cur);
+    await fb().reauthenticateWithCredential(window._fbUser, cred);
+    await fb().updatePassword(window._fbUser, np);
+    id('cPass').value=''; id('nPass').value=''; id('nPass2').value='';
+    ok.textContent='Password updated successfully!'; ok.classList.add('on');
+    setTimeout(()=>ok.classList.remove('on'), 3000);
+    toast('Password updated!','🔒');
+  } catch(e){
+    alert_(err, e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'
+      ? 'Current password is incorrect.'
+      : 'Failed to update password. Please try again.');
+  }
 }
 
 // ══════════════════════════════════════════
