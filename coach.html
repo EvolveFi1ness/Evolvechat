@@ -829,11 +829,49 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
 <div id="ctx">
   <div class="ci" onclick="ctxAct('profile')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>View Profile</div>
   <div class="ci" onclick="ctxAct('message')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Send Message</div>
+  <div class="ci" onclick="ctxAct('assignProgram')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Assign Program</div>
+  <div class="ci" onclick="ctxAct('viewCheckins')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>View Check-ins</div>
   <div class="ci" onclick="ctxAct('star')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Toggle Star</div>
   <div class="cdiv"></div>
   <div class="ci" onclick="ctxAct('archive')">Archive / Restore</div>
   <div class="cdiv"></div>
   <div class="ci danger" onclick="ctxAct('delete')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Delete Client</div>
+</div>
+
+<!-- ASSIGN PROGRAM MODAL -->
+<div class="mo" id="assignProgModal">
+  <div class="modal">
+    <div class="mh"><div class="mt">Assign Program to Client</div><button class="mc" onclick="closeModal('assignProgModal')">×</button></div>
+    <div class="mb2">
+      <div style="margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--muted2)">
+        Assigning a program will make it visible in the client's portal immediately.
+      </div>
+      <div id="assignProgClientName" style="font-weight:600;font-size:14px;margin-bottom:16px"></div>
+      <div class="fw"><label class="fl">Select Program</label>
+        <select class="fi" id="assignProgSel">
+          <option value="">— Choose a program —</option>
+        </select>
+      </div>
+      <div id="assignProgPreview" style="display:none;margin-top:14px;padding:14px;background:var(--surface2);border-radius:8px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:4px" id="apPrevName"></div>
+        <div style="font-size:12px;color:var(--muted2)" id="apPrevMeta"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="closeModal('assignProgModal')">Cancel</button>
+      <button class="btn btn-p" onclick="confirmAssignProgram()">Assign Program →</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW CHECKINS MODAL -->
+<div class="mo" id="checkinsModal">
+  <div class="modal" style="width:520px">
+    <div class="mh"><div class="mt">Client Check-ins</div><button class="mc" onclick="closeModal('checkinsModal')">×</button></div>
+    <div class="mb2" id="checkinsContent" style="max-height:60vh;overflow-y:auto">
+      <div style="text-align:center;color:var(--muted);padding:30px">Loading…</div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1321,10 +1359,156 @@ function showCtx(e,i){
 function closeCtx(){ id('ctx').style.display='none'; }
 document.addEventListener('click',closeCtx);
 
+// ── Client Profile Modal ──
+function openClientProfile(c){
+  // Build a detailed client view
+  const modal=document.createElement('div');
+  modal.className='mo on';
+  modal.innerHTML=`<div class="modal" style="width:500px">
+    <div class="mh"><div class="mt">${c.first} ${c.last}</div><button class="mc" onclick="this.closest('.mo').remove()">×</button></div>
+    <div class="mb2">
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:20px">
+        <div class="cav ${gc(c)}" style="width:52px;height:52px;font-size:18px">${gi(c)}</div>
+        <div>
+          <div style="font-weight:600;font-size:15px">${c.first} ${c.last}${c.isPortalUser?'<span class="portal-badge">Portal</span>':''}</div>
+          <div style="font-size:13px;color:var(--muted2)">${c.email||'—'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">Status: ${c.status} · Program: ${c.program||'None'}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:var(--surface2);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Check-in Day</div>
+          <div style="font-size:15px;font-weight:600">${c.due||'—'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Groups</div>
+          <div style="font-size:14px;font-weight:500">${c.groups&&c.groups.length?c.groups.join(', '):'None'}</div>
+        </div>
+      </div>
+      ${c.notes?`<div style="background:var(--surface2);border-radius:8px;padding:12px;font-size:13px;color:var(--muted2)"><strong style="color:var(--muted2)">Notes:</strong> ${c.notes}</div>`:''}
+      ${c.isPortalUser&&c.uid?`<div style="margin-top:12px;padding:10px 12px;background:rgba(124,85,245,.1);border:1px solid rgba(124,85,245,.2);border-radius:8px;font-size:12px;color:#a78bfa">✓ This client has a portal account and can see their program, submit check-ins, and message you.</div>`:`<div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted2)">ℹ️ This client hasn't signed up to the portal yet. Share the portal link so they can log in and track their progress.</div>`}
+    </div>
+    <div class="mf">
+      <button class="btn btn-s" onclick="this.closest('.mo').remove()">Close</button>
+      ${c.uid?`<button class="btn btn-p" onclick="this.closest('.mo').remove();goSec('messages');setTimeout(()=>openConvo('${c.uid}','${c.first} ${c.last}','${gc(c)}'),100)">Message Client</button>`:''}
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+}
+
+// ── Assign Program ──
+function openAssignProgram(c){
+  const sel=id('assignProgSel');
+  sel.innerHTML='<option value="">— Choose a program —</option>'+savedProgs.map(p=>`<option value="${p._fid||p.name}">${p.name} (${p.goal||'General'} · ${p.weeks||4}wk)</option>`).join('');
+  id('assignProgClientName').textContent=`Client: ${c.first} ${c.last}`;
+  id('assignProgModal').classList.add('on');
+  id('assignProgPreview').style.display='none';
+  sel.onchange=()=>{
+    const p=savedProgs.find(x=>(x._fid||x.name)===sel.value);
+    if(p){
+      id('assignProgPreview').style.display='block';
+      id('apPrevName').textContent=p.name;
+      id('apPrevMeta').textContent=`${p.goal||'General Fitness'} · ${p.weeks||4} weeks · ${p.days||3}x/week`;
+    } else {
+      id('assignProgPreview').style.display='none';
+    }
+  };
+}
+
+async function confirmAssignProgram(){
+  const c=clients.find(x=>x.id===ctxId); if(!c)return;
+  const progId=id('assignProgSel').value;
+  if(!progId){toast('Please select a program','⚠️');return;}
+  const prog=savedProgs.find(x=>(x._fid||x.name)===progId);
+  if(!prog){toast('Program not found','❌');return;}
+  // Assign to client object
+  c.program=prog.name;
+  await fsSaveClient(c);
+  // If client has a portal UID, also write to their users doc so portal shows it
+  if(c.uid){
+    try{
+      await fb().setDoc(fb().doc(fb().db,'users',c.uid),{assignedProgram:prog,assignedProgramAt:Date.now()},{merge:true});
+      toast(`"${prog.name}" assigned to ${c.first} — they'll see it in their portal!`,'✅');
+    }catch(e){
+      toast(`Program assigned locally. Client needs to register in the portal.`,'⚠️');
+    }
+  } else {
+    // Try to find by email
+    try{
+      const usersSnap=await fb().getDocs(fb().collection(fb().db,'users'));
+      const match=usersSnap.docs.find(d=>d.data().email&&d.data().email.toLowerCase()===(c.email||'').toLowerCase());
+      if(match){
+        await fb().setDoc(fb().doc(fb().db,'users',match.id),{assignedProgram:prog,assignedProgramAt:Date.now()},{merge:true});
+        toast(`"${prog.name}" assigned! Client will see it when they log into the portal.`,'✅');
+      } else {
+        toast(`Program saved. Client needs a portal account to see it online.`,'ℹ️');
+      }
+    }catch(e){toast('Program saved locally.','ℹ️');}
+  }
+  await fsPushActivity(`Assigned <strong>${prog.name}</strong> to ${c.first} ${c.last}`);
+  closeModal('assignProgModal');
+  renderClients();
+}
+
+// ── View Client Check-ins ──
+async function openViewCheckins(c){
+  id('checkinsModal').classList.add('on');
+  id('checkinsContent').innerHTML='<div style="text-align:center;color:var(--muted);padding:30px">Loading check-ins…</div>';
+  // Try to find the client's UID
+  let uid=c.uid;
+  if(!uid&&c.email){
+    try{
+      const usersSnap=await fb().getDocs(fb().collection(fb().db,'users'));
+      const match=usersSnap.docs.find(d=>d.data().email&&d.data().email.toLowerCase()===c.email.toLowerCase());
+      if(match) uid=match.id;
+    }catch(e){}
+  }
+  if(!uid){
+    id('checkinsContent').innerHTML=`<div style="text-align:center;color:var(--muted);padding:30px">
+      <div style="font-size:30px;margin-bottom:10px">📋</div>
+      <div style="font-size:13px">No portal account found for this client.<br>They need to sign up at the client portal to submit check-ins.</div>
+    </div>`;
+    return;
+  }
+  try{
+    const snap=await fb().getDocs(fb().collection(fb().db,'users',uid,'checkins'));
+    if(snap.empty){
+      id('checkinsContent').innerHTML=`<div style="text-align:center;color:var(--muted);padding:30px">
+        <div style="font-size:30px;margin-bottom:10px">📋</div>
+        <div style="font-size:13px">No check-ins submitted yet from ${c.first}.</div>
+      </div>`;
+      return;
+    }
+    const checkins=snap.docs.map(d=>d.data()).sort((a,b)=>b.ts-a.ts);
+    const sleepLbls=['','😴 Poor','😐 OK','😊 Good','🌟 Great'];
+    const energyLbls=['','🪫 Low','😐 OK','⚡ High','🔥 Peak'];
+    const stressLbls=['','😤 High','😕 Moderate','😌 Low'];
+    id('checkinsContent').innerHTML=`<div style="margin-bottom:12px;font-weight:600;font-size:13px">Check-ins from ${c.first} ${c.last} (${checkins.length} total)</div>`
+      +checkins.map(ci=>`
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${new Date(ci.ts).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:6px">
+            ${ci.weight?`<span>⚖️ <strong>${ci.weight}kg</strong></span>`:''}
+            ${ci.bodyFat?`<span>📊 <strong>${ci.bodyFat}% BF</strong></span>`:''}
+            ${ci.workoutsCompleted?`<span>🏋️ <strong>${ci.workoutsCompleted} workouts</strong></span>`:''}
+            ${ci.sleep?`<span>Sleep: <strong>${sleepLbls[ci.sleep]}</strong></span>`:''}
+            ${ci.energy?`<span>Energy: <strong>${energyLbls[ci.energy]}</strong></span>`:''}
+            ${ci.stress?`<span>Stress: <strong>${stressLbls[ci.stress]}</strong></span>`:''}
+          </div>
+          ${ci.notes?`<div style="font-size:12px;color:var(--muted2);background:rgba(255,255,255,.03);padding:8px;border-radius:6px;font-style:italic">"${ci.notes}"</div>`:''}
+        </div>`).join('');
+  }catch(e){
+    id('checkinsContent').innerHTML=`<div style="text-align:center;color:var(--red);padding:20px">Failed to load check-ins.</div>`;
+  }
+}
+
 async function ctxAct(action){
   const c=clients.find(x=>x.id===ctxId); if(!c)return closeCtx(); closeCtx();
-  if(action==='profile') toast(`Viewing ${c.first} ${c.last}'s profile`,'👤');
-  else if(action==='message'){ goSec('messages'); toast(`Opening chat with ${c.first}`,'💬'); }
+  if(action==='profile') openClientProfile(c);
+  else if(action==='message'){ goSec('messages'); if(c.uid) setTimeout(()=>openConvo(c.uid,`${c.first} ${c.last}`,gc(c)),100); else toast(`${c.first} has no portal account yet`,'ℹ️'); }
+  else if(action==='assignProgram') openAssignProgram(c);
+  else if(action==='viewCheckins') openViewCheckins(c);
   else if(action==='star'){
     c.starred=!c.starred;
     await fsSaveClient(c);
