@@ -866,13 +866,27 @@ async function fsLoadClients(){
     usersSnap.docs.forEach(d => {
       const data = d.data();
       if (data.role !== 'client') return;
+      // ✅ Skip the coach's own account (coach logged into client portal to test it)
+      if (d.id === CU) return;
       // Skip if this email is already in the manually-added list (avoid duplicates)
       if (manualClients.find(c => c.email && c.email.toLowerCase() === (data.email||'').toLowerCase())) return;
-      // Derive a display name from the email address
-      const emailName = (data.email||'').split('@')[0];
-      const parts = emailName.split('.');
-      const first = parts[0] ? parts[0].charAt(0).toUpperCase()+parts[0].slice(1) : 'Portal';
-      const last  = parts[1] ? parts[1].charAt(0).toUpperCase()+parts[1].slice(1) : 'User';
+
+      // Use stored displayName first; fall back to parsing the email prefix
+      let first = 'Portal', last = 'User';
+      if (data.displayName && data.displayName.trim()) {
+        const nameParts = data.displayName.trim().split(/\s+/);
+        first = nameParts[0] || 'Portal';
+        last  = nameParts.slice(1).join(' ') || 'User';
+      } else {
+        // Parse email: "john.doe@..." → John Doe; "johndoe@..." → Johndoe (no last)
+        const emailName = (data.email||'').split('@')[0];
+        const parts = emailName.split('.');
+        first = parts[0] ? parts[0].charAt(0).toUpperCase()+parts[0].slice(1) : 'Portal';
+        last  = parts[1] ? parts[1].charAt(0).toUpperCase()+parts[1].slice(1) : '';
+        // If we still have no last name, use a shortened email as display
+        if (!last) { first = emailName; last = ''; }
+      }
+
       portalClients.push({
         id: portalIdx--,
         first, last,
@@ -885,7 +899,7 @@ async function fsLoadClients(){
         program: '',
         notes: '',
         createdAt: data.lastSeen||Date.now(),
-        isPortalUser: true,  // flag so we can badge these differently
+        isPortalUser: true,
         uid: d.id
       });
     });
