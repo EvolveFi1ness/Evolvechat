@@ -17,193 +17,132 @@
       font-family: 'DM Sans', sans-serif;
       padding: 2rem;
     }
-    .card {
-      width: 100%;
-      max-width: 420px;
+
+    /* ── SCREENS ── */
+    .screen { display: none; width: 100%; max-width: 460px; animation: fadeUp 0.35s ease; }
+    .screen.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    .logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 42px;
-      letter-spacing: 4px;
-      color: #c9a84c;
-      margin-bottom: 4px;
-    }
-    .tagline {
-      font-size: 11px;
-      color: #555;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      margin-bottom: 2.5rem;
-    }
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid #222;
-      margin-bottom: 2rem;
-    }
-    .tab {
-      flex: 1;
-      padding: 10px;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 500;
-      color: #555;
-      cursor: pointer;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      transition: color 0.2s;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-    }
-    .tab.active {
-      color: #c9a84c;
-      border-bottom-color: #c9a84c;
-    }
+
+    /* ── BRAND ── */
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 4px; color: #c9a84c; margin-bottom: 4px; }
+    .tagline { font-size: 11px; color: #555; letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 2.5rem; }
+
+    /* ── ONBOARDING PROGRESS ── */
+    .progress-wrap { margin-bottom: 2rem; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: #555; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+    .progress-bar { height: 2px; background: #1e1e1e; border-radius: 2px; }
+    .progress-fill { height: 2px; background: #c9a84c; border-radius: 2px; transition: width 0.4s ease; }
+    .step-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 2px; color: #e8e8e8; margin-bottom: 4px; }
+    .step-sub { font-size: 13px; color: #555; margin-bottom: 1.75rem; }
+
+    /* ── TABS ── */
+    .tabs { display: flex; border-bottom: 1px solid #222; margin-bottom: 2rem; }
+    .tab { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 500; color: #555; cursor: pointer; letter-spacing: 1.5px; text-transform: uppercase; transition: color 0.2s; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab.active { color: #c9a84c; border-bottom-color: #c9a84c; }
+
+    /* ── FIELDS ── */
     .field { margin-bottom: 1rem; }
-    .field label {
-      display: block;
-      font-size: 10px;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: #666;
-      margin-bottom: 6px;
+    .field label { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: #666; margin-bottom: 6px; }
+    .field input, .field select, .field textarea {
+      width: 100%; background: #111; border: 1px solid #2a2a2a; border-radius: 6px;
+      padding: 12px 14px; color: #e8e8e8; font-size: 14px; font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s; outline: none; appearance: none;
     }
-    .field input,
-    .field select {
-      width: 100%;
-      background: #111;
-      border: 1px solid #2a2a2a;
-      border-radius: 6px;
-      padding: 12px 14px;
-      color: #e8e8e8;
-      font-size: 14px;
-      font-family: 'DM Sans', sans-serif;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      outline: none;
-      appearance: none;
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color: #c9a84c; box-shadow: 0 0 0 3px rgba(201,168,76,0.12);
     }
-    .field input:focus,
-    .field select:focus {
-      border-color: #c9a84c;
-      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
-    }
-    .field input::placeholder { color: #333; }
+    .field input::placeholder, .field textarea::placeholder { color: #333; }
+    .field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+    .field .hint { font-size: 11px; color: #444; margin-top: 5px; }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    /* ── UNIT TOGGLE ── */
+    .unit-toggle { display: flex; gap: 0; margin-bottom: 1rem; }
+    .unit-btn {
+      flex: 1; padding: 9px; text-align: center; font-size: 11px; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; background: #111; color: #555;
+      border: 1px solid #2a2a2a; transition: all 0.15s;
+    }
+    .unit-btn:first-child { border-radius: 6px 0 0 6px; }
+    .unit-btn:last-child  { border-radius: 0 6px 6px 0; }
+    .unit-btn.active { background: #1e1800; color: #c9a84c; border-color: #c9a84c; }
+
+    /* ── CHECKBOX PILLS ── */
+    .pill-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    .pill { padding: 7px 14px; border-radius: 20px; font-size: 12px; letter-spacing: 0.5px; cursor: pointer; border: 1px solid #2a2a2a; color: #555; background: #111; transition: all 0.15s; user-select: none; }
+    .pill.selected { background: #1e1800; color: #c9a84c; border-color: #c9a84c; }
+
+    /* ── BUTTONS ── */
     .btn {
-      width: 100%;
-      background: #c9a84c;
-      color: #0a0a0a;
-      border: none;
-      border-radius: 6px;
-      padding: 14px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      cursor: pointer;
-      margin-top: 0.5rem;
+      width: 100%; background: #c9a84c; color: #0a0a0a; border: none; border-radius: 6px;
+      padding: 14px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; margin-top: 0.5rem;
       transition: opacity 0.2s, transform 0.1s;
     }
     .btn:hover { opacity: 0.88; }
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .divider {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 1.5rem 0;
-      color: #333;
-      font-size: 11px;
+    .btn-ghost {
+      width: 100%; background: transparent; color: #555; border: 1px solid #2a2a2a; border-radius: 6px;
+      padding: 13px; font-family: 'DM Sans', sans-serif; font-size: 13px; letter-spacing: 1.5px;
+      text-transform: uppercase; cursor: pointer; margin-top: 8px; transition: color 0.2s, border-color 0.2s;
     }
-    .divider::before, .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: #222;
-    }
-    .switch-link {
-      text-align: center;
-      font-size: 13px;
-      color: #555;
-    }
-    .switch-link span {
-      color: #c9a84c;
-      cursor: pointer;
-    }
-    .status {
-      margin-top: 1.25rem;
-      padding: 11px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      display: none;
-      line-height: 1.5;
-    }
-    .status.success {
-      background: rgba(29, 158, 117, 0.1);
-      border: 1px solid rgba(29, 158, 117, 0.3);
-      color: #5dcaa5;
-      display: block;
-    }
-    .status.error {
-      background: rgba(226, 75, 74, 0.1);
-      border: 1px solid rgba(226, 75, 74, 0.25);
-      color: #f09595;
-      display: block;
-    }
-    .status.loading {
-      background: rgba(201, 168, 76, 0.08);
-      border: 1px solid rgba(201, 168, 76, 0.2);
-      color: #c9a84c;
-      display: block;
-    }
+    .btn-ghost:hover { color: #c9a84c; border-color: #c9a84c; }
+
+    /* ── STATUS ── */
+    .status { margin-top: 1.25rem; padding: 11px 14px; border-radius: 6px; font-size: 13px; display: none; line-height: 1.5; }
+    .status.success { background: rgba(29,158,117,0.1); border: 1px solid rgba(29,158,117,0.3); color: #5dcaa5; display: block; }
+    .status.error   { background: rgba(226,75,74,0.1);  border: 1px solid rgba(226,75,74,0.25);  color: #f09595; display: block; }
+
+    /* ── DIVIDER / LINK ── */
+    .divider { display: flex; align-items: center; gap: 12px; margin: 1.5rem 0; color: #333; font-size: 11px; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #222; }
+    .switch-link { text-align: center; font-size: 13px; color: #555; }
+    .switch-link span { color: #c9a84c; cursor: pointer; }
+
+    /* ── WELCOME CARD ── */
+    .welcome-icon { width: 64px; height: 64px; border-radius: 50%; background: #1e1800; border: 1px solid #c9a84c33; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; }
+    .welcome-icon svg { width: 30px; height: 30px; fill: #c9a84c; }
+    .welcome-name { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 3px; color: #e8e8e8; margin-bottom: 6px; }
+    .welcome-sub { font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 2rem; }
+    .profile-summary { background: #111; border: 1px solid #1e1e1e; border-radius: 8px; padding: 1rem 1.25rem; }
+    .profile-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #1a1a1a; font-size: 13px; }
+    .profile-row:last-child { border-bottom: none; }
+    .profile-row .lbl { color: #555; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+    .profile-row .val { color: #e8e8e8; font-weight: 500; }
+    .profile-row .val.gold { color: #c9a84c; }
   </style>
 </head>
 <body>
 
-<div class="card">
+<!-- ══════════════ SCREEN 1: AUTH ══════════════ -->
+<div class="screen active" id="screen-auth">
   <div class="logo">EVOLVE</div>
   <div class="tagline">Fitness · Performance · Results</div>
-
   <div class="tabs">
     <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
     <div class="tab" id="tab-signup" onclick="switchTab('signup')">Create Account</div>
   </div>
 
-  <!-- LOGIN FORM -->
   <div id="form-login">
-    <div class="field">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="you@example.com">
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="••••••••">
-    </div>
+    <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="••••••••"></div>
     <button class="btn" id="login-btn" onclick="handleLogin()">Sign In</button>
     <div class="divider">or</div>
     <div class="switch-link">No account? <span onclick="switchTab('signup')">Create one →</span></div>
   </div>
 
-  <!-- SIGNUP FORM -->
   <div id="form-signup" style="display:none">
     <div class="row2">
-      <div class="field">
-        <label>First Name</label>
-        <input type="text" id="su-first" placeholder="Jake">
-      </div>
-      <div class="field">
-        <label>Last Name</label>
-        <input type="text" id="su-last" placeholder="Cruz">
-      </div>
+      <div class="field"><label>First Name</label><input type="text" id="su-first" placeholder="Jake"></div>
+      <div class="field"><label>Last Name</label><input type="text" id="su-last" placeholder="Cruz"></div>
     </div>
-    <div class="field">
-      <label>Email</label>
-      <input type="email" id="su-email" placeholder="you@example.com">
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="su-pass" placeholder="Min. 6 characters">
-    </div>
+    <div class="field"><label>Email</label><input type="email" id="su-email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input type="password" id="su-pass" placeholder="Min. 6 characters"></div>
     <div class="field">
       <label>Primary Goal</label>
       <select id="su-goal">
@@ -218,8 +157,136 @@
     <div class="divider">or</div>
     <div class="switch-link">Already a member? <span onclick="switchTab('login')">Sign in →</span></div>
   </div>
+  <div class="status" id="auth-status"></div>
+</div>
 
-  <div class="status" id="status-msg"></div>
+<!-- ══════════════ SCREEN 2: ONBOARDING STEP 1 — BODY STATS ══════════════ -->
+<div class="screen" id="screen-step1">
+  <div class="logo">EVOLVE</div>
+  <div class="progress-wrap">
+    <div class="progress-label"><span>Profile Setup</span><span>Step 1 of 2</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+  </div>
+  <div class="step-title">Your Body Stats</div>
+  <div class="step-sub">Helps us personalize your workout and nutrition plans.</div>
+
+  <div class="field"><label>Date of Birth</label><input type="date" id="ob-dob"></div>
+
+  <div class="field">
+    <label>Height Unit</label>
+    <div class="unit-toggle">
+      <div class="unit-btn active" id="unit-cm" onclick="setHeightUnit('cm')">cm</div>
+      <div class="unit-btn" id="unit-ft" onclick="setHeightUnit('ft')">ft / in</div>
+    </div>
+  </div>
+
+  <div id="height-cm-wrap" class="field">
+    <label>Height (cm)</label>
+    <input type="number" id="ob-height-cm" placeholder="e.g. 175" min="100" max="250">
+  </div>
+  <div id="height-ft-wrap" style="display:none">
+    <div class="row2">
+      <div class="field"><label>Feet</label><input type="number" id="ob-height-ft" placeholder="5" min="3" max="8"></div>
+      <div class="field"><label>Inches</label><input type="number" id="ob-height-in" placeholder="9" min="0" max="11"></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Weight Unit</label>
+    <div class="unit-toggle">
+      <div class="unit-btn active" id="unit-kg" onclick="setWeightUnit('kg')">kg</div>
+      <div class="unit-btn" id="unit-lb" onclick="setWeightUnit('lb')">lbs</div>
+    </div>
+  </div>
+  <div class="field">
+    <label>Weight (<span id="weight-unit-label">kg</span>)</label>
+    <input type="number" id="ob-weight" placeholder="e.g. 70" min="20" max="500">
+  </div>
+
+  <div class="field">
+    <label>Biological Sex <span style="color:#444;font-size:10px">(for health calculations)</span></label>
+    <select id="ob-sex">
+      <option value="">Prefer not to say</option>
+      <option value="male">Male</option>
+      <option value="female">Female</option>
+    </select>
+  </div>
+
+  <button class="btn" onclick="goToStep2()">Next →</button>
+  <div class="status" id="step1-status"></div>
+</div>
+
+<!-- ══════════════ SCREEN 3: ONBOARDING STEP 2 — HEALTH INFO ══════════════ -->
+<div class="screen" id="screen-step2">
+  <div class="logo">EVOLVE</div>
+  <div class="progress-wrap">
+    <div class="progress-label"><span>Profile Setup</span><span>Step 2 of 2</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+  </div>
+  <div class="step-title">Health Information</div>
+  <div class="step-sub">Kept private and used only to keep you safe during training.</div>
+
+  <div class="field">
+    <label>Known Allergies</label>
+    <div class="pill-group" id="allergy-pills">
+      <div class="pill" onclick="togglePill(this,'allergy')">Nuts</div>
+      <div class="pill" onclick="togglePill(this,'allergy')">Dairy</div>
+      <div class="pill" onclick="togglePill(this,'allergy')">Gluten</div>
+      <div class="pill" onclick="togglePill(this,'allergy')">Shellfish</div>
+      <div class="pill" onclick="togglePill(this,'allergy')">Soy</div>
+      <div class="pill" onclick="togglePill(this,'allergy')">Eggs</div>
+      <div class="pill" onclick="togglePill(this,'allergy')">Latex</div>
+      <div class="pill" onclick="togglePill(this,'allergy')">None</div>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <input type="text" id="ob-allergy-other" placeholder="Other allergies (optional)">
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:0.5rem">
+    <label>Current Medications or Supplements</label>
+    <textarea id="ob-meds" placeholder="e.g. Metformin, Vitamin D, Protein powder — or leave blank if none"></textarea>
+    <div class="hint">This helps trainers avoid contraindicated exercises or nutritional advice.</div>
+  </div>
+
+  <div class="field">
+    <label>Medical Conditions <span style="color:#444;font-size:10px">(optional)</span></label>
+    <div class="pill-group" id="condition-pills">
+      <div class="pill" onclick="togglePill(this,'condition')">Hypertension</div>
+      <div class="pill" onclick="togglePill(this,'condition')">Diabetes</div>
+      <div class="pill" onclick="togglePill(this,'condition')">Asthma</div>
+      <div class="pill" onclick="togglePill(this,'condition')">Heart Condition</div>
+      <div class="pill" onclick="togglePill(this,'condition')">Joint Issues</div>
+      <div class="pill" onclick="togglePill(this,'condition')">Back Pain</div>
+      <div class="pill" onclick="togglePill(this,'condition')">None</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label>Emergency Contact Name</label>
+    <input type="text" id="ob-ec-name" placeholder="e.g. Maria Cruz">
+  </div>
+  <div class="field">
+    <label>Emergency Contact Number</label>
+    <input type="tel" id="ob-ec-phone" placeholder="e.g. +63 912 345 6789">
+  </div>
+
+  <button class="btn" id="finish-btn" onclick="handleFinish()">Complete Profile</button>
+  <button class="btn-ghost" onclick="showScreen('screen-step1')">← Back</button>
+  <div class="status" id="step2-status"></div>
+</div>
+
+<!-- ══════════════ SCREEN 4: WELCOME ══════════════ -->
+<div class="screen" id="screen-welcome">
+  <div class="welcome-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+    </svg>
+  </div>
+  <div class="welcome-name" id="wc-name">Welcome, Jake!</div>
+  <div class="welcome-sub">Your profile is set up. Your trainer can now build a plan tailored exactly to you.</div>
+  <div class="profile-summary" id="profile-summary"></div>
+  <button class="btn" style="margin-top:1.5rem" onclick="alert('Navigating to dashboard…')">Go to Dashboard →</button>
 </div>
 
 <!-- Firebase SDKs -->
@@ -228,7 +295,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-  // ── Firebase Config ──────────────────────────────────────────
   const firebaseConfig = {
     apiKey: "AIzaSyAaLdOjRndgq3fw9QfluTW5gmF7VZ26Vag",
     authDomain: "evolvechat-21d6f.firebaseapp.com",
@@ -238,105 +304,218 @@
     appId: "1:229550101540:web:2d671f6b3a2809570674b1",
     measurementId: "G-RK177F33Q9"
   };
-
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   const db   = firebase.firestore();
 
-  // ── Helpers ──────────────────────────────────────────────────
-  function showStatus(msg, type) {
-    const el = document.getElementById('status-msg');
-    el.textContent = msg;
-    el.className = 'status ' + type;
-  }
-  function clearStatus() {
-    const el = document.getElementById('status-msg');
-    el.className = 'status';
-    el.textContent = '';
-  }
-  function setLoading(btnId, loading) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = loading;
-    if (btnId === 'login-btn') {
-      btn.textContent = loading ? 'Signing in…' : 'Sign In';
-    } else {
-      btn.textContent = loading ? 'Creating account…' : 'Create Account';
-    }
+  // ── State ─────────────────────────────────────────────────────
+  let currentUid = null;
+  let step1Data  = {};
+  let heightUnit = 'cm';
+  let weightUnit = 'kg';
+
+  // ── Screen navigation ─────────────────────────────────────────
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ── Tab Switch ───────────────────────────────────────────────
+  // ── Status helpers ────────────────────────────────────────────
+  function showStatus(id, msg, type) {
+    const el = document.getElementById(id);
+    el.textContent = msg; el.className = 'status ' + type;
+  }
+  function clearStatus(id) {
+    const el = document.getElementById(id);
+    el.className = 'status'; el.textContent = '';
+  }
+
+  // ── Auth tab switch ───────────────────────────────────────────
   function switchTab(tab) {
     document.getElementById('form-login').style.display  = tab === 'login'  ? 'block' : 'none';
     document.getElementById('form-signup').style.display = tab === 'signup' ? 'block' : 'none';
     document.getElementById('tab-login').className  = 'tab' + (tab === 'login'  ? ' active' : '');
     document.getElementById('tab-signup').className = 'tab' + (tab === 'signup' ? ' active' : '');
-    clearStatus();
+    clearStatus('auth-status');
   }
 
-  // ── Login ────────────────────────────────────────────────────
+  // ── Unit toggles ──────────────────────────────────────────────
+  function setHeightUnit(u) {
+    heightUnit = u;
+    document.getElementById('unit-cm').className = 'unit-btn' + (u==='cm' ? ' active' : '');
+    document.getElementById('unit-ft').className = 'unit-btn' + (u==='ft' ? ' active' : '');
+    document.getElementById('height-cm-wrap').style.display = u==='cm' ? 'block' : 'none';
+    document.getElementById('height-ft-wrap').style.display = u==='ft' ? 'block' : 'none';
+  }
+  function setWeightUnit(u) {
+    weightUnit = u;
+    document.getElementById('unit-kg').className = 'unit-btn' + (u==='kg' ? ' active' : '');
+    document.getElementById('unit-lb').className = 'unit-btn' + (u==='lb' ? ' active' : '');
+    document.getElementById('weight-unit-label').textContent = u;
+  }
+
+  // ── Allergy / Condition pills ─────────────────────────────────
+  function togglePill(el, group) {
+    if (el.textContent === 'None') {
+      document.querySelectorAll('#' + (group==='allergy' ? 'allergy' : 'condition') + '-pills .pill')
+        .forEach(p => p.classList.remove('selected'));
+      el.classList.toggle('selected');
+      return;
+    }
+    document.querySelectorAll('#' + (group==='allergy' ? 'allergy' : 'condition') + '-pills .pill')
+      .forEach(p => { if (p.textContent === 'None') p.classList.remove('selected'); });
+    el.classList.toggle('selected');
+  }
+  function getSelectedPills(containerId) {
+    return Array.from(document.querySelectorAll('#' + containerId + ' .pill.selected'))
+      .map(p => p.textContent);
+  }
+
+  // ── LOGIN ─────────────────────────────────────────────────────
   async function handleLogin() {
     const email = document.getElementById('login-email').value.trim();
     const pass  = document.getElementById('login-password').value;
-    if (!email || !pass) { showStatus('Please fill in all fields.', 'error'); return; }
-    setLoading('login-btn', true);
-    clearStatus();
+    if (!email || !pass) { showStatus('auth-status','Please fill in all fields.','error'); return; }
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true; btn.textContent = 'Signing in…';
+    clearStatus('auth-status');
     try {
       const cred = await auth.signInWithEmailAndPassword(email, pass);
-      showStatus('Welcome back, ' + cred.user.email + '!', 'success');
-    } catch (e) {
-      showStatus(e.message, 'error');
+      showStatus('auth-status', 'Welcome back, ' + (cred.user.displayName || cred.user.email) + '!', 'success');
+    } catch(e) {
+      showStatus('auth-status', e.message, 'error');
     } finally {
-      setLoading('login-btn', false);
+      btn.disabled = false; btn.textContent = 'Sign In';
     }
   }
 
-  // ── Sign Up → saves to Firestore ─────────────────────────────
+  // ── SIGN UP ───────────────────────────────────────────────────
   async function handleSignup() {
     const first = document.getElementById('su-first').value.trim();
     const last  = document.getElementById('su-last').value.trim();
     const email = document.getElementById('su-email').value.trim();
     const pass  = document.getElementById('su-pass').value;
     const goal  = document.getElementById('su-goal').value;
-
-    if (!first || !last || !email || !pass) {
-      showStatus('Please fill in all required fields.', 'error');
-      return;
-    }
-    if (pass.length < 6) {
-      showStatus('Password must be at least 6 characters.', 'error');
-      return;
-    }
-
-    setLoading('signup-btn', true);
-    clearStatus();
-
+    if (!first || !last || !email || !pass) { showStatus('auth-status','Please fill in all fields.','error'); return; }
+    if (pass.length < 6) { showStatus('auth-status','Password must be at least 6 characters.','error'); return; }
+    const btn = document.getElementById('signup-btn');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    clearStatus('auth-status');
     try {
-      // 1. Create user in Firebase Auth
       const cred = await auth.createUserWithEmailAndPassword(email, pass);
-
-      // 2. Save member profile to Firestore → members/{uid}
-      await db.collection('members').doc(cred.user.uid).set({
-        uid:             cred.user.uid,
-        firstName:       first,
-        lastName:        last,
-        email:           email,
-        goal:            goal || null,
-        memberSince:     firebase.firestore.FieldValue.serverTimestamp(),
-        plan:            'free',
-        attendanceCount: 0
+      currentUid = cred.user.uid;
+      await db.collection('members').doc(currentUid).set({
+        uid: currentUid, firstName: first, lastName: last, email: email,
+        goal: goal || null, memberSince: firebase.firestore.FieldValue.serverTimestamp(),
+        plan: 'free', attendanceCount: 0, profileComplete: false
       });
-
-      // 3. Update Auth display name
       await cred.user.updateProfile({ displayName: first + ' ' + last });
-
-      showStatus('Account created! Welcome to Evolve, ' + first + '!', 'success');
-    } catch (e) {
-      showStatus(e.message, 'error');
+      // store name for later screens
+      window._newUserName = first;
+      showScreen('screen-step1');
+    } catch(e) {
+      showStatus('auth-status', e.message, 'error');
     } finally {
-      setLoading('signup-btn', false);
+      btn.disabled = false; btn.textContent = 'Create Account';
     }
   }
-</script>
 
+  // ── STEP 1 → STEP 2 ──────────────────────────────────────────
+  function goToStep2() {
+    const dob    = document.getElementById('ob-dob').value;
+    const weight = document.getElementById('ob-weight').value;
+    let heightCm = null;
+    if (heightUnit === 'cm') {
+      heightCm = parseFloat(document.getElementById('ob-height-cm').value) || null;
+    } else {
+      const ft = parseFloat(document.getElementById('ob-height-ft').value) || 0;
+      const inches = parseFloat(document.getElementById('ob-height-in').value) || 0;
+      heightCm = ft ? Math.round((ft * 30.48) + (inches * 2.54)) : null;
+    }
+    if (!dob || !heightCm || !weight) {
+      showStatus('step1-status', 'Please enter your date of birth, height, and weight.', 'error');
+      return;
+    }
+    // Calculate age
+    const today = new Date();
+    const birthDate = new Date(dob);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+
+    step1Data = {
+      dateOfBirth: dob,
+      age: age,
+      heightCm: heightCm,
+      weightKg: weightUnit === 'kg' ? parseFloat(weight) : Math.round(parseFloat(weight) * 0.453592 * 10) / 10,
+      weightDisplay: parseFloat(weight) + ' ' + weightUnit,
+      sex: document.getElementById('ob-sex').value || null
+    };
+    clearStatus('step1-status');
+    showScreen('screen-step2');
+  }
+
+  // ── FINISH PROFILE ────────────────────────────────────────────
+  async function handleFinish() {
+    const allergies    = getSelectedPills('allergy-pills');
+    const conditions   = getSelectedPills('condition-pills');
+    const allergyOther = document.getElementById('ob-allergy-other').value.trim();
+    const meds         = document.getElementById('ob-meds').value.trim();
+    const ecName       = document.getElementById('ob-ec-name').value.trim();
+    const ecPhone      = document.getElementById('ob-ec-phone').value.trim();
+
+    const btn = document.getElementById('finish-btn');
+    btn.disabled = true; btn.textContent = 'Saving profile…';
+    clearStatus('step2-status');
+
+    try {
+      const uid = currentUid || firebase.auth().currentUser?.uid;
+      if (!uid) throw new Error('Session expired. Please sign in again.');
+
+      const healthData = {
+        ...step1Data,
+        allergies: allergyOther
+          ? [...allergies, allergyOther]
+          : allergies,
+        medications: meds || null,
+        medicalConditions: conditions,
+        emergencyContact: {
+          name:  ecName  || null,
+          phone: ecPhone || null
+        },
+        profileComplete: true,
+        profileCompletedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      await db.collection('members').doc(uid).update(healthData);
+
+      // Build welcome summary
+      buildWelcomeSummary(healthData);
+      showScreen('screen-welcome');
+    } catch(e) {
+      showStatus('step2-status', e.message, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Complete Profile';
+    }
+  }
+
+  // ── WELCOME SUMMARY ───────────────────────────────────────────
+  function buildWelcomeSummary(data) {
+    document.getElementById('wc-name').textContent =
+      'Welcome, ' + (window._newUserName || 'Athlete') + '!';
+    const rows = [
+      ['Age',        data.age + ' years old'],
+      ['Height',     data.heightCm + ' cm'],
+      ['Weight',     data.weightDisplay],
+      ['Allergies',  data.allergies.length ? data.allergies.join(', ') : 'None listed'],
+      ['Conditions', data.medicalConditions.length ? data.medicalConditions.join(', ') : 'None listed'],
+      ['Medications',data.medications || 'None listed'],
+    ];
+    document.getElementById('profile-summary').innerHTML = rows.map(([lbl, val]) =>
+      `<div class="profile-row"><span class="lbl">${lbl}</span><span class="val">${val}</span></div>`
+    ).join('');
+  }
+</script>
 </body>
 </html>
