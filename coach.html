@@ -1,1842 +1,1377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>CoachApp – Pro Coaching Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-         onAuthStateChanged, updatePassword, reauthenticateWithCredential,
-         EmailAuthProvider, sendPasswordResetEmail, deleteUser }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection,
-         getDocs, deleteDoc, writeBatch }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evolve — Coach Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c9a84c;
+      --gold-dim: #c9a84c44;
+      --gold-bg: #1e1800;
+      --bg: #080808;
+      --bg2: #0f0f0f;
+      --bg3: #141414;
+      --border: #1e1e1e;
+      --border2: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #555;
+      --muted2: #333;
+      --green: #5dcaa5;
+      --red: #f09595;
+      --blue: #4a9edd;
+      --sidebar-w: 240px;
+    }
+    body { min-height:100vh; background:var(--bg); font-family:'DM Sans',sans-serif; color:var(--text); -webkit-font-smoothing:antialiased; }
 
+    /* ── AUTH ── */
+    #auth-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:2rem; }
+    .auth-card { width:100%; max-width:420px; }
+    .auth-logo { font-family:'Bebas Neue',sans-serif; font-size:48px; letter-spacing:5px; color:var(--gold); }
+    .auth-sub { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:2.5rem; }
+    .auth-tag { display:inline-block; font-size:10px; letter-spacing:2px; text-transform:uppercase; background:var(--gold-bg); color:var(--gold); border:1px solid var(--gold-dim); padding:4px 12px; border-radius:20px; margin-bottom:2rem; }
+    .field { margin-bottom:1rem; }
+    .field label { display:block; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:#666; margin-bottom:6px; }
+    .field input { width:100%; background:#111; border:1px solid var(--border2); border-radius:6px; padding:12px 14px; color:var(--text); font-size:14px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s, box-shadow .2s; }
+    .field input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,.1); }
+    .field input::placeholder { color:var(--muted2); }
+    .btn-primary { width:100%; background:var(--gold); color:#0a0a0a; border:none; border-radius:6px; padding:14px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:opacity .2s; margin-top:.5rem; }
+    .btn-primary:hover { opacity:.88; }
+    .btn-primary:disabled { opacity:.4; cursor:not-allowed; }
+    .auth-status { margin-top:1rem; padding:11px 14px; border-radius:6px; font-size:13px; display:none; }
+    .auth-status.error { background:rgba(226,75,74,.1); border:1px solid rgba(226,75,74,.25); color:var(--red); display:block; }
+
+    /* ── APP SHELL ── */
+    #app { display:none; min-height:100vh; }
+    #app.visible { display:flex; }
+
+    /* ── SIDEBAR ── */
+    .sidebar { width:var(--sidebar-w); background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:100; }
+    .sidebar-brand { padding:1.5rem 1.25rem 1rem; border-bottom:1px solid var(--border); }
+    .brand-logo { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:3px; color:var(--gold); }
+    .brand-role { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+    .sidebar-nav { flex:1; padding:1rem 0; overflow-y:auto; }
+    .nav-item { display:flex; align-items:center; gap:12px; padding:11px 1.25rem; font-size:13px; color:var(--muted); cursor:pointer; transition:all .15s; border-left:2px solid transparent; user-select:none; }
+    .nav-item:hover { color:var(--text); background:var(--bg3); }
+    .nav-item.active { color:var(--gold); background:var(--gold-bg); border-left-color:var(--gold); }
+    .nav-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+    .nav-badge { margin-left:auto; background:var(--gold); color:#0a0a0a; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
+    .sidebar-footer { padding:1rem 1.25rem; border-top:1px solid var(--border); }
+    .coach-info { display:flex; align-items:center; gap:10px; }
+    .coach-av { width:36px; height:36px; border-radius:50%; background:var(--gold-bg); border:1px solid var(--gold-dim); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--gold); flex-shrink:0; }
+    .coach-name { font-size:13px; font-weight:500; }
+    .coach-email { font-size:11px; color:var(--muted); }
+    .logout-btn { margin-top:10px; width:100%; background:transparent; border:1px solid var(--border2); color:var(--muted); border-radius:6px; padding:9px; font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .15s; }
+    .logout-btn:hover { border-color:var(--red); color:var(--red); }
+
+    /* ── MAIN CONTENT ── */
+    .main { margin-left:var(--sidebar-w); flex:1; min-height:100vh; }
+    .page { display:none; padding:2rem; max-width:1100px; animation:fadeIn .25s ease; }
+    .page.active { display:block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .page-header { margin-bottom:2rem; }
+    .page-title { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:2px; color:var(--text); }
+    .page-sub { font-size:13px; color:var(--muted); margin-top:4px; }
+
+    /* ── CARDS ── */
+    .card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    .card-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .card-title { font-size:13px; font-weight:600; letter-spacing:.5px; }
+    .card-body { padding:18px; }
+
+    /* ── STAT STRIP ── */
+    .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:2rem; }
+    .stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; }
+    .stat-val { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:1px; color:var(--gold); line-height:1; }
+    .stat-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+    .stat-change { font-size:11px; margin-top:6px; }
+    .stat-change.up { color:var(--green); }
+    .stat-change.down { color:var(--red); }
+
+    /* ── CLIENT LIST ── */
+    .client-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+    .client-card { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:16px; cursor:pointer; transition:border-color .2s, transform .15s; }
+    .client-card:hover { border-color:var(--gold-dim); transform:translateY(-2px); }
+    .client-card-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+    .client-av { width:44px; height:44px; border-radius:50%; background:var(--gold-bg); border:1px solid var(--gold-dim); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; color:var(--gold); flex-shrink:0; }
+    .client-name { font-size:15px; font-weight:500; }
+    .client-email { font-size:12px; color:var(--muted); margin-top:2px; }
+    .client-plan { font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:3px 10px; border-radius:20px; border:1px solid; margin-left:auto; }
+    .plan-free { color:var(--muted); border-color:var(--border2); background:transparent; }
+    .plan-pro { color:var(--gold); border-color:var(--gold-dim); background:var(--gold-bg); }
+    .client-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; padding-top:12px; border-top:1px solid var(--border); }
+    .cs-item { text-align:center; }
+    .cs-val { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--text); }
+    .cs-lbl { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+    .client-actions { display:flex; gap:8px; margin-top:12px; }
+    .action-btn { flex:1; padding:8px; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:11px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .15s; border:1px solid var(--border2); background:transparent; color:var(--muted); }
+    .action-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+    .action-btn.primary { background:var(--gold); border-color:var(--gold); color:#0a0a0a; font-weight:600; }
+    .action-btn.primary:hover { opacity:.88; }
+
+    /* ── CLIENT DETAIL MODAL ── */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:500; display:none; align-items:flex-start; justify-content:center; padding:2rem; overflow-y:auto; }
+    .modal-overlay.open { display:flex; animation:fadeIn .2s ease; }
+    .modal { background:var(--bg2); border:1px solid var(--border); border-radius:16px; width:100%; max-width:800px; margin:auto; overflow:hidden; }
+    .modal-header { padding:18px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; }
+    .modal-av { width:52px; height:52px; border-radius:50%; background:var(--gold-bg); border:1px solid var(--gold-dim); display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:600; color:var(--gold); }
+    .modal-name { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; }
+    .modal-email { font-size:12px; color:var(--muted); margin-top:2px; }
+    .modal-close { margin-left:auto; width:32px; height:32px; border-radius:50%; background:var(--bg3); border:1px solid var(--border2); color:var(--muted); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+    .modal-close:hover { border-color:var(--red); color:var(--red); }
+    .modal-tabs { display:flex; border-bottom:1px solid var(--border); }
+    .modal-tab { padding:12px 18px; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s; }
+    .modal-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+    .modal-body { padding:20px; max-height:65vh; overflow-y:auto; }
+    .modal-panel { display:none; }
+    .modal-panel.active { display:block; }
+
+    /* profile rows */
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1.5rem; }
+    .info-box { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+    .info-lbl { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+    .info-val { font-size:14px; font-weight:500; color:var(--text); }
+    .info-val.gold { color:var(--gold); }
+
+    /* workout log table */
+    .log-table { width:100%; border-collapse:collapse; }
+    .log-table th { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); padding:8px 12px; text-align:left; border-bottom:1px solid var(--border); }
+    .log-table td { padding:10px 12px; font-size:13px; border-bottom:1px solid var(--border); }
+    .log-table tr:last-child td { border-bottom:none; }
+    .log-table tr:hover td { background:var(--bg3); }
+    .log-badge { font-size:10px; padding:3px 9px; border-radius:20px; letter-spacing:.5px; }
+    .log-badge.done { background:rgba(93,202,165,.12); color:var(--green); border:1px solid rgba(93,202,165,.25); }
+
+    /* photo grid */
+    .photo-grid-sm { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .photo-thumb { aspect-ratio:3/4; border-radius:8px; overflow:hidden; cursor:pointer; border:1px solid var(--border); transition:border-color .15s; }
+    .photo-thumb:hover { border-color:var(--gold-dim); }
+    .photo-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+    .photo-thumb-meta { padding:6px 8px; background:var(--bg3); }
+    .photo-thumb-date { font-size:10px; color:var(--muted); }
+
+    /* ── WORKOUT BUILDER ── */
+    .builder-layout { display:grid; grid-template-columns:260px 1fr; gap:1.5rem; }
+    .builder-sidebar { display:flex; flex-direction:column; gap:12px; }
+    .client-select-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:14px; }
+    .cs-label { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+    select.field-select { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:10px 12px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; appearance:none; cursor:pointer; transition:border-color .2s; }
+    select.field-select:focus { border-color:var(--gold); }
+    .day-picker { display:flex; flex-direction:column; gap:6px; }
+    .day-btn { padding:9px 12px; border-radius:6px; background:var(--bg3); border:1px solid var(--border); color:var(--muted); font-size:12px; font-family:'DM Sans',sans-serif; letter-spacing:.5px; cursor:pointer; transition:all .15s; text-align:left; display:flex; align-items:center; justify-content:space-between; }
+    .day-btn:hover { border-color:var(--gold-dim); color:var(--text); }
+    .day-btn.active { background:var(--gold-bg); border-color:var(--gold); color:var(--gold); }
+    .day-ex-count { font-size:10px; opacity:.7; }
+
+    /* exercise list */
+    .builder-main { background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    .bm-header { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .bm-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:var(--gold); }
+    .ex-builder-list { padding:12px; min-height:200px; }
+    .ex-builder-item { background:var(--bg3); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:8px; display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; }
+    .ebi-name { font-size:14px; font-weight:500; }
+    .ebi-detail { font-size:11px; color:var(--muted); margin-top:2px; }
+    .ebi-target { font-size:12px; color:var(--gold); background:var(--gold-bg); border:1px solid var(--gold-dim); padding:4px 10px; border-radius:20px; white-space:nowrap; }
+    .ebi-del { width:28px; height:28px; border-radius:50%; background:transparent; border:1px solid var(--border2); color:var(--muted); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+    .ebi-del:hover { border-color:var(--red); color:var(--red); }
+    .add-exercise-form { padding:14px; border-top:1px solid var(--border); background:var(--bg3); display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:flex-end; }
+    .aef-field input { width:100%; background:var(--bg2); border:1px solid var(--border2); border-radius:6px; padding:9px 10px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s; }
+    .aef-field input:focus { border-color:var(--gold); }
+    .aef-field input::placeholder { color:var(--muted2); }
+    .aef-label { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+    .aef-add { background:var(--gold); border:none; color:#0a0a0a; padding:9px 16px; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; letter-spacing:1px; text-transform:uppercase; cursor:pointer; white-space:nowrap; transition:opacity .2s; }
+    .aef-add:hover { opacity:.88; }
+    .builder-footer { padding:14px 18px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .assign-btn { background:var(--gold); border:none; color:#0a0a0a; padding:11px 24px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:opacity .2s; }
+    .assign-btn:hover { opacity:.88; }
+    .assign-btn:disabled { opacity:.4; cursor:not-allowed; }
+    .cloudinary-import-btn { background:transparent; border:1px solid var(--border2); color:var(--muted); padding:11px 18px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all .15s; }
+    .cloudinary-import-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+
+    /* ── CHAT ── */
+    .chat-layout { display:grid; grid-template-columns:260px 1fr; gap:0; height:calc(100vh - 4rem - 72px); max-height:700px; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+    .chat-list { background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+    .chat-list-header { padding:14px 16px; border-bottom:1px solid var(--border); font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
+    .chat-list-items { flex:1; overflow-y:auto; }
+    .chat-client-item { display:flex; align-items:center; gap:10px; padding:12px 16px; cursor:pointer; border-bottom:1px solid var(--border); transition:background .15s; }
+    .chat-client-item:hover { background:var(--bg3); }
+    .chat-client-item.active { background:var(--gold-bg); }
+    .cci-av { width:36px; height:36px; border-radius:50%; background:var(--bg3); border:1px solid var(--border2); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:var(--gold); flex-shrink:0; }
+    .cci-name { font-size:13px; font-weight:500; }
+    .cci-preview { font-size:11px; color:var(--muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px; }
+    .cci-unread { margin-left:auto; width:18px; height:18px; border-radius:50%; background:var(--gold); color:#0a0a0a; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .chat-window { display:flex; flex-direction:column; background:var(--bg); }
+    .chat-topbar { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; background:var(--bg2); }
+    .chat-topbar-av { width:34px; height:34px; border-radius:50%; background:var(--gold-bg); border:1px solid var(--gold-dim); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:var(--gold); flex-shrink:0; }
+    .chat-topbar-name { font-size:14px; font-weight:500; }
+    .chat-topbar-status { font-size:11px; color:var(--green); margin-top:1px; }
+    .chat-messages { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:12px; }
+    .chat-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--muted); gap:8px; }
+    .chat-empty-icon { font-size:40px; }
+    .chat-empty-text { font-size:13px; }
+    .msg { max-width:70%; display:flex; flex-direction:column; gap:3px; }
+    .msg.coach { align-self:flex-end; align-items:flex-end; }
+    .msg.client { align-self:flex-start; align-items:flex-start; }
+    .msg-bubble { padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.5; }
+    .msg.coach .msg-bubble { background:var(--gold); color:#0a0a0a; border-radius:14px 14px 4px 14px; }
+    .msg.client .msg-bubble { background:var(--bg3); color:var(--text); border:1px solid var(--border2); border-radius:14px 14px 14px 4px; }
+    .msg-time { font-size:10px; color:var(--muted); }
+    .msg-system { align-self:center; font-size:11px; color:var(--muted); background:var(--bg3); border:1px solid var(--border); padding:5px 14px; border-radius:20px; }
+    .chat-input-area { padding:14px 18px; border-top:1px solid var(--border); background:var(--bg2); display:flex; gap:10px; align-items:flex-end; }
+    .chat-input { flex:1; background:var(--bg3); border:1px solid var(--border2); border-radius:10px; padding:11px 14px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; resize:none; max-height:120px; line-height:1.5; transition:border-color .2s; }
+    .chat-input:focus { border-color:var(--gold-dim); }
+    .chat-input::placeholder { color:var(--muted2); }
+    .chat-send { background:var(--gold); border:none; color:#0a0a0a; width:40px; height:40px; border-radius:10px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity .2s; }
+    .chat-send:hover { opacity:.88; }
+    .chat-no-select { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px; color:var(--muted); }
+
+    /* ── ANNOUNCEMENTS ── */
+    .announcement-form { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:1.5rem; }
+    .af-title { font-size:13px; font-weight:600; margin-bottom:14px; }
+    .af-field { margin-bottom:12px; }
+    .af-field label { display:block; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .af-field input, .af-field textarea { width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:6px; padding:10px 14px; color:var(--text); font-size:13px; font-family:'DM Sans',sans-serif; outline:none; transition:border-color .2s; }
+    .af-field input:focus, .af-field textarea:focus { border-color:var(--gold); }
+    .af-field input::placeholder, .af-field textarea::placeholder { color:var(--muted2); }
+    .af-field textarea { resize:vertical; min-height:80px; line-height:1.5; }
+    .af-actions { display:flex; gap:10px; }
+    .send-all-btn { background:var(--gold); border:none; color:#0a0a0a; padding:11px 22px; border-radius:6px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:opacity .2s; }
+    .send-all-btn:hover { opacity:.88; }
+    .send-all-btn:disabled { opacity:.4; cursor:not-allowed; }
+    .announcement-list { display:flex; flex-direction:column; gap:10px; }
+    .ann-card { background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:16px; }
+    .ann-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:8px; }
+    .ann-title-text { font-size:14px; font-weight:600; }
+    .ann-date { font-size:11px; color:var(--muted); }
+    .ann-body { font-size:13px; color:#aaa; line-height:1.6; }
+    .ann-footer { margin-top:10px; font-size:11px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+    .ann-sent-badge { background:rgba(93,202,165,.1); color:var(--green); border:1px solid rgba(93,202,165,.25); padding:3px 9px; border-radius:20px; font-size:10px; }
+
+    /* ── EMPTY / LOADING ── */
+    .empty-state { text-align:center; padding:3rem; color:var(--muted); }
+    .empty-icon { font-size:40px; margin-bottom:10px; }
+    .empty-text { font-size:14px; }
+    .empty-sub { font-size:12px; color:var(--muted2); margin-top:6px; }
+    .loading-dots { display:flex; gap:6px; justify-content:center; margin:2rem; }
+    .loading-dots span { width:8px; height:8px; border-radius:50%; background:var(--gold-dim); animation:bounce .8s infinite; }
+    .loading-dots span:nth-child(2) { animation-delay:.15s; }
+    .loading-dots span:nth-child(3) { animation-delay:.3s; }
+    @keyframes bounce { 0%,80%,100% { transform:scale(0); } 40% { transform:scale(1); } }
+
+    /* ── TOAST ── */
+    .toast { position:fixed; bottom:2rem; right:2rem; background:#222; border:1px solid var(--border2); color:var(--text); padding:12px 18px; border-radius:8px; font-size:13px; transform:translateY(80px); opacity:0; transition:all .3s; z-index:9999; max-width:320px; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .toast.success { background:rgba(29,158,117,.1); border-color:rgba(29,158,117,.3); color:var(--green); }
+
+    /* ── LIGHTBOX ── */
+    .lightbox { position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:1000; display:none; align-items:center; justify-content:center; padding:2rem; }
+    .lightbox.open { display:flex; }
+    .lb-inner { max-width:500px; width:100%; }
+    .lb-img { width:100%; border-radius:10px; max-height:70vh; object-fit:contain; }
+    .lb-meta { margin-top:12px; }
+    .lb-date { font-size:11px; color:var(--muted); letter-spacing:1px; }
+    .lb-note { font-size:14px; color:#ccc; margin-top:6px; }
+    .lb-close { width:100%; background:transparent; border:1px solid var(--border2); color:var(--muted); padding:12px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; margin-top:14px; transition:color .2s; }
+    .lb-close:hover { color:var(--text); }
+
+    /* ── SCROLLBARS ── */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     AUTH SCREEN
+══════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">EVOLVE</div>
+    <div class="auth-sub">Fitness Platform</div>
+    <div class="auth-tag">Coach Portal</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">
+      Enter your coach password to access the dashboard.
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')handleCoachLogin()">
+    </div>
+    <button class="btn-primary" id="auth-btn" onclick="handleCoachLogin()">Enter Dashboard</button>
+    <div class="auth-status" id="auth-status"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     CHANGE PASSWORD MODAL
+══════════════════════════════ -->
+<div class="modal-overlay" id="change-pass-modal">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px">Change Password</div>
+      <button class="modal-close" onclick="closeChangePass()">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:none">
+      <div class="field" style="margin-bottom:1rem">
+        <label style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#666;display:block;margin-bottom:6px">Current Password</label>
+        <input type="password" id="cp-current" placeholder="Enter current password" style="width:100%;background:#111;border:1px solid var(--border2);border-radius:6px;padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s">
+      </div>
+      <div class="field" style="margin-bottom:1rem">
+        <label style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#666;display:block;margin-bottom:6px">New Password</label>
+        <input type="password" id="cp-new" placeholder="At least 6 characters" style="width:100%;background:#111;border:1px solid var(--border2);border-radius:6px;padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s">
+      </div>
+      <div class="field" style="margin-bottom:1.25rem">
+        <label style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#666;display:block;margin-bottom:6px">Confirm New Password</label>
+        <input type="password" id="cp-confirm" placeholder="Repeat new password" style="width:100%;background:#111;border:1px solid var(--border2);border-radius:6px;padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s">
+      </div>
+      <button class="btn-primary" id="cp-btn" onclick="handleChangePassword()">Update Password</button>
+      <div class="auth-status" id="cp-status" style="margin-top:.75rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     APP SHELL
+══════════════════════════════ -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">EVOLVE</div>
+      <div class="brand-role">Coach Dashboard</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+        <span class="nav-icon">◈</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPage('clients')" id="nav-clients">
+        <span class="nav-icon">◎</span> Clients
+      </div>
+      <div class="nav-item" onclick="showPage('workouts')" id="nav-workouts">
+        <span class="nav-icon">◉</span> Assign Workout
+      </div>
+      <div class="nav-item" onclick="showPage('chat')" id="nav-chat">
+        <span class="nav-icon">◇</span> Messages
+        <span class="nav-badge" id="chat-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('announcements')" id="nav-announcements">
+        <span class="nav-icon">◆</span> Announcements
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="coach-info">
+        <div class="coach-av" id="coach-av">C</div>
+        <div>
+          <div class="coach-name" id="coach-name">Coach</div>
+          <div class="coach-email" id="coach-email"></div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="openChangePass()" style="margin-bottom:8px;border-color:var(--border2);color:var(--muted)">🔑 Change Password</button>
+      <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub" id="dash-date">Wednesday, May 20</div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-total-clients">—</div>
+          <div class="stat-lbl">Total Clients</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-active-today">—</div>
+          <div class="stat-lbl">Active Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-workouts-logged">—</div>
+          <div class="stat-lbl">Workouts Logged</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-photos">—</div>
+          <div class="stat-lbl">Progress Photos</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Recent Client Activity</div></div>
+          <div class="card-body" id="recent-activity-list">
+            <div class="loading-dots"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Quick Actions</div></div>
+          <div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+            <button class="action-btn primary" style="flex:none;padding:12px" onclick="showPage('workouts')">📋 Assign a Workout Plan</button>
+            <button class="action-btn" style="flex:none;padding:12px" onclick="showPage('announcements')">📢 Send Announcement</button>
+            <button class="action-btn" style="flex:none;padding:12px" onclick="showPage('chat')">💬 Open Messages</button>
+            <button class="action-btn" style="flex:none;padding:12px" onclick="showPage('clients')">👥 View All Clients</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CLIENTS ═══ -->
+    <div class="page" id="page-clients">
+      <div class="page-header">
+        <div class="page-title">Clients</div>
+        <div class="page-sub" id="clients-count">Loading…</div>
+      </div>
+      <div class="client-grid" id="client-grid">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+    <!-- ═══ ASSIGN WORKOUT ═══ -->
+    <div class="page" id="page-workouts">
+      <div class="page-header">
+        <div class="page-title">Assign Workout</div>
+        <div class="page-sub">Build a plan and assign it to a client</div>
+      </div>
+      <div class="builder-layout">
+        <div class="builder-sidebar">
+          <div class="client-select-card">
+            <div class="cs-label">Assign to Client</div>
+            <select class="field-select" id="assign-client-select">
+              <option value="">Select a client…</option>
+            </select>
+          </div>
+          <div class="client-select-card">
+            <div class="cs-label">Select Day</div>
+            <div class="day-picker" id="day-picker">
+              <button class="day-btn active" data-day="Monday" onclick="selectDay('Monday')">Monday <span class="day-ex-count" id="cnt-Monday">0 ex</span></button>
+              <button class="day-btn" data-day="Tuesday" onclick="selectDay('Tuesday')">Tuesday <span class="day-ex-count" id="cnt-Tuesday">0 ex</span></button>
+              <button class="day-btn" data-day="Wednesday" onclick="selectDay('Wednesday')">Wednesday <span class="day-ex-count" id="cnt-Wednesday">0 ex</span></button>
+              <button class="day-btn" data-day="Thursday" onclick="selectDay('Thursday')">Thursday <span class="day-ex-count" id="cnt-Thursday">0 ex</span></button>
+              <button class="day-btn" data-day="Friday" onclick="selectDay('Friday')">Friday <span class="day-ex-count" id="cnt-Friday">0 ex</span></button>
+              <button class="day-btn" data-day="Saturday" onclick="selectDay('Saturday')">Saturday <span class="day-ex-count" id="cnt-Saturday">0 ex</span></button>
+              <button class="day-btn" data-day="Sunday" onclick="selectDay('Sunday')">Sunday <span class="day-ex-count" id="cnt-Sunday">0 ex</span></button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="builder-main">
+            <div class="bm-header">
+              <div>
+                <div class="bm-title" id="builder-day-title">Monday</div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px"><input type="text" id="workout-name-input" placeholder="Workout name (e.g. Push Day)" style="background:transparent;border:none;color:var(--muted);font-size:11px;font-family:'DM Sans',sans-serif;outline:none;width:200px;"></div>
+              </div>
+              <button class="cloudinary-import-btn" onclick="importFromCloudinary()">☁ Import from Cloudinary</button>
+            </div>
+            <div class="ex-builder-list" id="ex-builder-list">
+              <div class="empty-state" style="padding:2rem">
+                <div class="empty-icon">🏋️</div>
+                <div class="empty-text">No exercises yet</div>
+                <div class="empty-sub">Add exercises below</div>
+              </div>
+            </div>
+            <div class="add-exercise-form">
+              <div class="aef-field">
+                <div class="aef-label">Exercise Name</div>
+                <input type="text" id="aef-name" placeholder="e.g. Bench Press">
+              </div>
+              <div class="aef-field">
+                <div class="aef-label">Muscle / Detail</div>
+                <input type="text" id="aef-detail" placeholder="e.g. Chest · Compound">
+              </div>
+              <div class="aef-field">
+                <div class="aef-label">Sets × Reps</div>
+                <input type="text" id="aef-target" placeholder="e.g. 4×8">
+              </div>
+              <button class="aef-add" onclick="addExerciseToPlan()">+ Add</button>
+            </div>
+            <div class="builder-footer">
+              <div style="font-size:12px;color:var(--muted)" id="builder-summary">0 exercises across 0 days</div>
+              <button class="assign-btn" onclick="assignWorkoutToClient()" id="assign-btn">Assign Plan →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CHAT ═══ -->
+    <div class="page" id="page-chat">
+      <div class="page-header">
+        <div class="page-title">Messages</div>
+        <div class="page-sub">Chat with your clients</div>
+      </div>
+      <div class="chat-layout">
+        <div class="chat-list">
+          <div class="chat-list-header">Clients</div>
+          <div class="chat-list-items" id="chat-list-items">
+            <div class="loading-dots"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="chat-window" id="chat-window">
+          <div class="chat-no-select">
+            <div style="font-size:36px">💬</div>
+            <div style="font-size:13px;color:var(--muted)">Select a client to start chatting</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ ANNOUNCEMENTS ═══ -->
+    <div class="page" id="page-announcements">
+      <div class="page-header">
+        <div class="page-title">Announcements</div>
+        <div class="page-sub">Send messages to all clients at once</div>
+      </div>
+      <div class="announcement-form">
+        <div class="af-title">New Announcement</div>
+        <div class="af-field">
+          <label>Title</label>
+          <input type="text" id="ann-title" placeholder="e.g. Schedule Change — This Week">
+        </div>
+        <div class="af-field">
+          <label>Message</label>
+          <textarea id="ann-body" placeholder="Write your message here…"></textarea>
+        </div>
+        <div class="af-actions">
+          <button class="send-all-btn" id="send-ann-btn" onclick="sendAnnouncement()">📢 Send to All Clients</button>
+        </div>
+      </div>
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:1rem">Past Announcements</div>
+      <div class="announcement-list" id="ann-list">
+        <div class="loading-dots"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- CLIENT DETAIL MODAL -->
+<div class="modal-overlay" id="client-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-av" id="m-av">JD</div>
+      <div>
+        <div class="modal-name" id="m-name">Client Name</div>
+        <div class="modal-email" id="m-email">email@example.com</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" onclick="switchModalTab('profile')">Profile</div>
+      <div class="modal-tab" onclick="switchModalTab('logs')">Workout Logs</div>
+      <div class="modal-tab" onclick="switchModalTab('photos')">Progress Photos</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-panel active" id="mp-profile">
+        <div class="info-grid" id="m-info-grid"></div>
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Health Info</div>
+        <div class="info-grid" id="m-health-grid"></div>
+      </div>
+      <div class="modal-panel" id="mp-logs">
+        <table class="log-table" id="m-log-table">
+          <thead><tr><th>Date</th><th>Workout</th><th>Sets</th><th>Reps</th><th>Volume</th><th>Status</th></tr></thead>
+          <tbody id="m-log-body"></tbody>
+        </table>
+      </div>
+      <div class="modal-panel" id="mp-photos">
+        <div class="photo-grid-sm" id="m-photo-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <div class="lb-inner" onclick="event.stopPropagation()">
+    <img class="lb-img" id="lb-img" src="" alt="">
+    <div class="lb-meta">
+      <div class="lb-date" id="lb-date"></div>
+      <div class="lb-note" id="lb-note"></div>
+    </div>
+    <button class="lb-close" onclick="closeLightbox()">Close</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<script>
+// ─────────────────────────────────────────
+//  FIREBASE
+// ─────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyAaLdOjRndgq3fw9QfluTW5gmF7VZ26Vag",
   authDomain: "evolvechat-21d6f.firebaseapp.com",
   projectId: "evolvechat-21d6f",
-  storageBucket: "evolvechat-21d6f.firebasestorage.app",
+  storageBucket: "evolvechat-21d6f.appspot.com",
   messagingSenderId: "229550101540",
-  appId: "1:229550101540:web:2d671f6b3a2809570674b1",
-  measurementId: "G-RK177F33Q9"
+  appId: "1:229550101540:web:2d671f6b3a2809570674b1"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth    = firebase.auth();
+const db      = firebase.firestore();
+const storage = firebase.storage();
+
+// ─────────────────────────────────────────
+//  CLOUDINARY
+// ─────────────────────────────────────────
+const CLOUDINARY = {
+  cloudName : 'dljglhspo',
+  apiKey    : '472296946846772',
+  apiSecret : '56OoqVe1_H1S__JuttfOywbUg9M',
+  folder    : 'workout-videos'
 };
 
-const app  = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-
-// ── Expose everything to global scope ──
-window._fb = {
-  auth, db,
-  createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut,
-  onAuthStateChanged, updatePassword, reauthenticateWithCredential,
-  EmailAuthProvider, sendPasswordResetEmail, deleteUser,
-  doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, writeBatch
+// ─────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────
+let coachUid   = null;
+let allClients = [];
+let activeChatUid = null;
+let chatUnsub  = null;
+let currentDay = 'Monday';
+let workoutPlan = {
+  Monday: { name:'', exercises:[] },
+  Tuesday: { name:'', exercises:[] },
+  Wednesday: { name:'', exercises:[] },
+  Thursday: { name:'', exercises:[] },
+  Friday: { name:'', exercises:[] },
+  Saturday: { name:'', exercises:[] },
+  Sunday: { name:'', exercises:[] }
 };
 
-// ══════════════════════════════════════════════════════════════
-//  HOW ROLE SEPARATION WORKS
-//  ─────────────────────────────────────────────────────────────
-//  Firebase Auth is shared (one account per email across all apps).
-//  Roles live in Firestore:
-//    • coaches/{uid}         → exists only for coaches
-//    • users/{uid}.role      → 'client' set by Client.html
-//
-//  Signup in CoachApp:
-//    1. Try createUser. If email-already-in-use → try signIn instead.
-//    2. After getting a UID, check if coaches/{uid} already exists → ok.
-//    3. Also check users/{uid}.role — if 'client' ONLY, block them with
-//       a clear message: "This email is registered as a client account."
-//    4. Otherwise, write coaches/{uid} and boot the app.
-//
-//  Login in CoachApp:
-//    1. signIn with Firebase Auth.
-//    2. Check coaches/{uid} — if missing → signed-out + error.
-//    3. If found → bootApp.
-// ══════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────
+//  UTILS
+// ─────────────────────────────────────────
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast'+(type?' '+type:'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function fmtTime(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+function initials(first='', last='') {
+  return ((first[0]||'?')+(last[0]||'')).toUpperCase();
+}
 
-// ── Auto-provision coach account on first run ──
-// Checks Firestore for config/coach. If missing, creates a Firebase Auth
-// account (coach@coachapp.app / admin123) and stores credentials in Firestore.
-// Password is never hard-coded after this — it lives only in Firebase Auth.
-async function ensureCoachAccount(){
-  const cfgRef = doc(db, 'config', 'coach');
-  const cfgSnap = await getDoc(cfgRef).catch(()=>null);
-  if(cfgSnap && cfgSnap.exists()) return; // already set up
+// ─────────────────────────────────────────
+//  AUTH — Firestore password (no email login)
+//  Password stored in: coachConfig/auth { passwordHash }
+//  Default: admin123
+//  We use a simple SHA-256 hash stored in Firestore.
+// ─────────────────────────────────────────
+const COACH_DOC = 'coachConfig/auth';
 
-  const DEFAULT_EMAIL = 'coach@coachapp.app';
-  const DEFAULT_PASS  = 'admin123';
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
 
+async function getStoredHash() {
   try {
-    // Create Firebase Auth account
-    const cred = await createUserWithEmailAndPassword(auth, DEFAULT_EMAIL, DEFAULT_PASS);
-    const uid  = cred.user.uid;
-
-    // Write coach profile to Firestore
-    await setDoc(doc(db, 'coaches', uid), {
-      first: 'Coach', last: '', email: DEFAULT_EMAIL,
-      role: 'coach', createdAt: Date.now()
-    });
-
-    // Store email in config so login can find it (password stays in Firebase Auth only)
-    await setDoc(cfgRef, { email: DEFAULT_EMAIL });
-
-    // Sign back out so the login page is shown
-    await signOut(auth);
-  } catch(e){
-    // auth/email-already-in-use = account exists from a previous run, just write config
-    if(e.code === 'auth/email-already-in-use'){
-      await setDoc(cfgRef, { email: DEFAULT_EMAIL }).catch(()=>{});
-    }
-  }
-}
-
-// ── Auth state observer ──
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window._fbUser = null;
-    // Ensure account exists before showing login
-    await ensureCoachAccount();
-    document.getElementById('app').style.display = 'none';
-    showAuth('loginPage');
-    return;
-  }
-
-  // Verify coach doc exists
-  const coachSnap = await getDoc(doc(db, 'coaches', user.uid));
-  if (coachSnap.exists()) {
-    window._fbUser    = user;
-    window._fbProfile = coachSnap.data();
-    bootApp(user, coachSnap.data(), false);
-  } else {
-    await signOut(auth);
-    showAuth('loginPage');
-  }
-});
-</script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0a0c14;--surface:#111420;--surface2:#181c2e;--surface3:#1e2338;
-  --border:#252a42;--border2:#2e3550;--text:#e2e6f8;--muted:#5a6280;--muted2:#8890b0;
-  --accent:#4f7cff;--accent2:#7c55f5;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;
-  --sw:230px;--sc:62px;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-
-/* ── AUTH ── */
-.auth-page{display:none;height:100vh;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden}
-.auth-page.on{display:flex}
-.auth-bg{position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse 60% 50% at 20% 50%,rgba(79,124,255,.13) 0%,transparent 70%),
-             radial-gradient(ellipse 50% 60% at 80% 30%,rgba(124,85,245,.11) 0%,transparent 70%)}
-.auth-grid{position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
-                   linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
-  background-size:48px 48px;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%)}
-.auth-card{position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:44px 42px;width:440px;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04) inset;animation:cardIn .3s ease}
-@keyframes cardIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
-.brand-row{display:flex;align-items:center;gap:12px;margin-bottom:30px}
-.brand-ico{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#fff;flex-shrink:0}
-.brand-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.5px}
-.brand-tag{font-size:11px;color:var(--muted2);margin-top:1px}
-.auth-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;letter-spacing:-.4px;margin-bottom:5px}
-.auth-sub{color:var(--muted2);font-size:13px;margin-bottom:26px;line-height:1.5}
-.fl{display:block;font-size:11px;font-weight:700;color:var(--muted2);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
-.fw{margin-bottom:16px}
-.fi{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-family:inherit;font-size:14px;padding:11px 14px;outline:none;transition:border-color .2s,box-shadow .2s}
-.fi:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,124,255,.15)}
-.fi::placeholder{color:var(--muted)}
-.fi.err{border-color:var(--red)}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.auth-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;font-size:13px}
-.rem{display:flex;align-items:center;gap:8px;cursor:pointer}
-.rem input{accent-color:var(--accent)}
-.al{color:var(--accent);cursor:pointer;font-size:13px}
-.al:hover{text-decoration:underline}
-.btn-auth{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;padding:13px;cursor:pointer;letter-spacing:.2px;transition:filter .2s,transform .1s;margin-bottom:18px}
-.btn-auth:hover{filter:brightness(1.1)}
-.btn-auth:active{transform:scale(.99)}
-.auth-sw{text-align:center;font-size:13px;color:var(--muted2)}
-.auth-alert{border-radius:8px;font-size:13px;padding:10px 14px;margin-bottom:14px;display:none;line-height:1.5}
-.auth-alert.e{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
-.auth-alert.s{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e}
-.auth-alert.on{display:block}
-.psb{height:3px;border-radius:2px;flex:1;background:var(--border2);transition:background .3s}
-.psb.w{background:#ef4444}.psb.f{background:#f59e0b}.psb.g{background:#22c55e}.psb.st{background:#4f7cff}
-.pslbl{font-size:11px;color:var(--muted);margin-top:5px}
-
-/* ── APP LAYOUT ── */
-#app{display:none;height:100vh;flex-direction:row;overflow:hidden}
-
-/* SIDEBAR */
-.sb{width:var(--sw);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s ease;overflow:hidden}
-.sb.col{width:var(--sc)}
-.sb-top{display:flex;align-items:center;gap:10px;padding:18px 14px;border-bottom:1px solid var(--border);min-height:64px}
-.logo-ico{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#fff}
-.logo-txt{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;letter-spacing:-.2px}
-.col-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:color .15s,background .15s}
-.col-btn:hover{color:var(--text);background:var(--surface2)}
-.nav{flex:1;padding:10px 0;overflow-y:auto;overflow-x:hidden}
-.nav-sec{padding:14px 14px 4px;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
-.sb.col .nav-sec{display:none}
-.ni{display:flex;align-items:center;gap:12px;padding:9px 16px;cursor:pointer;color:var(--muted2);font-size:14px;font-weight:500;white-space:nowrap;position:relative;transition:color .15s,background .15s;text-decoration:none}
-.ni:hover{color:var(--text);background:var(--surface2)}
-.ni.on{color:var(--accent);background:rgba(79,124,255,.08)}
-.ni.on::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--accent);border-radius:0 3px 3px 0}
-.nico{width:18px;height:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;flex-shrink:0}
-.sb.col .badge{display:none}
-.sb-bot{border-top:1px solid var(--border);padding:10px 0}
-.av-row{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;white-space:nowrap;transition:background .15s}
-.av-row:hover{background:var(--surface2)}
-.ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--red));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;border:2px solid var(--border2)}
-.av-inf{flex:1;min-width:0}
-.av-name{font-size:13px;font-weight:600;line-height:1.2}
-.av-role{font-size:11px;color:var(--muted)}
-.lo-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color .15s,background .15s}
-.lo-btn:hover{color:var(--red);background:rgba(239,68,68,.1)}
-.sb.col .av-inf,.sb.col .lo-btn{display:none}
-
-/* MAIN */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)}
-.tb-l{display:flex;align-items:center;gap:16px}
-.pg-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;letter-spacing:-.3px}
-.tb-r{display:flex;align-items:center;gap:10px}
-.btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:filter .15s,transform .1s;white-space:nowrap}
-.btn:hover{filter:brightness(1.1)}
-.btn:active{transform:scale(.98)}
-.btn-p{background:var(--accent);color:#fff}
-.btn-s{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
-.btn-d{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
-.ico-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:8px;border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;transition:color .15s,background .15s}
-.ico-btn:hover{background:var(--surface2);color:var(--text)}
-.ndot{width:7px;height:7px;border-radius:50%;background:var(--red);position:absolute;top:3px;right:3px;border:2px solid var(--surface)}
-.content{flex:1;overflow-y:auto;padding:28px 32px}
-.sec{display:none}
-.sec.on{display:block}
-
-/* STATS */
-.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
-.sc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border-color .2s}
-.sc:hover{border-color:var(--border2)}
-.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
-.sc.bl::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
-.sc.gr::before{background:linear-gradient(90deg,#22c55e,#16a34a)}
-.sc.or::before{background:linear-gradient(90deg,#f59e0b,#ef4444)}
-.sc.pu::before{background:linear-gradient(90deg,var(--accent2),#a855f7)}
-.sl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
-.sv{font-family:'Syne',sans-serif;font-size:32px;font-weight:700;letter-spacing:-1px;line-height:1;margin-bottom:8px}
-.sch{font-size:12px;color:var(--muted2)}
-.sch.up{color:var(--green)}
-.sch.dn{color:var(--red)}
-
-/* TABS */
-.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
-.tab{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
-.tab:hover{color:var(--text)}
-.tab.on{color:var(--text);border-bottom-color:var(--accent)}
-.tc{background:var(--surface2);border:1px solid var(--border);border-radius:10px;font-size:11px;font-weight:600;padding:1px 7px}
-
-/* SEARCH ROW */
-.sfr{display:flex;gap:10px;margin-bottom:20px;align-items:center}
-.sw{position:relative;flex:1}
-.sw svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
-.si{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;padding:9px 14px 9px 38px;outline:none;transition:border-color .15s}
-.si:focus{border-color:var(--accent)}
-.si::placeholder{color:var(--muted)}
-.fsel{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;padding:9px 12px;outline:none;cursor:pointer}
-.fsel:focus{border-color:var(--accent)}
-
-/* TABLE */
-.tw{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
-table{width:100%;border-collapse:collapse}
-thead tr{background:var(--surface2);border-bottom:1px solid var(--border)}
-th{text-align:left;padding:11px 16px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
-td{padding:13px 16px;font-size:14px;border-bottom:1px solid var(--border);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(255,255,255,.015)}
-.cb{width:36px}
-input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
-.cc{display:flex;align-items:center;gap:12px}
-.cav{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;position:relative}
-.cav .star{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;background:var(--orange);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px}
-.cn{font-weight:500}
-.ce{font-size:12px;color:var(--muted2);margin-top:2px}
-.pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
-.pg{background:rgba(34,197,94,.15);color:#22c55e}
-.po{background:rgba(245,158,11,.15);color:#f59e0b}
-.pb{background:rgba(79,124,255,.15);color:#4f7cff}
-.pr{background:rgba(239,68,68,.15);color:#ef4444}
-.py{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
-.cbw{display:flex;gap:4px}
-.cbar{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.cbar.hi{background:rgba(34,197,94,.15);color:#22c55e}
-.cbar.mi{background:rgba(245,158,11,.15);color:#f59e0b}
-.cbar.lo{background:rgba(239,68,68,.15);color:#ef4444}
-.tagw{display:flex;gap:5px;flex-wrap:wrap}
-.tag{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-size:11px;font-weight:500;padding:2px 8px;color:var(--muted2)}
-.mb{background:none;border:none;cursor:pointer;color:var(--muted);padding:6px 8px;border-radius:6px;transition:background .15s,color .15s}
-.mb:hover{background:var(--surface2);color:var(--text)}
-.ac{text-align:right}
-
-/* CARDS */
-.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.pc{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s;cursor:pointer}
-.pc:hover{border-color:var(--accent);transform:translateY(-2px)}
-.pch{padding:20px 20px 14px}
-.pci{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px}
-.pct{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px}
-.pcm{font-size:12px;color:var(--muted2)}
-.pcb{padding:14px 20px 18px;border-top:1px solid var(--border)}
-.pcs{display:flex;gap:20px}
-.ps{text-align:center}
-.psv{font-family:'Syne',sans-serif;font-size:20px;font-weight:700}
-.psl{font-size:11px;color:var(--muted2);margin-top:2px}
-
-/* LIBRARY */
-.rl{display:flex;flex-direction:column;gap:12px}
-.ri{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px;transition:border-color .2s;cursor:pointer}
-.ri:hover{border-color:var(--border2)}
-.rico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
-.rinf{flex:1;min-width:0}
-.rtit{font-weight:600;margin-bottom:3px}
-.rdesc{font-size:12px;color:var(--muted2)}
-.ract{display:flex;gap:8px;flex-shrink:0}
-
-/* SECTION HEADER */
-.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.st{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
-.ss{font-size:13px;color:var(--muted2);margin-top:2px}
-
-/* DASHBOARD */
-.dg{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.dc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
-.dct{font-size:13px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px}
-.al-list{display:flex;flex-direction:column;gap:10px}
-.ali{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
-.ali:last-child{border-bottom:none}
-.adot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
-.atxt{font-size:13px;line-height:1.5}
-.atm{font-size:11px;color:var(--muted);margin-top:3px}
-.dl{display:flex;flex-direction:column;gap:8px}
-.di{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border-radius:8px}
-.dav{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
-.dii{flex:1}
-.dn{font-size:13px;font-weight:600}
-.dp{font-size:11px;color:var(--muted2)}
-.dd{font-size:11px;font-weight:600}
-
-/* MODAL */
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center}
-.mo.on{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;width:480px;max-height:82vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:mIn .2s ease}
-@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:none}}
-@keyframes spin{to{transform:rotate(360deg)}}
-.mh{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 18px;border-bottom:1px solid var(--border)}
-.mt{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
-.mc{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;padding:4px 8px;border-radius:6px;transition:color .15s,background .15s}
-.mc:hover{color:var(--text);background:var(--surface2)}
-.mb2{padding:22px 24px}
-.mf{display:flex;gap:10px;justify-content:flex-end;padding:16px 24px;border-top:1px solid var(--border)}
-
-/* CALENDAR */
-.calg{display:grid;grid-template-columns:1fr 300px;gap:20px}
-.calw{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px}
-.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.calt{font-family:'Syne',sans-serif;font-size:16px;font-weight:700}
-.calnb{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:6px 10px;border-radius:8px;cursor:pointer;font-size:14px;transition:border-color .15s}
-.calnb:hover{border-color:var(--accent)}
-.cal-dh{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px}
-.cal-dn{text-align:center;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px}
-.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-.cday{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;cursor:pointer;position:relative;transition:background .15s}
-.cday:hover{background:var(--surface2)}
-.cday.tod{background:rgba(79,124,255,.15);color:var(--accent);font-weight:700}
-.cday.hev::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--accent);position:absolute;bottom:3px}
-.cday.om{color:var(--muted)}
-.schl{display:flex;flex-direction:column;gap:10px}
-.schi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;gap:12px}
-.scht{font-size:11px;font-weight:700;color:var(--accent);min-width:52px}
-.schn{font-size:13px;font-weight:600;margin-bottom:2px}
-.schc{font-size:12px;color:var(--muted2)}
-
-/* SETTINGS */
-.stg{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.stsec{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px}
-.stsec.full{grid-column:1/-1}
-.stt{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.str{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
-.str:last-child{border-bottom:none}
-.strl{font-size:13px;font-weight:500}
-.strd{font-size:11px;color:var(--muted2);margin-top:2px}
-.tgl{position:relative;width:40px;height:22px;cursor:pointer;flex-shrink:0}
-.tgl input{display:none}
-.tgl-tr{width:40px;height:22px;border-radius:11px;background:var(--border2);transition:background .2s;position:absolute;inset:0}
-.tgl input:checked~.tgl-tr{background:var(--accent)}
-.tgl-kn{width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:3px;left:3px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.tgl input:checked~.tgl-tr~.tgl-kn{left:21px}
-
-/* TOAST */
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9999}
-#toast.on{opacity:1}
-
-/* CTX */
-#ctx{position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:6px;min-width:170px;box-shadow:0 12px 40px rgba(0,0,0,.5);display:none;z-index:999}
-.ci{padding:9px 12px;cursor:pointer;color:var(--text);font-size:13px;border-radius:6px;display:flex;align-items:center;gap:10px;transition:background .1s}
-.ci:hover{background:var(--surface2)}
-.ci.danger{color:var(--red)}
-.cdiv{height:1px;background:var(--border);margin:4px 0}
-
-/* EMPTY */
-.empty{text-align:center;padding:60px 20px;color:var(--muted)}
-.ei{font-size:40px;margin-bottom:12px}
-.et{font-size:16px;font-weight:600;color:var(--muted2);margin-bottom:6px}
-.es{font-size:13px}
-
-/* AVATAR COLORS */
-.avi{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
-.avb{background:linear-gradient(135deg,#3b82f6,#06b6d4)}
-.avg{background:linear-gradient(135deg,#22c55e,#10b981)}
-.avr{background:linear-gradient(135deg,#f43f5e,#ec4899)}
-.ava2{background:linear-gradient(135deg,#f59e0b,#ef4444)}
-.avt{background:linear-gradient(135deg,#14b8a6,#3b82f6)}
-
-/* PRO TIP */
-.ptip{text-align:center;color:var(--muted);font-size:13px;margin-top:24px}
-.ptip kbd{background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:1px 6px;font-family:inherit;font-size:12px}
-/* PORTAL BADGE */
-.portal-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;background:rgba(124,85,245,.2);color:#a78bfa;border:1px solid rgba(124,85,245,.3);margin-left:5px;vertical-align:middle;letter-spacing:.3px;text-transform:uppercase}
-
-::-webkit-scrollbar{width:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:var(--muted)}
-</style>
-</head>
-<body>
-
-<!-- ════════════ LOGIN ════════════ -->
-<div class="auth-page on" id="loginPage">
-  <div class="auth-bg"></div><div class="auth-grid"></div>
-  <div class="auth-card">
-    <div class="brand-row">
-      <div class="brand-ico">C</div>
-      <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
-    </div>
-    <div class="auth-title">Welcome back</div>
-    <div class="auth-sub">Enter your password to access the coaching dashboard</div>
-    <div class="auth-alert e" id="loginErr"></div>
-    <div class="fw"><label class="fl">Password</label><input class="fi" type="password" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
-    <div class="auth-meta" style="justify-content:flex-end">
-      <span class="al" onclick="showAuth('forgotPage')">Forgot password?</span>
-    </div>
-    <button class="btn-auth" onclick="doLogin()">Sign In</button>
-  </div>
-</div>
-
-<!-- ════════════ FORGOT ════════════ -->
-<div class="auth-page" id="forgotPage">
-  <div class="auth-bg"></div><div class="auth-grid"></div>
-  <div class="auth-card">
-    <div class="brand-row">
-      <div class="brand-ico">C</div>
-      <div><div class="brand-name">CoachApp</div><div class="brand-tag">Professional Coaching Platform</div></div>
-    </div>
-    <div class="auth-title">Reset your password</div>
-    <div class="auth-sub">We'll send a password reset link to your registered email address.</div>
-    <div class="auth-alert e" id="fgErr"></div>
-    <div class="auth-alert s" id="fgOk"></div>
-    <button class="btn-auth" onclick="doForgot()">Send Reset Link</button>
-    <div class="auth-sw">Remembered it? <span class="al" onclick="showAuth('loginPage')">Back to sign in</span></div>
-  </div>
-</div>
-
-<!-- ════════════ APP ════════════ -->
-<div id="app" style="display:none;flex-direction:row;height:100vh;overflow:hidden;">
-
-  <!-- SIDEBAR -->
-  <aside class="sb" id="sb">
-    <div class="sb-top">
-      <div class="logo-ico">C</div>
-      <span class="logo-txt">CoachApp</span>
-      <button class="col-btn" onclick="toggleSB()">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-    </div>
-    <nav class="nav">
-      <div class="nav-sec">Main</div>
-      <a class="ni" data-s="dashboard" onclick="goSec('dashboard')">
-        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>Dashboard
-      </a>
-      <a class="ni on" data-s="clients" onclick="goSec('clients')">
-        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>Clients
-        <span class="badge" id="cBadge">0</span>
-      </a>
-      <a class="ni" data-s="programs" onclick="goSec('programs')">
-        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>Programs
-      </a>
-      <a class="ni" data-s="library" onclick="goSec('library')">
-        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Library
-      </a>
-      <div class="nav-sec">Schedule</div>
-      <a class="ni" data-s="calendar" onclick="goSec('calendar')">
-        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>Calendar
-      </a>
-      <a class="ni" data-s="messages" onclick="goSec('messages')">
-        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>Messages
-        <span class="badge">3</span>
-      </a>
-      <div class="nav-sec">Account</div>
-      <a class="ni" data-s="settings" onclick="goSec('settings')">
-        <span class="nico"><svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>Settings
-      </a>
-    </nav>
-    <div class="sb-bot">
-      <div class="av-row" onclick="goSec('settings')">
-        <div class="ava" id="sbAva">—</div>
-        <div class="av-inf">
-          <div class="av-name" id="sbName">—</div>
-          <div class="av-role" id="sbEmail" style="font-size:11px;color:var(--muted)">—</div>
-        </div>
-        <button class="lo-btn" onclick="event.stopPropagation();doLogout()" title="Sign out">
-          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-        </button>
-      </div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-    <div class="topbar">
-      <div class="tb-l"><h1 class="pg-title" id="pgTitle">Clients</h1></div>
-      <div class="tb-r">
-        <button class="ico-btn" onclick="toast('No new notifications','ℹ️')">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <span class="ndot"></span>
-        </button>
-        <button class="ico-btn" onclick="goSec('messages')">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        </button>
-        <button class="btn btn-p" id="topBtn" onclick="openAddModal()">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-          Add Client
-        </button>
-      </div>
-    </div>
-
-    <div class="content">
-
-      <!-- DASHBOARD -->
-      <div class="sec" id="sec-dashboard">
-        <div class="sg">
-          <div class="sc bl"><div class="sl">Total Clients</div><div class="sv" id="stC">0</div><div class="sch up" id="stCh">—</div></div>
-          <div class="sc gr"><div class="sl">Avg. Compliance</div><div class="sv" id="stComp">—<span style="font-size:18px">%</span></div><div class="sch">Across active clients</div></div>
-          <div class="sc or"><div class="sl">Active Programs</div><div class="sv">5</div><div class="sch">Available templates</div></div>
-          <div class="sc pu"><div class="sl">Check-ins Due</div><div class="sv" id="stDue">0</div><div class="sch">This week</div></div>
-        </div>
-        <div class="dg">
-          <div class="dc"><div class="dct">Recent Activity</div><div class="al-list" id="actList"></div></div>
-          <div class="dc"><div class="dct">Upcoming Check-ins</div><div class="dl" id="dueList"></div></div>
-        </div>
-      </div>
-
-      <!-- CLIENTS -->
-      <div class="sec on" id="sec-clients">
-        <div class="tabs" id="cTabs">
-          <div class="tab on" onclick="setTab('active',this)">Active <span class="tc" id="acCnt">0</span></div>
-          <div class="tab" onclick="setTab('archived',this)">Archived <span class="tc" id="arCnt">0</span></div>
-        </div>
-        <div class="sfr">
-          <div class="sw">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input class="si" type="text" placeholder="Search clients…" id="cSearch" oninput="renderClients()"/>
-          </div>
-          <select class="fsel" id="gFilter" onchange="renderClients()">
-            <option value="">All groups</option>
-            <option>Strength</option><option>Endurance</option><option>Weight Loss</option><option>Rehab</option>
-          </select>
-          <select class="fsel" id="sFilter" onchange="renderClients()">
-            <option value="name">Sort: Name</option>
-            <option value="compliance">Sort: Compliance</option>
-            <option value="due">Sort: Due day</option>
-          </select>
-        </div>
-        <div class="tw">
-          <table>
-            <thead><tr>
-              <th class="cb"><input type="checkbox" onchange="toggleAll(this)"/></th>
-              <th>Name</th><th>Status</th><th>Check-in Due</th><th>Compliance</th><th>Program</th><th>Groups</th><th></th>
-            </tr></thead>
-            <tbody id="cBody"></tbody>
-          </table>
-        </div>
-        <p class="ptip"><strong>Pro tip!</strong> Press <kbd>N</kbd> to add a client · <kbd>D</kbd> Dashboard · <kbd>M</kbd> Messages · <kbd>?</kbd> Shortcuts</p>
-      </div>
-
-      <!-- PROGRAMS -->
-      <div class="sec" id="sec-programs">
-        <div class="sh">
-          <div><div class="st">Programs</div><div class="ss">AI-powered coaching program builder</div></div>
-          <button class="btn btn-p" id="createProgBtn" onclick="showProgForm()">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New Program
-          </button>
-        </div>
-
-        <!-- Program Builder Form -->
-        <div id="progForm" style="display:none;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:28px;margin-bottom:24px;animation:mIn .2s ease">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px">✨</div>
-            <div>
-              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px">AI Program Builder</div>
-              <div style="font-size:12px;color:var(--muted2)">Describe your program and Claude will build it for you</div>
-            </div>
-            <button onclick="hideProgForm()" style="margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;padding:4px 8px;border-radius:6px" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='none'">×</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-            <div class="fw"><label class="fl">Program Name</label><input class="fi" type="text" id="pName" placeholder="e.g. Summer Shred 8-Week"/></div>
-            <div class="fw"><label class="fl">Duration</label>
-              <select class="fi" id="pWeeks">
-                <option value="4">4 Weeks</option><option value="6">6 Weeks</option><option value="8" selected>8 Weeks</option>
-                <option value="12">12 Weeks</option><option value="16">16 Weeks</option><option value="20">20 Weeks</option>
-              </select>
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-            <div class="fw"><label class="fl">Goal / Focus</label>
-              <select class="fi" id="pGoal">
-                <option>Fat Loss</option><option>Muscle Gain</option><option>Strength</option><option>Endurance</option>
-                <option>Athletic Performance</option><option>Rehab & Recovery</option><option>General Fitness</option>
-              </select>
-            </div>
-            <div class="fw"><label class="fl">Training Days / Week</label>
-              <select class="fi" id="pDays">
-                <option value="2">2 days</option><option value="3">3 days</option><option value="4" selected>4 days</option>
-                <option value="5">5 days</option><option value="6">6 days</option>
-              </select>
-            </div>
-          </div>
-          <div class="fw" style="margin-bottom:14px"><label class="fl">Target Client / Extra Details (optional)</label>
-            <textarea class="fi" id="pDetails" rows="2" placeholder="e.g. Intermediate lifters, access to full gym, focus on compound movements + cardio finishers" style="resize:vertical;line-height:1.5"></textarea>
-          </div>
-          <div style="display:flex;gap:10px;justify-content:flex-end">
-            <button class="btn btn-s" onclick="hideProgForm()">Cancel</button>
-            <button class="btn btn-p" id="genBtn" onclick="generateProgram()">
-              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
-              Generate with AI
-            </button>
-          </div>
-        </div>
-
-        <!-- Generated Program Preview -->
-        <div id="progPreview" style="display:none;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:28px;margin-bottom:24px;animation:mIn .2s ease">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
-            <div style="flex:1">
-              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px" id="prevTitle"></div>
-              <div style="font-size:12px;color:var(--muted2);margin-top:3px" id="prevMeta"></div>
-            </div>
-            <button class="btn btn-s" onclick="discardProgram()" style="font-size:12px;padding:6px 12px">Discard</button>
-            <button class="btn btn-p" onclick="saveProgram()" style="font-size:12px;padding:6px 12px">
-              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              Save Program
-            </button>
-          </div>
-          <div id="prevContent" style="font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;background:var(--surface2);border-radius:10px;padding:18px;max-height:400px;overflow-y:auto"></div>
-        </div>
-
-        <!-- Loading state -->
-        <div id="progLoading" style="display:none;text-align:center;padding:60px 20px">
-          <div style="width:48px;height:48px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px"></div>
-          <div style="font-size:14px;font-weight:600;color:var(--muted2)" id="loadingMsg">Building your program…</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:6px">Claude is designing a custom plan for you</div>
-        </div>
-
-        <!-- Saved Programs Grid -->
-        <div id="progEmpty" style="display:none;text-align:center;padding:70px 20px">
-          <div style="font-size:44px;margin-bottom:14px">🏋️</div>
-          <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--muted2);margin-bottom:8px">No programs yet</div>
-          <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Click "New Program" and let AI build your first coaching program.</div>
-          <button class="btn btn-p" onclick="showProgForm()">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create First Program
-          </button>
-        </div>
-        <div class="cg" id="progGrid"></div>
-      </div>
-
-      <!-- LIBRARY -->
-      <div class="sec" id="sec-library">
-        <div class="sh">
-          <div><div class="st">Resource Library</div><div class="ss">Templates, guides, and workout files</div></div>
-          <button class="btn btn-p" onclick="toast('Upload started','📁')">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Upload
-          </button>
-        </div>
-        <div class="sfr">
-          <div class="sw">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-            <input class="si" type="text" placeholder="Search library…"/>
-          </div>
-          <select class="fsel"><option>All types</option><option>Workouts</option><option>Nutrition</option><option>Templates</option><option>Videos</option></select>
-        </div>
-        <div class="rl" id="libList"></div>
-      </div>
-
-      <!-- CALENDAR -->
-      <div class="sec" id="sec-calendar">
-        <div class="calg">
-          <div class="calw">
-            <div class="calh">
-              <button class="calnb" onclick="chMonth(-1)">‹</button>
-              <div class="calt" id="calTitle"></div>
-              <button class="calnb" onclick="chMonth(1)">›</button>
-            </div>
-            <div class="cal-dh">
-              <div class="cal-dn">Su</div><div class="cal-dn">Mo</div><div class="cal-dn">Tu</div>
-              <div class="cal-dn">We</div><div class="cal-dn">Th</div><div class="cal-dn">Fr</div><div class="cal-dn">Sa</div>
-            </div>
-            <div class="cal-days" id="calDays"></div>
-          </div>
-          <div class="dc"><div class="dct">Today's Schedule</div><div class="schl" id="schList"></div></div>
-        </div>
-      </div>
-
-      <!-- MESSAGES -->
-      <div class="sec" id="sec-messages">
-        <div style="display:flex;gap:20px;height:calc(100vh - 160px)">
-          <div style="width:280px;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex-shrink:0">
-            <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-              <div class="sw"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-              <input class="si" type="text" placeholder="Search messages…" style="font-size:13px;padding:8px 12px 8px 34px"/></div>
-            </div>
-            <div id="msgList" style="overflow-y:auto;height:calc(100% - 66px)"></div>
-          </div>
-          <div style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;overflow:hidden">
-            <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
-              <div class="cav avi" style="width:36px;height:36px;font-size:12px;font-family:'Syne',sans-serif;font-weight:800" id="msgAva">?</div>
-              <div><div style="font-weight:600;font-size:14px" id="msgName">Select a conversation</div><div style="font-size:12px;color:var(--green)">● Online</div></div>
-              <button class="btn btn-s" style="margin-left:auto;padding:7px 14px;font-size:12px;background:rgba(34,197,94,.12);color:var(--green);border-color:rgba(34,197,94,.3)" onclick="toast('Video call feature coming soon','📹')">
-                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 10l4.553-2.277A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M5 8h8a2 2 0 012 2v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4a2 2 0 012-2z"/></svg>
-                Video Call
-              </button>
-            </div>
-            <div style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px" id="chatMsgs"></div>
-            <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:10px">
-              <input class="si" type="text" placeholder="Type a message…" id="msgInp" style="flex:1" onkeydown="if(event.key==='Enter')sendMsg()"/>
-              <button class="btn btn-p" onclick="sendMsg()">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Send
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- SETTINGS -->
-      <div class="sec" id="sec-settings">
-        <div class="stg">
-          <div class="stsec">
-            <div class="stt">👤 Profile</div>
-            <div class="frow"><div class="fw"><label class="fl">First Name</label><input class="fi" type="text" id="stFirst"/></div><div class="fw"><label class="fl">Last Name</label><input class="fi" type="text" id="stLast"/></div></div>
-            <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="stEmail" disabled style="opacity:.6;cursor:not-allowed"/></div>
-            <div class="fw"><label class="fl">Title / Role</label><input class="fi" type="text" id="stRole" placeholder="e.g. Head Coach"/></div>
-            <button class="btn btn-p" style="width:100%" onclick="saveProfile()">Save Changes</button>
-          </div>
-          <div class="stsec">
-            <div class="stt">🔔 Notifications</div>
-            <div class="str"><div><div class="strl">Check-in reminders</div><div class="strd">Alert when clients miss check-ins</div></div><label class="tgl"><input type="checkbox" checked/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
-            <div class="str"><div><div class="strl">New messages</div><div class="strd">Push notification for incoming messages</div></div><label class="tgl"><input type="checkbox" checked/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
-            <div class="str"><div><div class="strl">Weekly summary email</div><div class="strd">Monday morning digest</div></div><label class="tgl"><input type="checkbox"/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
-            <div class="str"><div><div class="strl">Client milestones</div><div class="strd">Celebrate PRs and goal achievements</div></div><label class="tgl"><input type="checkbox" checked/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
-          </div>
-          <div class="stsec">
-            <div class="stt">🔒 Change Login Password</div>
-            <div class="fw"><label class="fl">Current Password</label><input class="fi" type="password" id="cPass" placeholder="••••••••"/></div>
-            <div class="fw"><label class="fl">New Password</label><input class="fi" type="password" id="nPass" placeholder="Min. 8 characters"/></div>
-            <div class="fw"><label class="fl">Confirm New Password</label><input class="fi" type="password" id="nPass2" placeholder="••••••••"/></div>
-            <div class="auth-alert e" id="passErr" style="margin-bottom:10px"></div>
-            <div class="auth-alert s" id="passOk" style="margin-bottom:10px"></div>
-            <button class="btn btn-s" style="width:100%" onclick="changeLocalPass()">Update Password</button>
-          </div>
-          <div class="stsec">
-            <div class="stt">⚙️ Preferences</div>
-            <div class="str"><div><div class="strl">Default check-in day</div></div><select class="fsel" style="font-size:13px;padding:6px 10px"><option>Sunday</option><option>Monday</option><option>Friday</option></select></div>
-            <div class="str"><div><div class="strl">Compliance window</div></div><select class="fsel" style="font-size:13px;padding:6px 10px"><option>4 weeks</option><option>8 weeks</option><option>12 weeks</option></select></div>
-            <div class="str"><div><div class="strl">Auto-archive inactive</div><div class="strd">After 60 days without activity</div></div><label class="tgl"><input type="checkbox"/><div class="tgl-tr"></div><div class="tgl-kn"></div></label></div>
-          </div>
-          <div class="stsec full">
-            <div class="stt">🗑️ Danger Zone</div>
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div><div class="strl">Delete account</div><div class="strd">Permanently delete your account and all client data. This cannot be undone.</div></div>
-              <button class="btn btn-d" onclick="deleteAccount()">Delete Account</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /content -->
-  </main>
-</div><!-- /app -->
-
-<!-- ADD CLIENT MODAL -->
-<div class="mo" id="addModal">
-  <div class="modal">
-    <div class="mh"><div class="mt">Add New Client</div><button class="mc" onclick="closeModal('addModal')">×</button></div>
-    <div class="mb2">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="fw"><label class="fl">First Name</label><input class="fi" type="text" id="nFirst" placeholder="First"/></div>
-        <div class="fw"><label class="fl">Last Name</label><input class="fi" type="text" id="nLast" placeholder="Last"/></div>
-      </div>
-      <div class="fw"><label class="fl">Email</label><input class="fi" type="email" id="nEmail" placeholder="client@example.com"/></div>
-      <div class="fw"><label class="fl">Program</label>
-        <select class="fi" id="nProg">
-          <option value="">No program</option>
-        </select>
-      </div>
-      <div class="fw"><label class="fl">Group</label>
-        <select class="fi" id="nGroup">
-          <option value="">No group</option>
-          <option>Strength</option><option>Endurance</option><option>Weight Loss</option><option>Rehab</option>
-        </select>
-      </div>
-      <div class="fw"><label class="fl">Check-in Due</label>
-        <select class="fi" id="nDue">
-          <option>Sunday</option><option>Monday</option><option>Tuesday</option>
-          <option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
-        </select>
-      </div>
-      <div class="fw"><label class="fl">Notes (optional)</label><input class="fi" type="text" id="nNotes" placeholder="Any relevant notes…"/></div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-s" onclick="closeModal('addModal')">Cancel</button>
-      <button class="btn btn-p" onclick="addClient()">Add Client</button>
-    </div>
-  </div>
-</div>
-
-<div id="toast"><span id="tIco">✅</span><span id="tMsg">Done!</span></div>
-
-<div id="ctx">
-  <div class="ci" onclick="ctxAct('profile')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>View Profile</div>
-  <div class="ci" onclick="ctxAct('message')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Send Message</div>
-  <div class="ci" onclick="ctxAct('assignProgram')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>Assign Program</div>
-  <div class="ci" onclick="ctxAct('viewCheckins')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>View Check-ins</div>
-  <div class="ci" onclick="ctxAct('star')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Toggle Star</div>
-  <div class="cdiv"></div>
-  <div class="ci" onclick="ctxAct('archive')">Archive / Restore</div>
-  <div class="cdiv"></div>
-  <div class="ci danger" onclick="ctxAct('delete')"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Delete Client</div>
-</div>
-
-<!-- ASSIGN PROGRAM MODAL -->
-<div class="mo" id="assignProgModal">
-  <div class="modal">
-    <div class="mh"><div class="mt">Assign Program to Client</div><button class="mc" onclick="closeModal('assignProgModal')">×</button></div>
-    <div class="mb2">
-      <div style="margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px;font-size:13px;color:var(--muted2)">
-        Assigning a program will make it visible in the client's portal immediately.
-      </div>
-      <div id="assignProgClientName" style="font-weight:600;font-size:14px;margin-bottom:16px"></div>
-      <div class="fw"><label class="fl">Select Program</label>
-        <select class="fi" id="assignProgSel">
-          <option value="">— Choose a program —</option>
-        </select>
-      </div>
-      <div id="assignProgPreview" style="display:none;margin-top:14px;padding:14px;background:var(--surface2);border-radius:8px">
-        <div style="font-weight:600;font-size:13px;margin-bottom:4px" id="apPrevName"></div>
-        <div style="font-size:12px;color:var(--muted2)" id="apPrevMeta"></div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-s" onclick="closeModal('assignProgModal')">Cancel</button>
-      <button class="btn btn-p" onclick="confirmAssignProgram()">Assign Program →</button>
-    </div>
-  </div>
-</div>
-
-<!-- VIEW CHECKINS MODAL -->
-<div class="mo" id="checkinsModal">
-  <div class="modal" style="width:520px">
-    <div class="mh"><div class="mt">Client Check-ins</div><button class="mc" onclick="closeModal('checkinsModal')">×</button></div>
-    <div class="mb2" id="checkinsContent" style="max-height:60vh;overflow-y:auto">
-      <div style="text-align:center;color:var(--muted);padding:30px">Loading…</div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ══════════════════════════════════════════
-// FIREBASE HELPERS
-// ══════════════════════════════════════════
-// Shortcut to _fb references (set by module script above)
-const fb = ()=> window._fb;
-
-// Firestore path helpers
-const coachDoc   = (uid)    => fb().doc(fb().db, 'coaches', uid);
-const clientsCol = (uid)    => fb().collection(fb().db, 'coaches', uid, 'clients');
-const clientDoc  = (uid,cid)=> fb().doc(fb().db, 'coaches', uid, 'clients', String(cid));
-const progsCol   = (uid)    => fb().collection(fb().db, 'coaches', uid, 'programs');
-const progDoc    = (uid,pid)=> fb().doc(fb().db, 'coaches', uid, 'programs', String(pid));
-const actDoc     = (uid)    => fb().doc(fb().db, 'coaches', uid, 'meta', 'activity');
-
-// ── Clients ──
-async function fsLoadClients(){
-  // Load manually-added clients from the coach's own subcollection
-  const snap = await fb().getDocs(clientsCol(CU));
-  const manualClients = snap.docs.map(d=>({...d.data(), id: parseInt(d.id)}));
-  nextId = manualClients.length ? Math.max(...manualClients.map(c=>c.id).filter(x=>x>0))+1 : 1;
-
-  // Also load clients who self-registered via the Client Portal (users/{uid} with role:'client')
-  let portalClients = [];
-  try {
-    const usersSnap = await fb().getDocs(fb().collection(fb().db, 'users'));
-    let portalIdx = -1;
-    usersSnap.docs.forEach(d => {
-      const data = d.data();
-      if (data.role !== 'client') return;
-      // ✅ Skip the coach's own account (coach logged into client portal to test it)
-      if (d.id === CU) return;
-      // Skip if this email is already in the manually-added list (avoid duplicates)
-      if (manualClients.find(c => c.email && c.email.toLowerCase() === (data.email||'').toLowerCase())) return;
-
-      // Use stored displayName first; fall back to parsing the email prefix
-      let first = 'Portal', last = 'User';
-      if (data.displayName && data.displayName.trim()) {
-        const nameParts = data.displayName.trim().split(/\s+/);
-        first = nameParts[0] || 'Portal';
-        last  = nameParts.slice(1).join(' ') || 'User';
-      } else {
-        // Parse email: "john.doe@..." → John Doe; "johndoe@..." → Johndoe (no last)
-        const emailName = (data.email||'').split('@')[0];
-        const parts = emailName.split('.');
-        first = parts[0] ? parts[0].charAt(0).toUpperCase()+parts[0].slice(1) : 'Portal';
-        last  = parts[1] ? parts[1].charAt(0).toUpperCase()+parts[1].slice(1) : '';
-        // If we still have no last name, use a shortened email as display
-        if (!last) { first = emailName; last = ''; }
-      }
-
-      portalClients.push({
-        id: portalIdx--,
-        first, last,
-        email: data.email||'',
-        starred: false,
-        status: 'active',
-        due: '—',
-        comp: [0, 0, 0],
-        groups: [],
-        program: '',
-        notes: '',
-        createdAt: data.lastSeen||Date.now(),
-        isPortalUser: true,
-        uid: d.id
-      });
-    });
-  } catch(e){ console.warn('Could not load portal users:', e); }
-
-  clients = [...manualClients, ...portalClients];
-}
-async function fsSaveClient(c){
-  await fb().setDoc(clientDoc(CU, c.id), c);
-}
-async function fsDeleteClient(cid){
-  await fb().deleteDoc(clientDoc(CU, cid));
-}
-
-// ── Programs ──
-async function fsLoadProgs(){
-  const snap = await fb().getDocs(progsCol(CU));
-  savedProgs = snap.docs.map(d=>({...d.data(), _fid: d.id}));
-}
-async function fsSaveProg(p){
-  const ref = fb().doc(progsCol(CU));
-  await fb().setDoc(ref, {...p, _fid: ref.id});
-  p._fid = ref.id;
-  return p;
-}
-async function fsDeleteProg(fid){
-  await fb().deleteDoc(progDoc(CU, fid));
-}
-
-// ── Activity ──
-async function fsLoadActivity(){
-  try{
-    const snap = await fb().getDoc(actDoc(CU));
-    return snap.exists() ? (snap.data().log||[]) : [];
-  }catch{ return []; }
-}
-async function fsPushActivity(text){
-  const log = await fsLoadActivity();
-  log.unshift({text, time:'Just now'});
-  if(log.length>12) log.pop();
-  await fb().setDoc(actDoc(CU), {log}, {merge:true});
-}
-
-// ══════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════
-let CU=null, clients=[], savedProgs=[], nextId=1, curTab='active', ctxId=null, calMo, calYr;
-
-// ══════════════════════════════════════════
-// AUTH PAGE ROUTING
-// ══════════════════════════════════════════
-function showAuth(page){
-  ['loginPage','forgotPage'].forEach(p=>document.getElementById(p).classList.toggle('on',p===page));
-  document.querySelectorAll('.auth-alert').forEach(a=>a.classList.remove('on'));
-}
-
-// Called from Firebase onAuthStateChanged after coach doc verified
-window.bootApp = async function(fbUser, profile, fresh){
-  CU = fbUser.uid;
-  await fsLoadClients();
-
-  const first = profile.first || 'Coach';
-  const last  = profile.last  || '';
-  const email = fbUser.email  || '';
-  const ava   = last ? (first[0]+last[0]).toUpperCase() : first.slice(0,2).toUpperCase();
-  id('sbAva').textContent  = ava;
-  id('sbName').textContent = last ? `${first} ${last}` : first;
-  id('sbEmail').textContent= email;
-  id('stFirst').value = first;
-  id('stLast').value  = last;
-  id('stEmail').value = email;
-  id('stRole').value  = profile.role||'';
-
-  showAuth('none');
-  id('app').style.display='flex';
-  initApp();
-  if(fresh) toast(`Welcome, ${first}!`,'🎉');
-};
-
-// ══════════════════════════════════════════
-// LOGIN  — password-only (email from Firestore config/coach)
-// Default password on first signup: admin123
-// ══════════════════════════════════════════
-async function doLogin(){
-  const pass = v('lPass');
-  const err  = id('loginErr');
-  err.classList.remove('on');
-  if(!pass) return alert_(err,'Please enter your password.');
-
-  // Fetch the stored coach email from Firestore
-  let coachEmail = null;
-  try {
-    const cfgSnap = await fb().getDoc(fb().doc(fb().db, 'config', 'coach'));
-    if(cfgSnap.exists()) coachEmail = cfgSnap.data().email;
-  } catch(e){}
-
-  if(!coachEmail){
-    return alert_(err,'Account not set up yet. Please contact your administrator.');
-  }
-
-  try {
-    await fb().signInWithEmailAndPassword(fb().auth, coachEmail, pass);
-    // onAuthStateChanged fires → verifies coaches/{uid} → bootApp
-  } catch(e){
-    const msg = (e.code==='auth/wrong-password'||e.code==='auth/invalid-credential')
-      ? 'Incorrect password. Please try again.'
-      : (e.message||'Login failed. Please try again.');
-    alert_(err, msg);
-  }
-}
-
-// ══════════════════════════════════════════
-// LOGOUT
-// ══════════════════════════════════════════
-async function doLogout(){
-  await fb().signOut(fb().auth);
-  CU=null; clients=[]; savedProgs=[];
-  id('app').style.display='none';
-  curTab='active'; goSec('clients');
-  toast('Signed out successfully','👋');
-}
-
-// ══════════════════════════════════════════
-// FORGOT PASSWORD
-// ══════════════════════════════════════════
-async function doForgot(){
-  const err=id('fgErr'), ok=id('fgOk');
-  err.classList.remove('on'); ok.classList.remove('on');
-  try{
-    const cfgSnap = await fb().getDoc(fb().doc(fb().db, 'config', 'coach'));
-    const email = cfgSnap.exists() ? cfgSnap.data().email : null;
-    if(!email) return alert_(err,'No account found. Please contact your administrator.');
-    await fb().sendPasswordResetEmail(fb().auth, email);
-    alert_(ok,'Reset link sent! Check your email inbox.');
-  } catch(e){
-    alert_(err,'Failed to send reset email. Please try again.');
-  }
-}
-
-// ══════════════════════════════════════════
-// SAVE PROFILE  (Firestore)
-// ══════════════════════════════════════════
-async function saveProfile(){
-  const first=v('stFirst'), last=v('stLast'), role=v('stRole');
-  if(!first||!last) return toast('Name cannot be empty','⚠️');
-  await fb().updateDoc(coachDoc(CU), {first, last, role});
-  window._fbProfile = {...window._fbProfile, first, last, role};
-  id('sbAva').textContent=(first[0]+last[0]).toUpperCase();
-  id('sbName').textContent=`${first} ${last}`;
-  toast('Profile saved!','✅');
-}
-
-// ══════════════════════════════════════════
-// CHANGE PASSWORD  (Firebase reauthenticate)
-// ══════════════════════════════════════════
-async function changeLocalPass(){
-  const cur=v('cPass'), np=v('nPass'), np2=v('nPass2');
-  const err=id('passErr'), ok=id('passOk');
-  err.classList.remove('on'); ok.classList.remove('on');
-  if(!cur) return alert_(err,'Please enter your current password.');
-  if(np.length<8) return alert_(err,'New password must be at least 8 characters.');
-  if(np!==np2) return alert_(err,'Passwords do not match.');
-  try{
-    const cred = fb().EmailAuthProvider.credential(window._fbUser.email, cur);
-    await fb().reauthenticateWithCredential(window._fbUser, cred);
-    await fb().updatePassword(window._fbUser, np);
-    id('cPass').value=''; id('nPass').value=''; id('nPass2').value='';
-    ok.textContent='Password updated successfully!'; ok.classList.add('on');
-    setTimeout(()=>ok.classList.remove('on'), 3000);
-    toast('Password updated!','🔒');
-  } catch(e){
-    alert_(err, e.code==='auth/wrong-password'||e.code==='auth/invalid-credential'
-      ? 'Current password is incorrect.'
-      : 'Failed to update password. Please try again.');
-  }
-}
-
-// ══════════════════════════════════════════
-// DELETE ACCOUNT  (Firestore + Firebase Auth)
-// ══════════════════════════════════════════
-async function deleteAccount(){
-  if(!confirm('Delete your account and ALL client data permanently?')) return;
-  try{
-    // Delete all subcollections
-    const cSnap = await fb().getDocs(clientsCol(CU));
-    const pSnap = await fb().getDocs(progsCol(CU));
-    const batch = fb().writeBatch(fb().db);
-    cSnap.docs.forEach(d=>batch.delete(d.ref));
-    pSnap.docs.forEach(d=>batch.delete(d.ref));
-    batch.delete(actDoc(CU));
-    batch.delete(coachDoc(CU));
-    await batch.commit();
-    await fb().deleteUser(window._fbUser);
-    toast('Account deleted.','🗑️');
-  } catch(e){ toast('Delete failed: '+e.message,'❌'); }
-}
-
-// ══════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════
-function id(i){return document.getElementById(i)}
-function v(i){return id(i).value.trim()}
-function alert_(el,msg){el.textContent=msg;el.classList.add('on')}
-
-// ══════════════════════════════════════════
-// APP INIT
-// ══════════════════════════════════════════
-async function initApp(){
-  await fsLoadProgs();
-  renderClients(); renderPrograms(); renderLibrary();
-  renderMessages(); renderCalendar(); renderDashboard();
-}
-
-// ══════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════
-const titles={dashboard:'Dashboard',clients:'Clients',programs:'Programs',library:'Library',calendar:'Calendar',messages:'Messages',settings:'Settings'};
-const topDefs={
-  dashboard:null,
-  clients:{lbl:'Add Client',fn:'openAddModal()'},
-  programs:{lbl:'New Program',fn:"toast('New program created','✅')"},
-  library:{lbl:'Upload File',fn:"toast('Upload started','📁')"},
-  calendar:{lbl:'New Event',fn:"toast('Event created','📅')"},
-  messages:{lbl:'New Message',fn:"toast('New conversation','💬')"},
-  settings:{lbl:'Save Profile',fn:'saveProfile()'},
-};
-
-function goSec(s){
-  document.querySelectorAll('.sec').forEach(x=>x.classList.remove('on'));
-  id('sec-'+s).classList.add('on');
-  document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('on',n.dataset.s===s));
-  id('pgTitle').textContent=titles[s]||s;
-  const btn=id('topBtn'), def=topDefs[s];
-  if(def){ btn.style.display=''; btn.innerHTML=`<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>${def.lbl}`; btn.setAttribute('onclick',def.fn); }
-  else btn.style.display='none';
-  if(s==='dashboard') renderDashboard();
-  if(s==='programs')  renderPrograms();
-}
-
-function toggleSB(){ id('sb').classList.toggle('col'); }
-
-// ══════════════════════════════════════════
-// CLIENTS
-// ══════════════════════════════════════════
-const AVCOLS=['avi','avb','avg','avr','ava2','avt'];
-const gi=c=>(c.first[0]+c.last[0]).toUpperCase();
-const gc=c=>AVCOLS[(c.first.charCodeAt(0)+c.last.charCodeAt(0))%AVCOLS.length];
-const cc=v=>v>=85?'hi':v>=65?'mi':'lo';
-
-function setTab(tab,el){
-  curTab=tab;
-  document.querySelectorAll('#cTabs .tab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on');
-  renderClients();
-}
-
-function renderClients(){
-  const q=(v('cSearch')||'').toLowerCase();
-  const gf=id('gFilter').value, sf=id('sFilter').value;
-  let list=clients.filter(c=>c.status===curTab);
-  if(q) list=list.filter(c=>(c.first+' '+c.last).toLowerCase().includes(q)||(c.email||'').toLowerCase().includes(q));
-  if(gf) list=list.filter(c=>c.groups.includes(gf));
-  if(sf==='compliance') list.sort((a,b)=>b.comp[0]-a.comp[0]);
-  else if(sf==='due') list.sort((a,b)=>a.due.localeCompare(b.due));
-  else list.sort((a,b)=>a.last.localeCompare(b.last));
-
-  const body=id('cBody');
-  if(!list.length){
-    body.innerHTML=`<tr><td colspan="8"><div class="empty"><div class="ei">${curTab==='active'?'👥':'📦'}</div><div class="et">${curTab==='active'?'No active clients yet':'No archived clients'}</div><div class="es">${curTab==='active'?'Click "Add Client" to get started.':'Archived clients appear here.'}</div></div></td></tr>`;
-  } else {
-    body.innerHTML=list.map(c=>{
-      const comps=c.comp.map(vv=>`<div class="cbar ${cc(vv)}">${vv}</div>`).join('');
-      const tags=c.groups.map(g=>`<span class="tag">${g}</span>`).join('')||'<span style="color:var(--muted);font-size:12px">—</span>';
-      const star=c.starred?'<span class="star">★</span>':'';
-      const due=c.due==='—'?'<span style="color:var(--muted)">—</span>':`<span class="pill pg" style="font-size:11px">${c.due}</span>`;
-      return `<tr>
-        <td class="cb"><input type="checkbox"/></td>
-        <td><div class="cc"><div class="cav ${gc(c)}">${gi(c)}${star}</div><div><div class="cn">${c.first} ${c.last}${c.isPortalUser?'<span class="portal-badge">Portal</span>':''}</div><div class="ce">${c.email||''}</div></div></div></td>
-        <td><span class="pill ${c.status==='active'?'pg':'py'}">${c.status}</span></td>
-        <td>${due}</td>
-        <td><div class="cbw">${comps}</div></td>
-        <td><span style="font-size:13px">${c.program||'<span style="color:var(--muted)">None</span>'}</span></td>
-        <td><div class="tagw">${tags}</div></td>
-        <td class="ac"><button class="mb" onclick="showCtx(event,${c.id})"><svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button></td>
-      </tr>`;
-    }).join('');
-  }
-  const ac=clients.filter(c=>c.status==='active').length;
-  const ar=clients.filter(c=>c.status==='archived').length;
-  id('acCnt').textContent=ac; id('arCnt').textContent=ar;
-  id('cBadge').textContent=ac; id('stC').textContent=ac; id('stDue').textContent=ac;
-  const avg=ac?Math.round(clients.filter(c=>c.status==='active').reduce((s,c)=>s+c.comp[0],0)/ac):0;
-  id('stComp').innerHTML=ac?`${avg}<span style="font-size:18px">%</span>`:`—<span style="font-size:18px">%</span>`;
-}
-
-function toggleAll(cb){ document.querySelectorAll('#cBody input[type=checkbox]').forEach(c=>c.checked=cb.checked); }
-
-// ══════════════════════════════════════════
-// ADD CLIENT
-// ══════════════════════════════════════════
-function openAddModal(){
-  loadProgs();
-  const sel=id('nProg');
-  sel.innerHTML='<option value="">No program</option>'+savedProgs.map(p=>'<option>'+p.name+'</option>').join('');
-  id('addModal').classList.add('on');
-}
-function closeModal(i){ id(i).classList.remove('on'); }
-
-async function addClient(){
-  const first=v('nFirst'), last=v('nLast'), email=v('nEmail'),
-        prog=v('nProg'), group=v('nGroup'), due=v('nDue'), notes=v('nNotes');
-  if(!first||!last) return toast('Please enter first and last name','⚠️');
-  const c={
-    id:nextId++, first, last,
-    email:email||`${first.toLowerCase()}.${last.toLowerCase()}@client.com`,
-    starred:false, status:'active', due, notes, program:id('nProg').value,
-    comp:[Math.floor(70+Math.random()*30),Math.floor(70+Math.random()*30),Math.floor(70+Math.random()*30)],
-    groups:group?[group]:[],
-    createdAt:Date.now()
-  };
-  clients.push(c);
-  await fsSaveClient(c);
-  await fsPushActivity(`New client <strong>${first} ${last}</strong> added`);
-  ['nFirst','nLast','nEmail','nNotes'].forEach(x=>id(x).value='');
-  id('nProg').value=''; id('nGroup').value=''; id('nDue').value='Sunday';
-  closeModal('addModal');
-  renderClients(); renderDashboard();
-  toast(`${first} ${last} added!`,'✅');
-}
-
-// ══════════════════════════════════════════
-// CONTEXT MENU
-// ══════════════════════════════════════════
-function showCtx(e,i){
-  e.stopPropagation(); ctxId=i;
-  const m=id('ctx'); m.style.display='block';
-  let x=e.clientX-180, y=e.clientY;
-  if(x<0)x=e.clientX; if(y+220>window.innerHeight)y=window.innerHeight-220;
-  m.style.left=x+'px'; m.style.top=y+'px';
-}
-function closeCtx(){ id('ctx').style.display='none'; }
-document.addEventListener('click',closeCtx);
-
-// ── Client Profile Modal ──
-function openClientProfile(c){
-  // Build a detailed client view
-  const modal=document.createElement('div');
-  modal.className='mo on';
-  modal.innerHTML=`<div class="modal" style="width:500px">
-    <div class="mh"><div class="mt">${c.first} ${c.last}</div><button class="mc" onclick="this.closest('.mo').remove()">×</button></div>
-    <div class="mb2">
-      <div style="display:flex;gap:16px;align-items:center;margin-bottom:20px">
-        <div class="cav ${gc(c)}" style="width:52px;height:52px;font-size:18px">${gi(c)}</div>
-        <div>
-          <div style="font-weight:600;font-size:15px">${c.first} ${c.last}${c.isPortalUser?'<span class="portal-badge">Portal</span>':''}</div>
-          <div style="font-size:13px;color:var(--muted2)">${c.email||'—'}</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:3px">Status: ${c.status} · Program: ${c.program||'None'}</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-        <div style="background:var(--surface2);border-radius:8px;padding:12px">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Check-in Day</div>
-          <div style="font-size:15px;font-weight:600">${c.due||'—'}</div>
-        </div>
-        <div style="background:var(--surface2);border-radius:8px;padding:12px">
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">Groups</div>
-          <div style="font-size:14px;font-weight:500">${c.groups&&c.groups.length?c.groups.join(', '):'None'}</div>
-        </div>
-      </div>
-      ${c.notes?`<div style="background:var(--surface2);border-radius:8px;padding:12px;font-size:13px;color:var(--muted2)"><strong style="color:var(--muted2)">Notes:</strong> ${c.notes}</div>`:''}
-      ${c.isPortalUser&&c.uid?`<div style="margin-top:12px;padding:10px 12px;background:rgba(124,85,245,.1);border:1px solid rgba(124,85,245,.2);border-radius:8px;font-size:12px;color:#a78bfa">✓ This client has a portal account and can see their program, submit check-ins, and message you.</div>`:`<div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted2)">ℹ️ This client hasn't signed up to the portal yet. Share the portal link so they can log in and track their progress.</div>`}
-    </div>
-    <div class="mf">
-      <button class="btn btn-s" onclick="this.closest('.mo').remove()">Close</button>
-      ${c.uid?`<button class="btn btn-p" onclick="this.closest('.mo').remove();goSec('messages');setTimeout(()=>openConvo('${c.uid}','${c.first} ${c.last}','${gc(c)}'),100)">Message Client</button>`:''}
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
-}
-
-// ── Assign Program ──
-function openAssignProgram(c){
-  const sel=id('assignProgSel');
-  sel.innerHTML='<option value="">— Choose a program —</option>'+savedProgs.map(p=>`<option value="${p._fid||p.name}">${p.name} (${p.goal||'General'} · ${p.weeks||4}wk)</option>`).join('');
-  id('assignProgClientName').textContent=`Client: ${c.first} ${c.last}`;
-  id('assignProgModal').classList.add('on');
-  id('assignProgPreview').style.display='none';
-  sel.onchange=()=>{
-    const p=savedProgs.find(x=>(x._fid||x.name)===sel.value);
-    if(p){
-      id('assignProgPreview').style.display='block';
-      id('apPrevName').textContent=p.name;
-      id('apPrevMeta').textContent=`${p.goal||'General Fitness'} · ${p.weeks||4} weeks · ${p.days||3}x/week`;
-    } else {
-      id('assignProgPreview').style.display='none';
-    }
-  };
-}
-
-async function confirmAssignProgram(){
-  const c=clients.find(x=>x.id===ctxId); if(!c)return;
-  const progId=id('assignProgSel').value;
-  if(!progId){toast('Please select a program','⚠️');return;}
-  const prog=savedProgs.find(x=>(x._fid||x.name)===progId);
-  if(!prog){toast('Program not found','❌');return;}
-  // Assign to client object
-  c.program=prog.name;
-  await fsSaveClient(c);
-  // If client has a portal UID, also write to their users doc so portal shows it
-  if(c.uid){
-    try{
-      await fb().setDoc(fb().doc(fb().db,'users',c.uid),{assignedProgram:prog,assignedProgramAt:Date.now()},{merge:true});
-      toast(`"${prog.name}" assigned to ${c.first} — they'll see it in their portal!`,'✅');
-    }catch(e){
-      toast(`Program assigned locally. Client needs to register in the portal.`,'⚠️');
-    }
-  } else {
-    // Try to find by email
-    try{
-      const usersSnap=await fb().getDocs(fb().collection(fb().db,'users'));
-      const match=usersSnap.docs.find(d=>d.data().email&&d.data().email.toLowerCase()===(c.email||'').toLowerCase());
-      if(match){
-        await fb().setDoc(fb().doc(fb().db,'users',match.id),{assignedProgram:prog,assignedProgramAt:Date.now()},{merge:true});
-        toast(`"${prog.name}" assigned! Client will see it when they log into the portal.`,'✅');
-      } else {
-        toast(`Program saved. Client needs a portal account to see it online.`,'ℹ️');
-      }
-    }catch(e){toast('Program saved locally.','ℹ️');}
-  }
-  await fsPushActivity(`Assigned <strong>${prog.name}</strong> to ${c.first} ${c.last}`);
-  closeModal('assignProgModal');
-  renderClients();
-}
-
-// ── View Client Check-ins ──
-async function openViewCheckins(c){
-  id('checkinsModal').classList.add('on');
-  id('checkinsContent').innerHTML='<div style="text-align:center;color:var(--muted);padding:30px">Loading check-ins…</div>';
-  // Try to find the client's UID
-  let uid=c.uid;
-  if(!uid&&c.email){
-    try{
-      const usersSnap=await fb().getDocs(fb().collection(fb().db,'users'));
-      const match=usersSnap.docs.find(d=>d.data().email&&d.data().email.toLowerCase()===c.email.toLowerCase());
-      if(match) uid=match.id;
-    }catch(e){}
-  }
-  if(!uid){
-    id('checkinsContent').innerHTML=`<div style="text-align:center;color:var(--muted);padding:30px">
-      <div style="font-size:30px;margin-bottom:10px">📋</div>
-      <div style="font-size:13px">No portal account found for this client.<br>They need to sign up at the client portal to submit check-ins.</div>
-    </div>`;
-    return;
-  }
-  try{
-    const snap=await fb().getDocs(fb().collection(fb().db,'users',uid,'checkins'));
-    if(snap.empty){
-      id('checkinsContent').innerHTML=`<div style="text-align:center;color:var(--muted);padding:30px">
-        <div style="font-size:30px;margin-bottom:10px">📋</div>
-        <div style="font-size:13px">No check-ins submitted yet from ${c.first}.</div>
-      </div>`;
-      return;
-    }
-    const checkins=snap.docs.map(d=>d.data()).sort((a,b)=>b.ts-a.ts);
-    const sleepLbls=['','😴 Poor','😐 OK','😊 Good','🌟 Great'];
-    const energyLbls=['','🪫 Low','😐 OK','⚡ High','🔥 Peak'];
-    const stressLbls=['','😤 High','😕 Moderate','😌 Low'];
-    id('checkinsContent').innerHTML=`<div style="margin-bottom:12px;font-weight:600;font-size:13px">Check-ins from ${c.first} ${c.last} (${checkins.length} total)</div>`
-      +checkins.map(ci=>`
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px">
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${new Date(ci.ts).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</div>
-          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin-bottom:6px">
-            ${ci.weight?`<span>⚖️ <strong>${ci.weight}kg</strong></span>`:''}
-            ${ci.bodyFat?`<span>📊 <strong>${ci.bodyFat}% BF</strong></span>`:''}
-            ${ci.workoutsCompleted?`<span>🏋️ <strong>${ci.workoutsCompleted} workouts</strong></span>`:''}
-            ${ci.sleep?`<span>Sleep: <strong>${sleepLbls[ci.sleep]}</strong></span>`:''}
-            ${ci.energy?`<span>Energy: <strong>${energyLbls[ci.energy]}</strong></span>`:''}
-            ${ci.stress?`<span>Stress: <strong>${stressLbls[ci.stress]}</strong></span>`:''}
-          </div>
-          ${ci.notes?`<div style="font-size:12px;color:var(--muted2);background:rgba(255,255,255,.03);padding:8px;border-radius:6px;font-style:italic">"${ci.notes}"</div>`:''}
-        </div>`).join('');
-  }catch(e){
-    id('checkinsContent').innerHTML=`<div style="text-align:center;color:var(--red);padding:20px">Failed to load check-ins.</div>`;
-  }
-}
-
-async function ctxAct(action){
-  const c=clients.find(x=>x.id===ctxId); if(!c)return closeCtx(); closeCtx();
-  if(action==='profile') openClientProfile(c);
-  else if(action==='message'){ goSec('messages'); if(c.uid) setTimeout(()=>openConvo(c.uid,`${c.first} ${c.last}`,gc(c)),100); else toast(`${c.first} has no portal account yet`,'ℹ️'); }
-  else if(action==='assignProgram') openAssignProgram(c);
-  else if(action==='viewCheckins') openViewCheckins(c);
-  else if(action==='star'){
-    c.starred=!c.starred;
-    await fsSaveClient(c);
-    renderClients();
-    toast(c.starred?'Client starred ⭐':'Star removed','✏️');
-  }
-  else if(action==='archive'){
-    c.status=c.status==='active'?'archived':'active';
-    await fsSaveClient(c);
-    await fsPushActivity(`${c.first} ${c.last} ${c.status==='archived'?'archived':'restored'}`);
-    renderClients(); renderDashboard();
-    toast(`${c.first} ${c.last} ${c.status==='archived'?'archived':'restored'}`,'📦');
-  }
-  else if(action==='delete'){
-    if(!confirm(`Delete ${c.first} ${c.last}? This cannot be undone.`))return;
-    await fsDeleteClient(c.id);
-    clients=clients.filter(x=>x.id!==ctxId);
-    await fsPushActivity(`Client <strong>${c.first} ${c.last}</strong> deleted`);
-    renderClients(); renderDashboard();
-    toast(`${c.first} ${c.last} deleted`,'🗑️');
-  }
-}
-
-// ══════════════════════════════════════════
-// PROGRAMS — AI Builder
-// ══════════════════════════════════════════
-const PROG_ICONS={
-  'Fat Loss':'🔥','Muscle Gain':'💪','Strength':'🏋️','Endurance':'🏃',
-  'Athletic Performance':'🏆','Rehab & Recovery':'🧘','General Fitness':'⭐'
-};
-const PROG_COLORS={
-  'Fat Loss':'rgba(239,68,68,.15)','Muscle Gain':'rgba(79,124,255,.15)',
-  'Strength':'rgba(245,158,11,.15)','Endurance':'rgba(34,197,94,.15)',
-  'Athletic Performance':'rgba(239,68,68,.15)','Rehab & Recovery':'rgba(124,85,245,.15)',
-  'General Fitness':'rgba(79,124,255,.15)'
-};
-
-let pendingProg=null;
-
-function loadProgs(){ /* loaded from Firestore via fsLoadProgs() at boot */ }
-function saveProgs(){ /* handled per-op via fsSaveProg / fsDeleteProg */ }
-
-function showProgForm(){
-  id('progForm').style.display='block';
-  id('progPreview').style.display='none';
-  id('progLoading').style.display='none';
-  id('pName').focus();
-}
-function hideProgForm(){
-  id('progForm').style.display='none';
-}
-function discardProgram(){
-  pendingProg=null;
-  id('progPreview').style.display='none';
-  renderPrograms();
-}
-
-async function generateProgram(){
-  const name=v('pName'), weeks=v('pWeeks'), goal=id('pGoal').value,
-        days=v('pDays'), details=v('pDetails');
-  if(!name) return toast('Please enter a program name','⚠️');
-
-  hideProgForm();
-  id('progLoading').style.display='block';
-  id('progGrid').style.display='none';
-  id('progEmpty').style.display='none';
-
-  const msgs=[
-    'Designing your program structure…',
-    'Planning weekly progressions…',
-    'Writing session breakdowns…',
-    'Adding coaching notes…'
-  ];
-  let mi=0;
-  const ticker=setInterval(()=>{ id('loadingMsg').textContent=msgs[++mi%msgs.length]; },1600);
-
-  const prompt=`You are an expert fitness coach. Create a detailed coaching program with these specs:
-Name: ${name}
-Goal: ${goal}
-Duration: ${weeks} weeks
-Training days per week: ${days}
-${details?'Additional details: '+details:''}
-
-Write a complete program outline with:
-1. Program Overview (2-3 sentences)
-2. Weekly Structure (what each training day focuses on)
-3. Week-by-Week Progression (brief summary per phase, e.g. weeks 1-4, 5-8, etc.)
-4. Key Exercises / Methods
-5. Coaching Tips (2-3 actionable tips)
-
-Be specific, practical, and motivating. Keep it under 500 words.`;
-
-  try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data=await res.json();
-    clearInterval(ticker);
-    id('progLoading').style.display='none';
-
-    const content=data.content?.map(b=>b.text||'').join('')||'Could not generate program.';
-    pendingProg={name,weeks:parseInt(weeks),goal,days:parseInt(days),desc:`${weeks}-week ${goal.toLowerCase()} program`,content,icon:PROG_ICONS[goal]||'📋',bg:PROG_COLORS[goal]||'rgba(79,124,255,.15)',createdAt:Date.now()};
-
-    id('prevTitle').textContent=name;
-    id('prevMeta').textContent=`${weeks} weeks · ${days} days/week · ${goal}`;
-    id('prevContent').textContent=content;
-    id('progPreview').style.display='block';
-    id('progGrid').style.display='grid';
-    renderPrograms();
+    const doc = await db.doc(COACH_DOC).get();
+    if (doc.exists && doc.data().passwordHash) return doc.data().passwordHash;
+    // First time: seed the default password
+    const defaultHash = await sha256('admin123');
+    await db.doc(COACH_DOC).set({ passwordHash: defaultHash });
+    return defaultHash;
   } catch(e) {
-    clearInterval(ticker);
-    id('progLoading').style.display='none';
-    id('progGrid').style.display='grid';
-    renderPrograms();
-    toast('Error generating program. Try again.','❌');
+    // Fallback to default if Firestore unreachable
+    return await sha256('admin123');
   }
 }
 
-async function saveProgram(){
-  if(!pendingProg)return;
-  const saved = await fsSaveProg(pendingProg);
-  savedProgs.unshift(saved);
-  pendingProg=null;
-  id('progPreview').style.display='none';
-  renderPrograms();
-  toast(`"${savedProgs[0].name}" saved!`,'✅');
-}
-
-async function deleteProgram(fid){
-  if(!confirm('Delete this program?'))return;
-  await fsDeleteProg(fid);
-  savedProgs=savedProgs.filter(p=>p._fid!==fid);
-  renderPrograms();
-  toast('Program deleted','🗑️');
-}
-
-function viewProgram(fid){
-  const p=savedProgs.find(x=>x._fid===fid);
-  if(!p)return;
-  id('prevTitle').textContent=p.name;
-  id('prevMeta').textContent=`${p.weeks} weeks · ${p.days} days/week · ${p.goal}`;
-  id('prevContent').textContent=p.content;
-  id('progPreview').style.display='block';
-  pendingProg=null;
-}
-
-function renderPrograms(){
-  const grid=id('progGrid');
-  const showEmpty=!savedProgs.length&&!pendingProg;
-  id('progEmpty').style.display=showEmpty?'block':'none';
-  grid.style.display=savedProgs.length?'grid':'none';
-  if(!savedProgs.length){grid.innerHTML='';return;}
-  grid.innerHTML=savedProgs.map((p)=>{
-    const enrolled=clients.filter(c=>c.program===p.name&&c.status==='active').length;
-    const avg=enrolled?Math.round(clients.filter(c=>c.program===p.name&&c.status==='active').reduce((s,c)=>s+c.comp[0],0)/enrolled):0;
-    return `<div class="pc" onclick="viewProgram('${p._fid}')" style="position:relative">
-      <div style="position:absolute;top:12px;right:12px;z-index:1">
-        <button onclick="event.stopPropagation();deleteProgram('${p._fid}')" style="background:rgba(239,68,68,.12);border:none;color:var(--red);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;font-weight:600" onmouseover="this.style.background='rgba(239,68,68,.25)'" onmouseout="this.style.background='rgba(239,68,68,.12)'">✕</button>
-      </div>
-      <div class="pch"><div class="pci" style="background:${p.bg}">${p.icon||'📋'}</div><div class="pct">${p.name}</div><div class="pcm">${p.desc}</div></div>
-      <div class="pcb"><div class="pcs">
-        <div class="ps"><div class="psv">${p.weeks}</div><div class="psl">Weeks</div></div>
-        <div class="ps"><div class="psv">${enrolled}</div><div class="psl">Clients</div></div>
-        <div class="ps"><div class="psv">${enrolled?avg+'%':'—'}</div><div class="psl">Avg Comp.</div></div>
-      </div></div>
-    </div>`;
-  }).join('');
-}
-
-// ══════════════════════════════════════════
-// LIBRARY
-// ══════════════════════════════════════════
-const RES=[
-  {icon:'📄',bg:'rgba(79,124,255,.15)',title:'Client Intake Form',desc:'Onboarding questionnaire template',type:'Template',size:'42 KB'},
-  {icon:'🏋️',bg:'rgba(34,197,94,.15)',title:'Strength Phase 1 Workouts',desc:'Weeks 1–4 of Strength Foundations',type:'Workout',size:'1.2 MB'},
-  {icon:'🥗',bg:'rgba(245,158,11,.15)',title:'Macro Tracking Guide',desc:'Beginner nutrition guide PDF',type:'Nutrition',size:'580 KB'},
-  {icon:'🎬',bg:'rgba(124,85,245,.15)',title:'Squat Form Tutorial',desc:'Video breakdown for clients',type:'Video',size:'48 MB'},
-  {icon:'📊',bg:'rgba(239,68,68,.15)',title:'Progress Tracker Sheet',desc:'Monthly measurements spreadsheet',type:'Template',size:'78 KB'},
-  {icon:'🧘',bg:'rgba(34,197,94,.15)',title:'Mobility Warmup Routine',desc:'10-minute pre-workout warmup PDF',type:'Workout',size:'340 KB'},
-];
-function renderLibrary(){
-  id('libList').innerHTML=RES.map(r=>`
-    <div class="ri" onclick="toast('Opening ${r.title}','📂')">
-      <div class="rico" style="background:${r.bg}">${r.icon}</div>
-      <div class="rinf"><div class="rtit">${r.title}</div><div class="rdesc">${r.desc} · <span class="pill py" style="padding:1px 6px;font-size:10px">${r.type}</span> · ${r.size}</div></div>
-      <div class="ract">
-        <button class="btn btn-s" style="padding:6px 12px;font-size:12px" onclick="event.stopPropagation();toast('Assigned to client','✅')">Assign</button>
-        <button class="btn btn-s" style="padding:6px 12px;font-size:12px" onclick="event.stopPropagation();toast('Download started','⬇️')">Download</button>
-      </div>
-    </div>`).join('');
-}
-
-// ══════════════════════════════════════════
-// CALENDAR
-// ══════════════════════════════════════════
-const EVDAYS=[3,7,10,12,15,19,22,26];
-function renderCalendar(){
-  const now=new Date();
-  calMo=calMo??now.getMonth(); calYr=calYr??now.getFullYear();
-  const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  id('calTitle').textContent=`${MN[calMo]} ${calYr}`;
-  const first=new Date(calYr,calMo,1).getDay();
-  const dim=new Date(calYr,calMo+1,0).getDate();
-  const dip=new Date(calYr,calMo,0).getDate();
-  const today=new Date();
-  let html='';
-  for(let i=first-1;i>=0;i--) html+=`<div class="cday om">${dip-i}</div>`;
-  for(let d=1;d<=dim;d++){
-    const isTod=d===today.getDate()&&calMo===today.getMonth()&&calYr===today.getFullYear();
-    html+=`<div class="cday ${isTod?'tod':''} ${EVDAYS.includes(d)?'hev':''}" onclick="toast('Day ${d} selected','📅')">${d}</div>`;
-  }
-  id('calDays').innerHTML=html;
-  const active=clients.filter(c=>c.status==='active').slice(0,4);
-  const times=['9:00 AM','11:30 AM','2:00 PM','4:30 PM'];
-  const types=['Check-in Call','Program Review','Nutrition Check','Goal Setting'];
-  id('schList').innerHTML=active.length
-    ?active.map((c,i)=>`<div class="schi"><div class="scht">${times[i]}</div><div><div class="schn">${types[i]}</div><div class="schc">${c.first} ${c.last}</div></div></div>`).join('')
-    :`<div class="empty" style="padding:30px 20px"><div class="ei">📅</div><div class="et">No sessions today</div><div class="es">Add clients to auto-populate schedule.</div></div>`;
-}
-function chMonth(d){ calMo+=d; if(calMo>11){calMo=0;calYr++} if(calMo<0){calMo=11;calYr--} renderCalendar(); }
-
-// ══════════════════════════════════════════
-// MESSAGES  — real Firestore-backed chat
-// ══════════════════════════════════════════
-let chatHist=[];
-let activeConvo=null;
-let _msgUnsub=null; // Firestore onSnapshot unsubscribe handle
-
-// Firestore path: users/{clientUID}/messages
-const chatCol = (clientUID) => fb().collection(fb().db, 'users', clientUID, 'messages');
-
-// Build the conversation list from real portal clients + manually-added clients that have UIDs
-function getConvoClients(){
-  // Portal users have .uid (their Firebase auth UID); manually-added clients may not have .uid
-  return clients.filter(c => c.uid || c.isPortalUser).slice(0, 20);
-}
-
-function renderMessages(){
-  const convoList = getConvoClients();
-  if(!convoList.length){
-    id('msgList').innerHTML=`<div style="padding:24px 16px;text-align:center;color:var(--muted)">
-      <div style="font-size:30px;margin-bottom:10px">💬</div>
-      <div style="font-size:13px;font-weight:600;color:var(--muted2);margin-bottom:6px">No conversations yet</div>
-      <div style="font-size:12px;line-height:1.5">Clients appear here after they sign in to the Client Portal.</div>
-    </div>`;
-    id('msgAva').textContent='?';
-    id('msgName').textContent='Select a conversation';
-    id('chatMsgs').innerHTML='';
-    return;
-  }
-
-  id('msgList').innerHTML=convoList.map(c=>{
-    const isActive = activeConvo && activeConvo.uid === c.uid;
-    const unread = c._unread || 0;
-    return `
-    <div onclick="openConvo('${c.uid||''}','${c.first} ${c.last}','${gc(c)}')"
-      style="padding:14px 16px;display:flex;gap:12px;align-items:center;cursor:pointer;border-bottom:1px solid var(--border);background:${isActive?'var(--surface2)':'transparent'};transition:background .15s"
-      onmouseenter="this.style.background='var(--surface2)'"
-      onmouseleave="this.style.background='${isActive?'var(--surface2)':'transparent'}'">
-      <div class="cav ${gc(c)}" style="width:38px;height:38px;font-size:12px;font-family:'Syne',sans-serif;font-weight:800;flex-shrink:0">${gi(c)}</div>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-          <span style="font-size:13px;font-weight:600">${c.first} ${c.last}${c.isPortalUser?'<span class="portal-badge">Portal</span>':''}</span>
-        </div>
-        <div style="font-size:12px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px">${c.email||''}</div>
-      </div>
-      ${unread?`<div style="width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${unread}</div>`:''}
-    </div>`;
-  }).join('');
-
-  if(!activeConvo && convoList.length){
-    const first = convoList[0];
-    openConvo(first.uid||'', `${first.first} ${first.last}`, gc(first));
-  } else {
-    renderChat();
-  }
-}
-
-async function openConvo(uid, name, col){
-  if(!uid){ toast('This client has no portal account yet','ℹ️'); return; }
-
-  // Unsubscribe previous listener
-  if(_msgUnsub){ _msgUnsub(); _msgUnsub=null; }
-
-  const c = clients.find(x=>x.uid===uid) || {uid};
-  activeConvo = {uid, name, col};
-  c._unread = 0;
-
-  id('msgAva').textContent = name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
-  id('msgAva').className = `cav ${col}`;
-  id('msgName').textContent = name;
-  chatHist = [];
-  renderChat();
-  renderMessages();
-
-  // Subscribe to real-time messages from Firestore
-  const { onSnapshot, query, orderBy } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js').catch(()=>({}));
-  if(!onSnapshot){
-    // Fallback: one-time load
-    const snap = await fb().getDocs(chatCol(uid));
-    chatHist = snap.docs.map(d=>d.data()).sort((a,b)=>a.ts-b.ts);
-    renderChat();
-    return;
-  }
-
-  _msgUnsub = onSnapshot(
-    query(chatCol(uid), orderBy('ts','asc')),
-    snap => {
-      chatHist = snap.docs.map(d=>d.data());
-      renderChat();
-    },
-    err => console.warn('Chat listener error:', err)
-  );
-}
-
-function renderChat(){
-  if(!chatHist.length){
-    id('chatMsgs').innerHTML=`<div style="text-align:center;color:var(--muted);padding:40px 20px">
-      <div style="font-size:32px;margin-bottom:10px">👋</div>
-      <div style="font-size:13px">No messages yet. Say hello!</div>
-    </div>`;
-    return;
-  }
-  id('chatMsgs').innerHTML=chatHist.map(m=>`
-    <div style="display:flex;justify-content:${m.from==='coach'?'flex-end':'flex-start'}">
-      <div style="max-width:70%;background:${m.from==='coach'?'var(--accent)':'var(--surface2)'};
-        border:1px solid ${m.from==='coach'?'transparent':'var(--border2)'};
-        border-radius:${m.from==='coach'?'14px 14px 4px 14px':'14px 14px 14px 4px'};
-        padding:10px 14px;font-size:13px;line-height:1.5">
-        ${m.text}
-        <div style="font-size:10px;opacity:.5;margin-top:4px;text-align:right">${m.ts?new Date(m.ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''}</div>
-      </div>
-    </div>`).join('');
-  const el=id('chatMsgs'); el.scrollTop=el.scrollHeight;
-}
-
-async function sendMsg(){
-  const inp=id('msgInp'), txt=inp.value.trim();
-  if(!txt) return;
-  if(!activeConvo?.uid){ toast('Select a client to message first','ℹ️'); return; }
-  inp.value='';
-  const msg = { from:'coach', text:txt, ts:Date.now() };
-  // Write to Firestore → the client's portal will see it in real-time
+async function handleCoachLogin() {
+  const pass   = document.getElementById('auth-pass').value;
+  const btn    = document.getElementById('auth-btn');
+  const status = document.getElementById('auth-status');
+  if (!pass) { status.textContent='Enter your password.'; status.className='auth-status error'; return; }
+  btn.disabled=true; btn.textContent='Checking…'; status.className='auth-status';
   try {
-    const { addDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-    await addDoc(chatCol(activeConvo.uid), msg);
-  } catch(e){
-    // Fallback: show locally only
-    chatHist.push(msg);
-    renderChat();
-    console.warn('Firestore write failed, showing locally:', e);
+    const entered = await sha256(pass);
+    const stored  = await getStoredHash();
+    if (entered !== stored) throw new Error('Incorrect password. Please try again.');
+    // Store session in sessionStorage so page refresh stays logged in
+    sessionStorage.setItem('coachAuth', entered);
+    bootApp();
+  } catch(e) {
+    status.textContent = e.message; status.className='auth-status error';
+  } finally { btn.disabled=false; btn.textContent='Enter Dashboard'; }
+}
+
+async function handleLogout() {
+  if (chatUnsub) chatUnsub();
+  sessionStorage.removeItem('coachAuth');
+  coachUid = null; allClients = [];
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-pass').value='';
+  document.getElementById('auth-status').className='auth-status';
+}
+
+// Auto-login if session exists
+(async () => {
+  const session = sessionStorage.getItem('coachAuth');
+  if (session) {
+    const stored = await getStoredHash();
+    if (session === stored) { bootApp(); return; }
+    sessionStorage.removeItem('coachAuth');
+  }
+})();
+
+function bootApp() {
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  document.getElementById('coach-name').textContent = 'Coach';
+  document.getElementById('coach-email').textContent = 'evolvefi1ness';
+  document.getElementById('coach-av').textContent = 'C';
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  loadAllClients();
+  listenForUnreadMessages();
+}
+
+// ─────────────────────────────────────────
+//  CHANGE PASSWORD
+// ─────────────────────────────────────────
+function openChangePass() {
+  document.getElementById('cp-current').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+  document.getElementById('cp-status').className='auth-status';
+  document.getElementById('change-pass-modal').classList.add('open');
+}
+function closeChangePass() {
+  document.getElementById('change-pass-modal').classList.remove('open');
+}
+
+async function handleChangePassword() {
+  const current = document.getElementById('cp-current').value;
+  const newPass  = document.getElementById('cp-new').value;
+  const confirm  = document.getElementById('cp-confirm').value;
+  const btn      = document.getElementById('cp-btn');
+  const status   = document.getElementById('cp-status');
+  status.className='auth-status';
+
+  if (!current||!newPass||!confirm) { status.textContent='Please fill in all fields.'; status.className='auth-status error'; return; }
+  if (newPass.length<6) { status.textContent='New password must be at least 6 characters.'; status.className='auth-status error'; return; }
+  if (newPass!==confirm) { status.textContent='New passwords do not match.'; status.className='auth-status error'; return; }
+
+  btn.disabled=true; btn.textContent='Updating…';
+  try {
+    const currentHash = await sha256(current);
+    const stored      = await getStoredHash();
+    if (currentHash!==stored) throw new Error('Current password is incorrect.');
+
+    const newHash = await sha256(newPass);
+    await db.doc(COACH_DOC).set({ passwordHash: newHash });
+    // Update session
+    sessionStorage.setItem('coachAuth', newHash);
+    status.textContent='Password updated successfully!';
+    status.className='auth-status';
+    status.style.cssText='margin-top:.75rem;background:rgba(93,202,165,.1);border:1px solid rgba(93,202,165,.3);color:#5dcaa5;display:block;padding:11px 14px;border-radius:6px;font-size:13px';
+    showToast('Password changed! 🔒', 'success');
+    setTimeout(closeChangePass, 2000);
+  } catch(e) {
+    status.textContent=e.message; status.className='auth-status error';
+  } finally { btn.disabled=false; btn.textContent='Update Password'; }
+}
+
+// ─────────────────────────────────────────
+//  NAV
+// ─────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('active');
+  if (page==='chat') renderChatList();
+  if (page==='announcements') loadAnnouncements();
+  if (page==='workouts') populateClientSelect();
+}
+
+// ─────────────────────────────────────────
+//  LOAD CLIENTS
+// ─────────────────────────────────────────
+async function loadAllClients() {
+  try {
+    const snap = await db.collection('members').get();
+    allClients = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    renderClientGrid();
+    updateDashboardStats();
+  } catch(e) {
+    console.error('loadAllClients:', e);
+    document.getElementById('client-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text">Could not load clients</div><div class="empty-sub">${e.message}</div></div>`;
   }
 }
 
-// ══════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════
-async function renderDashboard(){
-  const activity = await fsLoadActivity();
-  const acols=['#4f7cff','#22c55e','#f59e0b','#ef4444','#7c55f5'];
-  const actEl=id('actList');
-  if(!activity.length){
-    actEl.innerHTML=`<div class="empty" style="padding:30px 20px"><div class="ei">📋</div><div class="et">No activity yet</div><div class="es">Actions like adding clients will appear here.</div></div>`;
+function renderClientGrid() {
+  const grid = document.getElementById('client-grid');
+  document.getElementById('clients-count').textContent = allClients.length + ' clients registered';
+  if (!allClients.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-text">No clients yet</div><div class="empty-sub">Clients appear here once they register</div></div>`;
+    return;
+  }
+  grid.innerHTML = allClients.map(c => `
+    <div class="client-card" onclick="openClientModal('${c.uid}')">
+      <div class="client-card-top">
+        <div class="client-av">${initials(c.firstName,c.lastName)}</div>
+        <div>
+          <div class="client-name">${c.firstName||''} ${c.lastName||''}</div>
+          <div class="client-email">${c.email||''}</div>
+        </div>
+        <div class="client-plan plan-${(c.plan||'free').toLowerCase()}">${(c.plan||'free').toUpperCase()}</div>
+      </div>
+      <div class="client-stats">
+        <div class="cs-item"><div class="cs-val">${c.attendanceCount||0}</div><div class="cs-lbl">Sessions</div></div>
+        <div class="cs-item"><div class="cs-val">${c.age||'—'}</div><div class="cs-lbl">Age</div></div>
+        <div class="cs-item"><div class="cs-val">${c.weightKg||'—'}</div><div class="cs-lbl">kg</div></div>
+      </div>
+      <div class="client-actions">
+        <button class="action-btn" onclick="event.stopPropagation();openChatWith('${c.uid}')">💬 Chat</button>
+        <button class="action-btn primary" onclick="event.stopPropagation();openAssignFor('${c.uid}')">📋 Assign Plan</button>
+      </div>
+    </div>`).join('');
+}
+
+async function updateDashboardStats() {
+  document.getElementById('stat-total-clients').textContent = allClients.length;
+
+  // workouts logged today
+  const today = new Date(); today.setHours(0,0,0,0);
+  let totalLogs=0, todayLogs=0, totalPhotos=0;
+
+  await Promise.all(allClients.map(async c => {
+    try {
+      const logs = await db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get();
+      logs.forEach(l => {
+        totalLogs++;
+        const d = l.data().completedAt?.toDate?.();
+        if (d && d >= today) todayLogs++;
+      });
+      const photos = await db.collection('members').doc(c.uid).collection('progressPhotos').limit(50).get();
+      totalPhotos += photos.size;
+    } catch(_) {}
+  }));
+
+  document.getElementById('stat-active-today').textContent = todayLogs;
+  document.getElementById('stat-workouts-logged').textContent = totalLogs;
+  document.getElementById('stat-photos').textContent = totalPhotos;
+
+  // recent activity feed
+  const feed = document.getElementById('recent-activity-list');
+  const activities = [];
+  await Promise.all(allClients.slice(0,10).map(async c => {
+    try {
+      const logs = await db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(1).get();
+      logs.forEach(l => {
+        const d = l.data();
+        activities.push({ name:`${c.firstName||''} ${c.lastName||''}`, action:'logged '+d.workoutName, ts:d.completedAt });
+      });
+    } catch(_) {}
+  }));
+  activities.sort((a,b)=> (b.ts?.seconds||0)-(a.ts?.seconds||0));
+  if (!activities.length) {
+    feed.innerHTML = `<div class="empty-state" style="padding:1.5rem"><div class="empty-sub">No workout logs yet</div></div>`;
   } else {
-    actEl.innerHTML=activity.map((a,i)=>`
-      <div class="ali">
-        <div class="adot" style="background:${acols[i%acols.length]}"></div>
-        <div><div class="atxt">${a.text}</div><div class="atm">${a.time}</div></div>
+    feed.innerHTML = activities.slice(0,6).map(a=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>
+        <div style="flex:1;font-size:13px;color:#aaa"><strong style="color:var(--text)">${a.name}</strong> ${a.action}</div>
+        <div style="font-size:11px;color:var(--muted)">${fmtDate(a.ts)}</div>
       </div>`).join('');
   }
-  const due=clients.filter(c=>c.status==='active').slice(0,6);
-  const dueEl=id('dueList');
-  dueEl.innerHTML=due.length
-    ?due.map(c=>`<div class="di"><div class="dav ${gc(c)}">${gi(c)}</div><div class="dii"><div class="dn">${c.first} ${c.last}</div><div class="dp">${c.program||'No program'}</div></div><div class="dd" style="color:var(--accent)">${c.due}</div></div>`).join('')
-    :`<div class="empty" style="padding:30px 20px"><div class="ei">👥</div><div class="et">No clients yet</div><div class="es">Add clients to see check-ins here.</div></div>`;
-  renderPrograms();
 }
 
-// ══════════════════════════════════════════
-// TOAST
-// ══════════════════════════════════════════
-let tT;
-function toast(msg,ico='✅'){
-  id('tMsg').textContent=msg; id('tIco').textContent=ico;
-  id('toast').classList.add('on');
-  clearTimeout(tT); tT=setTimeout(()=>id('toast').classList.remove('on'),2600);
+// ─────────────────────────────────────────
+//  CLIENT MODAL
+// ─────────────────────────────────────────
+let currentModalUid = null;
+async function openClientModal(uid) {
+  currentModalUid = uid;
+  const client = allClients.find(c=>c.uid===uid) || {};
+  document.getElementById('m-av').textContent    = initials(client.firstName,client.lastName);
+  document.getElementById('m-name').textContent  = `${client.firstName||''} ${client.lastName||''}`;
+  document.getElementById('m-email').textContent = client.email||'';
+
+  // Profile
+  const bmi = (client.heightCm&&client.weightKg) ? Math.round(client.weightKg/Math.pow(client.heightCm/100,2)*10)/10 : '—';
+  document.getElementById('m-info-grid').innerHTML = [
+    ['Name', `${client.firstName||''} ${client.lastName||''}`],
+    ['Email', client.email||'—'],
+    ['Age', client.age ? client.age+' years' : '—'],
+    ['Plan', (client.plan||'free').toUpperCase()],
+    ['Height', client.heightCm ? client.heightCm+' cm' : '—'],
+    ['Weight', client.weightDisplay||'—'],
+    ['BMI', bmi],
+    ['Sessions', client.attendanceCount||0],
+    ['Goal', client.goal ? client.goal.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—'],
+    ['Member Since', fmtDate(client.memberSince)]
+  ].map(([l,v])=>`<div class="info-box"><div class="info-lbl">${l}</div><div class="info-val">${v}</div></div>`).join('');
+
+  document.getElementById('m-health-grid').innerHTML = [
+    ['Allergies', (client.allergies?.join(', '))||'None'],
+    ['Medications', client.medications||'None'],
+    ['Conditions', (client.medicalConditions?.join(', '))||'None'],
+    ['Emergency Contact', client.emergencyContact?.name||'—'],
+    ['Emergency Phone', client.emergencyContact?.phone||'—'],
+    ['Sex', client.sex||'—']
+  ].map(([l,v])=>`<div class="info-box"><div class="info-lbl">${l}</div><div class="info-val">${v}</div></div>`).join('');
+
+  document.getElementById('client-modal').classList.add('open');
+  switchModalTab('profile');
+  loadClientLogs(uid);
+  loadClientPhotos(uid);
 }
 
-// ══════════════════════════════════════════
-// MODALS — click outside
-// ══════════════════════════════════════════
-document.querySelectorAll('.mo').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('on')}));
+function closeModal() {
+  document.getElementById('client-modal').classList.remove('open');
+  currentModalUid = null;
+}
 
-// ══════════════════════════════════════════
-// KEYBOARD SHORTCUTS
-// ══════════════════════════════════════════
-document.addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT'||!CU)return;
-  if(e.key==='?') toast('N=New client · D=Dashboard · C=Clients · M=Messages · Esc=Close','ℹ️');
-  if(e.key==='n'||e.key==='N'){goSec('clients');openAddModal();}
-  if(e.key==='d'||e.key==='D') goSec('dashboard');
-  if(e.key==='c'||e.key==='C') goSec('clients');
-  if(e.key==='m'||e.key==='M') goSec('messages');
-  if(e.key==='Escape'){closeCtx();document.querySelectorAll('.mo').forEach(o=>o.classList.remove('on'));}
+function switchModalTab(tab) {
+  document.querySelectorAll('.modal-tab').forEach((t,i)=>{
+    const tabs=['profile','logs','photos'];
+    t.classList.toggle('active', tabs[i]===tab);
+  });
+  document.querySelectorAll('.modal-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('mp-'+tab).classList.add('active');
+}
+
+async function loadClientLogs(uid) {
+  const tbody = document.getElementById('m-log-body');
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr>';
+  try {
+    const snap = await db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(20).get();
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No workout logs yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = snap.docs.map(d=>{
+      const l = d.data();
+      return `<tr>
+        <td>${fmtDate(l.completedAt)}</td>
+        <td style="font-weight:500">${l.workoutName||'—'}</td>
+        <td>${l.totalSets||0}</td>
+        <td>${l.totalReps||0}</td>
+        <td>${l.totalVolume||0} kg</td>
+        <td><span class="log-badge done">Completed</span></td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:20px">${e.message}</td></tr>`;
+  }
+}
+
+async function loadClientPhotos(uid) {
+  const grid = document.getElementById('m-photo-grid');
+  grid.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+  try {
+    const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(12).get();
+    if (snap.empty) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🖼️</div><div class="empty-text">No photos yet</div></div>`;
+      return;
+    }
+    grid.innerHTML = snap.docs.map(d=>{
+      const p=d.data();
+      return `<div class="photo-thumb" onclick="openLightbox('${p.url}','${fmtDate(p.uploadedAt)}','${(p.note||'').replace(/'/g,"\\'")}')">
+        <img src="${p.url}" alt="Progress photo" loading="lazy">
+        <div class="photo-thumb-meta"><div class="photo-thumb-date">${fmtDate(p.uploadedAt)}</div></div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text" style="color:var(--red)">${e.message}</div></div>`;
+  }
+}
+
+function openLightbox(url,date,note) {
+  document.getElementById('lb-img').src=url;
+  document.getElementById('lb-date').textContent=date;
+  document.getElementById('lb-note').textContent=note||'';
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+// ─────────────────────────────────────────
+//  WORKOUT BUILDER
+// ─────────────────────────────────────────
+function populateClientSelect() {
+  const sel = document.getElementById('assign-client-select');
+  sel.innerHTML = '<option value="">Select a client…</option>' +
+    allClients.map(c=>`<option value="${c.uid}">${c.firstName||''} ${c.lastName||''} (${c.email||''})</option>`).join('');
+}
+
+function openAssignFor(uid) {
+  showPage('workouts');
+  populateClientSelect();
+  document.getElementById('assign-client-select').value = uid;
+}
+
+function selectDay(day) {
+  currentDay = day;
+  document.querySelectorAll('.day-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.day===day);
+  });
+  document.getElementById('builder-day-title').textContent = day;
+  document.getElementById('workout-name-input').value = workoutPlan[day].name;
+  renderExerciseList();
+}
+
+function renderExerciseList() {
+  const list = document.getElementById('ex-builder-list');
+  const exs  = workoutPlan[currentDay].exercises;
+  if (!exs.length) {
+    list.innerHTML = `<div class="empty-state" style="padding:2rem"><div class="empty-icon">🏋️</div><div class="empty-text">No exercises yet</div><div class="empty-sub">Add exercises below</div></div>`;
+  } else {
+    list.innerHTML = exs.map((ex,i)=>`
+      <div class="ex-builder-item">
+        <div><div class="ebi-name">${ex.name}</div><div class="ebi-detail">${ex.detail}</div></div>
+        <div class="ebi-target">${ex.target}</div>
+        <button class="ebi-del" onclick="removeExercise(${i})">✕</button>
+      </div>`).join('');
+  }
+  updateDayCounts();
+  updateBuilderSummary();
+}
+
+function addExerciseToPlan() {
+  const name   = document.getElementById('aef-name').value.trim();
+  const detail = document.getElementById('aef-detail').value.trim();
+  const target = document.getElementById('aef-target').value.trim();
+  if (!name) { showToast('Enter an exercise name'); return; }
+  workoutPlan[currentDay].exercises.push({ name, detail:detail||'Exercise', target:target||'3×10' });
+  document.getElementById('aef-name').value='';
+  document.getElementById('aef-detail').value='';
+  document.getElementById('aef-target').value='';
+  renderExerciseList();
+}
+
+function removeExercise(i) {
+  workoutPlan[currentDay].exercises.splice(i,1);
+  renderExerciseList();
+}
+
+function updateDayCounts() {
+  Object.keys(workoutPlan).forEach(day=>{
+    const cnt=document.getElementById('cnt-'+day);
+    if(cnt) cnt.textContent = workoutPlan[day].exercises.length+' ex';
+  });
+}
+
+function updateBuilderSummary() {
+  const days = Object.values(workoutPlan).filter(d=>d.exercises.length>0).length;
+  const exs  = Object.values(workoutPlan).reduce((t,d)=>t+d.exercises.length,0);
+  document.getElementById('builder-summary').textContent = `${exs} exercise${exs!==1?'s':''} across ${days} day${days!==1?'s':''}`;
+}
+
+// Save workout name on input blur/change
+document.getElementById('workout-name-input').addEventListener('input', function() {
+  workoutPlan[currentDay].name = this.value;
 });
+
+async function assignWorkoutToClient() {
+  const clientUid = document.getElementById('assign-client-select').value;
+  if (!clientUid) { showToast('Select a client first'); return; }
+  const totalExs = Object.values(workoutPlan).reduce((t,d)=>t+d.exercises.length,0);
+  if (!totalExs) { showToast('Add at least one exercise'); return; }
+
+  const btn = document.getElementById('assign-btn');
+  btn.disabled=true; btn.textContent='Assigning…';
+  try {
+    // Build the plan object keyed by day
+    const plan = {};
+    Object.entries(workoutPlan).forEach(([day,d])=>{
+      if(d.exercises.length) {
+        plan[day] = { name: d.name||day+' Workout', exercises: d.exercises };
+      }
+    });
+    await db.collection('members').doc(clientUid).update({
+      assignedWorkoutPlan: plan,
+      workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      workoutAssignedBy: coachUid
+    });
+
+    // Send a chat notification to the client
+    const client = allClients.find(c=>c.uid===clientUid);
+    const chatId = [coachUid, clientUid].sort().join('_');
+    await db.collection('chats').doc(chatId).collection('messages').add({
+      text: `📋 New workout plan assigned! Open your app to see this week's schedule (${Object.keys(plan).join(', ')}).`,
+      senderId: coachUid,
+      senderRole: 'coach',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection('chats').doc(chatId).set({
+      participants: [coachUid, clientUid],
+      lastMessage: 'New workout plan assigned!',
+      lastAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge:true});
+
+    showToast(`Plan assigned to ${client?.firstName||'client'}! 🎉`, 'success');
+    // Reset plan
+    Object.keys(workoutPlan).forEach(d=>{ workoutPlan[d]={name:'',exercises:[]}; });
+    renderExerciseList();
+    updateDayCounts();
+  } catch(e) {
+    showToast('Error: '+e.message);
+  } finally {
+    btn.disabled=false; btn.textContent='Assign Plan →';
+  }
+}
+
+async function importFromCloudinary() {
+  showToast('Fetching from Cloudinary…');
+  try {
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY.cloudName}/resources/search`;
+    const params = new URLSearchParams({ expression:`folder:${CLOUDINARY.folder}`, with_field:'context', max_results:'100' });
+    const resp = await fetch(`${url}?${params}`, {
+      headers:{ 'Authorization':'Basic '+btoa(`${CLOUDINARY.apiKey}:${CLOUDINARY.apiSecret}`) }
+    });
+    if (!resp.ok) throw new Error('Cloudinary error '+resp.status);
+    const data = await resp.json();
+    const resources = data.resources||[];
+    let imported = 0;
+    resources.forEach(r=>{
+      const ctx = r.context?.custom||r.context||{};
+      const day = ctx.day;
+      if (!day||!workoutPlan[day]) return;
+      if (ctx.exercise_name) {
+        workoutPlan[day].exercises.push({
+          name: ctx.exercise_name,
+          detail: ctx.detail||ctx.muscle_group||'Exercise',
+          target: ctx.target||ctx.sets_reps||'3×10',
+          videoUrl: r.secure_url
+        });
+        if (ctx.workout_name) workoutPlan[day].name = ctx.workout_name;
+        imported++;
+      }
+    });
+    renderExerciseList();
+    selectDay(currentDay);
+    showToast(`Imported ${imported} exercise${imported!==1?'s':''} from Cloudinary`, 'success');
+  } catch(e) {
+    showToast('Cloudinary import failed: '+e.message);
+  }
+}
+
+// ─────────────────────────────────────────
+//  CHAT
+// ─────────────────────────────────────────
+function renderChatList() {
+  const list = document.getElementById('chat-list-items');
+  if (!allClients.length) {
+    list.innerHTML = `<div style="padding:1rem;text-align:center;font-size:12px;color:var(--muted)">No clients yet</div>`;
+    return;
+  }
+  list.innerHTML = allClients.map(c=>`
+    <div class="chat-client-item ${activeChatUid===c.uid?'active':''}" id="cci-${c.uid}" onclick="openChatWith('${c.uid}')">
+      <div class="cci-av">${initials(c.firstName,c.lastName)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="cci-name">${c.firstName||''} ${c.lastName||''}</div>
+        <div class="cci-preview" id="cci-preview-${c.uid}">Tap to open chat</div>
+      </div>
+    </div>`).join('');
+  allClients.forEach(c=>loadLastMessage(c.uid));
+}
+
+async function loadLastMessage(clientUid) {
+  const chatId = [coachUid, clientUid].sort().join('_');
+  try {
+    const snap = await db.collection('chats').doc(chatId).collection('messages').orderBy('createdAt','desc').limit(1).get();
+    if (!snap.empty) {
+      const el = document.getElementById('cci-preview-'+clientUid);
+      if (el) el.textContent = snap.docs[0].data().text?.slice(0,40)||'';
+    }
+  } catch(_) {}
+}
+
+function openChatWith(clientUid) {
+  showPage('chat');
+  activeChatUid = clientUid;
+  const client = allClients.find(c=>c.uid===clientUid)||{};
+
+  // highlight in list
+  document.querySelectorAll('.chat-client-item').forEach(el=>el.classList.remove('active'));
+  const cci = document.getElementById('cci-'+clientUid);
+  if(cci) cci.classList.add('active');
+
+  // render window
+  const win = document.getElementById('chat-window');
+  win.innerHTML = `
+    <div class="chat-topbar">
+      <div class="chat-topbar-av">${initials(client.firstName,client.lastName)}</div>
+      <div>
+        <div class="chat-topbar-name">${client.firstName||''} ${client.lastName||''}</div>
+        <div class="chat-topbar-status">● Online</div>
+      </div>
+    </div>
+    <div class="chat-messages" id="chat-messages-area"></div>
+    <div class="chat-input-area">
+      <textarea class="chat-input" id="chat-input" placeholder="Type a message…" rows="1" onkeydown="chatKeydown(event)"></textarea>
+      <button class="chat-send" onclick="sendMessage()">➤</button>
+    </div>`;
+
+  // subscribe to messages
+  if (chatUnsub) chatUnsub();
+  const chatId = [coachUid, clientUid].sort().join('_');
+  chatUnsub = db.collection('chats').doc(chatId).collection('messages')
+    .orderBy('createdAt','asc').limit(100)
+    .onSnapshot(snap=>{
+      const area = document.getElementById('chat-messages-area');
+      if (!area) return;
+      area.innerHTML = '';
+      if (snap.empty) {
+        area.innerHTML = `<div class="chat-empty"><div class="chat-empty-icon">👋</div><div class="chat-empty-text">Say hi to ${client.firstName||'your client'}!</div></div>`;
+        return;
+      }
+      snap.docs.forEach(doc=>{
+        const m = doc.data();
+        const isCoach = m.senderId===coachUid || m.senderRole==='coach';
+        const bubble = document.createElement('div');
+        bubble.className = 'msg '+(isCoach?'coach':'client');
+        bubble.innerHTML = `
+          <div class="msg-bubble">${m.text}</div>
+          <div class="msg-time">${m.createdAt ? fmtTime(m.createdAt) : 'Sending…'}</div>`;
+        area.appendChild(bubble);
+      });
+      area.scrollTop = area.scrollHeight;
+      // update preview
+      const lastText = snap.docs[snap.docs.length-1]?.data()?.text||'';
+      const prev = document.getElementById('cci-preview-'+clientUid);
+      if (prev) prev.textContent = lastText.slice(0,40);
+    });
+}
+
+function chatKeydown(e) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text||!activeChatUid) return;
+  input.value='';
+  const chatId = [coachUid, activeChatUid].sort().join('_');
+  try {
+    await db.collection('chats').doc(chatId).collection('messages').add({
+      text,
+      senderId: coachUid,
+      senderRole: 'coach',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection('chats').doc(chatId).set({
+      participants: [coachUid, activeChatUid],
+      lastMessage: text,
+      lastAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, {merge:true});
+  } catch(e) { showToast('Failed to send: '+e.message); }
+}
+
+function listenForUnreadMessages() {
+  // Listen for any new messages sent by clients
+  const badge = document.getElementById('chat-badge');
+  // Simple approach: count chats with recent client messages
+  db.collection('chats').where('participants','array-contains',coachUid)
+    .onSnapshot(snap=>{
+      let count=0;
+      snap.docs.forEach(d=>{
+        const data=d.data();
+        if (data.lastMessage && data.lastSenderRole==='client') count++;
+      });
+      if (count>0) { badge.textContent=count; badge.style.display='flex'; }
+      else badge.style.display='none';
+    });
+}
+
+// ─────────────────────────────────────────
+//  ANNOUNCEMENTS
+// ─────────────────────────────────────────
+async function sendAnnouncement() {
+  const title = document.getElementById('ann-title').value.trim();
+  const body  = document.getElementById('ann-body').value.trim();
+  if (!title||!body) { showToast('Please fill in title and message'); return; }
+  const btn = document.getElementById('send-ann-btn');
+  btn.disabled=true; btn.textContent='Sending…';
+  try {
+    // Save to announcements collection
+    await db.collection('announcements').add({
+      title, body,
+      sentBy: coachUid,
+      sentAt: firebase.firestore.FieldValue.serverTimestamp(),
+      recipientCount: allClients.length
+    });
+    // Also send as a chat message to every client
+    await Promise.all(allClients.map(async c=>{
+      const chatId = [coachUid, c.uid].sort().join('_');
+      await db.collection('chats').doc(chatId).collection('messages').add({
+        text: `📢 ${title}\n\n${body}`,
+        senderId: coachUid,
+        senderRole: 'coach',
+        isAnnouncement: true,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await db.collection('chats').doc(chatId).set({
+        participants:[coachUid,c.uid],
+        lastMessage:'📢 '+title,
+        lastAt:firebase.firestore.FieldValue.serverTimestamp()
+      },{merge:true});
+    }));
+    showToast(`Sent to ${allClients.length} clients! 📢`, 'success');
+    document.getElementById('ann-title').value='';
+    document.getElementById('ann-body').value='';
+    loadAnnouncements();
+  } catch(e) { showToast('Error: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='📢 Send to All Clients'; }
+}
+
+async function loadAnnouncements() {
+  const list = document.getElementById('ann-list');
+  list.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+  try {
+    const snap = await db.collection('announcements').orderBy('sentAt','desc').limit(20).get();
+    if (snap.empty) {
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">📢</div><div class="empty-text">No announcements yet</div></div>`;
+      return;
+    }
+    list.innerHTML = snap.docs.map(d=>{
+      const a=d.data();
+      return `<div class="ann-card">
+        <div class="ann-header">
+          <div class="ann-title-text">${a.title}</div>
+          <div class="ann-date">${fmtDate(a.sentAt)}</div>
+        </div>
+        <div class="ann-body">${a.body}</div>
+        <div class="ann-footer">
+          <span class="ann-sent-badge">✓ Sent</span>
+          Delivered to ${a.recipientCount||0} client${a.recipientCount!==1?'s':''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-text" style="color:var(--red)">${e.message}</div></div>`;
+  }
+}
+
+// init
+updateDayCounts();
 </script>
 </body>
 </html>
