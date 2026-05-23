@@ -422,114 +422,327 @@
   .home-photo-add-slot-icon { font-size: 20px; }
   .home-photo-add-slot-lbl { font-size: 10px; color: var(--gold); font-weight: 600; letter-spacing: 0.3px; }
 
-  /* ════ WORKOUT LOGGER ════ */
-  #tab-log-panel { padding: 0 0 2rem; }
-  .log-header { padding: 1.5rem 1.25rem 0.5rem; }
-  .log-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 26px; color: var(--text); letter-spacing: -0.5px; }
-  .log-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
-  .log-day-badge {
-    display: inline-block; margin-top: 10px; font-size: 11px; letter-spacing: 1px;
-    text-transform: uppercase; color: var(--gold); background: var(--gold-dim);
-    border: 1px solid rgba(212,168,67,0.2); padding: 5px 14px; border-radius: 100px;
-    font-weight: 600;
-  }
+  /* ════ WORKOUT LOGGER — HEVY-STYLE ════ */
+  #tab-log-panel { padding: 0 0 6rem; background: var(--bg); }
 
-  /* exercise logger card */
-  .log-ex-card {
-    margin: 1rem 1.25rem 0;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .log-ex-header {
-    padding: 14px 18px;
-    background: var(--bg3);
-    border-bottom: 1px solid var(--border);
+  /* ── Active workout banner (sticky at top) ── */
+  .wkt-active-bar {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(6,5,10,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(201,168,76,0.12);
+    padding: 12px 16px;
     display: flex; align-items: center; justify-content: space-between;
   }
-  .log-ex-name   { font-size: 15px; font-weight: 600; color: var(--text); }
-  .log-ex-target {
-    font-size: 11px; color: var(--gold); letter-spacing: 0.5px; font-weight: 700;
-    background: var(--gold-dim); border: 1px solid rgba(212,168,67,0.2);
-    padding: 4px 10px; border-radius: 100px;
+  .wkt-bar-left { display: flex; align-items: center; gap: 10px; }
+  .wkt-bar-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px rgba(61,203,114,0.7);
+    animation: wktPulse 1.8s ease-in-out infinite;
   }
-  .log-ex-detail { font-size: 11px; color: var(--text3); margin-top: 3px; }
-  .log-sets-area { padding: 12px 18px; }
-  .log-set-row { display: grid; grid-template-columns: 28px 1fr 1fr auto; gap: 8px; align-items: center; margin-bottom: 8px; }
-  .set-num { font-size: 11px; color: var(--text3); text-align: center; font-weight: 600; }
-  .set-input {
-    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
-    padding: 9px 10px; color: var(--text); font-size: 13px; font-family: 'Inter', sans-serif;
-    outline: none; width: 100%; text-align: center; transition: border-color 0.2s;
-  }
-  .set-input:focus { border-color: var(--gold); }
-  .set-input::placeholder { color: var(--text3); }
-  .set-input.done { border-color: rgba(74,222,128,0.4); background: rgba(74,222,128,0.05); color: var(--green); }
-  .set-done-btn {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--bg3); border: 1px solid var(--border);
-    color: var(--text3); font-size: 14px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; flex-shrink: 0;
-  }
-  .set-done-btn.checked { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.5); color: var(--green); }
-  .set-labels { display: grid; grid-template-columns: 28px 1fr 1fr auto; gap: 8px; padding: 0 0 4px; }
-  .set-lbl { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text3); text-align: center; font-weight: 500; }
-  .add-set-btn {
-    width: 100%; background: transparent; border: 1px dashed var(--border);
-    border-radius: 8px; padding: 9px; color: var(--text3);
-    font-family: 'Inter', sans-serif; font-size: 12px; letter-spacing: 0.5px;
-    text-transform: uppercase; cursor: pointer; margin-top: 4px;
-    transition: all 0.2s; font-weight: 500;
-  }
-  .add-set-btn:hover { border-color: rgba(212,168,67,0.4); color: var(--gold); background: var(--gold-glow); }
-  .log-note-wrap { padding: 0 18px 14px; }
-  .log-note {
-    width: 100%; background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 8px; padding: 9px 12px; color: var(--text2);
-    font-size: 12px; font-family: 'Inter', sans-serif; outline: none;
-    resize: none; height: 60px; transition: border-color 0.2s; line-height: 1.5;
-  }
-  .log-note:focus { border-color: rgba(212,168,67,0.3); }
-  .log-note::placeholder { color: var(--text3); }
+  @keyframes wktPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  .wkt-bar-name { font-size: 13px; font-weight: 700; color: var(--text); font-family:'Outfit',sans-serif; }
+  .wkt-bar-timer { font-size: 13px; font-weight: 700; color: var(--gold); font-family:'Outfit',sans-serif; font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
 
-  /* complete */
-  .log-complete-area { padding: 1.5rem 1.25rem 0; }
-  .log-summary-bar {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
-    padding: 14px 18px; display: flex; justify-content: space-around; margin-bottom: 1rem;
+  /* ── Workout title section (Hevy style) ── */
+  .wkt-title-section { padding: 16px 16px 0; }
+  .wkt-day-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(201,168,76,0.6); font-weight: 700; font-family:'Outfit',sans-serif; margin-bottom: 4px; }
+  .wkt-name { font-family:'Outfit',sans-serif; font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; line-height: 1.15; }
+  .wkt-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .wkt-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; font-family:'Outfit',sans-serif; padding: 4px 10px; border-radius: 100px; letter-spacing: 0.3px; }
+  .wkt-chip-exercises { background: rgba(90,159,239,0.1); color: #5A9FEF; border: 1px solid rgba(90,159,239,0.2); }
+  .wkt-chip-sets      { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
+
+  /* ── Exercise card (Hevy style) ── */
+  .log-ex-card {
+    margin: 10px 12px 0;
+    background: #131313;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
   }
-  .ls-item { text-align: center; }
-  .ls-val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 700; color: var(--gold); letter-spacing: -0.5px; }
-  .ls-lbl { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text3); margin-top: 3px; font-weight: 500; }
+  .log-ex-accent { display: none; }
+
+  .log-ex-header {
+    padding: 0;
+    background: transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px;
+    border-radius: 14px 14px 0 0;
+    overflow: hidden;
+  }
+  .log-ex-header-inner {
+    display: flex; align-items: center; gap: 11px;
+    padding: 12px 14px; flex: 1; min-width: 0;
+  }
+  .log-ex-thumb-wrap {
+    width: 42px; height: 42px; border-radius: 9px;
+    overflow: hidden; flex-shrink: 0;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    cursor: pointer; position: relative;
+  }
+  .log-ex-thumb-wrap img { width:100%;height:100%;object-fit:cover;display:block; }
+  .log-ex-thumb-wrap .play-overlay {
+    position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;
+    transition:background .15s;font-size:10px;color:#fff;
+  }
+  .log-ex-thumb-wrap:hover .play-overlay { background:rgba(0,0,0,0.55); }
+  .log-ex-thumb-fallback { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px; }
+
+  .log-ex-info { flex: 1; min-width: 0; }
+  .log-ex-name { font-size: 14px; font-weight: 700; color: var(--text); font-family:'Outfit',sans-serif; line-height: 1.2; }
+  .log-ex-muscles { font-size: 11px; color: var(--text3); margin-top: 2px; font-family:'Outfit',sans-serif; }
+  .log-ex-target-badge {
+    display: inline-flex; align-items: center;
+    margin-top: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    font-family:'Outfit',sans-serif; padding: 2px 7px; border-radius: 5px;
+    background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.18);
+  }
+  .log-ex-color-bar {
+    width: 4px; align-self: stretch; flex-shrink: 0; border-radius: 0 3px 3px 0;
+  }
+
+  /* Set table */
+  .log-sets-area { padding: 6px 14px 10px; }
+  .set-table-head {
+    display: grid; grid-template-columns: 28px 1fr 68px 68px 36px;
+    gap: 4px; padding: 4px 2px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    margin-bottom: 3px;
+  }
+  .set-th {
+    font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(99,95,90,0.6); font-weight: 700; text-align: center;
+    font-family:'Outfit',sans-serif;
+  }
+  .set-th:first-child { text-align: left; }
+
+  .log-set-row {
+    display: grid; grid-template-columns: 28px 1fr 68px 68px 36px;
+    gap: 4px; align-items: center; padding: 3px 2px;
+    border-radius: 8px; transition: background 0.15s;
+  }
+  .log-set-row[data-done="1"] { background: rgba(61,203,114,0.05); }
+
+  .set-num {
+    font-size: 12px; color: var(--text3); text-align: center;
+    font-weight: 700; font-family:'Outfit',sans-serif;
+    width: 22px; height: 22px; border-radius: 6px;
+    background: rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .log-set-row[data-done="1"] .set-num { background: var(--green); color: #060408; }
+
+  .set-input {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 8px 4px; color: var(--text);
+    font-size: 15px; font-weight: 700; font-family:'Outfit',sans-serif;
+    outline: none; width: 100%; text-align: center;
+    transition: border-color 0.15s, background 0.15s;
+    -moz-appearance: textfield;
+  }
+  .set-input::-webkit-outer-spin-button,
+  .set-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .set-input:focus { border-color: rgba(201,168,76,0.6); background: rgba(201,168,76,0.06); }
+  .set-input::placeholder { color: rgba(99,95,90,0.4); }
+  .set-input.done {
+    border-color: rgba(61,203,114,0.35); background: rgba(61,203,114,0.07);
+    color: var(--green);
+  }
+
+  .set-done-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1);
+    color: var(--text3); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0; font-weight: 800;
+  }
+  .set-done-btn.checked { background: var(--green); border-color: var(--green); color: #060408; }
+  .set-done-btn:hover:not(.checked) { border-color: rgba(61,203,114,0.5); color: var(--green); }
+
+  .add-set-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; margin: 8px 0 2px;
+    background: transparent; border: 1.5px dashed rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 9px; color: rgba(99,95,90,0.55);
+    font-family:'Outfit',sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.3px; cursor: pointer; transition: all 0.2s;
+  }
+  .add-set-btn:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); background: rgba(201,168,76,0.04); }
+
+  .log-note-wrap { padding: 2px 14px 12px; }
+  .log-note {
+    width: 100%; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 9px 12px; color: var(--text2);
+    font-size: 12px; font-family:'Outfit',sans-serif; outline: none;
+    resize: none; height: 44px; transition: border-color 0.2s; line-height: 1.5;
+  }
+  .log-note:focus { border-color: rgba(201,168,76,0.25); }
+  .log-note::placeholder { color: rgba(99,95,90,0.35); }
+
+  /* ── Finish workout footer — sticky bottom bar ── */
+  .log-complete-area {
+    position: fixed;
+    bottom: 0; left: 240px; right: 0;
+    background: rgba(10,10,10,0.97);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding: 10px 24px 18px;
+    z-index: 200;
+    display: none; /* shown by JS when logger is active */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  @media (max-width: 768px) {
+    .log-complete-area { left: 0; padding: 10px 16px 18px; }
+  }
+  .log-summary-bar {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+  }
+  .ls-item {
+    text-align: center; padding: 4px 8px;
+    border-right: 1px solid rgba(255,255,255,0.05);
+  }
+  .ls-item:last-child { border-right: none; }
+  .ls-val { font-family:'Outfit',sans-serif; font-size: 20px; font-weight: 800; color: var(--text); line-height: 1; }
+  .ls-lbl { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-top: 4px; font-weight: 600; font-family:'Outfit',sans-serif; }
+
   .complete-workout-btn {
-    width: 100%; background: var(--gold); color: #0A0A0A; border: none;
-    border-radius: 12px; padding: 16px; font-family: 'Inter', sans-serif;
+    width: 100%;
+    max-width: 480px;
+    display: block;
+    margin: 0 auto;
+    background: #3DCB72;
+    color: #03150a; border: none;
+    border-radius: 13px; padding: 13px; font-family:'Inter',sans-serif;
     font-size: 14px; font-weight: 700; letter-spacing: 0.3px;
     cursor: pointer; transition: all 0.2s;
-    box-shadow: 0 4px 20px rgba(212,168,67,0.3);
   }
-  .complete-workout-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-  .complete-workout-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; transform: none; }
+  .complete-workout-btn:hover { background: #48d97e; }
+  .complete-workout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* push log content up so sticky bar doesn't cover it */
+  #tab-log-panel { padding-bottom: 130px; }
 
-  /* past logs */
-  .past-log-card {
-    margin: 0 1.25rem 10px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 18px;
-    transition: border-color 0.2s;
+  /* ── Past logs ── */
+  .past-logs-header {
+    font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(99,95,90,0.55); font-weight: 700; font-family:'Outfit',sans-serif;
+    padding: 20px 16px 10px;
   }
-  .past-log-card:hover { border-color: var(--border2); }
-  .plc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .plc-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; color: var(--gold); letter-spacing: -0.3px; }
-  .plc-date { font-size: 11px; color: var(--text3); }
-  .plc-stats { display: flex; gap: 18px; }
-  .plc-stat { font-size: 12px; color: var(--text2); }
-  .plc-stat span { color: var(--text); font-weight: 600; }
+  .past-log-card {
+    margin: 0 12px 10px;
+    background: #131313;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 14px 16px;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  .past-log-card:hover { border-color: rgba(201,168,76,0.3); }
+  .plc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .plc-name { font-family:'Outfit',sans-serif; font-weight: 800; font-size: 15px; color: var(--text); }
+  .plc-day  { font-size: 11px; color: var(--text3); font-family:'Outfit',sans-serif; margin-top: 1px; }
+  .plc-date { font-size: 11px; color: var(--text3); font-family:'Outfit',sans-serif; }
+  .plc-chevron { font-size: 14px; color: rgba(99,95,90,0.4); margin-top: 1px; }
+  .plc-stats { display: flex; gap: 0; margin-bottom: 8px; }
+  .plc-stat-pill {
+    font-size: 11px; font-weight: 600; font-family:'Outfit',sans-serif;
+    color: var(--text3); padding: 2px 0;
+    display: flex; align-items: center; gap: 3px;
+  }
+  .plc-stat-pill + .plc-stat-pill::before { content: '·'; margin: 0 7px; color: rgba(99,95,90,0.35); }
+  .plc-stat-pill strong { color: var(--text2); }
+  .plc-ex-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+  .plc-ex-tag {
+    font-size: 10px; padding: 2px 8px; border-radius: 5px;
+    background: rgba(255,255,255,0.04); color: rgba(99,95,90,0.65);
+    font-family:'Outfit',sans-serif; border: 1px solid rgba(255,255,255,0.06);
+  }
+
+    /* ── Workout Detail Drawer ── */
+  .wkt-drawer-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 500; display: none; align-items: flex-end; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .wkt-drawer-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .wkt-drawer {
+    width: 100%; max-width: 640px; max-height: 88vh;
+    background: #0c0b10;
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: flex; flex-direction: column;
+    animation: slideUp 0.3s cubic-bezier(0.22,1,0.36,1);
+    overflow: hidden;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+  .wkt-drawer-handle {
+    width: 36px; height: 4px; background: rgba(255,255,255,0.12);
+    border-radius: 2px; margin: 10px auto 0; flex-shrink: 0;
+  }
+  .wkt-drawer-header {
+    padding: 14px 20px 12px; flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .wkt-drawer-title { font-family:'DM Serif Display',serif; font-size: 22px; color: var(--text); letter-spacing: -0.3px; }
+  .wkt-drawer-meta { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  .wkt-drawer-date { font-size: 12px; color: var(--text3); font-family:'Outfit',sans-serif; }
+  .wkt-drawer-stat-chip {
+    font-size: 11px; font-weight: 600; font-family:'Outfit',sans-serif;
+    padding: 3px 9px; border-radius: 100px;
+    background: rgba(255,255,255,0.05); color: var(--text3);
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+  .wkt-drawer-close {
+    position: absolute; top: 14px; right: 16px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06); border: none;
+    color: var(--text3); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .wkt-drawer-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+  .wkt-drawer-body { overflow-y: auto; flex: 1; padding-bottom: 24px; }
+
+  /* Exercise block inside drawer */
+  .wdr-ex-block {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 14px 20px;
+  }
+  .wdr-ex-block:last-child { border-bottom: none; }
+  .wdr-ex-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .wdr-ex-accent { width: 3px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+  .wdr-ex-name { font-size: 14px; font-weight: 700; color: var(--text); font-family:'Outfit',sans-serif; }
+  .wdr-ex-note { font-size: 11px; color: var(--text3); margin-top: 2px; font-style: italic; font-family:'Outfit',sans-serif; }
+
+  /* Set rows inside drawer */
+  .wdr-set-table { width: 100%; border-collapse: collapse; }
+  .wdr-set-table th {
+    font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(99,95,90,0.55); font-weight: 700; text-align: center;
+    padding: 0 6px 6px; font-family:'Outfit',sans-serif;
+  }
+  .wdr-set-table th:first-child { text-align: left; }
+  .wdr-set-row td {
+    text-align: center; padding: 7px 6px;
+    font-size: 13px; font-family:'Outfit',sans-serif;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .wdr-set-row td:first-child { text-align: left; }
+  .wdr-set-row.done-row td { color: var(--green); }
+  .wdr-set-row:not(.done-row) td { color: var(--text3); }
+  .wdr-set-num { font-weight: 700; font-size: 11px; }
+  .wdr-set-badge {
+    display: inline-block; width: 18px; height: 18px; border-radius: 50%;
+    font-size: 9px; font-weight: 700; text-align: center; line-height: 18px;
+  }
+  .wdr-set-badge.done { background: rgba(61,203,114,0.15); color: var(--green); }
+  .wdr-set-badge.skip { background: rgba(99,95,90,0.12); color: var(--text3); }
 
   /* ════ PROGRESS PHOTOS ════ */
   #tab-progress-panel { padding: 0 0 2rem; }
@@ -630,14 +843,66 @@
   .angle-note-field::placeholder { color: var(--text3); }
   .angle-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
-  /* photo grid */
+  /* ── Before / After layout ── */
+  .ba-layout { padding: 0 1.25rem 2rem; }
+  .ba-row {
+    margin-bottom: 1.5rem;
+  }
+  .ba-row-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 0.75rem;
+  }
+  .ba-row-label {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 4px 14px; border-radius: 100px; font-family: 'Inter', sans-serif; flex-shrink: 0;
+  }
+  .ba-row-label.after-lbl  { color: #3dcb72; background: rgba(61,203,114,0.12); border: 1px solid rgba(61,203,114,0.35); }
+  .ba-row-label.before-lbl { color: #5a9fef; background: rgba(90,159,239,0.12); border: 1px solid rgba(90,159,239,0.35); }
+  .ba-row-label.checkin-lbl { color: #c9a84c; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); }
+  .ba-row-meta {
+    font-size: 11px; color: var(--text3); font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ba-row-divider { flex: 1; height: 1px; background: var(--border); }
+  .ba-angle-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  }
+  .ba-angle-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; cursor: pointer; transition: all 0.18s; position: relative;
+  }
+  .ba-angle-card:hover { border-color: rgba(212,168,67,0.35); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
+  .ba-angle-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+  .ba-angle-empty {
+    width: 100%; aspect-ratio: 3/4; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+    background: var(--bg3); border-radius: 12px;
+    border: 1px dashed rgba(255,255,255,0.08);
+  }
+  .ba-angle-empty-icon { font-size: 20px; opacity: 0.35; }
+  .ba-angle-empty-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+  .ba-angle-name {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 18px 8px 7px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.75));
+    font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+    color: rgba(255,255,255,0.85); font-family: 'Inter', sans-serif; text-align: center;
+  }
+  .ba-only-before {
+    padding: 1.5rem; text-align: center; background: var(--bg2);
+    border: 1px dashed rgba(255,255,255,0.07); border-radius: 14px;
+    margin-bottom: 1.5rem;
+  }
+  .ba-only-before p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* Legacy photo grid — kept for fallback */
   .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 1.25rem; }
   .photo-card {
     background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
     overflow: hidden; cursor: pointer; transition: all 0.2s;
   }
   .photo-card:hover { border-color: var(--border2); transform: translateY(-2px); }
-  .photo-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+  .photo-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; max-height: 220px; }
   .photo-card-meta { padding: 10px 12px; }
   .photo-card-date { font-size: 11px; color: var(--text3); }
   .photo-card-note { font-size: 12px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -647,6 +912,92 @@
     border: 1px solid rgba(212,168,67,0.3); border-radius: 100px;
     padding: 2px 7px; margin-bottom: 3px;
   }
+
+  /* ── BEFORE / AFTER COMPARISON ── */
+  .ba-view { display: none; padding: 0 1.25rem 2rem; }
+  .ba-view.active { display: block; }
+  .ba-angle-tabs { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .ba-angle-tab {
+    padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer;
+    background: var(--bg3); color: var(--text3); border: 1px solid var(--border);
+    transition: all 0.15s;
+  }
+  .ba-angle-tab.active { background: var(--gold-dim); color: var(--gold); border-color: rgba(201,168,76,0.4); }
+  .ba-slider-wrap {
+    position: relative; border-radius: 18px; overflow: hidden;
+    border: 1px solid var(--border); user-select: none; touch-action: none;
+    background: var(--bg2);
+  }
+  .ba-slider-wrap.empty { display: flex; align-items: center; justify-content: center; min-height: 300px; }
+  .ba-img-after { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; max-height: 480px; }
+  .ba-img-before-wrap {
+    position: absolute; inset: 0; overflow: hidden;
+    width: 50%;
+  }
+  .ba-img-before {
+    display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; max-height: 480px;
+    position: absolute; top: 0; left: 0;
+    /* match after image exactly */
+  }
+  .ba-divider {
+    position: absolute; top: 0; bottom: 0;
+    width: 3px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.5);
+    left: 50%; transform: translateX(-50%); cursor: ew-resize; z-index: 5;
+  }
+  .ba-handle {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: ew-resize; z-index: 6;
+  }
+  .ba-label {
+    position: absolute; bottom: 14px;
+    font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 100px;
+  }
+  .ba-label.before-lbl { left: 12px; background: rgba(90,159,239,0.85); color: #fff; }
+  .ba-label.after-lbl  { right: 12px; background: rgba(61,203,114,0.85); color: #fff; }
+  .ba-weight-row {
+    display: flex; gap: 12px; margin-top: 12px;
+  }
+  .ba-weight-pill {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; text-align: center;
+  }
+  .ba-weight-pill .wlbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); font-weight: 700; }
+  .ba-weight-pill .wval { font-size: 20px; font-weight: 700; font-family: 'Syne', sans-serif; margin-top: 4px; }
+  .ba-weight-pill .wdate { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .ba-weight-pill.before-pill .wval { color: var(--blue); }
+  .ba-weight-pill.after-pill .wval  { color: var(--green); }
+  .ba-diff-pill {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; text-align: center;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .ba-diff-pill .wlbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); font-weight: 700; }
+  .ba-diff-pill .wval { font-size: 20px; font-weight: 700; font-family: 'Syne', sans-serif; margin-top: 4px; }
+  .ba-no-compare {
+    padding: 3rem 1rem; text-align: center; color: var(--text3);
+  }
+  .ba-no-compare .empty-icon { font-size: 2.5rem; margin-bottom: 8px; }
+  .ba-no-compare p { font-size: 13px; line-height: 1.6; }
+
+  /* ── VIEW TOGGLE in progress photos header ── */
+  .prog-view-toggle {
+    display: flex; gap: 4px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 10px; padding: 3px;
+    margin: 0 1.25rem 1rem;
+  }
+  .pvt-btn {
+    flex: 1; padding: 8px 10px; border-radius: 8px; font-size: 11px;
+    font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    cursor: pointer; border: none; background: transparent; color: var(--text3);
+    transition: all 0.15s; font-family: 'Inter', sans-serif;
+  }
+  .pvt-btn.active { background: var(--gold); color: #0a0a0a; }
 
   /* lightbox */
   .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 999; display: none; align-items: center; justify-content: center; padding: 1.5rem; backdrop-filter: blur(4px); }
@@ -1612,29 +1963,8 @@
   .nav-item.active::before { background: var(--gold); box-shadow: 0 0 8px rgba(201,168,76,0.6); }
   .nav-item span { font-family: 'Outfit', sans-serif; font-size: 9px; letter-spacing: 0.8px; font-weight: 600; }
 
-  /* Complete workout screen */
-  .complete-workout-btn {
-    background: linear-gradient(135deg, var(--gold-2), var(--gold));
-    font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    border-radius: 14px;
-    box-shadow: 0 4px 24px rgba(201,168,76,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
-    transition: all 0.25s;
-    border: none;
-  }
-  .complete-workout-btn:hover {
-    box-shadow: 0 8px 32px rgba(201,168,76,0.45);
-    transform: translateY(-2px);
-    background: linear-gradient(135deg, var(--gold-3), var(--gold-2));
-    opacity: 1;
-  }
+  /* Complete workout screen — Hevy green */
 
-  .log-summary-bar {
-    background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 18px;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-  }
 
   .ls-val {
     font-family: 'DM Serif Display', serif;
@@ -1712,19 +2042,13 @@
   }
 
   /* Past log cards */
-  .past-log-card {
-    background: rgba(255,255,255,0.025);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 18px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
-    transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
-  }
+  
   .past-log-card:hover {
     border-color: rgba(201,168,76,0.15);
     transform: translateY(-2px);
     box-shadow: 0 12px 36px rgba(0,0,0,0.3);
   }
-  .plc-name { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 18px; color: var(--gold-2); }
+  
 
   /* FAB */
   .cal-fab {
@@ -2430,8 +2754,7 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 .progress-photos-header { padding-left: 0 !important; }
 .log-header { padding-left: 0 !important; }
 .log-ex-card { margin-left: 0 !important; margin-right: 0 !important; }
-.log-complete-area { padding-left: 0 !important; padding-right: 0 !important; }
-.past-log-card { margin-left: 0 !important; margin-right: 0 !important; }
+
 #prog-panel-checkin { padding-left: 0 !important; padding-right: 0 !important; }
 .profile-panel { padding-left: 0 !important; padding-right: 0 !important; }
 
@@ -2530,10 +2853,951 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 /* Remove max-width caps from content panels */
 #screen-home { max-width: none !important; padding: 0 !important; }
 
+/* ══════════════════════════════════════════════
+   COACH-MATCH OVERRIDES — aligns client UI to coach.html
+   ══════════════════════════════════════════════ */
+
+/* ── Core color alignment ── */
+:root {
+  --gold:      #D4A843 !important;
+  --gold-2:    #F0C866 !important;
+  --gold-3:    #F8E0A0 !important;
+  --gold-dim:  rgba(212,168,67,0.14) !important;
+  --gold-glow: rgba(212,168,67,0.07) !important;
+  --bg:  #040404 !important;
+  --bg2: #0A0A0A !important;
+  --bg3: #101010 !important;
+  --bg4: #161616 !important;
+  --border:  rgba(255,255,255,0.06) !important;
+  --border2: rgba(255,255,255,0.10) !important;
+  --text:  #F0EDE8 !important;
+  --text2: #6B6865 !important;
+  --text3: #3A3838 !important;
+  --muted: #6B6865 !important;
+  --muted2: #2E2C2A !important;
+  --green: #4ADE80 !important;
+  --green-dim: rgba(74,222,128,0.10) !important;
+  --red:   #F87171 !important;
+  --red-dim: rgba(248,113,113,0.08) !important;
+  --blue:  #60A5FA !important;
+  --border-gold: rgba(212,168,67,0.2) !important;
+}
+
+/* ── Body background — coach style, no purple ── */
+html, body {
+  background: var(--bg) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Topbar — exactly like coach ── */
+.home-topbar {
+  background: var(--bg2) !important;
+  border-bottom: 1px solid var(--border) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  height: 64px !important;
+}
+
+.home-topbar .brand {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 26px !important;
+  letter-spacing: -1px !important;
+  background: linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  filter: none !important;
+}
+
+/* Web nav items */
+.web-nav-item {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--muted) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  transition: all 0.15s !important;
+}
+.web-nav-item:hover {
+  color: var(--text) !important;
+  background: var(--bg3) !important;
+  border: none !important;
+}
+.web-nav-item.active {
+  color: var(--gold) !important;
+  background: var(--gold-glow) !important;
+  border: none !important;
+}
+
+/* Avatar in topbar */
+.avatar {
+  background: var(--gold-dim) !important;
+  border: 1px solid rgba(212,168,67,0.25) !important;
+  color: var(--gold) !important;
+  box-shadow: none !important;
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  transition: all 0.2s !important;
+}
+.avatar:hover {
+  background: rgba(212,168,67,0.25) !important;
+  border-color: var(--gold) !important;
+  box-shadow: none !important;
+}
+
+/* ── Web sidebar — matches coach sidebar exactly ── */
+.website-body {
+  grid-template-columns: 240px 1fr !important;
+  max-width: none !important;
+}
+
+.web-sidebar {
+  width: 240px !important;
+  background: var(--bg2) !important;
+  border-right: 1px solid var(--border) !important;
+  padding: 0 !important;
+  position: sticky !important;
+  top: 64px !important;
+}
+
+/* Sidebar brand / user card — coach style footer-like */
+.sidebar-user-card {
+  padding: 1rem 1.25rem !important;
+  border-bottom: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
+  margin-bottom: 0 !important;
+  gap: 10px !important;
+}
+.sidebar-user-card:hover {
+  background: var(--bg3) !important;
+  border-color: var(--border) !important;
+}
+.sidebar-user-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  background: var(--gold-dim) !important;
+  border: 1px solid rgba(212,168,67,0.25) !important;
+  color: var(--gold) !important;
+  font-family: 'Syne', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+.sidebar-user-name {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+}
+.sidebar-user-plan {
+  font-size: 11px !important;
+  color: var(--muted) !important;
+  font-weight: 500 !important;
+  margin-top: 1px !important;
+}
+
+/* Sidebar section title — coach style */
+.sidebar-section-title {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 9px !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  color: var(--muted) !important;
+  font-weight: 700 !important;
+  padding: 1rem 1.25rem 0.35rem !important;
+  margin: 0 !important;
+}
+.sidebar-section-title:first-child { padding-top: 0.75rem !important; }
+
+/* Sidebar nav items — coach style */
+.sidebar-nav-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 11px !important;
+  padding: 10px 1.25rem !important;
+  border-radius: 0 !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: var(--muted) !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+  margin-bottom: 0 !important;
+  border: none !important;
+  border-left: 2px solid transparent !important;
+  user-select: none !important;
+}
+.sidebar-nav-item svg {
+  width: 15px !important;
+  height: 15px !important;
+  flex-shrink: 0 !important;
+  stroke-width: 1.8 !important;
+}
+.sidebar-nav-item:hover {
+  color: var(--text) !important;
+  background: var(--bg3) !important;
+  border-left-color: transparent !important;
+  border-radius: 0 !important;
+}
+.sidebar-nav-item.active {
+  color: var(--gold) !important;
+  background: var(--gold-glow) !important;
+  border-left-color: var(--gold) !important;
+  border-radius: 0 !important;
+}
+
+/* Main content area */
+.web-main {
+  padding: 2rem !important;
+  background: var(--bg) !important;
+}
+
+/* ── Auth card — coach style ── */
+.card {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: 20px !important;
+  padding: 2.5rem !important;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(212,168,67,0.06) !important;
+  backdrop-filter: none !important;
+}
+
+.logo {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 48px !important;
+  letter-spacing: -2px !important;
+  background: linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  filter: none !important;
+  margin-bottom: 4px !important;
+}
+
+.tagline {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  letter-spacing: 2px !important;
+  color: var(--muted) !important;
+  text-transform: uppercase !important;
+  margin-bottom: 2.5rem !important;
+  font-weight: 400 !important;
+}
+
+/* Auth tag */
+.auth-tag {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 10px !important;
+  letter-spacing: 1.5px !important;
+}
+
+/* Fields — coach style */
+.field label {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  color: var(--muted) !important;
+  font-weight: 500 !important;
+}
+.field input, .field select, .field textarea {
+  background: var(--bg3) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 14px !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px rgba(212,168,67,0.1) !important;
+  background: var(--bg3) !important;
+}
+.field input::placeholder, .field textarea::placeholder {
+  color: var(--muted2) !important;
+}
+
+/* Primary buttons */
+.btn, .btn-primary {
+  background: var(--gold) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #0A0A0A !important;
+  box-shadow: 0 4px 20px rgba(212,168,67,0.3) !important;
+  letter-spacing: 0 !important;
+  transition: all 0.2s !important;
+}
+.btn:hover, .btn-primary:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 24px rgba(212,168,67,0.4) !important;
+  background: var(--gold) !important;
+}
+
+.btn-ghost {
+  background: transparent !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: var(--muted) !important;
+  box-shadow: none !important;
+}
+.btn-ghost:hover {
+  color: var(--gold) !important;
+  border-color: rgba(212,168,67,0.3) !important;
+  background: var(--gold-glow) !important;
+}
+
+/* Start workout button */
+.start-btn {
+  background: var(--gold) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  color: #0A0A0A !important;
+  box-shadow: 0 4px 16px rgba(212,168,67,0.3) !important;
+  letter-spacing: 0 !important;
+}
+.start-btn:hover {
+  opacity: 0.9 !important;
+  transform: translateY(-1px) !important;
+  background: var(--gold) !important;
+}
+
+/* ── Greeting section — coach-style typography ── */
+.greeting-time {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  color: var(--muted) !important;
+  font-weight: 500 !important;
+  margin-bottom: 6px !important;
+}
+.greeting-name {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 32px !important;
+  color: var(--text) !important;
+  letter-spacing: -0.5px !important;
+  line-height: 1.1 !important;
+}
+.greeting-sub {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 13px !important;
+  color: var(--muted) !important;
+}
+
+/* ── Stat boxes — coach style ── */
+.stat-box {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  padding: 18px 12px !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+.stat-box::before { display: none !important; }
+.stat-box:hover {
+  border-color: var(--border2) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.stat-box .s-val {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 36px !important;
+  color: var(--gold) !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
+  background-clip: unset !important;
+  line-height: 1 !important;
+  letter-spacing: -1px !important;
+}
+.stat-box .s-lbl {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 10px !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  color: var(--muted) !important;
+  margin-top: 5px !important;
+  font-weight: 600 !important;
+}
+
+/* Section labels */
+.section-label {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 10px !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+  color: var(--muted) !important;
+  font-weight: 600 !important;
+}
+
+/* ── Workout card — coach style ── */
+.workout-card {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s !important;
+}
+.workout-card:hover {
+  border-color: var(--border2) !important;
+  box-shadow: none !important;
+}
+.workout-card-header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(212,168,67,0.1) !important;
+}
+.workout-day {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 10px !important;
+  letter-spacing: 1.5px !important;
+  color: rgba(212,168,67,0.6) !important;
+  font-weight: 600 !important;
+}
+.workout-name {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 20px !important;
+  color: var(--gold) !important;
+  letter-spacing: -0.5px !important;
+}
+.workout-badge {
+  background: var(--gold-dim) !important;
+  border: 1px solid rgba(212,168,67,0.25) !important;
+  color: var(--gold) !important;
+  font-family: 'Inter', sans-serif !important;
+  font-size: 10px !important;
+  letter-spacing: 0.5px !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+.ex-name { font-family: 'Inter', sans-serif !important; font-weight: 500 !important; }
+.ex-detail { font-family: 'Inter', sans-serif !important; }
+.ex-sets { font-family: 'Inter', sans-serif !important; font-size: 12px !important; color: var(--gold) !important; }
+
+/* ── BMI Card ── */
+.bmi-card {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+.bmi-val {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 40px !important;
+  color: var(--gold) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--gold) !important;
+  letter-spacing: -1px !important;
+}
+
+/* ── Activity feed ── */
+.activity-feed {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+}
+.activity-row:hover { background: var(--bg3) !important; }
+.activity-text { font-family: 'Inter', sans-serif !important; }
+.activity-time { font-family: 'Inter', sans-serif !important; }
+
+/* ── Progress photos ── */
+.progress-photos-title {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 26px !important;
+  letter-spacing: -0.5px !important;
+}
+.progress-photos-sub { font-family: 'Inter', sans-serif !important; }
+.upload-zone {
+  border: 2px dashed var(--border) !important;
+  border-radius: 18px !important;
+  background: var(--bg2) !important;
+  box-shadow: none !important;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--gold) !important;
+  background: var(--gold-glow) !important;
+}
+.upload-main { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+.upload-main strong { color: var(--gold) !important; }
+.upload-hint { font-family: 'Inter', sans-serif !important; }
+
+/* Photo cards */
+.photo-card {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  transition: all 0.2s !important;
+}
+.photo-card:hover {
+  border-color: var(--border2) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: none !important;
+}
+.photo-card-date { font-family: 'Inter', sans-serif !important; }
+.photo-card-note { font-family: 'Inter', sans-serif !important; }
+.photo-angle-badge {
+  font-family: 'Inter', sans-serif !important;
+  background: var(--gold-dim) !important;
+  color: var(--gold) !important;
+  border-color: rgba(212,168,67,0.3) !important;
+  box-shadow: none !important;
+}
+
+/* Angle slots */
+.angle-slot {
+  background: var(--bg2) !important;
+  border: 2px dashed var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.angle-slot:hover { border-color: rgba(212,168,67,0.5) !important; background: var(--gold-glow) !important; }
+.angle-slot.filled { border-style: solid !important; border-color: rgba(212,168,67,0.4) !important; }
+.angle-slot-name { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+.angle-slot-label { font-family: 'Inter', sans-serif !important; }
+
+/* ── Profile ── */
+.pp-header {
+  background: linear-gradient(135deg, rgba(212,168,67,0.08) 0%, transparent 100%) !important;
+  border: 1px solid rgba(212,168,67,0.12) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+.pp-avatar {
+  background: var(--gold-dim) !important;
+  border: 2px solid rgba(212,168,67,0.3) !important;
+  color: var(--gold) !important;
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+.pp-name {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 20px !important;
+  letter-spacing: -0.3px !important;
+}
+.pp-email { font-family: 'Inter', sans-serif !important; }
+.pp-section {
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+}
+.pp-section-title {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 10px !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+  color: var(--muted) !important;
+  background: var(--bg3) !important;
+}
+.pp-row .lbl { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+.pp-row .val { font-family: 'Inter', sans-serif !important; }
+.pp-row .val.gold { color: var(--gold) !important; font-weight: 700 !important; }
+
+/* Logout btn */
+.logout-btn {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.3px !important;
+  text-transform: uppercase !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--muted) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.logout-btn:hover {
+  border-color: rgba(248,113,113,0.4) !important;
+  color: var(--red) !important;
+  background: rgba(248,113,113,0.06) !important;
+}
+
+/* ── Schedule card ── */
+.photo-schedule-card {
+  background: rgba(212,168,67,0.05) !important;
+  border: 1px solid rgba(212,168,67,0.18) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+.psc-title { font-family: 'Inter', sans-serif !important; color: var(--gold) !important; }
+.psc-sub { font-family: 'Inter', sans-serif !important; }
+.psc-day {
+  font-family: 'Inter', sans-serif !important;
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+}
+.psc-day.selected {
+  background: rgba(212,168,67,0.15) !important;
+  border-color: rgba(212,168,67,0.5) !important;
+  color: var(--gold) !important;
+  box-shadow: none !important;
+}
+.psc-save-btn {
+  background: var(--gold) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  color: #0A0A0A !important;
+  box-shadow: none !important;
+}
+
+/* ── Upload buttons ── */
+.up-submit {
+  background: var(--gold) !important;
+  border: none !important;
+  border-radius: 10px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  color: #0A0A0A !important;
+  box-shadow: none !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.up-cancel {
+  font-family: 'Inter', sans-serif !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border) !important;
+  color: var(--muted) !important;
+  background: transparent !important;
+}
+.up-cancel:hover { border-color: rgba(248,113,113,0.4) !important; color: var(--red) !important; }
+
+/* ── Toast ── */
+.toast {
+  background: var(--bg3) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: 100px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important;
+  backdrop-filter: none !important;
+  color: var(--text) !important;
+}
+.toast.success {
+  border-color: rgba(74,222,128,0.3) !important;
+  color: var(--green) !important;
+  background: rgba(74,222,128,0.08) !important;
+}
+.toast.error { border-color: rgba(248,113,113,0.3) !important; color: var(--red) !important; }
+
+/* ── Lightbox ── */
+.lightbox {
+  background: rgba(0,0,0,0.95) !important;
+  backdrop-filter: blur(4px) !important;
+}
+.lightbox-inner {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+.lightbox-date { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+.lightbox-note { font-family: 'Inter', sans-serif !important; }
+.lightbox-close {
+  font-family: 'Inter', sans-serif !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--border) !important;
+  color: var(--muted) !important;
+  background: transparent !important;
+}
+.lightbox-close:hover { border-color: var(--border2) !important; color: var(--text) !important; }
+.lightbox-delete {
+  border-radius: 12px !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Status / alerts ── */
+.status.success { background: var(--green-dim) !important; border-color: rgba(74,222,128,0.25) !important; color: var(--green) !important; font-family: 'Inter', sans-serif !important; }
+.status.error   { background: var(--red-dim) !important; border-color: rgba(248,113,113,0.25) !important; color: var(--red) !important; font-family: 'Inter', sans-serif !important; }
+
+/* ── Tabs on auth ── */
+.tabs { border-bottom: 1px solid var(--border) !important; gap: 4px !important; }
+.tab {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  color: var(--muted) !important;
+  border-radius: 4px 4px 0 0 !important;
+}
+.tab:hover { color: var(--text) !important; background: var(--bg3) !important; }
+.tab.active { color: var(--gold) !important; border-bottom-color: var(--gold) !important; background: var(--gold-glow) !important; }
+
+/* ── Unit toggle ── */
+.unit-btn { font-family: 'Inter', sans-serif !important; font-size: 12px !important; }
+.unit-btn.active { background: var(--gold-dim) !important; color: var(--gold) !important; border-color: var(--gold) !important; }
+
+/* ── Pills ── */
+.pill { font-family: 'Inter', sans-serif !important; font-size: 12px !important; }
+.pill.selected { background: var(--gold-dim) !important; color: var(--gold) !important; border-color: var(--gold) !important; box-shadow: none !important; }
+
+/* ── Step titles ── */
+.step-title { font-family: 'Syne', sans-serif !important; font-weight: 700 !important; font-size: 22px !important; }
+.step-sub { font-family: 'Inter', sans-serif !important; }
+
+/* ── Calendar ── */
+.fcal-month-title { font-family: 'Syne', sans-serif !important; font-weight: 600 !important; font-size: 16px !important; }
+.fcal-page-header { background: rgba(4,4,4,0.97) !important; backdrop-filter: blur(12px) !important; }
+.fcal-today-btn { font-family: 'Inter', sans-serif !important; }
+
+/* ── Done overlay ── */
+.done-close {
+  background: var(--gold) !important;
+  border: none !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 20px rgba(212,168,67,0.4) !important;
+  border-radius: 100px !important;
+}
+.done-close:hover { opacity: 0.9 !important; transform: translateY(-2px) !important; background: var(--gold) !important; }
+.done-stat-val {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 40px !important;
+  letter-spacing: -1px !important;
+  color: var(--text) !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--text) !important;
+}
+
+/* ── Past log cards ── */
+.past-log-card {
+  background: #131313 !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+}
+.past-log-card:hover {
+  border-color: rgba(212,168,67,0.3) !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+.plc-name { font-family: 'Inter', sans-serif !important; font-weight: 700 !important; }
+.plc-day, .plc-date { font-family: 'Inter', sans-serif !important; }
+
+/* ── Chat panel ── */
+.chat-input-wrap, .chat-input { font-family: 'Inter', sans-serif !important; }
+
+/* ── Workout logger — set inputs ── */
+.wkt-bar-name { font-family: 'Inter', sans-serif !important; }
+.wkt-bar-timer { font-family: 'Inter', sans-serif !important; }
+.wkt-name { font-family: 'Syne', sans-serif !important; font-weight: 700 !important; }
+
+/* ── Workout drawer ── */
+.wkt-drawer { background: #0c0b10 !important; border-top: 1px solid rgba(255,255,255,0.08) !important; }
+.wkt-drawer-title { font-family: 'Syne', sans-serif !important; font-weight: 700 !important; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(212,168,67,0.25); }
+
+/* ── Global font assignment ── */
+input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
+
+/* ── Switch link ── */
+.switch-link { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+.switch-link span { color: var(--gold) !important; }
+
+/* ── Divider ── */
+.divider { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+
+/* ── Hint ── */
+.hint { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+
+/* ── Upload zone — compact on desktop ── */
+.upload-zone {
+  padding: 1.5rem 2rem !important;
+  margin: 0 0 1rem !important;
+}
+.upload-icon { font-size: 28px !important; margin-bottom: 8px !important; }
+
+/* ── Angle upload grid — 4 columns, fixed height on desktop ── */
+.angle-upload-grid {
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+  margin: 0 0 1rem !important;
+}
+.angle-slot {
+  aspect-ratio: unset !important;
+  height: 160px !important;
+}
+@media (max-width: 768px) {
+  .angle-upload-grid { grid-template-columns: 1fr 1fr !important; }
+  .angle-slot { height: auto !important; aspect-ratio: 3/4 !important; }
+  .upload-zone { padding: 2rem 1.25rem !important; }
+}
+
+/* ── Home photo strip ── */
+.home-photo-upload-btn {
+  background: var(--gold-dim) !important;
+  border: 1px solid rgba(212,168,67,0.3) !important;
+  color: var(--gold) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+.home-photo-add-slot {
+  background: rgba(212,168,67,0.04) !important;
+  border: 1px dashed rgba(212,168,67,0.25) !important;
+  border-radius: 12px !important;
+}
+.home-photo-add-slot:hover { background: rgba(212,168,67,0.08) !important; border-color: rgba(212,168,67,0.5) !important; }
+.home-photo-add-slot-lbl { font-family: 'Inter', sans-serif !important; color: var(--gold) !important; }
+
+/* ── Active screen background fix ── */
+.screen.active::before { display: none !important; }
+#screen-home { background: var(--bg) !important; }
+
+/* ── Nutrition tab panel styling ── */
+#tab-nutrition-panel input, #tab-nutrition-panel select, #tab-nutrition-panel textarea {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Prog subtabs ── */
+.prog-subtab {
+  font-family: 'Inter', sans-serif !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+}
+
+/* Event modal */
+.ev-title-input {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 22px !important;
+  letter-spacing: -0.5px !important;
+}
+.ev-save-btn {
+  background: var(--gold) !important;
+  border: none !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  color: #0A0A0A !important;
+  box-shadow: 0 4px 16px rgba(212,168,67,0.3) !important;
+  border-radius: 8px !important;
+}
+.ev-save-btn:hover {
+  background: var(--gold) !important;
+  opacity: 0.9 !important;
+  transform: none !important;
+  box-shadow: 0 4px 16px rgba(212,168,67,0.4) !important;
+}
+.ev-cancel-btn { font-family: 'Inter', sans-serif !important; }
+.ev-type-tab { font-family: 'Inter', sans-serif !important; }
+.ev-type-tab.selected {
+  background: rgba(212,168,67,0.12) !important;
+  border-color: rgba(212,168,67,0.4) !important;
+  color: var(--gold-2) !important;
+}
+
+/* ── Page header web ── */
+.page-header-web h1 {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 32px !important;
+  letter-spacing: -1px !important;
+  color: var(--text) !important;
+}
+.page-header-web p { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
+
+/* ── LIVEKIT CALL STYLES (Client) ── */
+#incoming-call-banner {
+  display: none;
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  z-index: 9980;
+  background: #121212;
+  border: 1px solid rgba(74,222,128,0.35);
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(74,222,128,0.1);
+  min-width: 280px; max-width: 320px;
+  animation: slideUp 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+#incoming-call-banner.active { display: flex; align-items: center; gap: 12px; }
+@keyframes slideUp { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+.inc-call-ring { width: 42px; height: 42px; border-radius: 50%; background: rgba(74,222,128,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; animation: ringPulse 0.8s ease-in-out infinite; }
+@keyframes ringPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+.inc-call-info { flex: 1; }
+.inc-call-title { font-size: 13px; font-weight: 700; color: #e8e8e8; }
+.inc-call-sub { font-size: 11px; color: #555; margin-top: 2px; }
+.inc-call-actions { display: flex; gap: 8px; }
+.inc-accept { background: #4ade80; color: #0a0a0a; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+.inc-accept:hover { transform: scale(1.1); }
+.inc-decline { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+.inc-decline:hover { transform: scale(1.1); background: rgba(248,113,113,0.25); }
+
+/* Active call overlay (client) */
+#client-call-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 9990;
+  background: rgba(0,0,0,0.92);
+  backdrop-filter: blur(12px);
+  align-items: center; justify-content: center; flex-direction: column;
+}
+#client-call-overlay.active { display: flex; }
+.cli-call-card {
+  background: #0e0e0e;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 24px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  width: 300px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+}
+.cli-call-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: rgba(201,168,76,0.12);
+  border: 2px solid rgba(201,168,76,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; margin: 0 auto 1rem;
+}
+.cli-call-name { font-weight: 700; font-size: 18px; color: #e8e8e8; }
+.cli-call-status { font-size: 12px; color: #555; margin-top: 4px; letter-spacing: 0.5px; }
+.cli-call-timer { font-size: 20px; color: #4ade80; font-variant-numeric: tabular-nums; margin-top: 6px; min-height: 28px; font-family: 'Syne', sans-serif; }
+.cli-call-controls { display: flex; gap: 14px; justify-content: center; margin-top: 1.75rem; }
+.cli-ctrl { width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.cli-ctrl.mute { background: rgba(255,255,255,0.08); color: #e8e8e8; }
+.cli-ctrl.mute.active { background: rgba(248,113,113,0.2); color: #f87171; }
+.cli-ctrl.end { background: #f87171; color: #fff; box-shadow: 0 4px 20px rgba(248,113,113,0.4); }
+.cli-ctrl.end:hover { background: #ef4444; transform: scale(1.05); }
+.cli-ctrl:hover:not(.end) { background: rgba(255,255,255,0.12); transform: scale(1.05); }
+
 </style>
 
-</head>
-<body>
+<!-- LiveKit Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
 
 </head>
 <body>
@@ -2863,31 +4127,46 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 
     <!-- ═══ TAB: LOG WORKOUT ═══ -->
     <div id="tab-log-panel" style="display:none">
-      <div class="log-header">
-        <div class="log-title">Log Workout</div>
-        <div class="log-sub" id="log-sub">Track your sets, reps, and weight.</div>
-        <div class="log-day-badge" id="log-day-badge">Monday — Push Day</div>
+
+      <!-- Sticky active-workout bar with live timer -->
+      <div class="wkt-active-bar" id="wkt-active-bar">
+        <div class="wkt-bar-left">
+          <div class="wkt-bar-dot"></div>
+          <div class="wkt-bar-name" id="wkt-bar-name">Workout</div>
+        </div>
+        <div class="wkt-bar-timer" id="wkt-bar-timer">0:00</div>
+      </div>
+
+      <!-- Workout title + chips -->
+      <div class="wkt-title-section">
+        <div class="wkt-day-label" id="log-day-badge">Monday — Push Day</div>
+        <div class="wkt-name" id="log-sub">Track your sets, reps, and weight.</div>
+        <div class="wkt-meta" id="wkt-meta">
+          <span class="wkt-chip wkt-chip-exercises" id="wkt-chip-ex">— exercises</span>
+          <span class="wkt-chip wkt-chip-sets" id="wkt-chip-sets">0 sets done</span>
+        </div>
       </div>
 
       <!-- Exercise cards injected here -->
       <div id="log-exercises-container"></div>
 
-      <!-- Summary + complete button -->
-      <div class="log-complete-area">
+      <!-- Finish section -->
+      <div class="log-complete-area" id="log-complete-area">
         <div class="log-summary-bar">
           <div class="ls-item"><div class="ls-val" id="ls-sets">0</div><div class="ls-lbl">Sets Done</div></div>
           <div class="ls-item"><div class="ls-val" id="ls-vol">0</div><div class="ls-lbl">Total Reps</div></div>
-          <div class="ls-item"><div class="ls-val" id="ls-weight">0</div><div class="ls-lbl">Total kg</div></div>
+          <div class="ls-item"><div class="ls-val" id="ls-weight">0</div><div class="ls-lbl">Volume kg</div></div>
         </div>
-        <button class="complete-workout-btn" id="complete-btn" onclick="completeWorkout()">✓ Complete Workout</button>
+        <button class="complete-workout-btn" id="complete-btn" onclick="completeWorkout()">✓ Finish Workout</button>
         <div class="status" id="log-status" style="margin-top:10px"></div>
       </div>
 
-      <div class="section-label" style="margin-top:1rem">Past Workout Logs</div>
+      <!-- Past logs -->
+      <div class="past-logs-header">Previous Workouts</div>
       <div id="past-logs-container">
         <div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No logs yet</div><div class="empty-sub">Complete a workout to see your history</div></div>
       </div>
-      <div style="height:1rem"></div>
+      <div style="height:2rem"></div>
     </div>
 
     <!-- ═══ TAB: PROGRESS (Photos + Check-in) ═══ -->
@@ -2904,6 +4183,8 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
           <div class="progress-photos-title">Progress Photos</div>
           <div class="progress-photos-sub">Track your physique journey. Visible to your coach.</div>
         </div>
+
+
 
         <!-- Photo request banner from coach -->
         <div id="photo-req-banner" style="display:none"></div>
@@ -2935,6 +4216,23 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
         <!-- Submit row (appears once at least one photo selected) -->
         <div class="angle-submit-row" id="angle-submit-row">
           <textarea class="angle-note-field" id="angle-note" placeholder="Add a note (optional) — e.g. Week 4, feeling stronger!"></textarea>
+          <!-- Weight at time of photo -->
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:10px;padding:10px 12px">
+            <span style="font-size:16px">⚖️</span>
+            <div style="flex:1">
+              <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:rgba(201,168,76,0.7);font-weight:700;font-family:Inter,sans-serif;margin-bottom:4px">Current Weight <span style="color:#e8605a;font-weight:700">*</span></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="number" id="upload-weight-input" placeholder="e.g. 75.5" step="0.1" min="20" max="500"
+                  style="flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;font-weight:700;font-family:Outfit,sans-serif;-moz-appearance:textfield;width:100%"
+                  oninput="this.style.color=this.value?'var(--text)':'var(--text3)'">
+                <!-- Unit toggle -->
+                <div style="display:flex;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);flex-shrink:0">
+                  <button id="upload-wt-kg" onclick="uploadWtSetUnit('kg')" style="padding:5px 10px;font-size:10px;font-weight:700;font-family:Inter,sans-serif;background:rgba(201,168,76,0.2);color:#c9a84c;border:none;cursor:pointer;transition:all .15s;letter-spacing:0.5px">KG</button>
+                  <button id="upload-wt-lbs" onclick="uploadWtSetUnit('lbs')" style="padding:5px 10px;font-size:10px;font-weight:700;font-family:Inter,sans-serif;background:transparent;color:#555;border:none;cursor:pointer;transition:all .15s;letter-spacing:0.5px">LBS</button>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="angle-actions">
             <button class="up-cancel" onclick="cancelAngleUpload()">Cancel</button>
             <button class="up-submit" id="angle-submit-btn" onclick="submitAnglePhotos()">Upload Photos</button>
@@ -2962,9 +4260,10 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
           </div>
         </div>
 
-        <!-- Photo gallery -->
+
+        <!-- Photo gallery — Before / After layout -->
         <div class="section-label">Your Photos</div>
-        <div class="photo-grid" id="photo-grid">
+        <div class="ba-layout" id="photo-grid">
           <div class="empty-state" style="grid-column:1/-1">
             <div class="empty-icon">🖼️</div>
             <div class="empty-title">No photos yet</div>
@@ -2972,7 +4271,10 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
           </div>
         </div>
         <div style="height:1rem"></div>
-      </div>
+
+
+
+      </div><!-- end prog-panel-photos -->
 
       <!-- ── CHECK-IN panel ── -->
       <div id="prog-panel-checkin" style="display:none;padding:0 1.25rem 2rem">
@@ -3134,6 +4436,18 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
         <div style="font-size:13px;color:#555;margin-top:4px">Chat with your coach</div>
       </div>
       <div style="margin:1rem 1.25rem;background:#111;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 220px)">
+        <!-- ── Coach Chat Topbar ── -->
+        <div id="client-chat-topbar" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #1e1e1e;background:#0e0e0e;flex-shrink:0">
+          <div style="width:38px;height:38px;border-radius:50%;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#c9a84c;flex-shrink:0;font-family:'Syne',sans-serif">E</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700;color:#e8e8e8;font-family:'DM Sans',sans-serif">Your Coach</div>
+            <div id="client-chat-coach-status" style="font-size:11px;color:#4ade80;margin-top:1px">● Online</div>
+          </div>
+          <button id="client-call-btn" onclick="clientInitiateCall()" title="Voice call your coach"
+            style="width:38px;height:38px;border-radius:50%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);color:#4ade80;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0">
+            📞
+          </button>
+        </div>
         <div id="client-chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
           <div style="text-align:center;color:#333;padding:2rem;font-size:13px">Loading messages…</div>
         </div>
@@ -3679,6 +4993,23 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
   </div>
 </div>
 
+<!-- ══ WORKOUT DETAIL DRAWER ══ -->
+<div class="wkt-drawer-overlay" id="wkt-drawer-overlay" onclick="closeWktDrawer(event)">
+  <div class="wkt-drawer" id="wkt-drawer">
+    <div class="wkt-drawer-handle"></div>
+    <div class="wkt-drawer-header" style="position:relative;">
+      <div class="wkt-drawer-title" id="wdr-title">Workout</div>
+      <div class="wkt-drawer-meta">
+        <span class="wkt-drawer-date" id="wdr-date"></span>
+        <span class="wkt-drawer-stat-chip" id="wdr-chip-sets"></span>
+        <span class="wkt-drawer-stat-chip" id="wdr-chip-vol"></span>
+      </div>
+      <button class="wkt-drawer-close" onclick="closeWktDrawer()">✕</button>
+    </div>
+    <div class="wkt-drawer-body" id="wdr-body"></div>
+  </div>
+</div>
+
 <!-- ══ WORKOUT COMPLETE OVERLAY ══ -->
 <div class="done-overlay" id="done-overlay">
   <div class="done-icon">🏆</div>
@@ -3789,12 +5120,43 @@ function getExMedia(name) {
   };
 }
 
+function openWorkoutVidModal(name, detail) {
+  const overlay = document.getElementById('wvm-overlay');
+  if (!overlay) return;
+  const vidEl   = document.getElementById('wvm-video');
+  const thumbEl = document.getElementById('wvm-thumb');
+  const titleEl = document.getElementById('wvm-title');
+  const detailEl = document.getElementById('wvm-detail');
+  const noVidEl  = document.getElementById('wvm-novid');
+  if (titleEl)  titleEl.textContent  = name || '';
+  if (detailEl) detailEl.textContent = detail || '';
+  const media = getExMedia(name);
+  if (media && media.videoUrl) {
+    if (thumbEl && media.thumbUrl) { thumbEl.src = media.thumbUrl; thumbEl.style.display = 'block'; }
+    if (vidEl)  { vidEl.src = media.videoUrl; vidEl.style.display = 'none'; }
+    if (noVidEl) noVidEl.style.display = 'none';
+  } else {
+    if (thumbEl) thumbEl.style.display = 'none';
+    if (vidEl)  { vidEl.src = ''; vidEl.style.display = 'none'; }
+    if (noVidEl) noVidEl.style.display = 'flex';
+  }
+  overlay.style.display = 'flex';
+}
+
+function closeWorkoutVidModal() {
+  const overlay = document.getElementById('wvm-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  const vidEl = document.getElementById('wvm-video');
+  if (vidEl) { vidEl.pause(); vidEl.src = ''; }
+}
+
 function loadCloudinaryMedia() { return Promise.resolve(); }
 
 function clientPreviewVideo(name) {
   // Delegate to unified workout video modal
-  const ex = typeof WORKOUTS !== 'undefined' && selectedDay !== undefined
-    ? (WORKOUTS[selectedDay]?.exercises||[]).find(e=>e.name===name) : null;
+  const ex = typeof WORKOUTS !== 'undefined' && todayWorkout
+    ? (todayWorkout.exercises||[]).find(e=>e.name===name) : null;
   openWorkoutVidModal(name, ex ? ex.detail : '');
 }
 
@@ -4066,8 +5428,12 @@ function loadHomeScreen(data) {
         <div class="ex-sets">${ex.target||''}</div>
       </div>`;
     }).join('');
-    document.getElementById('log-day-badge').textContent = todayName + ' — ' + (w.name || 'Workout');
-    document.getElementById('log-sub').textContent = 'Logging: ' + (w.name || 'Workout') + ' · ' + w.exercises.length + ' exercises';
+    document.getElementById('log-day-badge').textContent = todayName;
+    document.getElementById('log-sub').textContent = w.name || 'Workout';
+    const chipEl = document.getElementById('wkt-chip-ex');
+    if (chipEl) chipEl.textContent = w.exercises.length + ' exercise' + (w.exercises.length !== 1 ? 's' : '');
+    const barNameEl = document.getElementById('wkt-bar-name');
+    if (barNameEl) barNameEl.textContent = w.name || 'Workout';
     buildWorkoutLogger(w);
   } else {
     // No workout assigned for today
@@ -4089,7 +5455,11 @@ function loadHomeScreen(data) {
     document.getElementById('workout-badge').textContent = '0 exercises';
     document.getElementById('exercise-list-preview').innerHTML = noWorkoutHTML;
     document.getElementById('log-day-badge').textContent = todayName;
-    document.getElementById('log-sub').textContent       = hasAnyPlan ? 'Rest day — no exercises scheduled' : 'No workout plan assigned';
+    document.getElementById('log-sub').textContent       = hasAnyPlan ? 'Rest Day' : 'No Plan Yet';
+    const chipElRest = document.getElementById('wkt-chip-ex');
+    if (chipElRest) chipElRest.textContent = '0 exercises';
+    const barNameRest = document.getElementById('wkt-bar-name');
+    if (barNameRest) barNameRest.textContent = hasAnyPlan ? 'Rest Day' : 'No Workout';
     // Hide the log button on home card when there's nothing to log
     const startBtn = document.querySelector('.start-btn');
     if (startBtn) startBtn.style.display = 'none';
@@ -4144,10 +5514,16 @@ function loadHomeScreen(data) {
       const updated = snap.data();
       const newPlan = updated.assignedWorkoutPlan || {};
       const planJSON = JSON.stringify(newPlan);
-      if (window._lastAssignedPlanJSON && window._lastAssignedPlanJSON !== planJSON) {
+      if (window._lastAssignedPlanJSON !== undefined && window._lastAssignedPlanJSON !== planJSON) {
         // Plan changed — re-render workout card
         loadHomeScreen(updated);
-        showToast('Your coach updated your workout plan! 💪', 'success');
+        const hadPlan = window._lastAssignedPlanJSON !== '{}';
+        const hasPlan = planJSON !== '{}';
+        if (!hasPlan && hadPlan) {
+          showToast('Your coach removed your workout plan.', 'info');
+        } else if (hasPlan) {
+          showToast('Your coach updated your workout plan! 💪', 'success');
+        }
       }
       window._lastAssignedPlanJSON = planJSON;
     }, () => {});
@@ -4166,81 +5542,126 @@ function loadHomeScreen(data) {
 // ─────────────────────────────────────────
 //  WORKOUT LOGGER
 // ─────────────────────────────────────────
+// ── WORKOUT TIMER ──────────────────────────────────────────────────────────
+let _wktTimerInterval = null;
+let _wktStartTime     = null;
+
+function startWktTimer() {
+  _wktStartTime = Date.now();
+  clearInterval(_wktTimerInterval);
+  _wktTimerInterval = setInterval(() => {
+    const secs = Math.floor((Date.now() - _wktStartTime) / 1000);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    const el = document.getElementById('wkt-bar-timer');
+    if (el) el.textContent = m + ':' + String(s).padStart(2,'0');
+  }, 1000);
+}
+function stopWktTimer() {
+  clearInterval(_wktTimerInterval);
+  _wktTimerInterval = null;
+}
+
+// Accent colors cycling per exercise (like Hevy)
+const WKT_ACCENT_COLORS = [
+  '#5A9FEF','#3DCB72','#C9A84C','#E8605A','#A855F7','#F97316','#06B6D4','#EC4899'
+];
+
 function buildWorkoutLogger(workout) {
   const container = document.getElementById('log-exercises-container');
   container.innerHTML = '';
 
+  // Update bar name
+  const barName = document.getElementById('wkt-bar-name');
+  if (barName) barName.textContent = workout?.name || 'Workout';
+
+  const wktName = document.getElementById('log-sub');
+  const dayBadge = document.getElementById('log-day-badge');
+  const chipEx = document.getElementById('wkt-chip-ex');
+
   if (!workout || !workout.exercises || !workout.exercises.length) {
     container.innerHTML = `
-      <div style="text-align:center;padding:3rem 1rem;color:#666">
-        <div style="font-size:2rem;margin-bottom:.75rem">⏳</div>
-        <div style="font-size:1rem;font-weight:600;color:#e8e8e8;margin-bottom:.4rem">No workout assigned</div>
-        <div style="font-size:.85rem">Your coach hasn't assigned a workout plan yet.<br>Check back soon!</div>
+      <div style="text-align:center;padding:3rem 1.5rem;color:#444;">
+        <div style="font-size:48px;margin-bottom:14px;">⏳</div>
+        <div style="font-size:16px;font-weight:700;color:#e8e8e8;margin-bottom:8px;font-family:'Outfit',sans-serif;">No workout assigned</div>
+        <div style="font-size:13px;color:#555;line-height:1.6;font-family:'Outfit',sans-serif;">Your coach hasn't assigned a workout plan yet.<br>Check back soon!</div>
       </div>`;
-    // Hide the complete button too
     const logBtn = document.getElementById('complete-btn');
     if (logBtn) { logBtn.style.display = 'none'; logBtn.disabled = true; }
+    const finishBar = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
+    if (finishBar) finishBar.style.display = 'none';
+    stopWktTimer();
     return;
   }
-  // Show complete button if it was hidden
+
   const logBtn = document.getElementById('complete-btn');
   if (logBtn) { logBtn.style.display = ''; logBtn.disabled = false; }
+  const finishBar = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
+  if (finishBar) finishBar.style.display = 'block';
 
-  // Pre-load Cloudinary media map if not yet done
-  if (!_cMediaLoaded) loadCloudinaryMedia().then(() => renderWorkout(WORKOUTS[selectedDay])).catch(()=>{});
+  if (chipEx) chipEx.textContent = workout.exercises.length + ' exercise' + (workout.exercises.length !== 1 ? 's' : '');
+
+  // Start timer when logger is built
+  startWktTimer();
+
+  // Pre-load media
+  // Media thumbnails loaded inline per-exercise above
 
   workout.exercises.forEach((ex, exIdx) => {
+    const accentColor = WKT_ACCENT_COLORS[exIdx % WKT_ACCENT_COLORS.length];
     const card = document.createElement('div');
     card.className = 'log-ex-card';
     card.dataset.exIdx = exIdx;
 
-    // Parse default sets from target (e.g. "4×8" → 4 sets, 8 reps)
     const match = ex.target.match(/(\d+)[×x](\d+)/);
     const defaultSets = match ? parseInt(match[1]) : 3;
     const defaultReps = match ? parseInt(match[2]) : 10;
 
     card.innerHTML = `
       <div class="log-ex-header">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid rgba(255,255,255,0.07);cursor:pointer;position:relative;"
-               onclick="clientPreviewVideo('${ex.name.replace(/'/g, '&#39;')}')" title="Watch demo">
-            <img id="ex-thumb-${exIdx}" src="" alt="${ex.name}" style="width:100%;height:100%;object-fit:cover;display:block;"
-                 onerror="this.style.display='none';this.parentElement.querySelector('span').style.display='flex';">
-            <span style="display:none;position:absolute;inset:0;align-items:center;justify-content:center;font-size:20px;">💪</span>
-            <div style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;transition:background .15s;"
-                 onmouseenter="this.style.background='rgba(0,0,0,0.5)'" onmouseleave="this.style.background='rgba(0,0,0,0)'">▶</div>
+        <div class="log-ex-color-bar" style="background:${accentColor};"></div>
+        <div class="log-ex-header-inner">
+          <div class="log-ex-thumb-wrap" onclick="clientPreviewVideo('${ex.name.replace(/'/g,"&#39;")}')">
+            <img id="ex-thumb-${exIdx}" src="" alt="${ex.name}"
+              style="width:100%;height:100%;object-fit:cover;display:none;"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <div class="log-ex-thumb-fallback" id="ex-fallback-${exIdx}" style="display:flex;">💪</div>
+            <div class="play-overlay">▶</div>
           </div>
-          <div>
+          <div class="log-ex-info">
             <div class="log-ex-name">${ex.name}</div>
-            <div class="log-ex-detail">${ex.detail}</div>
+            <div class="log-ex-muscles">${ex.detail || ''}</div>
+            <div class="log-ex-target-badge">${ex.target}</div>
           </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="log-ex-target">${ex.target}</div>
         </div>
       </div>
       <div class="log-sets-area">
-        <div class="set-labels">
-          <div class="set-lbl">SET</div>
-          <div class="set-lbl">Weight (kg)</div>
-          <div class="set-lbl">Reps</div>
-          <div class="set-lbl"></div>
+        <div class="set-table-head">
+          <div class="set-th">SET</div>
+          <div class="set-th" style="text-align:left;padding-left:4px;">PREVIOUS</div>
+          <div class="set-th">KG</div>
+          <div class="set-th">REPS</div>
+          <div class="set-th"></div>
         </div>
         <div class="sets-container" id="sets-${exIdx}"></div>
         <button class="add-set-btn" onclick="addSet(${exIdx}, 0, ${defaultReps})">+ Add Set</button>
       </div>
       <div class="log-note-wrap">
-        <textarea class="log-note" id="note-${exIdx}" placeholder="Notes for ${ex.name} (optional)…"></textarea>
+        <textarea class="log-note" id="note-${exIdx}" placeholder="Note…"></textarea>
       </div>`;
 
     container.appendChild(card);
-    // Set thumbnail using unified media lookup
+
+    // Load thumbnail
     (() => {
       const _wm = (typeof getWorkoutMedia !== 'undefined') ? getWorkoutMedia(ex.name) : null;
-      const el  = document.getElementById('ex-thumb-' + exIdx);
-      if (el) {
-        const thumbSrc = _wm?.thumbnail || getExMedia(ex.name).thumbUrl;
-        if (thumbSrc) { el.src = thumbSrc; el.style.display = 'block'; }
+      const imgEl = document.getElementById('ex-thumb-' + exIdx);
+      const fbEl  = document.getElementById('ex-fallback-' + exIdx);
+      const src = _wm?.thumbnail || getExMedia(ex.name).thumbUrl;
+      if (src && imgEl) {
+        imgEl.src = src;
+        imgEl.style.display = 'block';
+        if (fbEl) fbEl.style.display = 'none';
       }
     })();
 
@@ -4253,14 +5674,17 @@ function buildWorkoutLogger(workout) {
 
 function addSet(exIdx, weight, reps) {
   const container = document.getElementById('sets-' + exIdx);
-  const setNum    = container.children.length + 1;
-  const row       = document.createElement('div');
+  if (!container) return;
+  const setNum = container.children.length + 1;
+  const row    = document.createElement('div');
   row.className   = 'log-set-row';
   row.dataset.done = '0';
+  // "Previous" column shows a placeholder dash (future: pull from last session)
   row.innerHTML = `
     <div class="set-num">${setNum}</div>
-    <input class="set-input weight-input" type="number" min="0" placeholder="kg" value="${weight||''}" oninput="updateSummary()">
-    <input class="set-input reps-input"   type="number" min="0" placeholder="reps" value="${reps||''}" oninput="updateSummary()">
+    <div style="font-size:11px;color:rgba(99,95,90,0.35);font-family:'Outfit',sans-serif;text-align:left;padding-left:4px;align-self:center;">—</div>
+    <input class="set-input weight-input" type="number" min="0" step="0.5" placeholder="—" value="${weight||''}" oninput="updateSummary()">
+    <input class="set-input reps-input"   type="number" min="0" placeholder="—" value="${reps||''}" oninput="updateSummary()">
     <button class="set-done-btn" onclick="toggleSetDone(this)" title="Mark done">✓</button>`;
   container.appendChild(row);
   updateSummary();
@@ -4289,6 +5713,9 @@ function updateSummary() {
   document.getElementById('ls-sets').textContent   = totalSets;
   document.getElementById('ls-vol').textContent    = totalReps;
   document.getElementById('ls-weight').textContent = Math.round(totalWeight);
+  // Update header chip
+  const chip = document.getElementById('wkt-chip-sets');
+  if (chip) chip.textContent = totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' done';
 }
 
 // ─────────────────────────────────────────
@@ -4359,6 +5786,7 @@ async function completeWorkout() {
     document.getElementById('done-vol').textContent  = doneWeight;
     document.getElementById('done-sub').textContent  = todayWorkout?.name + ' complete!';
     document.getElementById('done-overlay').classList.add('open');
+    stopWktTimer();
 
     loadPastLogs();
   } catch(e) {
@@ -4376,36 +5804,135 @@ function closeDoneOverlay() {
 // ─────────────────────────────────────────
 //  LOAD PAST LOGS
 // ─────────────────────────────────────────
+let _pastLogsData = []; // cache for drawer
+
 async function loadPastLogs() {
   const uid = currentUid || auth.currentUser?.uid;
   if (!uid) return;
   const container = document.getElementById('past-logs-container');
   try {
     const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-      .orderBy('completedAt', 'desc').limit(5).get();
+      .orderBy('completedAt', 'desc').limit(10).get();
     if (snap.empty) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No logs yet</div><div class="empty-sub">Complete a workout to see your history</div></div>`;
       return;
     }
+    _pastLogsData = [];
     container.innerHTML = '';
-    snap.forEach(doc => {
-      const d = doc.data();
-      const date = d.completedAt?.toDate ? d.completedAt.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila',month:'short',day:'numeric',year:'numeric'}) : 'Recent';
+    snap.forEach((doc, i) => {
+      const d = { ...doc.data(), _id: doc.id };
+      _pastLogsData.push(d);
+      const date = d.completedAt?.toDate
+        ? d.completedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', weekday:'short', month:'short', day:'numeric', year:'numeric' })
+        : 'Recent';
+
+      // Count done sets across exercises
+      const doneSets = d.exercises
+        ? d.exercises.reduce((sum, ex) => sum + (ex.sets?.filter(s => s.done).length || 0), 0)
+        : (d.totalSets || 0);
+
       const card = document.createElement('div');
       card.className = 'past-log-card';
+      const exCount = d.exercises?.length || 0;
+      const durationMin = d.durationSeconds ? Math.round(d.durationSeconds / 60) : null;
       card.innerHTML = `
         <div class="plc-header">
-          <div class="plc-name">${d.workoutName||'Workout'}</div>
-          <div class="plc-date">${date}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="plc-name">${d.workoutName || 'Workout'}</div>
+            <div class="plc-day">${d.dayName || ''}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <div class="plc-date">${date}</div>
+            <div class="plc-chevron">›</div>
+          </div>
         </div>
         <div class="plc-stats">
-          <div class="plc-stat">Sets: <span>${d.totalSets||0}</span></div>
-          <div class="plc-stat">Reps: <span>${d.totalReps||0}</span></div>
-          <div class="plc-stat">Volume: <span>${d.totalVolume||0} kg</span></div>
-        </div>`;
+          ${exCount ? `<div class="plc-stat-pill"><strong>${exCount}</strong> exercise${exCount!==1?'s':''}</div>` : ''}
+          <div class="plc-stat-pill">Sets: <strong>${d.totalSets || 0}</strong></div>
+          <div class="plc-stat-pill">Reps: <strong>${d.totalReps || 0}</strong></div>
+          <div class="plc-stat-pill"><strong>${d.totalVolume || 0} kg</strong> vol</div>
+          ${durationMin ? `<div class="plc-stat-pill"><strong>${durationMin}m</strong></div>` : ''}
+        </div>
+        ${d.exercises && d.exercises.length ? `
+        <div class="plc-ex-tags">
+          ${d.exercises.slice(0,5).map(ex => `<span class="plc-ex-tag">${ex.name}</span>`).join('')}
+          ${d.exercises.length > 5 ? `<span class="plc-ex-tag">+${d.exercises.length - 5} more</span>` : ''}
+        </div>` : ''}`;
+
+      card.addEventListener('click', () => openWktDrawer(i));
       container.appendChild(card);
     });
   } catch(e) { /* silently fail */ }
+}
+
+// ─────────────────────────────────────────
+//  WORKOUT DETAIL DRAWER
+// ─────────────────────────────────────────
+function openWktDrawer(idx) {
+  const d = _pastLogsData[idx];
+  if (!d) return;
+
+  const date = d.completedAt?.toDate
+    ? d.completedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', weekday:'long', month:'long', day:'numeric', year:'numeric' })
+    : '';
+
+  document.getElementById('wdr-title').textContent = d.workoutName || 'Workout';
+  document.getElementById('wdr-date').textContent  = date;
+  document.getElementById('wdr-chip-sets').textContent = (d.totalSets || 0) + ' sets';
+  document.getElementById('wdr-chip-vol').textContent  = (d.totalVolume || 0) + ' kg volume';
+
+  const body = document.getElementById('wdr-body');
+
+  if (!d.exercises || !d.exercises.length) {
+    body.innerHTML = `<div style="text-align:center;padding:3rem 1rem;color:var(--text3);font-family:'Outfit',sans-serif;">No exercise data saved for this session.</div>`;
+  } else {
+    body.innerHTML = d.exercises.map((ex, exIdx) => {
+      const accent = WKT_ACCENT_COLORS[exIdx % WKT_ACCENT_COLORS.length];
+      const sets   = ex.sets || [];
+      const doneSets = sets.filter(s => s.done);
+      const totalVol = doneSets.reduce((sum, s) => sum + ((s.weight || 0) * (s.reps || 0)), 0);
+
+      const setRows = sets.map((s, si) => `
+        <tr class="wdr-set-row ${s.done ? 'done-row' : ''}">
+          <td><span class="wdr-set-num">${si + 1}</span></td>
+          <td><span class="wdr-set-badge ${s.done ? 'done' : 'skip'}">${s.done ? '✓' : '—'}</span></td>
+          <td>${s.done ? (s.weight || 0) + ' kg' : '—'}</td>
+          <td>${s.done ? (s.reps || 0) : '—'}</td>
+          <td>${s.done && s.weight ? Math.round(s.weight * (s.reps || 0)) + ' kg' : '—'}</td>
+        </tr>`).join('');
+
+      return `
+        <div class="wdr-ex-block">
+          <div class="wdr-ex-header">
+            <div class="wdr-ex-accent" style="background:${accent};"></div>
+            <div>
+              <div class="wdr-ex-name">${ex.name}</div>
+              <div class="wdr-ex-note">${doneSets.length} of ${sets.length} sets completed${totalVol > 0 ? ' · ' + Math.round(totalVol) + ' kg volume' : ''}</div>
+              ${ex.note ? `<div style="font-size:11px;color:var(--gold);margin-top:3px;font-family:'Outfit',sans-serif;font-style:italic;">"${ex.note}"</div>` : ''}
+            </div>
+          </div>
+          ${sets.length ? `
+          <table class="wdr-set-table">
+            <thead>
+              <tr>
+                <th>Set</th><th>Status</th><th>Weight</th><th>Reps</th><th>Volume</th>
+              </tr>
+            </thead>
+            <tbody>${setRows}</tbody>
+          </table>` : '<div style="font-size:12px;color:var(--text3);padding:6px 0;font-family:Outfit,sans-serif;">No sets recorded</div>'}
+        </div>`;
+    }).join('');
+  }
+
+  document.getElementById('wkt-drawer-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeWktDrawer(e) {
+  // If called from overlay click, only close if clicking the backdrop itself
+  if (e && e.target !== document.getElementById('wkt-drawer-overlay')) return;
+  document.getElementById('wkt-drawer-overlay').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 // ─────────────────────────────────────────
@@ -4431,7 +5958,7 @@ function handleAngleSelect(e, angle) {
   e.stopPropagation();
   const file = e.target.files[0];
   if (!file) return;
-  if (file.size > 5 * 1024 * 1024) { showToast('File too large. Max 5MB.', 'error'); return; }
+  if (file.size > 25 * 1024 * 1024) { showToast('File too large. Max 25MB.', 'error'); return; }
   _angleFiles[angle] = file;
   const reader = new FileReader();
   reader.onload = ev => {
@@ -4478,6 +6005,12 @@ async function submitAnglePhotos() {
   if (!uid) return;
   const angles = Object.keys(_angleFiles);
   if (!angles.length) { showToast('Please select at least one photo.', 'error'); return; }
+  const _wtVal = parseFloat(document.getElementById('upload-weight-input')?.value);
+  if (isNaN(_wtVal) || _wtVal <= 0) {
+    const inp = document.getElementById('upload-weight-input');
+    if (inp) { inp.style.color='#e8605a'; inp.placeholder='Enter your weight to continue'; setTimeout(()=>{inp.style.color='';inp.placeholder='e.g. 75.5';},2500); }
+    showToast('Please enter your current weight.', 'error'); return;
+  }
   const note = document.getElementById('angle-note').value.trim();
   const btn  = document.getElementById('angle-submit-btn');
   btn.disabled = true; btn.textContent = 'Uploading…';
@@ -4492,12 +6025,16 @@ async function submitAnglePhotos() {
         r.onerror = () => reject(new Error('Failed to read file'));
         r.readAsDataURL(file);
       });
-      const compressed = await compressImageBase64(base64raw, 800, 0.78);
+      const compressed = await compressImageBase64(base64raw, 1600, 0.88);
+      const _uploadWt    = parseFloat(document.getElementById('upload-weight-input')?.value);
+      const _uploadWtUnit = (document.getElementById('upload-wt-lbs')?.style.background?.includes('201') ? 'lbs' : 'kg');
       await db.collection('members').doc(uid).collection('progressPhotos').add({
         base64: compressed,
         angle: angle,
         note: note || null,
         fileName: file.name,
+        weight: isNaN(_uploadWt) ? null : _uploadWt,
+        weightUnit: isNaN(_uploadWt) ? null : _uploadWtUnit,
         uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
@@ -4516,7 +6053,7 @@ async function submitAnglePhotos() {
     } catch(_) {}
     if (reqId) {
       const reqBase64 = _anglePreviews['front'] || Object.values(_anglePreviews)[0];
-      const reqCompressed = await compressImageBase64(reqBase64, 800, 0.78);
+      const reqCompressed = await compressImageBase64(reqBase64, 1600, 0.88);
       await db.collection('photoRequests').doc(reqId).update({
         fulfilled: true,
         base64: reqCompressed,
@@ -4527,6 +6064,19 @@ async function submitAnglePhotos() {
       showToast('Photos submitted to coach! ✓', 'success');
     } else {
       showToast(angles.length + ' photo' + (angles.length > 1 ? 's' : '') + ' uploaded! 🎉', 'success');
+    }
+    // Also log weight to weightLogs collection for tracker
+    const _wv = parseFloat(document.getElementById('upload-weight-input')?.value);
+    if (!isNaN(_wv) && _wv > 0) {
+      const _wu = (document.getElementById('upload-wt-lbs')?.style.background?.includes('201') ? 'lbs' : 'kg');
+      try {
+        await db.collection('members').doc(uid).collection('weightLogs').add({
+          value: _wv, unit: _wu,
+          date: new Date().toISOString().slice(0,10),
+          source: 'photo_upload',
+          loggedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        } catch(_) {}
     }
     cancelAngleUpload();
     loadProgressPhotos();
@@ -4572,33 +6122,257 @@ async function loadProgressPhotos() {
   const grid = document.getElementById('photo-grid');
   try {
     const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-      .orderBy('uploadedAt', 'desc').limit(20).get();
+      .orderBy('uploadedAt', 'desc').limit(60).get();
     if (snap.empty) {
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🖼️</div><div class="empty-title">No photos yet</div><div class="empty-sub">Upload your first progress photo above</div></div>`;
+      grid.innerHTML = `<div class="empty-state" style="text-align:center;padding:2.5rem 1rem"><div class="empty-icon">🖼️</div><div class="empty-title">No photos yet</div><div class="empty-sub">Upload your first progress photo above</div></div>`;
       return;
     }
-    grid.innerHTML = '';
+
+    // Group photos by calendar date (en-PH) — each date = one upload session
+    const sessions = {};
     snap.forEach(doc => {
-      const d    = doc.data();
-      const src  = d.base64 || d.url || ''; // support both base64 and legacy url
-      const date = d.uploadedAt?.toDate ? d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila',month:'short',day:'numeric',year:'numeric'}) : '';
-      const card = document.createElement('div');
-      card.className = 'photo-card';
-      card.onclick   = () => openLightbox(src, date, d.note, doc.id, d.angle);
-      const angleLabel = d.angle ? { front:'Front', back:'Back', left:'Left Side', right:'Right Side' }[d.angle] || d.angle : null;
-      card.innerHTML = `
-        <img src="${src}" alt="Progress photo" loading="lazy">
-        <div class="photo-card-meta">
-          ${angleLabel ? `<div class="photo-angle-badge">${angleLabel}</div>` : ''}
-          <div class="photo-card-date">${date}</div>
-          ${d.note ? `<div class="photo-card-note">${d.note}</div>` : ''}
-        </div>`;
-      grid.appendChild(card);
+      const d = doc.data();
+      const dt = d.uploadedAt?.toDate ? d.uploadedAt.toDate() : new Date();
+      const dateKey = dt.toLocaleDateString('en-PH', { timeZone:'Asia/Manila', year:'numeric', month:'2-digit', day:'2-digit' });
+      const dateLabel = dt.toLocaleDateString('en-PH', { timeZone:'Asia/Manila', month:'long', day:'numeric', year:'numeric' });
+      if (!sessions[dateKey]) sessions[dateKey] = { dateKey, dateLabel, ts: dt.getTime(), photos: [] };
+      sessions[dateKey].photos.push({ doc, d });
     });
+
+    // Sort sessions newest → oldest
+    const sorted = Object.values(sessions).sort((a,b) => b.ts - a.ts);
+    const total = sorted.length;
+
+    const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+    const ANGLES = ['front', 'back', 'left', 'right'];
+
+    grid.innerHTML = '';
+
+    // Helper: build a row for one session
+    function buildRow(session, labelClass, labelText, idx) {
+      const row = document.createElement('div');
+      row.className = 'ba-row';
+
+      const weight = session.photos[0]?.d?.weight;
+      const weightUnit = session.photos[0]?.d?.weightUnit || 'kg';
+      const weightHtml = weight
+        ? `<span style="font-size:11px;color:#c9a84c;font-weight:700;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:100px;padding:2px 9px;font-family:Inter,sans-serif">⚖️ ${weight} ${weightUnit}</span>`
+        : '';
+
+      row.innerHTML = `
+        <div class="ba-row-header">
+          <div class="ba-row-label ${labelClass}">${labelText}</div>
+          <div class="ba-row-meta">
+            ${weightHtml}
+            <span>${session.dateLabel}</span>
+          </div>
+          <div class="ba-row-divider"></div>
+        </div>
+        <div class="ba-angle-row" id="ba-angle-row-${idx}"></div>
+      `;
+
+      grid.appendChild(row);
+
+      const angleRow = document.getElementById(`ba-angle-row-${idx}`);
+
+      ANGLES.forEach(angle => {
+        const photo = session.photos.find(p => (p.d.angle || 'front') === angle) || null;
+        const cell = document.createElement('div');
+
+        if (photo) {
+          const src = photo.d.base64 || photo.d.url || '';
+          const date = photo.d.uploadedAt?.toDate
+            ? photo.d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', month:'short', day:'numeric', year:'numeric' })
+            : '';
+          cell.className = 'ba-angle-card';
+          cell.onclick = () => openLightbox(src, date, photo.d.note, photo.doc.id, angle);
+          cell.innerHTML = `
+            <img src="${src}" alt="${ANGLE_NAMES[angle]}" loading="lazy">
+            <div class="ba-angle-name">${ANGLE_NAMES[angle]}</div>
+          `;
+        } else {
+          cell.className = 'ba-angle-empty';
+          cell.innerHTML = `
+            <div class="ba-angle-empty-icon">📷</div>
+            <div class="ba-angle-empty-lbl">${ANGLE_NAMES[angle]}</div>
+          `;
+        }
+        angleRow.appendChild(cell);
+      });
+    }
+
+    if (total === 1) {
+      // Only one session — label it "Before" so the next upload becomes "After"
+      buildRow(sorted[0], 'before-lbl', 'Before', 0);
+      const nudge = document.createElement('div');
+      nudge.className = 'ba-only-before';
+      nudge.innerHTML = `<p>📸 Upload another set of photos and an <strong>After</strong> row will appear automatically.</p>`;
+      grid.appendChild(nudge);
+    } else {
+      // After row = newest (idx 0)
+      buildRow(sorted[0], 'after-lbl', 'After', 0);
+
+      // Middle check-in rows (2nd newest to 2nd oldest), newest first
+      for (let i = 1; i < total - 1; i++) {
+        buildRow(sorted[i], 'checkin-lbl', `Check-in ${total - 1 - i}`, i);
+      }
+
+      // Before row = oldest (last idx)
+      buildRow(sorted[total - 1], 'before-lbl', 'Before', total - 1);
+    }
+
   } catch(e) {
-    // Storage rules may block — show friendly message
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🔒</div><div class="empty-title">Configure Firebase Storage</div><div class="empty-sub">Enable Storage rules in your Firebase console to display photos.</div></div>`;
+    grid.innerHTML = `<div class="empty-state" style="text-align:center;padding:2rem"><div class="empty-icon">🔒</div><div class="empty-title">Configure Firebase Storage</div><div class="empty-sub">Enable Storage rules in your Firebase console to display photos.</div></div>`;
   }
+}
+
+// ── VIEW TOGGLE ──
+function setProgPhotoView(view) {
+  // View toggle removed — Before/After labels are shown directly on photos
+}
+
+// ── BEFORE / AFTER RENDER ──
+let _baSessions = [];
+let _baCurrentAngle = null;
+
+function renderBeforeAfter(sorted) {
+  _baSessions = sorted;
+  const noPhotos = document.getElementById('ba-no-photos');
+  const content  = document.getElementById('ba-content');
+  if (!noPhotos || !content) return;
+
+  if (sorted.length < 2) {
+    noPhotos.style.display = '';
+    content.style.display  = 'none';
+    return;
+  }
+  noPhotos.style.display = 'none';
+  content.style.display  = '';
+
+  // Find all angles that exist in BOTH first and last session
+  const oldest = sorted[sorted.length - 1];
+  const newest = sorted[0];
+  const oldAngles = new Set(oldest.photos.map(p => p.d.angle || 'front'));
+  const newAngles = new Set(newest.photos.map(p => p.d.angle || 'front'));
+  const commonAngles = [...oldAngles].filter(a => newAngles.has(a));
+  const allAngles = [...new Set([...oldAngles, ...newAngles])];
+
+  // Build angle tabs (show all available; grey out if only in one)
+  const tabsEl = document.getElementById('ba-angle-tabs');
+  const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+  const angles = allAngles.length ? allAngles : ['front'];
+  const preferred = _baCurrentAngle && angles.includes(_baCurrentAngle) ? _baCurrentAngle : (commonAngles[0] || angles[0]);
+  _baCurrentAngle = preferred;
+
+  tabsEl.innerHTML = angles.map(a =>
+    `<button class="ba-angle-tab${a===preferred?' active':''}" onclick="switchBaAngle('${a}')">${ANGLE_NAMES[a]||a}</button>`
+  ).join('');
+
+  showBaAngle(preferred, oldest, newest);
+}
+
+function switchBaAngle(angle) {
+  _baCurrentAngle = angle;
+  document.querySelectorAll('.ba-angle-tab').forEach(t => t.classList.toggle('active', t.textContent.trim().toLowerCase().replace(' ','') === angle.replace(' ','')));
+  // Re-select by angle name
+  document.querySelectorAll('.ba-angle-tab').forEach(t => {
+    const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+    t.classList.toggle('active', (ANGLE_NAMES[angle]||angle) === t.textContent.trim());
+  });
+  if (_baSessions.length >= 2) {
+    showBaAngle(angle, _baSessions[_baSessions.length-1], _baSessions[0]);
+  }
+}
+
+function showBaAngle(angle, oldest, newest) {
+  const findPhoto = (session, ang) => {
+    const exact = session.photos.find(p => (p.d.angle || 'front') === ang);
+    return exact || session.photos[0];
+  };
+  const beforeItem = findPhoto(oldest, angle);
+  const afterItem  = findPhoto(newest, angle);
+  if (!beforeItem || !afterItem) return;
+
+  const beforeSrc = beforeItem.d.base64 || beforeItem.d.url || '';
+  const afterSrc  = afterItem.d.base64  || afterItem.d.url  || '';
+
+  const imgBefore = document.getElementById('ba-img-before');
+  const imgAfter  = document.getElementById('ba-img-after');
+  imgBefore.src = beforeSrc;
+  imgAfter.src  = afterSrc;
+
+  // Reset divider to 50%
+  setBaDivider(50);
+
+  // Weight pills
+  const bw = beforeItem.d.weight;
+  const aw = afterItem.d.weight;
+  const bu = beforeItem.d.weightUnit || 'kg';
+  const au = afterItem.d.weightUnit  || 'kg';
+  const wRow = document.getElementById('ba-weight-row');
+  if (bw && aw && bu === au) {
+    const diff = (parseFloat(aw) - parseFloat(bw)).toFixed(1);
+    const diffSign = diff > 0 ? '+' : '';
+    const diffColor = diff < 0 ? 'var(--green)' : (diff > 0 ? 'var(--red)' : 'var(--text3)');
+    document.getElementById('ba-weight-before').textContent = bw + ' ' + bu;
+    document.getElementById('ba-weight-after').textContent  = aw + ' ' + au;
+    document.getElementById('ba-weight-diff').textContent   = diffSign + diff + ' ' + bu;
+    document.getElementById('ba-weight-diff').style.color   = diffColor;
+    const bd = beforeItem.d.uploadedAt?.toDate ? beforeItem.d.uploadedAt.toDate().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
+    const ad = afterItem.d.uploadedAt?.toDate  ? afterItem.d.uploadedAt.toDate().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
+    document.getElementById('ba-date-before').textContent = bd;
+    document.getElementById('ba-date-after').textContent  = ad;
+    wRow.style.display = '';
+  } else {
+    wRow.style.display = 'none';
+  }
+
+  initBaSlider();
+}
+
+// ── SLIDER DRAG ──
+function setBaDivider(pct) {
+  pct = Math.max(5, Math.min(95, pct));
+  const div = document.getElementById('ba-divider');
+  const wrap = document.getElementById('ba-before-wrap');
+  if (div)  div.style.left  = pct + '%';
+  if (wrap) wrap.style.width = pct + '%';
+  // Stretch before image to fill the clip
+  const imgB = document.getElementById('ba-img-before');
+  if (imgB) {
+    const containerW = document.getElementById('ba-slider-wrap')?.offsetWidth || 400;
+    imgB.style.width = (containerW) + 'px';
+  }
+}
+
+function initBaSlider() {
+  const wrap = document.getElementById('ba-slider-wrap');
+  if (!wrap || wrap._sliderInit) return;
+  wrap._sliderInit = true;
+  setBaDivider(50);
+
+  const getPct = (clientX) => {
+    const rect = wrap.getBoundingClientRect();
+    return ((clientX - rect.left) / rect.width) * 100;
+  };
+
+  let dragging = false;
+  const onMove = (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    setBaDivider(getPct(x));
+  };
+  const onUp = () => { dragging = false; };
+
+  // Mouse
+  wrap.addEventListener('mousedown', (e) => { dragging = true; setBaDivider(getPct(e.clientX)); });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  // Touch
+  wrap.addEventListener('touchstart', (e) => { dragging = true; setBaDivider(getPct(e.touches[0].clientX)); }, { passive: true });
+  wrap.addEventListener('touchmove', (e) => { if(dragging){ e.preventDefault(); setBaDivider(getPct(e.touches[0].clientX)); } }, { passive: false });
+  wrap.addEventListener('touchend', onUp);
 }
 
 async function loadHomePhotoStrip() {
@@ -5346,14 +7120,10 @@ function setProgSubtab(sub) {
   document.getElementById('prog-panel-checkin').style.display = sub==='checkin' ? 'block' : 'none';
   const tabPhotos  = document.getElementById('subtab-photos');
   const tabCheckin = document.getElementById('subtab-checkin');
-  if (sub==='photos') {
-    tabPhotos.style.color='#c9a84c'; tabPhotos.style.borderBottomColor='#c9a84c';
-    tabCheckin.style.color='#555';   tabCheckin.style.borderBottomColor='transparent';
-  } else {
-    tabCheckin.style.color='#c9a84c'; tabCheckin.style.borderBottomColor='#c9a84c';
-    tabPhotos.style.color='#555';    tabPhotos.style.borderBottomColor='transparent';
-    loadCheckinHistory();
-  }
+  [tabPhotos, tabCheckin].forEach(t => { if(t){t.style.color='#555'; t.style.borderBottomColor='transparent';} });
+  const active = {photos:tabPhotos, checkin:tabCheckin}[sub];
+  if (active) { active.style.color='#c9a84c'; active.style.borderBottomColor='#c9a84c'; }
+  if (sub==='checkin') loadCheckinHistory();
 }
 
 // ─────────────────────────────────────────
@@ -6121,6 +7891,38 @@ let nutrCatFilter     = 'All';
 let nutrSearchTimer   = null;
 let nutrSearchResultsCache = [];
 
+// ── MIDNIGHT RESET ──────────────────────────────────────────────────────────
+// Tracks what "today" was the last time we checked, so we can detect a date rollover.
+let nutrLastKnownDate = nutrDateKey(new Date());
+
+function nutrCheckDateRollover() {
+  const realToday = nutrDateKey(new Date());
+  if (realToday === nutrLastKnownDate) return; // same day, nothing to do
+  nutrLastKnownDate = realToday;
+
+  // Only auto-jump to the new day if the user was already viewing "today"
+  // (i.e. what was today before midnight — now yesterday)
+  const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return nutrDateKey(d); })();
+  if (nutrDateKey(nutrCurrentDate) === yesterday) {
+    nutrCurrentDate = new Date(); // snap to real today
+    const uid = (typeof auth !== 'undefined') && auth.currentUser?.uid;
+    if (uid) {
+      nutrLoadDayLogs(uid, realToday).then(() => renderNutritionTab());
+    } else {
+      renderNutritionTab();
+    }
+  }
+}
+
+// Poll every 60 s so we catch the rollover even if the tab sits open overnight
+setInterval(nutrCheckDateRollover, 60000);
+
+// Also fire the moment the user brings the tab back into focus
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') nutrCheckDateRollover();
+});
+// ────────────────────────────────────────────────────────────────────────────
+
 function nutrDateKey(d) { return d.toISOString().slice(0,10); }
 
 function nutrFormatDate(d) {
@@ -6159,6 +7961,12 @@ async function nutrLoadDayLogs(uid, dateKey) {
     NUTR_MEALS.forEach(m => nutrFoodLogs[dateKey][m] = []);
     snap.docs.forEach(doc => {
       const d = doc.data();
+      if (d.assignedByCoach) {
+        // These live in the Assigned Plan section only, not in meal slots
+        if (!nutrFoodLogs[dateKey].__assigned__) nutrFoodLogs[dateKey].__assigned__ = [];
+        nutrFoodLogs[dateKey].__assigned__.push({...d, logId: doc.id});
+        return;
+      }
       const meal = d.mealSlot || d.mealName || 'Lunch';
       const slot = NUTR_MEALS.includes(meal) ? meal : 'Lunch';
       if (!nutrFoodLogs[dateKey][slot]) nutrFoodLogs[dateKey][slot] = [];
@@ -6171,12 +7979,12 @@ function nutrGetDayTotals(dateKey) {
   const day = nutrFoodLogs[dateKey] || {};
   let cal=0, p=0, c=0, f=0, fi=0;
   Object.values(day).forEach(items => items.forEach(item => {
-    const ratio = (item.servingG || item.serving_size_g || 100) / (item.serving_size_g || 100);
-    cal += (item.calories||0) * ratio;
-    p   += (item.protein_g||item.protein||0) * ratio;
-    c   += (item.carbs_g||item.carbs||0) * ratio;
-    f   += (item.fat_g||item.fats||0) * ratio;
-    fi  += (item.fiber_g||0) * ratio;
+    // Macros are already pre-scaled at save time — no ratio needed
+    cal += (item.calories||0);
+    p   += (item.protein_g||item.protein||0);
+    c   += (item.carbs_g||item.carbs||0);
+    f   += (item.fat_g||item.fats||0);
+    fi  += (item.fiber_g||0);
   }));
   return {cal:Math.round(cal), p:Math.round(p), c:Math.round(c), f:Math.round(f), fi:Math.round(fi)};
 }
@@ -6220,11 +8028,11 @@ function renderNutritionTab() {
 function nutrMealTotals(items) {
   let cal=0,p=0,c=0,f=0;
   items.forEach(item => {
-    const ratio = (item.servingG||item.serving_size_g||100) / (item.serving_size_g||100);
-    cal += (item.calories||0)*ratio;
-    p   += (item.protein_g||item.protein||0)*ratio;
-    c   += (item.carbs_g||item.carbs||0)*ratio;
-    f   += (item.fat_g||item.fats||0)*ratio;
+    // Macros are already pre-scaled at save time — no ratio needed
+    cal += (item.calories||0);
+    p   += (item.protein_g||item.protein||0);
+    c   += (item.carbs_g||item.carbs||0);
+    f   += (item.fat_g||item.fats||0);
   });
   return {cal:Math.round(cal),p:Math.round(p),c:Math.round(c),f:Math.round(f)};
 }
@@ -6253,11 +8061,11 @@ function renderNutrMealSections(dateKey) {
       <div style="background:#0d0d0d;border:1px solid #1a1a1a;border-radius:14px;overflow:hidden;">
         ${items.map((item,idx) => {
           const g = item.servingG || item.serving_size_g || 100;
-          const r = g / (item.serving_size_g || 100);
-          const cal = Math.round((item.calories||0)*r);
-          const p   = Math.round((item.protein_g||item.protein||0)*r);
-          const c   = Math.round((item.carbs_g||item.carbs||0)*r);
-          const fa  = Math.round((item.fat_g||item.fats||0)*r);
+          // Macros already pre-scaled — use stored values directly
+          const cal = Math.round(item.calories||0);
+          const p   = Math.round(item.protein_g||item.protein||0);
+          const c   = Math.round(item.carbs_g||item.carbs||0);
+          const fa  = Math.round(item.fat_g||item.fats||0);
           return `
           <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;${idx>0?'border-top:1px solid #161616;':''}">
             <div style="flex:1;min-width:0;">
@@ -6276,12 +8084,92 @@ function renderNutrMealSections(dateKey) {
 function renderNutrAssignedPlan() {
   const el = document.getElementById('nutr-assigned-plan');
   if (!el) return;
-  if (!nutrPlan) { el.innerHTML = '<div style="color:#444;font-size:13px;padding:16px 0;text-align:center;">No meal plan assigned yet.</div>'; return; }
-  el.innerHTML = `
-    <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:14px;padding:14px 16px;">
+
+  const dateKey = nutrDateKey(nutrCurrentDate);
+  const assigned = (nutrFoodLogs[dateKey]?.__assigned__) || [];
+  const day = nutrFoodLogs[dateKey] || {};
+
+  // Build a map of food_name (lowercase) → total grams already logged in meal slots today
+  const loggedGramsMap = {};
+  NUTR_MEALS.forEach(meal => {
+    (day[meal] || []).forEach(item => {
+      const key = (item.food_name || '').toLowerCase().trim();
+      if (key) loggedGramsMap[key] = (loggedGramsMap[key] || 0) + (item.servingG || item.serving_size_g || 100);
+    });
+  });
+
+  // Macro target summary header
+  const planHeader = nutrPlan ? `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);">
       <div style="font-size:13px;font-weight:700;color:#c9a84c;">${nutrPlan.planName||'My Plan'}</div>
-      <div style="font-size:11px;color:#555;margin-top:3px;">P:${nutrPlan.protein||0}g · C:${nutrPlan.carbs||0}g · F:${nutrPlan.fats||0}g · ${nutrPlan.calories||0} kcal</div>
-      ${nutrPlan.notes?`<div style="font-size:12px;color:#666;margin-top:6px;font-style:italic;">"${nutrPlan.notes}"</div>`:''}
+      <div style="font-size:11px;color:#555;">P:${nutrPlan.protein||0}g · C:${nutrPlan.carbs||0}g · F:${nutrPlan.fats||0}g · ${nutrPlan.calories||0} kcal</div>
+    </div>` : '';
+
+  if (!assigned.length && !nutrPlan) {
+    el.innerHTML = '<div style="color:#444;font-size:13px;padding:16px 0;text-align:center;">No meal plan assigned yet.</div>';
+    return;
+  }
+
+  const foodRows = assigned.map((item, idx) => {
+    const assignedG = item.servingG || item.serving_size_g || 100;
+    const foodKey   = (item.food_name || '').toLowerCase().trim();
+    const loggedG   = loggedGramsMap[foodKey] || 0;
+    const remainG   = Math.max(0, assignedG - loggedG);
+    const isDone    = remainG === 0;
+
+    // Scale macros to remaining grams
+    const ratio     = assignedG > 0 ? remainG / assignedG : 0;
+    const cal       = Math.round((item.calories||0) * ratio);
+    const p         = Math.round((item.protein_g||item.protein||0) * ratio);
+    const c         = Math.round((item.carbs_g||item.carbs||0) * ratio);
+    const fa        = Math.round((item.fat_g||item.fats||0) * ratio);
+
+    const servingLabel = item.serving_label ? `${assignedG}g (${item.serving_label})` : `${assignedG}g`;
+
+    // Progress bar width
+    const progressPct = assignedG > 0 ? Math.min(100, Math.round(loggedG / assignedG * 100)) : 0;
+
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;${idx>0?'border-top:1px solid #161616;':''}${isDone?'opacity:0.5;':''}">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:13px;color:${isDone?'#555':'#ddd'};font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${isDone?'text-decoration:line-through;':''}">${item.food_name||'Food'}</div>
+            ${isDone ? '<span style="font-size:10px;background:rgba(61,203,114,0.12);color:#3DCB72;border:1px solid rgba(61,203,114,0.25);border-radius:4px;padding:1px 6px;letter-spacing:0.4px;font-weight:700;flex-shrink:0;">✓ DONE</span>' : ''}
+          </div>
+          <div style="font-size:11px;color:#444;margin-top:2px;">
+            ${isDone
+              ? `All ${assignedG}g eaten · P:${Math.round(item.protein_g||item.protein||0)} C:${Math.round(item.carbs_g||item.carbs||0)} F:${Math.round(item.fat_g||item.fats||0)} · ${Math.round(item.calories||0)} kcal`
+              : `${loggedG > 0 ? `${loggedG}g eaten · ` : ''}${servingLabel} assigned · P:${p} C:${c} F:${fa} · ${cal} kcal remaining`
+            }
+          </div>
+          ${loggedG > 0 && !isDone ? `
+          <div style="margin-top:6px;height:3px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${progressPct}%;background:linear-gradient(90deg,#c9a84c,#e8c96a);border-radius:3px;transition:width 0.4s ease;"></div>
+          </div>` : ''}
+          ${isDone ? `
+          <div style="margin-top:6px;height:3px;background:rgba(61,203,114,0.15);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:100%;background:#3DCB72;border-radius:3px;"></div>
+          </div>` : ''}
+        </div>
+        <div style="flex-shrink:0;${isDone
+          ? 'background:rgba(61,203,114,0.08);border:1px solid rgba(61,203,114,0.2);'
+          : remainG < assignedG && remainG > 0
+            ? 'background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);'
+            : 'background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);'
+          }border-radius:8px;padding:5px 10px;text-align:center;min-width:52px;">
+          <div style="font-size:14px;font-weight:700;color:${isDone?'#3DCB72':'#c9a84c'};line-height:1;">${isDone ? '0g' : remainG + 'g'}</div>
+          <div style="font-size:9px;color:${isDone?'#2a8a50':'#7a6a3a'};letter-spacing:0.5px;text-transform:uppercase;margin-top:2px;">${isDone ? 'done' : 'needed'}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15);border-radius:14px;padding:14px 16px;">
+      ${planHeader}
+      ${assigned.length ? `
+        <div style="font-size:11px;color:#555;margin-bottom:8px;">Grams needed per food item</div>
+        <div style="background:#0d0d0d;border:1px solid #1a1a1a;border-radius:12px;overflow:hidden;">${foodRows}</div>
+      ` : '<div style="color:#555;font-size:12px;text-align:center;padding:10px 0;">No foods assigned for today.</div>'}
     </div>`;
 }
 
@@ -6712,6 +8600,57 @@ async function nutrConfirmAdd() {
   }
 }
 
+// Log a coach-assigned food to a client-chosen meal slot
+function nutrLogAssignedFood(logId) {
+  const dateKey = nutrDateKey(nutrCurrentDate);
+  const item = (nutrFoodLogs[dateKey]?.__assigned__ || []).find(i => i.logId === logId);
+  if (!item) return;
+
+  // Build a simple meal-picker overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'assign-meal-picker';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1100;display:flex;align-items:flex-end;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="width:100%;max-width:480px;background:#0f0f0f;border-radius:20px 20px 0 0;border:1px solid #1f1f1f;padding:20px 20px 32px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:700;color:#e8e8e8;">Log "${item.food_name}" to…</div>
+        <button onclick="document.getElementById('assign-meal-picker').remove()" style="background:none;border:none;color:#555;cursor:pointer;font-size:20px;">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${NUTR_MEALS.map(meal => `
+          <button onclick="nutrConfirmLogAssigned('${logId}','${meal}')"
+            style="display:flex;align-items:center;gap:12px;background:#141414;border:1px solid #222;border-radius:12px;padding:12px 16px;color:#ddd;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;transition:border-color 0.15s;"
+            onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='#222'">
+            <span style="font-size:18px;">${MEAL_ICONS[meal]||'🍽'}</span>${meal}
+          </button>`).join('')}
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+async function nutrConfirmLogAssigned(logId, meal) {
+  document.getElementById('assign-meal-picker')?.remove();
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+  const dateKey = nutrDateKey(nutrCurrentDate);
+  const item = (nutrFoodLogs[dateKey]?.__assigned__ || []).find(i => i.logId === logId);
+  if (!item) return;
+  try {
+    // Update the existing doc: add mealSlot, remove assignedByCoach flag
+    await db.collection('members').doc(uid).collection('mealLogs').doc(logId).update({
+      mealSlot: meal, mealName: meal, assignedByCoach: false,
+      loggedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Move it from __assigned__ into the proper meal bucket locally
+    nutrFoodLogs[dateKey].__assigned__ = nutrFoodLogs[dateKey].__assigned__.filter(i => i.logId !== logId);
+    if (!nutrFoodLogs[dateKey][meal]) nutrFoodLogs[dateKey][meal] = [];
+    nutrFoodLogs[dateKey][meal].push({...item, mealSlot: meal, assignedByCoach: false});
+    renderNutritionTab();
+    showToast('✅ Logged to ' + meal);
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
 async function nutrDeleteLog(logId, meal) {
   const uid = auth.currentUser?.uid;
   if (!uid) return;
@@ -6740,6 +8679,304 @@ function showClientToast(msg) {
   t.style.opacity = '1';
   setTimeout(() => { t.style.opacity = '0'; setTimeout(()=>t.remove(),300); }, 2500);
 }
+</script>
+
+
+<script>
+function uploadWtSetUnit(u) {
+  const kg  = document.getElementById('upload-wt-kg');
+  const lbs = document.getElementById('upload-wt-lbs');
+  if (!kg || !lbs) return;
+  kg.style.background  = u==='kg'  ? 'rgba(201,168,76,0.2)' : 'transparent';
+  kg.style.color       = u==='kg'  ? '#c9a84c' : '#555';
+  lbs.style.background = u==='lbs' ? 'rgba(201,168,76,0.2)' : 'transparent';
+  lbs.style.color      = u==='lbs' ? '#c9a84c' : '#555';
+}
+</script>
+
+<!-- ═══ INCOMING CALL BANNER ═══ -->
+<div id="incoming-call-banner">
+  <div class="inc-call-ring">📞</div>
+  <div class="inc-call-info">
+    <div class="inc-call-title">Incoming Call</div>
+    <div class="inc-call-sub" id="inc-call-from">Your Coach</div>
+  </div>
+  <div class="inc-call-actions">
+    <button class="inc-accept" onclick="acceptCall()" title="Accept">✓</button>
+    <button class="inc-decline" onclick="declineCall()" title="Decline">✕</button>
+  </div>
+</div>
+
+<!-- ═══ ACTIVE CALL OVERLAY (Client) ═══ -->
+<div id="client-call-overlay">
+  <div class="cli-call-card">
+    <div class="cli-call-avatar" id="cli-call-avatar">🏋️</div>
+    <div class="cli-call-name" id="cli-call-name">Your Coach</div>
+    <div class="cli-call-status" id="cli-call-status">Connected</div>
+    <div class="cli-call-timer" id="cli-call-timer"></div>
+    <div class="cli-call-controls">
+      <button class="cli-ctrl mute" id="cli-mute-btn" onclick="cliToggleMute()" title="Mute">🎙️</button>
+      <button class="cli-ctrl end" onclick="cliEndCall()" title="End call">📵</button>
+      <button class="cli-ctrl mute" id="cli-speaker-btn" onclick="cliToggleSpeaker()" title="Speaker">🔊</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  LIVEKIT CALL — CLIENT SIDE
+// ═══════════════════════════════════════════════════
+
+const CLI_LK_URL     = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
+const CLI_LK_API_KEY = 'APINy8wg8sjumEe';
+const CLI_LK_SECRET  = 'Gt6UJZQxNBNeKau7FaoJ2ffJHFdeKJhrhKOkQZv3hcxB';
+
+let cliLkRoom = null;
+let cliCallTimerInterval = null;
+let cliCallSeconds = 0;
+let cliIsMuted = false;
+let pendingCallDoc = null;   // Firestore doc ID
+let callListenerUnsub = null;
+
+async function generateCliLkToken(roomName, participantIdentity) {
+  const header  = { alg: 'HS256', typ: 'JWT' };
+  const now     = Math.floor(Date.now() / 1000);
+  const payload = {
+    iss: CLI_LK_API_KEY,
+    sub: participantIdentity,
+    jti: participantIdentity + '_' + now,
+    iat: now,
+    exp: now + 3600,
+    nbf: now,
+    video: {
+      room: roomName,
+      roomJoin: true,
+      canPublish: true,
+      canSubscribe: true,
+      canPublishData: true
+    }
+  };
+  const enc = txt => new TextEncoder().encode(txt);
+  const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const hdrB64  = btoa(JSON.stringify(header)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const payB64  = btoa(JSON.stringify(payload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const signing = hdrB64 + '.' + payB64;
+  const key = await crypto.subtle.importKey(
+    'raw', enc(CLI_LK_SECRET), { name:'HMAC', hash:'SHA-256' }, false, ['sign']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, enc(signing));
+  return signing + '.' + b64url(sig);
+}
+
+// ── Listen for incoming calls after login ──
+function startCallListener(uid) {
+  if (callListenerUnsub) callListenerUnsub();
+  callListenerUnsub = db.collection('callRequests')
+    .where('calleeUid', '==', uid)
+    .where('status', '==', 'ringing')
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          pendingCallDoc = change.doc.id;
+          showIncomingCallBanner(d.callerName || 'Your Coach');
+        }
+      });
+    });
+}
+
+function showIncomingCallBanner(callerName) {
+  document.getElementById('inc-call-from').textContent = callerName;
+  const banner = document.getElementById('incoming-call-banner');
+  banner.classList.add('active');
+  // Vibrate if supported
+  if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+  // Auto-dismiss after 30s
+  setTimeout(() => {
+    if (banner.classList.contains('active')) declineCall();
+  }, 30000);
+}
+
+async function acceptCall() {
+  const callerName = document.getElementById('inc-call-from').textContent || 'Your Coach';
+  document.getElementById('incoming-call-banner').classList.remove('active');
+  if (!pendingCallDoc) return;
+  const uid = currentUid || auth.currentUser?.uid;
+  try {
+    await db.collection('callRequests').doc(pendingCallDoc).update({ status: 'accepted' });
+  } catch(e) {}
+  // Show active call UI
+  document.getElementById('cli-call-name').textContent = callerName;
+  document.getElementById('client-call-overlay').classList.add('active');
+  document.getElementById('cli-call-status').textContent = 'Connecting…';
+  // Join room
+  await cliJoinRoom(pendingCallDoc, 'client_' + uid);
+  document.getElementById('cli-call-status').textContent = 'Connected';
+  cliStartTimer();
+  // Listen for coach ending
+  db.collection('callRequests').doc(pendingCallDoc).onSnapshot(snap => {
+    const d = snap.data();
+    if (d && (d.status === 'ended' || d.status === 'missed')) {
+      cliCleanupCall();
+    }
+  });
+}
+
+async function declineCall() {
+  document.getElementById('incoming-call-banner').classList.remove('active');
+  if (!pendingCallDoc) return;
+  try {
+    await db.collection('callRequests').doc(pendingCallDoc).update({ status: 'rejected' });
+  } catch(e) {}
+  pendingCallDoc = null;
+}
+
+async function cliJoinRoom(roomName, identity) {
+  try {
+    const token = await generateCliLkToken(roomName, identity);
+    cliLkRoom = new LivekitClient.Room({
+      adaptiveStream: true,
+      dynacast: true,
+      audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+    cliLkRoom.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => { cliEndCall(); });
+    cliLkRoom.on(LivekitClient.RoomEvent.Disconnected, () => { cliCleanupCall(); });
+    cliLkRoom.on(LivekitClient.RoomEvent.TrackSubscribed, (track) => {
+      if (track.kind === LivekitClient.Track.Kind.Audio) {
+        const el = track.attach();
+        el.setAttribute('data-lk-cli', '1');
+        el.style.display = 'none';
+        document.body.appendChild(el);
+      }
+    });
+    await cliLkRoom.connect(CLI_LK_URL, token);
+    await cliLkRoom.localParticipant.setMicrophoneEnabled(true);
+  } catch(e) {
+    showToast('Call error: ' + e.message);
+    cliCleanupCall();
+  }
+}
+
+function cliStartTimer() {
+  cliCallSeconds = 0;
+  cliCallTimerInterval = setInterval(() => {
+    cliCallSeconds++;
+    const m = String(Math.floor(cliCallSeconds/60)).padStart(2,'0');
+    const s = String(cliCallSeconds%60).padStart(2,'0');
+    document.getElementById('cli-call-timer').textContent = m + ':' + s;
+  }, 1000);
+}
+
+async function cliToggleMute() {
+  if (!cliLkRoom) return;
+  cliIsMuted = !cliIsMuted;
+  await cliLkRoom.localParticipant.setMicrophoneEnabled(!cliIsMuted);
+  const btn = document.getElementById('cli-mute-btn');
+  btn.textContent = cliIsMuted ? '🔇' : '🎙️';
+  btn.classList.toggle('active', cliIsMuted);
+}
+
+function cliToggleSpeaker() {
+  document.querySelectorAll('audio[data-lk-cli]').forEach(a => { a.muted = !a.muted; });
+  const btn = document.getElementById('cli-speaker-btn');
+  btn.classList.toggle('active');
+  btn.textContent = btn.classList.contains('active') ? '🔇' : '🔊';
+}
+
+async function cliEndCall() {
+  if (pendingCallDoc) {
+    db.collection('callRequests').doc(pendingCallDoc).update({ status: 'ended' }).catch(()=>{});
+  }
+  if (cliLkRoom) { try { await cliLkRoom.disconnect(); } catch(_){} cliLkRoom = null; }
+  cliCleanupCall();
+}
+
+function cliCleanupCall() {
+  if (cliCallTimerInterval) { clearInterval(cliCallTimerInterval); cliCallTimerInterval = null; }
+  if (cliLkRoom) { try { cliLkRoom.disconnect(); } catch(_){} cliLkRoom = null; }
+  document.querySelectorAll('audio[data-lk-cli]').forEach(a => a.remove());
+  document.getElementById('client-call-overlay').classList.remove('active');
+  document.getElementById('incoming-call-banner').classList.remove('active');
+  cliIsMuted = false;
+  cliCallSeconds = 0;
+  pendingCallDoc = null;
+  // Reset call button
+  const btn = document.getElementById('client-call-btn');
+  if (btn) { btn.style.background='rgba(74,222,128,0.08)'; btn.style.borderColor='rgba(74,222,128,0.25)'; btn.style.color='#4ade80'; btn.title='Voice call your coach'; }
+}
+
+// ── Client-initiated call (client calls coach) ──
+let cliOutgoingCallUnsub = null;
+
+async function clientInitiateCall() {
+  const uid = currentUid || auth.currentUser?.uid;
+  if (!uid) { showToast('Please sign in first'); return; }
+  if (cliLkRoom || pendingCallDoc) { showToast('Already in a call'); return; }
+
+  const coachUid = COACH_FIXED_UID;
+  const roomName = ['call', uid, coachUid].sort().join('_');
+  pendingCallDoc = roomName;
+
+  // Show calling state on overlay
+  document.getElementById('client-call-overlay').classList.add('active');
+  document.getElementById('cli-call-status').textContent = 'Calling…';
+  document.getElementById('cli-call-timer').textContent = '';
+
+  // Update call button to in-call state
+  const btn = document.getElementById('client-call-btn');
+  if (btn) { btn.style.background='rgba(248,113,113,0.15)'; btn.style.borderColor='rgba(248,113,113,0.4)'; btn.style.color='#f87171'; btn.title='In call'; }
+
+  // Write call request to Firestore
+  try {
+    await db.collection('callRequests').doc(roomName).set({
+      roomName,
+      callerUid: uid,
+      callerName: 'Member',
+      calleeUid: coachUid,
+      status: 'ringing',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { showToast('Call failed: ' + e.message); cliCleanupCall(); return; }
+
+  // Listen for coach accepting / rejecting
+  cliOutgoingCallUnsub = db.collection('callRequests').doc(roomName).onSnapshot(async snap => {
+    const d = snap.data();
+    if (!d) return;
+    if (d.status === 'accepted') {
+      if (cliOutgoingCallUnsub) { cliOutgoingCallUnsub(); cliOutgoingCallUnsub = null; }
+      document.getElementById('cli-call-status').textContent = 'Connected';
+      cliStartTimer();
+      await cliJoinRoom(roomName, 'client_' + uid);
+    } else if (d.status === 'rejected' || d.status === 'ended' || d.status === 'missed') {
+      if (cliOutgoingCallUnsub) { cliOutgoingCallUnsub(); cliOutgoingCallUnsub = null; }
+      showToast(d.status === 'rejected' ? 'Call declined' : 'Call ended');
+      cliCleanupCall();
+    }
+  });
+
+  // Auto-cancel after 30s if no answer
+  setTimeout(() => {
+    if (!cliLkRoom && pendingCallDoc === roomName) {
+      db.collection('callRequests').doc(roomName).update({ status: 'missed' }).catch(()=>{});
+      if (cliOutgoingCallUnsub) { cliOutgoingCallUnsub(); cliOutgoingCallUnsub = null; }
+      showToast('No answer');
+      cliCleanupCall();
+    }
+  }, 30000);
+}
+
+// Hook into auth state — start call listener after login/auto-login
+// Uses firebase auth directly so it works on page refresh AND explicit login
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    startCallListener(user.uid);
+  } else {
+    // User signed out — stop listener
+    if (callListenerUnsub) { callListenerUnsub(); callListenerUnsub = null; }
+    cliCleanupCall();
+  }
+});
 </script>
 
 </body>
