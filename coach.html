@@ -252,12 +252,13 @@
     transition: all 0.15s;
   }
   .modal-close:hover { border-color: rgba(248,113,113,0.4); color: var(--red); }
-  .modal-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .modal-tabs { display: flex; border-bottom: 1px solid var(--border); gap: 4px; padding: 0 8px; }
   .modal-tab {
-    padding: 12px 18px; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase;
+    padding: 14px 16px; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase;
     color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
-    transition: all 0.15s; font-weight: 600;
+    transition: all 0.15s; font-weight: 700;
   }
+  .modal-tab:hover { color: var(--text); }
   .modal-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
   .modal-body { padding: 22px; max-height: 65vh; overflow-y: auto; }
   .modal-panel { display: none; }
@@ -278,14 +279,40 @@
   .log-table tr:hover td { background: var(--bg3); }
   .log-badge { font-size: 10px; padding: 3px 10px; border-radius: 100px; font-weight: 700; }
   .log-badge.done { background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .log-table tr.log-summary-row { cursor: pointer; }
+  .log-table tr.log-summary-row:hover td { background: var(--bg3); }
+  .log-table tr.log-summary-row td:first-child { padding-left: 10px; }
+  .log-expand-btn { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 0 4px; transition: transform 0.2s; line-height: 1; }
+  .log-expand-btn.open { transform: rotate(90deg); color: var(--gold); }
+  .log-detail-row { display: none; }
+  .log-detail-row.open { display: table-row; }
+  .log-detail-cell { padding: 0 12px 12px 32px !important; background: var(--bg3) !important; }
+  .log-ex-detail-block { margin-bottom: 10px; }
+  .log-ex-detail-name { font-size: 12px; font-weight: 600; color: var(--gold); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; }
+  .log-set-detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .log-set-detail-table th { color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 8px; text-align: left; font-weight: 600; }
+  .log-set-detail-table td { padding: 3px 8px; color: var(--text2); }
+  .log-set-detail-table tr.set-done td { color: var(--text); }
+  .log-set-detail-table tr.set-skipped td { color: var(--text3); text-decoration: line-through; }
+  .log-set-done-badge { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 4px; }
+  .log-set-skip-badge { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--text3); margin-right: 4px; }
 
   /* photo grid */
-  .photo-grid-sm { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .photo-thumb { aspect-ratio: 3/4; border-radius: 10px; overflow: hidden; cursor: pointer; border: 1px solid var(--border); transition: all 0.15s; }
-  .photo-thumb:hover { border-color: rgba(212,168,67,0.3); transform: scale(1.02); }
+  .photo-grid-sm { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .photo-thumb { aspect-ratio: 3/4; border-radius: 12px; overflow: hidden; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s; position: relative; }
+  .photo-thumb:hover { border-color: rgba(201,168,76,0.45); transform: scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
   .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .photo-thumb-meta { padding: 6px 8px; background: var(--bg3); }
   .photo-thumb-date { font-size: 10px; color: var(--muted); }
+  /* angle badge — larger, high contrast, positioned top-left */
+  .photo-angle-badge {
+    position: absolute; top: 8px; left: 8px;
+    font-size: 9px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    background: rgba(0,0,0,0.72); color: #fff;
+    padding: 4px 9px; border-radius: 6px;
+    backdrop-filter: blur(4px);
+    pointer-events: none;
+  }
 
   /* ── DASHBOARD PHOTO FEED ── */
   .dash-photo-feed {
@@ -1052,14 +1079,17 @@
 
   /* client schedule info in modal */
   .client-schedule-info {
-    background: rgba(212,168,67,0.05); border: 1px solid rgba(212,168,67,0.15);
-    border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 18px; margin-bottom: 16px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
   }
-  .csi-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
-  .csi-val { font-size: 13px; font-weight: 600; color: var(--gold); }
-  .csi-status-ok { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 3px; }
-  .csi-status-late { font-size: 11px; color: var(--red); font-weight: 600; margin-top: 3px; }
+  .csi-label { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
+  .csi-val { font-size: 15px; font-weight: 700; color: var(--gold); letter-spacing: -0.3px; }
+  .csi-status-ok { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--green); font-weight: 600; margin-top: 4px; }
+  .csi-status-ok::before { content: '✓'; font-weight: 800; }
+  .csi-status-late { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--red); font-weight: 600; margin-top: 4px; }
+  .csi-right { text-align: right; }
+  .csi-right .csi-val { color: var(--text); }
 
   /* ════════════════════════════════════
      PREMIUM OVERRIDES — EVOLVE COACH
@@ -2632,6 +2662,35 @@
 .call-btn:hover { background: rgba(74,222,128,0.22); transform: scale(1.05); }
 .call-btn.in-call { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.4); color: #f87171; }
 
+/* ── Video call elements (coach) ── */
+#coach-remote-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  background: #000;
+  display: none;
+  border-radius: 20px;
+}
+#coach-local-video {
+  position: absolute;
+  bottom: 130px; right: 16px;
+  width: 110px; height: 82px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: #111;
+  display: none;
+  z-index: 10;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.coach-video-active #coach-remote-video { display: block; }
+.coach-video-active #coach-local-video  { display: block; }
+.coach-video-active .call-avatar        { display: none; }
+.coach-video-active .call-name          { opacity: 0.75; font-size: 14px; }
+.coach-cam-btn { background: rgba(255,255,255,0.10) !important; border-color: rgba(255,255,255,0.25) !important; }
+.coach-cam-btn.cam-off { background: rgba(248,113,113,0.2) !important; border-color: rgba(248,113,113,0.5) !important; color: #f87171 !important; }
+
 /* Active call overlay */
 #call-overlay {
   display: none;
@@ -2719,12 +2778,283 @@
 <!-- LiveKit Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
 
+<style>
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — COACH DASHBOARD
+   Mobile-first overrides for phones, tablets, desktops
+   ═══════════════════════════════════════════════════════ */
+
+/* Mobile topbar (visible only on small screens) */
+#mobile-topbar {
+  display: none;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: 56px;
+  background: #08070C;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+}
+#mobile-topbar .mob-brand {
+  flex: 1;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800; font-size: 20px; letter-spacing: 2px;
+  background: linear-gradient(135deg, #EDD07A, #C9A84C);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+#mob-hamburger {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: transparent; border: 1px solid rgba(255,255,255,0.08);
+  color: #e8e8e8; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.15s;
+}
+#mob-hamburger:hover { background: rgba(255,255,255,0.06); }
+
+/* Sidebar overlay (tap-to-close backdrop) */
+#sidebar-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65); z-index: 149;
+  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+}
+#sidebar-overlay.open { display: block; }
+
+/* ── Mobile bottom tab bar ── */
+#coach-mobile-tabs {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+  background: #08070C;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  justify-content: space-around;
+  align-items: center;
+}
+.cmt-tab {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 12px; border-radius: 10px; cursor: pointer;
+  transition: all 0.15s; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.3px; color: rgba(100,95,90,0.8);
+  font-family: 'Outfit', sans-serif; min-width: 52px;
+  border: none; background: transparent;
+}
+.cmt-tab .cmt-icon { font-size: 20px; line-height: 1; }
+.cmt-tab.active { color: #C9A84C; }
+.cmt-tab.active .cmt-icon { filter: drop-shadow(0 0 6px rgba(201,168,76,0.5)); }
+.cmt-tab:hover { background: rgba(255,255,255,0.03); color: #e8e8e8; }
+
+/* ── Tablet (1024px and below) ── */
+@media (max-width: 1024px) {
+  :root { --sidebar-w: 210px; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .page { padding: 1.5rem !important; }
+  .client-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)) !important; }
+  .nutr-builder-layout, .builder-layout { grid-template-columns: 1fr !important; }
+}
+
+/* ── Mobile (768px and below) ── */
+@media (max-width: 768px) {
+  /* Show mobile chrome */
+  #mobile-topbar { display: flex; }
+  #coach-mobile-tabs { display: flex; }
+
+  /* Body offset for top + bottom bars */
+  #app.visible { flex-direction: column; }
+  .main {
+    margin-left: 0 !important;
+    padding-top: 56px;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+    min-height: 100vh;
+  }
+
+  /* Sidebar becomes off-canvas drawer */
+  .sidebar {
+    position: fixed !important; top: 0 !important; left: 0 !important; bottom: 0 !important;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.22,1,0.36,1);
+    z-index: 150 !important;
+    width: 280px !important;
+    overflow-y: auto;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  /* Pages */
+  .page { padding: 1rem !important; }
+  .page-header { margin-bottom: 1rem; }
+
+  /* Grids collapse */
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+  .client-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .info-grid { grid-template-columns: 1fr !important; }
+  .builder-layout { grid-template-columns: 1fr !important; }
+  .nutr-builder-layout { grid-template-columns: 1fr !important; }
+  .nutr-grid { grid-template-columns: 1fr !important; }
+  .photo-grid-sm { grid-template-columns: repeat(4, 1fr) !important; }
+
+  /* Chat layout stacks */
+  .chat-layout {
+    grid-template-columns: 1fr !important;
+    height: calc(100vh - 140px) !important;
+  }
+  .chat-list {
+    height: 200px !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    flex-shrink: 0 !important;
+  }
+  .chat-window { flex: 1 !important; min-height: 0; }
+
+  /* Modals full screen on mobile */
+  .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .modal {
+    max-width: 100% !important; width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92vh !important; overflow-y: auto !important;
+    margin: 0 !important;
+  }
+
+  /* Client card actions wrap */
+  .client-actions { flex-wrap: wrap; }
+  .client-actions .btn { flex: 1; min-width: 80px; text-align: center; }
+
+  /* Workout builder */
+  .pt-layout { grid-template-columns: 1fr !important; }
+  .pt-sidebar, .pt-main-area { width: 100% !important; }
+
+  /* Calendar */
+  .fcal-header { flex-wrap: wrap; gap: 8px; }
+
+  /* Progress photos grid */
+  .photo-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Topbar page-header inline actions stack */
+  .page-header { flex-wrap: wrap !important; gap: 10px !important; }
+  .page-header-actions { flex-wrap: wrap !important; gap: 8px !important; }
+
+  /* Toast at bottom above tab bar */
+  .toast { bottom: calc(70px + env(safe-area-inset-bottom)) !important; }
+
+  /* Incoming call banner raise above tabs */
+  #coach-incoming-call-banner { bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+  #call-overlay { z-index: 9999 !important; }
+}
+
+/* ── Small phones (480px and below) ── */
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .client-stats { grid-template-columns: 1fr 1fr !important; }
+  .page { padding: 0.75rem !important; }
+  .page-header { padding: 0 !important; }
+  .cmt-tab { padding: 6px 8px; min-width: 44px; font-size: 9px; }
+  .modal-tabs { overflow-x: auto; }
+  .modal-tab { font-size: 10px !important; padding: 10px 12px !important; white-space: nowrap; }
+  .nutr-macro-targets { grid-template-columns: 1fr 1fr !important; }
+  .food-row { grid-template-columns: 1fr !important; }
+  .meal-item-row { grid-template-columns: 1fr !important; }
+}
+
+/* ── Landscape phone ── */
+@media (max-width: 768px) and (orientation: landscape) {
+  .main { padding-top: 48px; }
+  #mobile-topbar { height: 48px; }
+  .page { padding: 0.75rem !important; }
+  .stat-grid { grid-template-columns: repeat(4, 1fr) !important; }
+  .chat-layout { height: calc(100vh - 110px) !important; }
+  .chat-list { height: 160px !important; }
+}
+
+/* ── Overflow protection globally ── */
+html, body { max-width: 100%; overflow-x: hidden; }
+* { box-sizing: border-box; }
+img, video, iframe { max-width: 100%; }
+
+/* ── iOS anti-zoom: inputs must be 16px minimum on mobile ── */
+@media (max-width: 768px) {
+  input, textarea, select { font-size: 16px !important; }
+}
+
+/* ── Touch device improvements ── */
+@media (hover: none) and (pointer: coarse) {
+  button, .nav-item, .cmt-tab, [onclick] {
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+  }
+  /* Bigger touch targets */
+  .nav-item { padding: 12px 1.4rem; }
+  .cmt-tab { min-height: 48px; }
+  .modal-close { width: 40px !important; height: 40px !important; }
+  /* Scrollable areas */
+  .modal { -webkit-overflow-scrolling: touch; }
+  .chat-list-items { -webkit-overflow-scrolling: touch; }
+  .sidebar-nav { -webkit-overflow-scrolling: touch; }
+}
+
+/* ── Safe area support (iPhone notch/home bar) ── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  #coach-mobile-tabs {
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  }
+  .main {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+</style>
+
 </head>
 <body>
 
-<!-- ══════════════════════════════
-     AUTH SCREEN
-══════════════════════════════ -->
+<!-- ── MOBILE TOPBAR ── -->
+<div id="mobile-topbar">
+  <button id="mob-hamburger" onclick="toggleMobileSidebar()" aria-label="Menu">☰</button>
+  <div class="mob-brand">EVOLVE</div>
+  <div style="width:40px"></div>
+</div>
+
+<!-- ── SIDEBAR OVERLAY (tap to close) ── -->
+<div id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+<!-- ── MOBILE BOTTOM TAB BAR ── -->
+<div id="coach-mobile-tabs">
+  <button class="cmt-tab active" id="cmt-dashboard" onclick="showPage('dashboard');setActiveTab('dashboard')">
+    <span class="cmt-icon">🏠</span>Home
+  </button>
+  <button class="cmt-tab" id="cmt-clients" onclick="showPage('clients');setActiveTab('clients')">
+    <span class="cmt-icon">👥</span>Clients
+  </button>
+  <button class="cmt-tab" id="cmt-chat" onclick="showPage('chat');setActiveTab('chat')">
+    <span class="cmt-icon">💬</span>Messages
+  </button>
+  <button class="cmt-tab" id="cmt-workouts" onclick="showPage('workouts');setActiveTab('workouts')">
+    <span class="cmt-icon">💪</span>Workouts
+  </button>
+  <button class="cmt-tab" id="cmt-more" onclick="toggleMobileSidebar()">
+    <span class="cmt-icon">⋯</span>More
+  </button>
+</div>
+
+<script>
+function toggleMobileSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeMobileSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+function setActiveTab(page) {
+  document.querySelectorAll('.cmt-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('cmt-' + page);
+  if (tab) tab.classList.add('active');
+  closeMobileSidebar();
+}
+// Patch showPage to also update bottom tabs
+const _origShowPage = typeof showPage === 'function' ? showPage : null;
+document.addEventListener('DOMContentLoaded', () => {
+  // Re-patch after all scripts loaded
+});
+</script>
+
+
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">EVOLVE</div>
@@ -3502,15 +3832,15 @@
             <div class="csi-val" id="m-schedule-day">—</div>
             <div id="m-schedule-status"></div>
           </div>
-          <div style="text-align:right">
+          <div class="csi-right">
             <div class="csi-label">Next Due</div>
             <div class="csi-val" id="m-schedule-next">—</div>
           </div>
         </div>
         <!-- View toggle -->
-        <div style="display:flex;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:14px">
-          <button id="coach-pvt-grid" onclick="setCoachPhotoView('grid')" style="flex:1;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;border:none;background:var(--gold);color:#0a0a0a;transition:all 0.15s;font-family:'Inter',sans-serif;">📸 All Photos</button>
-          <button id="coach-pvt-compare" onclick="setCoachPhotoView('compare')" style="flex:1;padding:7px 10px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all 0.15s;font-family:'Inter',sans-serif;">⚖️ Before &amp; After</button>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button id="coach-pvt-grid" onclick="setCoachPhotoView('grid')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;cursor:pointer;border:none;background:var(--gold);color:#0a0a0a;transition:all 0.18s;font-family:'Outfit','Inter',sans-serif;box-shadow:0 4px 14px rgba(201,168,76,0.25)"><span style="font-size:14px">🖼️</span> All Photos</button>
+          <button id="coach-pvt-compare" onclick="setCoachPhotoView('compare')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all 0.18s;font-family:'Outfit','Inter',sans-serif;"><span style="font-size:14px">⚖️</span> Before &amp; After</button>
         </div>
         <!-- Photo grid -->
         <div class="photo-grid-sm" id="m-photo-grid"></div>
@@ -3559,7 +3889,7 @@
       </div>
       <div class="modal-panel" id="mp-logs">
         <table class="log-table" id="m-log-table">
-          <thead><tr><th>Date</th><th>Workout</th><th>Sets</th><th>Reps</th><th>Volume</th><th>Status</th></tr></thead>
+          <thead><tr><th style="width:28px"></th><th>Date</th><th>Workout</th><th>Sets</th><th>Reps</th><th>Volume</th><th>Status</th></tr></thead>
           <tbody id="m-log-body"></tbody>
         </table>
       </div>
@@ -4712,6 +5042,11 @@ function showPage(page) {
   if (page==='progress') { renderPtClientList(); }
   if (page==='dashboard') loadDashboardPhotos();
   if (page==='nutrition') initNutritionPage();
+  // Sync mobile bottom tabs
+  document.querySelectorAll('.cmt-tab').forEach(t => t.classList.remove('active'));
+  const mTab = document.getElementById('cmt-' + page);
+  if (mTab) mTab.classList.add('active');
+  closeMobileSidebar();
 }
 
 // ─────────────────────────────────────────
@@ -4942,16 +5277,50 @@ function switchModalTab(tab) {
 
 async function loadClientLogs(uid) {
   const tbody = document.getElementById('m-log-body');
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr>';
   try {
     const snap = await db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(20).get();
     if (snap.empty) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">No workout logs yet</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No workout logs yet</td></tr>';
       return;
     }
-    tbody.innerHTML = snap.docs.map(d=>{
+    let html = '';
+    snap.docs.forEach((d, idx) => {
       const l = d.data();
-      return `<tr>
+      const rowId = 'log-detail-' + idx;
+      const btnId = 'log-btn-' + idx;
+      const hasDetail = l.exercises && l.exercises.length > 0;
+
+      // Build per-exercise breakdown HTML
+      let detailHTML = '';
+      if (hasDetail) {
+        detailHTML = l.exercises.map(ex => {
+          const sets = ex.sets || [];
+          const doneSets = sets.filter(s => s.done);
+          const setRows = sets.map((s, si) => {
+            const isDone = s.done;
+            const wt = s.weight > 0 ? s.weight + ' kg' : '—';
+            const rp = s.reps > 0 ? s.reps : '—';
+            return `<tr class="${isDone ? 'set-done' : 'set-skipped'}">
+              <td><span class="${isDone ? 'log-set-done-badge' : 'log-set-skip-badge'}"></span>Set ${si+1}</td>
+              <td>${wt}</td>
+              <td>${rp}</td>
+              <td style="color:${isDone ? 'var(--green)' : 'var(--text3)'};font-size:10px;letter-spacing:0.5px">${isDone ? 'DONE' : 'SKIP'}</td>
+            </tr>`;
+          }).join('');
+          return `<div class="log-ex-detail-block">
+            <div class="log-ex-detail-name">${ex.name||'Exercise'} <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">${doneSets.length}/${sets.length} sets</span></div>
+            <table class="log-set-detail-table">
+              <thead><tr><th>Set</th><th>Weight</th><th>Reps</th><th>Status</th></tr></thead>
+              <tbody>${setRows}</tbody>
+            </table>
+            ${ex.note ? '<div style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:4px">Note: ' + ex.note + '</div>' : ''}
+          </div>`;
+        }).join('');
+      }
+
+      html += `<tr class="log-summary-row" onclick="${hasDetail ? 'toggleLogDetail(\'' + rowId + '\',\'' + btnId + '\')' : ''}">
+        <td><button class="log-expand-btn" id="${btnId}" style="${hasDetail ? '' : 'visibility:hidden'}">▶</button></td>
         <td>${fmtDate(l.completedAt)}</td>
         <td style="font-weight:500">${l.workoutName||'—'}</td>
         <td>${l.totalSets||0}</td>
@@ -4959,10 +5328,26 @@ async function loadClientLogs(uid) {
         <td>${l.totalVolume||0} kg</td>
         <td><span class="log-badge done">Completed</span></td>
       </tr>`;
-    }).join('');
+
+      if (hasDetail) {
+        html += `<tr class="log-detail-row" id="${rowId}">
+          <td class="log-detail-cell" colspan="7">${detailHTML}</td>
+        </tr>`;
+      }
+    });
+    tbody.innerHTML = html;
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--red);padding:20px">${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px">${e.message}</td></tr>`;
   }
+}
+
+function toggleLogDetail(rowId, btnId) {
+  const row = document.getElementById(rowId);
+  const btn = document.getElementById(btnId);
+  if (!row) return;
+  const isOpen = row.classList.contains('open');
+  row.classList.toggle('open', !isOpen);
+  if (btn) btn.classList.toggle('open', !isOpen);
 }
 
 async function loadClientPhotos(uid) {
@@ -4994,20 +5379,20 @@ async function loadClientPhotos(uid) {
 
     grid.innerHTML = '';
     sorted.forEach((session, idx) => {
-      let sessionLabel, labelColor;
-      if (total === 1) { sessionLabel = 'Before'; labelColor = 'var(--gold)'; }
-      else if (idx === 0) { sessionLabel = 'After — Current'; labelColor = 'var(--green)'; }
-      else if (idx === total - 1) { sessionLabel = 'Before'; labelColor = 'var(--blue)'; }
-      else { sessionLabel = `Check-in ${total - 1 - idx}`; labelColor = 'var(--gold)'; }
+      let sessionLabel, labelBg, labelColor;
+      if (total === 1) { sessionLabel = 'Before'; labelBg = 'rgba(90,159,239,0.15)'; labelColor = 'var(--blue)'; }
+      else if (idx === 0) { sessionLabel = 'After — Current'; labelBg = 'rgba(61,203,114,0.12)'; labelColor = 'var(--green)'; }
+      else if (idx === total - 1) { sessionLabel = 'Before'; labelBg = 'rgba(90,159,239,0.15)'; labelColor = 'var(--blue)'; }
+      else { sessionLabel = `Check-in ${total - 1 - idx}`; labelBg = 'var(--gold-dim)'; labelColor = 'var(--gold)'; }
 
       const header = document.createElement('div');
-      header.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:10px 0 6px;margin-top:' + (idx?'4px':'0');
+      header.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:12px 0 8px;margin-top:' + (idx?'10px':'0');
       const w = session.photos[0]?.d?.weight;
       const wu = session.photos[0]?.d?.weightUnit || 'kg';
       header.innerHTML = `
-        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:${labelColor};background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:3px 10px">${sessionLabel}</span>
-        ${w ? `<span style="font-size:10px;color:var(--gold);font-weight:700">⚖️ ${w} ${wu}</span>` : ''}
-        <span style="font-size:10px;color:var(--muted)">${session.dateLabel}</span>
+        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:${labelColor};background:${labelBg};border:1px solid ${labelColor.replace('var(--','rgba(').replace(')',',0.25)')};border-radius:6px;padding:4px 10px">${sessionLabel}</span>
+        ${w ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--gold);font-weight:700;background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:100px;padding:3px 10px">⚖️ ${w} ${wu}</span>` : ''}
+        <span style="font-size:11px;color:var(--muted)">${session.dateLabel}</span>
         <div style="flex:1;height:1px;background:var(--border)"></div>`;
       grid.appendChild(header);
 
@@ -5016,9 +5401,8 @@ async function loadClientPhotos(uid) {
         const angleMap = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
         const cell = document.createElement('div');
         cell.className = 'photo-thumb';
-        cell.style.cssText = 'position:relative;';
-        const angBadge = d.angle ? `<div style="position:absolute;top:6px;left:6px;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;background:rgba(0,0,0,0.7);color:#c9a84c;padding:2px 7px;border-radius:100px">${angleMap[d.angle]||d.angle}</div>` : '';
-        cell.innerHTML = `<img src="${src}" alt="Progress photo" loading="lazy">${angBadge}<div class="photo-thumb-meta"><div class="photo-thumb-date">${fmtDate(d.uploadedAt)}</div></div>`;
+        const angBadge = d.angle ? `<div class="photo-angle-badge">${angleMap[d.angle]||d.angle}</div>` : '';
+        cell.innerHTML = `<img src="${src}" alt="Progress photo" loading="lazy">${angBadge}`;
         cell.onclick = () => openLightboxById(docc.id, fmtDate(d.uploadedAt), d.note||'');
         grid.appendChild(cell);
       });
@@ -5039,12 +5423,16 @@ function setCoachPhotoView(view) {
     grid.style.display = '';
     ba.style.display   = 'none';
     btnG.style.background = 'var(--gold)'; btnG.style.color = '#0a0a0a';
+    btnG.style.border = 'none'; btnG.style.boxShadow = '0 4px 14px rgba(201,168,76,0.25)';
     btnC.style.background = 'transparent'; btnC.style.color = 'var(--muted)';
+    btnC.style.border = '1px solid var(--border)'; btnC.style.boxShadow = 'none';
   } else {
     grid.style.display = 'none';
     ba.style.display   = '';
     btnG.style.background = 'transparent'; btnG.style.color = 'var(--muted)';
+    btnG.style.border = '1px solid var(--border)'; btnG.style.boxShadow = 'none';
     btnC.style.background = 'var(--gold)'; btnC.style.color = '#0a0a0a';
+    btnC.style.border = 'none'; btnC.style.boxShadow = '0 4px 14px rgba(201,168,76,0.25)';
   }
 }
 
@@ -5421,8 +5809,42 @@ function addExerciseToPlan() {
 }
 
 function removeExercise(i) {
-  workoutPlan[currentDay].exercises.splice(i,1);
+  workoutPlan[currentDay].exercises.splice(i, 1);
   renderExerciseList();
+  updateBuilderSummary();
+  // Auto-save to Firebase so the client sees the removal immediately
+  autoSavePlanToFirebase();
+}
+
+async function autoSavePlanToFirebase() {
+  const clientUid = document.getElementById('assign-client-select').value;
+  if (!clientUid) return; // no client selected — nothing to push
+
+  try {
+    // Build the plan the same way assignWorkoutToClient() does
+    const plan = {};
+    Object.entries(workoutPlan).forEach(([day, d]) => {
+      if (d.exercises.length) {
+        plan[day] = { name: d.name || day + ' Workout', exercises: d.exercises };
+      }
+    });
+
+    await db.collection('members').doc(clientUid).set({
+      assignedWorkoutPlan: plan,
+      workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      workoutAssignedBy: coachUid
+    }, { merge: true });
+
+    const totalEx = Object.values(plan).reduce((s, d) => s + d.exercises.length, 0);
+    if (totalEx === 0) {
+      showToast('Exercise removed — plan is now empty.', 'info');
+    } else {
+      showToast('Exercise removed and plan updated.', 'success');
+    }
+  } catch (e) {
+    showToast('Error saving change: ' + e.message);
+    console.error('[autoSavePlanToFirebase]', e);
+  }
 }
 
 function updateDayCounts() {
@@ -5788,7 +6210,7 @@ function openChatWith(clientUid) {
         <div class="chat-topbar-name">${clientFullName.trim()}</div>
         <div class="chat-topbar-status">● Online</div>
       </div>
-      <button class="call-btn" title="Start voice call" onclick="initiateCall('${clientUid}','${clientFullName.trim()}')">📞</button>
+      <button class="call-btn" title="Start video call" onclick="initiateCall('${clientUid}','${clientFullName.trim()}')">📷</button>
     </div>
     <div class="chat-messages" id="chat-messages-area"></div>
     <div class="chat-input-area">
@@ -11208,6 +11630,8 @@ function closeNutrLightbox() {
 
 <!-- ═══ LIVEKIT CALL OVERLAY (Coach) ═══ -->
 <div id="call-overlay">
+  <video id="coach-remote-video" autoplay playsinline></video>
+  <video id="coach-local-video"  autoplay playsinline muted onclick="coachPipFlip()"></video>
   <div class="call-card">
     <div class="call-quality" id="call-quality-indicator"></div>
     <div class="call-avatar" id="call-avatar-initials">?</div>
@@ -11216,6 +11640,7 @@ function closeNutrLightbox() {
     <div class="call-timer" id="call-timer"></div>
     <div class="call-controls">
       <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()" title="Mute">🎙️</button>
+      <button class="ctrl-btn coach-cam-btn" id="coach-cam-btn" onclick="coachToggleCamera()" title="Camera">📷</button>
       <button class="ctrl-btn end" onclick="endCall()" title="End call">📵</button>
       <button class="ctrl-btn mute" id="speaker-btn" onclick="toggleSpeaker()" title="Speaker">🔊</button>
     </div>
@@ -11333,11 +11758,35 @@ async function joinLkRoom(roomName, identity) {
         const el = track.attach();
         el.style.display = 'none';
         document.body.appendChild(el);
+      } else if (track.kind === LivekitClient.Track.Kind.Video) {
+        const remoteVid = document.getElementById('coach-remote-video');
+        track.attach(remoteVid);
+        document.getElementById('call-overlay').classList.add('coach-video-active');
+      }
+    });
+    lkRoom.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
+      if (track.kind === LivekitClient.Track.Kind.Video) {
+        const remoteVid = document.getElementById('coach-remote-video');
+        track.detach(remoteVid);
+        document.getElementById('call-overlay').classList.remove('coach-video-active');
       }
     });
 
     await lkRoom.connect(LK_URL, token);
     await lkRoom.localParticipant.setMicrophoneEnabled(true);
+    // Enable camera (optional)
+    try {
+      await lkRoom.localParticipant.setCameraEnabled(true);
+      const localVid  = document.getElementById('coach-local-video');
+      const camTrack  = lkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
+      if (camTrack && camTrack.track) {
+        camTrack.track.attach(localVid);
+        localVid.style.display = 'block';
+        document.getElementById('coach-cam-btn').classList.remove('cam-off');
+      }
+    } catch(camErr) {
+      document.getElementById('coach-cam-btn').classList.add('cam-off');
+    }
     document.getElementById('call-quality-indicator').innerHTML = '🟢 Live';
   } catch(e) {
     showToast('Call failed: ' + e.message);
@@ -11387,6 +11836,36 @@ function toggleSpeaker() {
   btn.textContent = btn.classList.contains('active') ? '🔇' : '🔊';
 }
 
+let coachCamEnabled = true;
+async function coachToggleCamera() {
+  if (!lkRoom) return;
+  coachCamEnabled = !coachCamEnabled;
+  const btn = document.getElementById('coach-cam-btn');
+  const localVid = document.getElementById('coach-local-video');
+  try {
+    await lkRoom.localParticipant.setCameraEnabled(coachCamEnabled);
+    if (coachCamEnabled) {
+      const camTrack = lkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
+      if (camTrack && camTrack.track) {
+        camTrack.track.attach(localVid);
+        localVid.style.display = 'block';
+      }
+      btn.textContent = '📷';
+      btn.classList.remove('cam-off');
+    } else {
+      localVid.style.display = 'none';
+      btn.textContent = '🚫';
+      btn.classList.add('cam-off');
+    }
+  } catch(e) { showToast('Camera error: ' + e.message); }
+}
+
+function coachPipFlip() {
+  const v = document.getElementById('coach-local-video');
+  if (v.style.left) { v.style.left=''; v.style.right='16px'; }
+  else { v.style.right=''; v.style.left='16px'; }
+}
+
 async function endCall() {
   // Outgoing call (coach initiated): room = sorted[coachUid, clientUid]
   if (activeChatCallUid) {
@@ -11403,17 +11882,25 @@ function cleanupCall() {
   if (lkRoom) { try { lkRoom.disconnect(); } catch(_){} lkRoom = null; }
   // Remove attached audio elements
   document.querySelectorAll('audio[data-lk]').forEach(a => a.remove());
-  document.getElementById('call-overlay').classList.remove('active');
+  // Clean up video elements
+  const remoteVid = document.getElementById('coach-remote-video');
+  const localVid  = document.getElementById('coach-local-video');
+  if (remoteVid) { remoteVid.srcObject = null; remoteVid.style.display = 'none'; }
+  if (localVid)  { localVid.srcObject = null;  localVid.style.display = 'none'; }
+  document.getElementById('call-overlay').classList.remove('active', 'coach-video-active');
   document.getElementById('coach-incoming-call-banner').classList.remove('active');
   document.getElementById('call-quality-indicator').innerHTML = '';
   isMuted = false;
+  coachCamEnabled = true;
   callSeconds = 0;
   activeChatCallUid = null;
   coachPendingCallDoc = null;
   coachPendingCallerUid = null;
+  const camBtn = document.getElementById('coach-cam-btn');
+  if (camBtn) { camBtn.textContent = '📷'; camBtn.classList.remove('cam-off'); }
   // Reset call button state
   const btn = document.querySelector('.call-btn');
-  if (btn) { btn.classList.remove('in-call'); btn.title = 'Start voice call'; }
+  if (btn) { btn.classList.remove('in-call'); btn.title = 'Start video call'; }
 }
 
 // ═══════════════════════════════════════════════════
