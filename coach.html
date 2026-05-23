@@ -2688,6 +2688,32 @@
 .ctrl-btn.end:hover { background: #ef4444; transform: scale(1.05); }
 .ctrl-btn:hover:not(.end) { background: rgba(255,255,255,0.12); transform: scale(1.05); }
 .call-quality { position: absolute; top: 14px; right: 16px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+/* Incoming call banner (coach side — when client calls) */
+#coach-incoming-call-banner {
+  display: none;
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  z-index: 9980;
+  background: #121212;
+  border: 1px solid rgba(74,222,128,0.35);
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(74,222,128,0.1);
+  min-width: 280px; max-width: 320px;
+  animation: slideUpCoach 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+#coach-incoming-call-banner.active { display: flex; align-items: center; gap: 12px; }
+@keyframes slideUpCoach { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+.coach-inc-ring { width: 42px; height: 42px; border-radius: 50%; background: rgba(74,222,128,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; animation: ringPulseCoach 0.8s ease-in-out infinite; }
+@keyframes ringPulseCoach { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+.coach-inc-info { flex: 1; }
+.coach-inc-title { font-size: 13px; font-weight: 700; color: #e8e8e8; }
+.coach-inc-sub { font-size: 11px; color: #888; margin-top: 2px; }
+.coach-inc-actions { display: flex; gap: 8px; }
+.coach-inc-accept { background: #4ade80; color: #0a0a0a; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+.coach-inc-accept:hover { transform: scale(1.1); }
+.coach-inc-decline { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
+.coach-inc-decline:hover { transform: scale(1.1); background: rgba(248,113,113,0.25); }
 </style>
 
 <!-- LiveKit Client SDK -->
@@ -4590,6 +4616,8 @@ function bootApp() {
   loadAllClients();
   listenForUnreadMessages();
   loadCloudinaryMedia();
+  // Start listening for incoming calls from clients
+  startCoachCallListener();
 }
 
 async function checkFirestoreAccess() {
@@ -11165,6 +11193,19 @@ function closeNutrLightbox() {
   </div>
 </div>
 
+<!-- ═══ INCOMING CALL BANNER (Coach — when client calls) ═══ -->
+<div id="coach-incoming-call-banner">
+  <div class="coach-inc-ring">📞</div>
+  <div class="coach-inc-info">
+    <div class="coach-inc-title">Incoming Call</div>
+    <div class="coach-inc-sub" id="coach-inc-call-from">A member</div>
+  </div>
+  <div class="coach-inc-actions">
+    <button class="coach-inc-accept" onclick="coachAcceptIncomingCall()" title="Accept">✓</button>
+    <button class="coach-inc-decline" onclick="coachDeclineIncomingCall()" title="Decline">✕</button>
+  </div>
+</div>
+
 <!-- ═══ LIVEKIT CALL OVERLAY (Coach) ═══ -->
 <div id="call-overlay">
   <div class="call-card">
@@ -11347,6 +11388,7 @@ function toggleSpeaker() {
 }
 
 async function endCall() {
+  // Outgoing call (coach initiated): room = sorted[coachUid, clientUid]
   if (activeChatCallUid) {
     const roomName = ['call', coachUid, activeChatCallUid].sort().join('_');
     db.collection('callRequests').doc(roomName).update({ status: 'ended' }).catch(()=>{});
@@ -11362,13 +11404,103 @@ function cleanupCall() {
   // Remove attached audio elements
   document.querySelectorAll('audio[data-lk]').forEach(a => a.remove());
   document.getElementById('call-overlay').classList.remove('active');
+  document.getElementById('coach-incoming-call-banner').classList.remove('active');
   document.getElementById('call-quality-indicator').innerHTML = '';
   isMuted = false;
   callSeconds = 0;
   activeChatCallUid = null;
+  coachPendingCallDoc = null;
+  coachPendingCallerUid = null;
   // Reset call button state
   const btn = document.querySelector('.call-btn');
   if (btn) { btn.classList.remove('in-call'); btn.title = 'Start voice call'; }
+}
+
+// ═══════════════════════════════════════════════════
+//  INCOMING CALL LISTENER — coach receives client calls
+// ═══════════════════════════════════════════════════
+
+let coachIncomingCallUnsub = null;
+let coachPendingCallDoc = null;
+let coachPendingCallerUid = null;
+
+function startCoachCallListener() {
+  if (coachIncomingCallUnsub) coachIncomingCallUnsub();
+  coachIncomingCallUnsub = db.collection('callRequests')
+    .where('calleeUid', '==', COACH_FIXED_UID)
+    .where('status', '==', 'ringing')
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          coachPendingCallDoc = change.doc.id;
+          coachPendingCallerUid = d.callerUid;
+          showCoachIncomingBanner(d.callerName || 'A member');
+        }
+      });
+    });
+}
+
+function showCoachIncomingBanner(callerName) {
+  document.getElementById('coach-inc-call-from').textContent = callerName;
+  const banner = document.getElementById('coach-incoming-call-banner');
+  banner.classList.add('active');
+  if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
+  // Auto-dismiss after 30s
+  setTimeout(() => {
+    if (banner.classList.contains('active')) coachDeclineIncomingCall();
+  }, 30000);
+}
+
+async function coachAcceptIncomingCall() {
+  document.getElementById('coach-incoming-call-banner').classList.remove('active');
+  if (!coachPendingCallDoc) return;
+  if (lkRoom) { showToast('Already in a call'); return; }
+
+  const roomName = coachPendingCallDoc;
+  const callerUid = coachPendingCallerUid;
+
+  // Find caller name from allClients if available
+  const clientObj = (typeof allClients !== 'undefined' ? allClients : [])
+    .find(c => c.uid === callerUid);
+  const callerLabel = clientObj
+    ? ((clientObj.firstName || '') + ' ' + (clientObj.lastName || '')).trim()
+    : 'Member';
+
+  // Update Firestore status → accepted
+  try {
+    await db.collection('callRequests').doc(roomName).update({ status: 'accepted' });
+  } catch(e) { showToast('Could not accept: ' + e.message); return; }
+
+  // Show coach call overlay
+  showCallOverlay(callerLabel, 'Connecting…');
+  activeChatCallUid = callerUid;
+
+  // Join room as coach
+  await joinLkRoom(roomName, 'coach_' + COACH_FIXED_UID);
+  updateCallStatus('Connected');
+  startCallTimer();
+
+  // Listen for client ending the call
+  callUnsub = db.collection('callRequests').doc(roomName).onSnapshot(snap => {
+    const d = snap.data();
+    if (d && (d.status === 'ended' || d.status === 'missed')) {
+      cleanupCall();
+    }
+  });
+
+  coachPendingCallDoc = null;
+  coachPendingCallerUid = null;
+}
+
+async function coachDeclineIncomingCall() {
+  document.getElementById('coach-incoming-call-banner').classList.remove('active');
+  if (!coachPendingCallDoc) return;
+  try {
+    await db.collection('callRequests').doc(coachPendingCallDoc).update({ status: 'rejected' });
+  } catch(e) {}
+  coachPendingCallDoc = null;
+  coachPendingCallerUid = null;
 }
 </script>
 
