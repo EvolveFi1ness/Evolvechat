@@ -572,6 +572,33 @@
   }
   .add-set-btn:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); background: rgba(201,168,76,0.04); }
 
+  /* ── WORKOUT COMPLETED STATE ── */
+  .wkt-completed-banner {
+    background: linear-gradient(135deg, rgba(61,203,114,0.12) 0%, rgba(61,203,114,0.06) 100%);
+    border: 1px solid rgba(61,203,114,0.3);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    margin: 1rem;
+  }
+  .wkt-completed-icon { font-size: 48px; margin-bottom: 10px; }
+  .wkt-completed-title { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: #3DCB72; margin-bottom: 6px; }
+  .wkt-completed-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+  .wkt-completed-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 16px; }
+  .wkt-completed-stat { text-align: center; }
+  .wkt-completed-stat-val { font-size: 22px; font-weight: 700; color: var(--text); font-family: 'Outfit', sans-serif; }
+  .wkt-completed-stat-lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+  .wkt-completed-ex-list { text-align: left; margin-top: 14px; }
+  .wkt-completed-ex-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .wkt-completed-ex-row:last-child { border-bottom: none; }
+  .wkt-completed-check { width: 20px; height: 20px; border-radius: 50%; background: rgba(61,203,114,0.15); border: 1px solid rgba(61,203,114,0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: #3DCB72; }
+  .wkt-completed-ex-name { flex: 1; font-weight: 500; color: var(--text); }
+  .wkt-completed-ex-detail { font-size: 11px; color: var(--muted); }
+  .log-ex-card.locked { pointer-events: none; opacity: 0.6; filter: grayscale(0.3); }
+  .log-ex-card.locked .set-done-btn { display: none; }
+  .log-ex-card.locked .set-input { background: var(--bg3) !important; cursor: default; }
+  .log-ex-card.locked .add-set-btn { display: none; }
+
   .log-note-wrap { padding: 2px 14px 12px; }
   .log-note {
     width: 100%; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
@@ -3758,6 +3785,37 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
 .inc-decline { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
 .inc-decline:hover { transform: scale(1.1); background: rgba(248,113,113,0.25); }
 
+/* ── Video call elements (client) ── */
+#cli-remote-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  background: #000;
+  display: none;
+  border-radius: 20px;
+}
+#cli-local-video {
+  position: absolute;
+  bottom: 130px; right: 16px;
+  width: 110px; height: 82px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: #111;
+  display: none;
+  z-index: 10;
+  cursor: pointer;
+  transform-origin: bottom right;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+#cli-local-video.pip-hidden { opacity: 0; pointer-events: none; }
+.cli-video-overlay-active #cli-remote-video { display: block; }
+.cli-video-overlay-active #cli-local-video  { display: block; }
+.cli-video-overlay-active .cli-call-avatar  { display: none; }
+.cli-video-overlay-active .cli-call-name    { opacity: 0.75; font-size: 14px; }
+.cli-cam-btn { background: rgba(255,255,255,0.10) !important; border-color: rgba(255,255,255,0.25) !important; }
+.cli-cam-btn.cam-off { background: rgba(248,113,113,0.2) !important; border-color: rgba(248,113,113,0.5) !important; color: #f87171 !important; }
+
 /* Active call overlay (client) */
 #client-call-overlay {
   display: none;
@@ -3798,6 +3856,154 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
 
 <!-- LiveKit Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE — CLIENT APP
+   Fixes for phones, tablets, and all screen sizes
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Large desktop (1280px+) ── */
+@media (min-width: 1280px) {
+  .website-body { grid-template-columns: 280px 1fr; }
+  .web-main { padding: 2.5rem 3.5rem; }
+  .stat-strip { grid-template-columns: repeat(4, 1fr) !important; }
+}
+
+/* ── Standard desktop (1024px–1279px) ── */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .website-body { grid-template-columns: 240px 1fr; }
+  .web-main { padding: 2rem 2.5rem; }
+  .stat-strip { grid-template-columns: repeat(4, 1fr) !important; }
+}
+
+/* ── Tablet landscape (769px–1023px) ── */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .website-body { grid-template-columns: 200px 1fr; }
+  .web-main { padding: 1.5rem 1.75rem; }
+  .stat-strip { grid-template-columns: repeat(3, 1fr) !important; }
+  .web-sidebar { padding: 1.5rem 1rem; }
+  .sidebar-nav-item { font-size: 13px; padding: 8px 8px; }
+  .home-topbar { padding: 0 1.5rem !important; }
+  .web-nav { margin: 0 1.5rem; gap: 2px; }
+  .web-nav-item { padding: 7px 10px; font-size: 12px; }
+  #tab-chat-panel > div:last-child { height: calc(100vh - 280px) !important; }
+}
+
+/* ── Mobile (max 768px) — already handled, but strengthen ── */
+@media (max-width: 768px) {
+  /* Topbar tighter */
+  .home-topbar { padding: 0 1rem !important; height: 56px !important; }
+  .home-topbar .brand { font-size: 22px !important; }
+
+  /* Chat panel better height on mobile */
+  #tab-chat-panel > div:last-child {
+    height: calc(100vh - 200px) !important;
+    margin: 0 0.75rem !important;
+  }
+
+  /* Stat strip 2-up on small phones */
+  .stat-strip { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+
+  /* Workout log table scrollable */
+  .log-ex-row {
+    grid-template-columns: 28px 1fr 60px 60px 32px !important;
+    font-size: 12px !important;
+  }
+
+  /* Progress angle grid 2-col */
+  .angle-upload-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* Nutrition detail modal full height */
+  #nutr-detail-modal > div { border-radius: 20px 20px 0 0 !important; }
+  #nutr-search-modal { border-radius: 0 !important; }
+
+  /* Onboarding card full width */
+  .card { width: 100% !important; max-width: 100% !important; border-radius: 0 !important; min-height: 100vh !important; }
+
+  /* Calendar FAB */
+  .cal-fab { right: 16px !important; bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+
+  /* Incoming call banner above nav */
+  #incoming-call-banner { bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
+
+  /* Overflow protection */
+  .web-main { overflow-x: hidden; }
+  [style*="display:grid"], [style*="display: grid"] { min-width: 0; }
+}
+
+/* ── Small phones (max 480px) ── */
+@media (max-width: 480px) {
+  .stat-strip { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+  .home-topbar { height: 52px !important; }
+  .home-topbar .brand { font-size: 20px !important; }
+
+  /* Log table — hide set column, keep essentials */
+  .log-ex-row { grid-template-columns: 22px 1fr 58px 58px 28px !important; }
+  .log-ex-header { grid-template-columns: 22px 1fr 58px 58px 28px !important; }
+
+  /* Bottom nav labels smaller */
+  .bottom-nav { padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); }
+  .nav-tab { font-size: 9px !important; gap: 2px !important; }
+
+  /* Chat message input area */
+  #client-chat-input { font-size: 14px !important; } /* prevent iOS zoom */
+
+  /* Nutrition ring smaller */
+  #nutr-ring-wrap { transform: scale(0.85); transform-origin: center; }
+}
+
+/* ── Very small phones (max 360px) ── */
+@media (max-width: 360px) {
+  .stat-strip { grid-template-columns: 1fr 1fr !important; }
+  .web-main { padding: 0.75rem !important; }
+  .home-topbar .brand { font-size: 18px !important; }
+  .sidebar-user-name { font-size: 12px !important; }
+}
+
+/* ── iOS safe area support ── */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .bottom-nav {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* ── Touch improvements ── */
+@media (hover: none) and (pointer: coarse) {
+  /* Bigger tap targets */
+  .sidebar-nav-item { padding: 11px 10px; }
+  .nav-tab { min-width: 48px; }
+  .web-nav-item { padding: 10px 14px; }
+  button, [onclick] { -webkit-tap-highlight-color: transparent; }
+
+  /* No hover effects on touch */
+  .sidebar-nav-item:hover { background: transparent; border-color: transparent; }
+}
+
+/* ── Landscape phone fix ── */
+@media (max-width: 768px) and (orientation: landscape) {
+  #tab-chat-panel > div:last-child { height: calc(100vh - 160px) !important; }
+  .stat-strip { grid-template-columns: repeat(4, 1fr) !important; }
+  .bottom-nav { padding: 4px 0 calc(4px + env(safe-area-inset-bottom)); }
+  .home-topbar { height: 48px !important; }
+  .web-main { padding: 0.75rem 1rem !important; }
+}
+
+/* ── Prevent horizontal scroll globally ── */
+html, body { max-width: 100%; overflow-x: hidden; }
+* { box-sizing: border-box; }
+img, video, iframe { max-width: 100%; }
+
+/* ── iOS anti-zoom: all inputs must be 16px on mobile ── */
+@media (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  /* but keep visual font smaller via scale trick for compact inputs */
+  .set-input { font-size: 16px !important; }
+  #client-chat-input { font-size: 16px !important; }
+}
+</style>
 
 </head>
 <body>
@@ -4443,7 +4649,7 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
             <div style="font-size:14px;font-weight:700;color:#e8e8e8;font-family:'DM Sans',sans-serif">Your Coach</div>
             <div id="client-chat-coach-status" style="font-size:11px;color:#4ade80;margin-top:1px">● Online</div>
           </div>
-          <button id="client-call-btn" onclick="clientInitiateCall()" title="Voice call your coach"
+          <button id="client-call-btn" onclick="clientInitiateCall()" title="Video call your coach"
             style="width:38px;height:38px;border-radius:50%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);color:#4ade80;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0">
             📞
           </button>
@@ -5515,14 +5721,26 @@ function loadHomeScreen(data) {
       const newPlan = updated.assignedWorkoutPlan || {};
       const planJSON = JSON.stringify(newPlan);
       if (window._lastAssignedPlanJSON !== undefined && window._lastAssignedPlanJSON !== planJSON) {
-        // Plan changed — re-render workout card
-        loadHomeScreen(updated);
         const hadPlan = window._lastAssignedPlanJSON !== '{}';
         const hasPlan = planJSON !== '{}';
         if (!hasPlan && hadPlan) {
+          // Coach removed the plan entirely — always apply immediately, even mid-session.
+          // The client should never keep logging a workout that no longer exists.
+          window._workoutLoggingActive = false;
+          window._pendingPlanUpdate = null;
+          loadHomeScreen(updated);
           showToast('Your coach removed your workout plan.', 'info');
-        } else if (hasPlan) {
-          showToast('Your coach updated your workout plan! 💪', 'success');
+        } else if (hasPlan && window._workoutLoggingActive) {
+          // Coach updated exercises while client is mid-session —
+          // queue the update so in-progress set data is not wiped.
+          window._pendingPlanUpdate = updated;
+          showToast('Your coach updated your workout plan! Changes apply after you finish this session. 💪', 'success');
+        } else {
+          // No active session — safe to re-render immediately.
+          loadHomeScreen(updated);
+          if (hasPlan) {
+            showToast('Your coach updated your workout plan! 💪', 'success');
+          }
         }
       }
       window._lastAssignedPlanJSON = planJSON;
@@ -5560,6 +5778,8 @@ function startWktTimer() {
 function stopWktTimer() {
   clearInterval(_wktTimerInterval);
   _wktTimerInterval = null;
+  // Always clear the active-logging guard when the timer stops
+  window._workoutLoggingActive = false;
 }
 
 // Accent colors cycling per exercise (like Hevy)
@@ -5567,7 +5787,106 @@ const WKT_ACCENT_COLORS = [
   '#5A9FEF','#3DCB72','#C9A84C','#E8605A','#A855F7','#F97316','#06B6D4','#EC4899'
 ];
 
-function buildWorkoutLogger(workout) {
+async function checkTodayCompletion(workout) {
+  // Fast path: check local flag first (set the moment the workout was completed this session)
+  // This avoids the Firestore serverTimestamp race condition on immediate reload.
+  const localFlag = getTodayCompletionFlag(workout?.dayName);
+  if (localFlag) {
+    // Restore from localStorage saved state so the locked cards show what was logged
+    const container = document.getElementById('log-exercises-container');
+    if (container && container.querySelectorAll('.log-ex-card').length === 0) {
+      // Cards haven't been built yet — let buildWorkoutLogger finish, then lock
+      return false; // fall through to build, then lockLoggerCards will be called by restoreAndLock
+    }
+    lockLoggerCards();
+    return true;
+  }
+
+  // Slow path: verify against Firestore (handles page reload after browser cache cleared)
+  const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+  if (!uid || !workout) return false;
+  try {
+    const snap = await db.collection('members').doc(uid).collection('workoutLogs')
+      .where('dayName', '==', workout.dayName || '')
+      .orderBy('completedAt', 'desc').limit(1).get();
+    if (snap.empty) return false;
+    const log = snap.docs[0].data();
+    if (!log.completedAt) return false;
+    const logDate = log.completedAt.toDate
+      ? log.completedAt.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' })
+      : '';
+    const todayFormatted = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
+    if (logDate !== todayFormatted) return false;
+    // Already done today — show completed view
+    showCompletedWorkoutView(workout, log);
+    return true;
+  } catch(e) {
+    console.warn('checkTodayCompletion error:', e);
+    return false;
+  }
+}
+
+function showCompletedWorkoutView(workout, log) {
+  // Rebuild the exercise cards from the saved log data so the user can see
+  // exactly what they logged — then lock everything so nothing is editable.
+  const container = document.getElementById('log-exercises-container');
+  container.innerHTML = '';
+
+  const exercises = log.exercises || [];
+  exercises.forEach((ex, exIdx) => {
+    const accentColor = WKT_ACCENT_COLORS[exIdx % WKT_ACCENT_COLORS.length];
+    const card = document.createElement('div');
+    card.className = 'log-ex-card';
+    card.dataset.exIdx = exIdx;
+    card.innerHTML = `
+      <div class="log-ex-header">
+        <div class="log-ex-color-bar" style="background:${accentColor};"></div>
+        <div class="log-ex-header-inner">
+          <div class="log-ex-thumb-wrap">
+            <div class="log-ex-thumb-fallback" style="display:flex;">💪</div>
+          </div>
+          <div class="log-ex-info">
+            <div class="log-ex-name">${ex.name}</div>
+            <div class="log-ex-muscles"></div>
+            <div class="log-ex-target-badge">${(ex.sets||[]).length} sets logged</div>
+          </div>
+        </div>
+      </div>
+      <div class="log-sets-area">
+        <div class="set-table-head">
+          <div class="set-th">SET</div>
+          <div class="set-th" style="text-align:left;padding-left:4px;">PREVIOUS</div>
+          <div class="set-th">KG</div>
+          <div class="set-th">REPS</div>
+          <div class="set-th"></div>
+        </div>
+        <div class="sets-container" id="sets-${exIdx}"></div>
+      </div>`;
+    container.appendChild(card);
+
+    // Populate sets from the log
+    (ex.sets || []).forEach(s => {
+      addSet(exIdx, s.weight || '', s.reps || '', s.done);
+    });
+  });
+
+  // Now lock everything
+  lockLoggerCards();
+  stopWktTimer();
+
+  // Update header chips
+  const chipSets = document.getElementById('wkt-chip-sets');
+  if (chipSets) chipSets.textContent = '✓ Done today';
+  const chipEx = document.getElementById('wkt-chip-ex');
+  if (chipEx) chipEx.textContent = exercises.length + ' exercise' + (exercises.length !== 1 ? 's' : '');
+}
+
+async function buildWorkoutLogger(workout) {
+  // Guard against concurrent calls — cancel any previous in-flight build
+  // (can happen when loadHomeScreen is called twice in quick succession e.g. initial load + onSnapshot)
+  if (window._buildLoggerToken === undefined) window._buildLoggerToken = 0;
+  const myToken = ++window._buildLoggerToken;
+
   const container = document.getElementById('log-exercises-container');
   container.innerHTML = '';
 
@@ -5594,12 +5913,23 @@ function buildWorkoutLogger(workout) {
     return;
   }
 
+  // Check if already completed today — if so show locked view instead
+  const alreadyDone = await checkTodayCompletion(workout);
+  if (alreadyDone) return;
+
+  // Another call came in while we were awaiting — abort this stale run
+  if (myToken !== window._buildLoggerToken) return;
+
   const logBtn = document.getElementById('complete-btn');
   if (logBtn) { logBtn.style.display = ''; logBtn.disabled = false; }
   const finishBar = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
   if (finishBar) finishBar.style.display = 'block';
 
   if (chipEx) chipEx.textContent = workout.exercises.length + ' exercise' + (workout.exercises.length !== 1 ? 's' : '');
+
+  // Mark that a workout session is now active — prevents coach plan updates
+  // from blowing away in-progress set data
+  window._workoutLoggingActive = true;
 
   // Start timer when logger is built
   startWktTimer();
@@ -5665,28 +5995,45 @@ function buildWorkoutLogger(workout) {
       }
     })();
 
-    // Add default sets
+    // Add default sets — suppress auto-save during this loop
+    window._loggerRestoring = true;
     for (let s = 0; s < defaultSets; s++) {
       addSet(exIdx, 0, defaultReps);
     }
+    window._loggerRestoring = false;
   });
+
+  // Restore any in-progress data from before the page refresh (replaces defaults if saved data exists)
+  restoreLoggerState();
+
+  // If the workout was completed this session, lock the cards immediately
+  // (handles the case where checkTodayCompletion ran before cards were in the DOM)
+  const _completedFlag = getTodayCompletionFlag(workout?.dayName);
+  if (_completedFlag) {
+    lockLoggerCards();
+  }
 }
 
-function addSet(exIdx, weight, reps) {
+function addSet(exIdx, weight, reps, done) {
   const container = document.getElementById('sets-' + exIdx);
   if (!container) return;
   const setNum = container.children.length + 1;
   const row    = document.createElement('div');
   row.className   = 'log-set-row';
-  row.dataset.done = '0';
-  // "Previous" column shows a placeholder dash (future: pull from last session)
+  row.dataset.done = done ? '1' : '0';
   row.innerHTML = `
     <div class="set-num">${setNum}</div>
     <div style="font-size:11px;color:rgba(99,95,90,0.35);font-family:'Outfit',sans-serif;text-align:left;padding-left:4px;align-self:center;">—</div>
-    <input class="set-input weight-input" type="number" min="0" step="0.5" placeholder="—" value="${weight||''}" oninput="updateSummary()">
-    <input class="set-input reps-input"   type="number" min="0" placeholder="—" value="${reps||''}" oninput="updateSummary()">
+    <input class="set-input weight-input" type="number" min="0" step="0.5" placeholder="—" value="${weight||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()">
+    <input class="set-input reps-input"   type="number" min="0" placeholder="—" value="${reps||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()">
     <button class="set-done-btn" onclick="toggleSetDone(this)" title="Mark done">✓</button>`;
   container.appendChild(row);
+  // Restore done styling if reloading from saved state
+  if (done) {
+    const btn = row.querySelector('.set-done-btn');
+    btn.classList.add('checked');
+    row.querySelectorAll('.set-input').forEach(inp => inp.classList.add('done'));
+  }
   updateSummary();
 }
 
@@ -5697,6 +6044,7 @@ function toggleSetDone(btn) {
   btn.classList.toggle('checked', !isDone);
   row.querySelectorAll('.set-input').forEach(inp => inp.classList.toggle('done', !isDone));
   updateSummary();
+  if (!window._loggerRestoring) saveLoggerState();
 }
 
 function updateSummary() {
@@ -5716,6 +6064,151 @@ function updateSummary() {
   // Update header chip
   const chip = document.getElementById('wkt-chip-sets');
   if (chip) chip.textContent = totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' done';
+}
+
+// ─────────────────────────────────────────
+//  LOGGER STATE PERSISTENCE (localStorage)
+// ─────────────────────────────────────────
+function _loggerStorageKey() {
+  // Key is scoped to today's date so yesterday's incomplete session doesn't bleed in
+  const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  return 'evolve_logger_' + today;
+}
+
+function saveLoggerState() {
+  try {
+    const exercises = [];
+    document.querySelectorAll('.log-ex-card').forEach((card, exIdx) => {
+      const sets = [];
+      card.querySelectorAll('.log-set-row').forEach(row => {
+        sets.push({
+          weight: row.querySelector('.weight-input').value,
+          reps:   row.querySelector('.reps-input').value,
+          done:   row.dataset.done === '1'
+        });
+      });
+      const note = document.getElementById('note-' + exIdx)?.value || '';
+      exercises.push({ sets, note });
+    });
+    const timerElapsed = _wktStartTime ? Math.floor((Date.now() - _wktStartTime) / 1000) : 0;
+    localStorage.setItem(_loggerStorageKey(), JSON.stringify({ exercises, timerElapsed }));
+  } catch(e) { /* localStorage unavailable — silent fail */ }
+}
+
+function restoreLoggerState() {
+  try {
+    const raw = localStorage.getItem(_loggerStorageKey());
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!saved || !saved.exercises) return false;
+
+    // Suppress auto-save while we're rebuilding from saved data
+    window._loggerRestoring = true;
+
+    saved.exercises.forEach((exData, exIdx) => {
+      const container = document.getElementById('sets-' + exIdx);
+      if (!container) return;
+      // Wipe the default sets, then restore exactly what was saved
+      container.innerHTML = '';
+      exData.sets.forEach(s => {
+        addSet(exIdx, s.weight, s.reps, s.done);
+      });
+      // Restore note
+      const noteEl = document.getElementById('note-' + exIdx);
+      if (noteEl && exData.note) noteEl.value = exData.note;
+    });
+
+    // Restore timer offset so elapsed time continues correctly after reload
+    if (saved.timerElapsed && saved.timerElapsed > 0) {
+      _wktStartTime = Date.now() - saved.timerElapsed * 1000;
+    }
+
+    window._loggerRestoring = false;
+    updateSummary();
+    return true;
+  } catch(e) {
+    window._loggerRestoring = false;
+    return false;
+  }
+}
+
+function clearLoggerState() {
+  try { localStorage.removeItem(_loggerStorageKey()); } catch(e) {}
+}
+
+function markWorkoutCompletedToday() {
+  // Stamp a simple flag so checkTodayCompletion can resolve synchronously on reload
+  // without waiting for the Firestore serverTimestamp to be set.
+  try {
+    const key = 'evolve_completed_' + phIsoDate();
+    localStorage.setItem(key, JSON.stringify({
+      dayName:     todayWorkout?.dayName || '',
+      workoutName: todayWorkout?.name    || 'Workout',
+      completedAt: Date.now()
+    }));
+    // Clean up keys from previous days to avoid localStorage bloat
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('evolve_completed_') && k !== key) localStorage.removeItem(k);
+    });
+  } catch(e) {}
+}
+
+function getTodayCompletionFlag(dayName) {
+  try {
+    const key = 'evolve_completed_' + phIsoDate();
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    // Match on dayName (empty string matches empty string too)
+    if (data.dayName === (dayName || '')) return data;
+    return null;
+  } catch(e) { return null; }
+}
+
+// Also save note text as user types
+document.addEventListener('input', e => {
+  if (e.target && e.target.classList.contains('log-note')) saveLoggerState();
+});
+
+// ─────────────────────────────────────────
+//  LOCK LOGGER AFTER COMPLETION
+// ─────────────────────────────────────────
+function lockLoggerCards() {
+  // Disable all inputs and buttons inside exercise cards
+  document.querySelectorAll('.log-ex-card').forEach(card => {
+    card.classList.add('locked');
+    card.querySelectorAll('.set-input').forEach(inp => {
+      inp.readOnly   = true;
+      inp.tabIndex   = -1;
+    });
+    card.querySelectorAll('.set-done-btn, .add-set-btn').forEach(btn => {
+      btn.disabled = true;
+    });
+    card.querySelectorAll('.log-note').forEach(ta => {
+      ta.readOnly = true;
+      ta.style.cursor = 'default';
+    });
+  });
+  // Hide the Finish Workout bar
+  const completeBtn = document.getElementById('complete-btn');
+  if (completeBtn) { completeBtn.style.display = 'none'; completeBtn.disabled = true; }
+  const logArea = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
+  if (logArea) logArea.style.display = 'none';
+  // Add a "Completed today" banner above the first card
+  const container = document.getElementById('log-exercises-container');
+  if (container && !container.querySelector('.wkt-done-inline-banner')) {
+    const banner = document.createElement('div');
+    banner.className = 'wkt-done-inline-banner';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:rgba(61,203,114,0.07);border:1px solid rgba(61,203,114,0.2);border-radius:12px;margin-bottom:14px;">
+        <span style="font-size:22px;">✅</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#3DCB72;font-family:'Outfit',sans-serif;">Workout Complete!</div>
+          <div style="font-size:12px;color:var(--muted);font-family:'Outfit',sans-serif;margin-top:2px;">Great work today. Your session has been saved.</div>
+        </div>
+      </div>`;
+    container.insertBefore(banner, container.firstChild);
+  }
 }
 
 // ─────────────────────────────────────────
@@ -5780,6 +6273,12 @@ async function completeWorkout() {
       else feedEl.prepend(feedRow);
     }
 
+    // Stamp a local completion flag so reload detection is instant
+    markWorkoutCompletedToday();
+
+    // Lock all exercise cards so values stay visible but nothing is editable
+    lockLoggerCards();
+
     // Show done overlay
     document.getElementById('done-sets').textContent = doneSets;
     document.getElementById('done-reps').textContent = doneReps;
@@ -5787,6 +6286,16 @@ async function completeWorkout() {
     document.getElementById('done-sub').textContent  = todayWorkout?.name + ' complete!';
     document.getElementById('done-overlay').classList.add('open');
     stopWktTimer();
+
+    // Clear persisted logger state — workout is done
+    clearLoggerState();
+
+    // Clear the active-logging guard and apply any plan update that arrived mid-session
+    window._workoutLoggingActive = false;
+    if (window._pendingPlanUpdate) {
+      loadHomeScreen(window._pendingPlanUpdate);
+      window._pendingPlanUpdate = null;
+    }
 
     loadPastLogs();
   } catch(e) {
@@ -8709,6 +9218,8 @@ function uploadWtSetUnit(u) {
 
 <!-- ═══ ACTIVE CALL OVERLAY (Client) ═══ -->
 <div id="client-call-overlay">
+  <video id="cli-remote-video" autoplay playsinline></video>
+  <video id="cli-local-video"  autoplay playsinline muted onclick="cliPipFlip()"></video>
   <div class="cli-call-card">
     <div class="cli-call-avatar" id="cli-call-avatar">🏋️</div>
     <div class="cli-call-name" id="cli-call-name">Your Coach</div>
@@ -8716,6 +9227,7 @@ function uploadWtSetUnit(u) {
     <div class="cli-call-timer" id="cli-call-timer"></div>
     <div class="cli-call-controls">
       <button class="cli-ctrl mute" id="cli-mute-btn" onclick="cliToggleMute()" title="Mute">🎙️</button>
+      <button class="cli-ctrl cli-cam-btn" id="cli-cam-btn" onclick="cliToggleCamera()" title="Camera">📷</button>
       <button class="cli-ctrl end" onclick="cliEndCall()" title="End call">📵</button>
       <button class="cli-ctrl mute" id="cli-speaker-btn" onclick="cliToggleSpeaker()" title="Speaker">🔊</button>
     </div>
@@ -8848,10 +9360,35 @@ async function cliJoinRoom(roomName, identity) {
         el.setAttribute('data-lk-cli', '1');
         el.style.display = 'none';
         document.body.appendChild(el);
+      } else if (track.kind === LivekitClient.Track.Kind.Video) {
+        const remoteVid = document.getElementById('cli-remote-video');
+        track.attach(remoteVid);
+        document.getElementById('client-call-overlay').classList.add('cli-video-overlay-active');
+      }
+    });
+    cliLkRoom.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
+      if (track.kind === LivekitClient.Track.Kind.Video) {
+        const remoteVid = document.getElementById('cli-remote-video');
+        track.detach(remoteVid);
+        document.getElementById('client-call-overlay').classList.remove('cli-video-overlay-active');
       }
     });
     await cliLkRoom.connect(CLI_LK_URL, token);
     await cliLkRoom.localParticipant.setMicrophoneEnabled(true);
+    // Enable camera (optional — user can toggle off)
+    try {
+      await cliLkRoom.localParticipant.setCameraEnabled(true);
+      const localVid = document.getElementById('cli-local-video');
+      const camTrack = cliLkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
+      if (camTrack && camTrack.track) {
+        camTrack.track.attach(localVid);
+        localVid.style.display = 'block';
+        document.getElementById('cli-cam-btn').classList.remove('cam-off');
+      }
+    } catch(camErr) {
+      // Camera permission denied — that's fine, audio-only
+      document.getElementById('cli-cam-btn').classList.add('cam-off');
+    }
   } catch(e) {
     showToast('Call error: ' + e.message);
     cliCleanupCall();
@@ -8884,6 +9421,37 @@ function cliToggleSpeaker() {
   btn.textContent = btn.classList.contains('active') ? '🔇' : '🔊';
 }
 
+let cliCamEnabled = true;
+async function cliToggleCamera() {
+  if (!cliLkRoom) return;
+  cliCamEnabled = !cliCamEnabled;
+  const btn = document.getElementById('cli-cam-btn');
+  const localVid = document.getElementById('cli-local-video');
+  try {
+    await cliLkRoom.localParticipant.setCameraEnabled(cliCamEnabled);
+    if (cliCamEnabled) {
+      const camTrack = cliLkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
+      if (camTrack && camTrack.track) {
+        camTrack.track.attach(localVid);
+        localVid.style.display = 'block';
+      }
+      btn.textContent = '📷';
+      btn.classList.remove('cam-off');
+    } else {
+      localVid.style.display = 'none';
+      btn.textContent = '🚫';
+      btn.classList.add('cam-off');
+    }
+  } catch(e) { showToast('Camera error: ' + e.message); }
+}
+
+function cliPipFlip() {
+  // Toggle local video between bottom-right corners
+  const v = document.getElementById('cli-local-video');
+  if (v.style.left) { v.style.left=''; v.style.right='16px'; }
+  else { v.style.right=''; v.style.left='16px'; }
+}
+
 async function cliEndCall() {
   if (pendingCallDoc) {
     db.collection('callRequests').doc(pendingCallDoc).update({ status: 'ended' }).catch(()=>{});
@@ -8896,14 +9464,22 @@ function cliCleanupCall() {
   if (cliCallTimerInterval) { clearInterval(cliCallTimerInterval); cliCallTimerInterval = null; }
   if (cliLkRoom) { try { cliLkRoom.disconnect(); } catch(_){} cliLkRoom = null; }
   document.querySelectorAll('audio[data-lk-cli]').forEach(a => a.remove());
-  document.getElementById('client-call-overlay').classList.remove('active');
+  // Clean up video elements
+  const remoteVid = document.getElementById('cli-remote-video');
+  const localVid  = document.getElementById('cli-local-video');
+  if (remoteVid) { remoteVid.srcObject = null; remoteVid.style.display = 'none'; }
+  if (localVid)  { localVid.srcObject = null; localVid.style.display = 'none'; }
+  document.getElementById('client-call-overlay').classList.remove('active', 'cli-video-overlay-active');
   document.getElementById('incoming-call-banner').classList.remove('active');
   cliIsMuted = false;
+  cliCamEnabled = true;
   cliCallSeconds = 0;
   pendingCallDoc = null;
+  const camBtn = document.getElementById('cli-cam-btn');
+  if (camBtn) { camBtn.textContent = '📷'; camBtn.classList.remove('cam-off'); }
   // Reset call button
   const btn = document.getElementById('client-call-btn');
-  if (btn) { btn.style.background='rgba(74,222,128,0.08)'; btn.style.borderColor='rgba(74,222,128,0.25)'; btn.style.color='#4ade80'; btn.title='Voice call your coach'; }
+  if (btn) { btn.style.background='rgba(74,222,128,0.08)'; btn.style.borderColor='rgba(74,222,128,0.25)'; btn.style.color='#4ade80'; btn.title='Video call your coach'; }
 }
 
 // ── Client-initiated call (client calls coach) ──
