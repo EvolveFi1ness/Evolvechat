@@ -6309,16 +6309,19 @@ function loadHomeScreen(data) {
  } else {
   // No workout assigned for today
   const hasAnyPlan = Object.keys(WORKOUTS).length > 0;
+  const noWorkoutIcon = hasAnyPlan
+   ? `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>`
+   : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(201,168,76,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg>`;
   const noWorkoutHTML = `
-   <div style="text-align:center;padding:2rem 1rem;color:var(--muted,#666)">
-    <div style="font-size:2rem;margin-bottom:.75rem;display:none">${hasAnyPlan ? '' : ''}</div>
-    <div style="font-size:1rem;font-weight:600;color:var(--text,#e8e8e8);margin-bottom:.4rem">
+   <div style="text-align:center;padding:1.5rem 1rem 1.25rem;color:var(--muted,#666)">
+    <div style="display:flex;justify-content:center;margin-bottom:.75rem;opacity:0.7">${noWorkoutIcon}</div>
+    <div style="font-size:.9375rem;font-weight:700;color:var(--text,#e8e8e8);margin-bottom:.35rem;font-family:'Outfit',sans-serif;">
      ${hasAnyPlan ? 'Rest Day' : 'No workout assigned yet'}
     </div>
-    <div style="font-size:.85rem;line-height:1.5">
+    <div style="font-size:.8125rem;line-height:1.55;color:var(--muted,#666);font-family:'Outfit',sans-serif;">
      ${hasAnyPlan
       ? 'Your coach has not scheduled a workout for today. Enjoy your rest!'
-      : 'Your coach has not assigned a workout plan yet.<br>Check back soon!'}
+      : 'Your coach has not assigned a workout plan yet. Check back soon!'}
     </div>
    </div>`;
   document.getElementById('workout-day').textContent  = todayName;
@@ -6331,16 +6334,20 @@ function loadHomeScreen(data) {
   if (chipElRest) chipElRest.textContent = '0 exercises';
   const barNameRest = document.getElementById('wkt-bar-name');
   if (barNameRest) barNameRest.textContent = hasAnyPlan ? 'Rest Day' : 'No Workout';
-  // Hide the log button on home card when there's nothing to log
+  // Hide the log button AND the footer when there's nothing to log
   const startBtn = document.querySelector('.start-btn');
   if (startBtn) startBtn.style.display = 'none';
+  const cardFooter = document.querySelector('.workout-card-footer');
+  if (cardFooter) cardFooter.style.display = 'none';
   buildWorkoutLogger(null);
  }
 
- // Show log button whenever there is a workout
+ // Show log button + footer whenever there is a workout
  if (w && w.exercises?.length) {
   const startBtn = document.querySelector('.start-btn');
   if (startBtn) startBtn.style.display = '';
+  const cardFooter = document.querySelector('.workout-card-footer');
+  if (cardFooter) cardFooter.style.display = '';
  }
 
  // BMI
