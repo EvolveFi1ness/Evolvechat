@@ -340,7 +340,7 @@
  .greeting-sub { font-size: 13px; color: var(--text2); margin-top: 6px; line-height: 1.5; }
 
  /* STAT STRIP */
- .stat-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 1.25rem 1.25rem 0; }
+ .stat-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 1.25rem 1.25rem 0; }
  .stat-box {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -751,14 +751,18 @@
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.06);
   padding: 14px 16px;
-  cursor: pointer; transition: border-color 0.15s;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
  }
- .past-log-card:hover { border-color: rgba(201,168,76,0.3); }
+ .past-log-card:hover { border-color: rgba(201,168,76,0.3); background: #161616; }
+ .past-log-card:active { transform: scale(0.985); background: #181818; }
  .plc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
  .plc-name { font-family:'Outfit',sans-serif; font-weight: 800; font-size: 15px; color: var(--text); }
  .plc-day { font-size: 11px; color: var(--text3); font-family:'Outfit',sans-serif; margin-top: 1px; }
  .plc-date { font-size: 11px; color: var(--text3); font-family:'Outfit',sans-serif; }
- .plc-chevron { font-size: 14px; color: rgba(99,95,90,0.4); margin-top: 1px; }
+ .plc-chevron { font-size: 18px; color: rgba(201,168,76,0.5); margin-top: 0; transition: color 0.15s; }
+ .past-log-card:hover .plc-chevron { color: var(--gold); }
  .plc-stats { display: flex; gap: 0; margin-bottom: 8px; }
  .plc-stat-pill {
   font-size: 11px; font-weight: 600; font-family:'Outfit',sans-serif;
@@ -1399,21 +1403,27 @@
  /* ── ADD EVENT MODAL — Google Calendar style ── */
  .ev-modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 900;
-  display: none; align-items: center; justify-content: center;
+  display: none; align-items: flex-end; justify-content: center;
   backdrop-filter: blur(2px);
  }
  .ev-modal-overlay.open { display: flex; }
 
  .ev-modal {
-  width: 460px;
+  width: 100%; max-width: 460px;
   background: #101010;
-  border-radius: 16px;
+  border-radius: 20px 20px 0 0;
   border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
-  animation: gcalPop 0.2s cubic-bezier(0.22,1,0.36,1);
+  border-bottom: none;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.7);
+  animation: evSlideUp 0.28s cubic-bezier(0.22,1,0.36,1);
   overflow: hidden;
  }
+ @media (min-width: 540px) {
+  .ev-modal-overlay { align-items: center; }
+  .ev-modal { border-radius: 16px; border-bottom: 1px solid rgba(255,255,255,0.08); max-width: 460px; animation: gcalPop 0.2s cubic-bezier(0.22,1,0.36,1); }
+ }
  @keyframes gcalPop { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+ @keyframes evSlideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
  /* Title bar */
  .ev-modal-topbar {
@@ -2926,9 +2936,7 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 }
 /* Calendar FAB hidden on desktop, shown on mobile */
 .cal-fab { display: none !important; }
-@media (max-width: 768px) { .cal-fab { display: flex !important; } }
-.cal-fab.visible { display: none !important; }
-@media (max-width: 768px) { .cal-fab.visible { display: flex !important; } }
+/* FAB only shown via JS inline style on calendar tab */
 
 /* Progress subtabs on website */
 #tab-progress-panel > div:first-child {
@@ -2988,7 +2996,7 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
  #screen-home-inner { padding-bottom: 100px !important; }
  .home-topbar { padding: 0 1.25rem !important; }
  .web-nav { display: none; }
- .stat-strip { grid-template-columns: repeat(3, 1fr) !important; }
+ .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 /* Remove max-width caps from content panels */
@@ -4486,21 +4494,21 @@ html, body {
 @media (min-width: 1280px) {
  .website-body { grid-template-columns: 280px 1fr; }
  .web-main { padding: 2.5rem 3.5rem; }
- .stat-strip { grid-template-columns: repeat(4, 1fr) !important; }
+ .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 /* ── Standard desktop (1024px–1279px) ── */
 @media (min-width: 1024px) and (max-width: 1279px) {
  .website-body { grid-template-columns: 240px 1fr; }
  .web-main { padding: 2rem 2.5rem; }
- .stat-strip { grid-template-columns: repeat(4, 1fr) !important; }
+ .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 /* ── Tablet landscape (769px–1023px) ── */
 @media (min-width: 769px) and (max-width: 1023px) {
  .website-body { grid-template-columns: 200px 1fr; }
  .web-main { padding: 1.5rem 1.75rem; }
- .stat-strip { grid-template-columns: repeat(3, 1fr) !important; }
+ .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
  .web-sidebar { padding: 1.5rem 1rem; }
  .sidebar-nav-item { font-size: 13px; padding: 8px 8px; }
  .home-topbar { padding: 0 1.5rem !important; }
@@ -4522,7 +4530,7 @@ html, body {
  }
 
  /* Stat strip 2-up on small phones */
- .stat-strip { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
+ .stat-strip { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
 
  /* Workout log table scrollable */
  .log-ex-row {
@@ -4603,7 +4611,7 @@ html, body {
 /* ── Landscape phone fix ── */
 @media (max-width: 768px) and (orientation: landscape) {
  #tab-chat-panel > div:last-child { height: calc(100vh - 160px) !important; }
- .stat-strip { grid-template-columns: repeat(4, 1fr) !important; }
+ .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
  .bottom-nav { padding: 4px 0 calc(4px + env(safe-area-inset-bottom)); }
  .home-topbar { height: 48px !important; }
  .web-main { padding: 0.75rem 1rem !important; }
@@ -4652,9 +4660,29 @@ img, video, iframe { max-width: 100%; }
  .nav-item span { font-size: 8px !important; letter-spacing: 0.3px !important; }
  .nav-item svg { width: 20px !important; height: 20px !important; }
 
- /* ── Stat strip: keep 3 col on phones ── */
- .stat-strip { grid-template-columns: repeat(3, 1fr) !important; }
+ /* ── Stat strip: 2 boxes = 2 columns ── */
+ .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
  .stat-box .s-val { font-size: 22px !important; }
+
+ /* ── Calendar grid: full width, smaller day cells ── */
+ #screen-calendar-full .web-main { padding: 1rem !important; }
+ .fcal-day { min-height: 56px !important; padding: 4px 3px 2px !important; }
+ .fcal-day-num { font-size: 12px !important; }
+ .fcal-page-header { padding: 0 0 1rem !important; }
+ .fcal-grid-wrap { border-radius: 12px !important; }
+ .fcal-dow span { font-size: 9px !important; padding: 7px 0 !important; }
+
+ /* ── Event type tabs wrap on small screens ── */
+ .ev-type-tabs { flex-wrap: wrap !important; padding: 10px 16px 6px !important; gap: 6px !important; }
+ .ev-type-tab { font-size: 12px !important; padding: 6px 12px !important; }
+ .ev-title-input { font-size: 20px !important; }
+ .ev-modal-footer { padding: 10px 16px calc(16px + env(safe-area-inset-bottom)) !important; }
+
+ /* ── Profile page full width ── */
+ .profile-panel { padding: 1rem !important; }
+ .pp-header { padding: 1rem !important; margin-bottom: 1rem !important; }
+ .pp-name { font-size: 17px !important; }
+ .pp-email { font-size: 12px !important; }
 
  /* ── Call screen ── */
  .cli-call-avatar { width: 80px !important; height: 80px !important; font-size: 32px !important; }
@@ -4667,8 +4695,8 @@ img, video, iframe { max-width: 100%; }
  /* ── Notification panel full width on mobile ── */
  .client-notif-panel { left: 8px !important; right: 8px !important; width: auto !important; top: 8px !important; }
 
- /* ── Event modal mobile bottom sheet ── */
- .ev-modal { width: 100% !important; border-radius: 20px 20px 0 0 !important; position: fixed !important; bottom: 0 !important; }
+ /* ── Event modal: always bottom sheet on mobile ── */
+ .ev-modal { width: 100% !important; border-radius: 20px 20px 0 0 !important; border-bottom: none !important; }
  .ev-modal-overlay { align-items: flex-end !important; }
 }
 </style>
@@ -5262,11 +5290,11 @@ img, video, iframe { max-width: 100%; }
    <div class="profile-panel">
     <div class="pp-header" style="position:relative;">
      <div class="pp-avatar" id="pp-avatar">JC</div>
-     <div>
-      <div class="pp-name" id="pp-name">Jake Cruz</div>
-      <div class="pp-email" id="pp-email">jake@example.com</div>
+     <div style="flex:1;min-width:0;padding-right:70px;">
+      <div class="pp-name" id="pp-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Jake Cruz</div>
+      <div class="pp-email" id="pp-email" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">jake@example.com</div>
      </div>
-     <button onclick="openProfileEdit()" style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#c9a84c;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.4px;transition:all 0.2s;"
+     <button onclick="openProfileEdit()" style="position:absolute;right:0;top:50%;transform:translateY(-50%);background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:#c9a84c;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.4px;transition:all 0.2s;white-space:nowrap;"
       onmouseenter="this.style.background='rgba(201,168,76,0.22)'" onmouseleave="this.style.background='rgba(201,168,76,0.12)'"> Edit</button>
     </div>
     <div class="pp-section">
@@ -5693,14 +5721,16 @@ img, video, iframe { max-width: 100%; }
 
    <!-- Calendar toolbar -->
    <div class="fcal-page-header" style="position:static; padding: 0 0 1.5rem; border-bottom: none; background: transparent; backdrop-filter: none; box-shadow: none;">
-    <button class="fcal-today-btn" onclick="cliCalGoToday()">Today</button>
-    <div class="fcal-nav-group">
-     <button class="fcal-arrow" onclick="cliCalPrev()">&#8249;</button>
-     <button class="fcal-arrow" onclick="cliCalNext()">&#8250;</button>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+     <button class="fcal-today-btn" onclick="cliCalGoToday()">Today</button>
+     <div class="fcal-nav-group">
+      <button class="fcal-arrow" onclick="cliCalPrev()">&#8249;</button>
+      <button class="fcal-arrow" onclick="cliCalNext()">&#8250;</button>
+     </div>
+     <span class="fcal-month-title" id="cli-cal-month-label">May 2026</span>
+     <div style="flex:1"></div>
+     <button class="fcal-today-btn" onclick="openAddEventModal()" style="color:var(--gold);border-color:rgba(201,168,76,0.3)">+ Add Event</button>
     </div>
-    <span class="fcal-month-title" id="cli-cal-month-label">May 2026</span>
-    <div style="flex:1"></div>
-    <button class="fcal-today-btn" onclick="openAddEventModal()" style="color:var(--gold);border-color:rgba(201,168,76,0.3)">+ Add Event</button>
    </div>
 
    <!-- Calendar grid -->
@@ -5752,17 +5782,18 @@ img, video, iframe { max-width: 100%; }
  </div>
 </div>
 
-<!-- ══ ADD EVENT FAB ══ -->
-<button class="cal-fab" id="cal-fab" onclick="openAddEventModal()" title="Add Event">+</button>
+<!-- ══ ADD EVENT FAB — calendar tab only, managed by JS ══ -->
+<button class="cal-fab" id="cal-fab" onclick="openAddEventModal()" title="Add Event" style="display:none;">+</button>
 
 <!-- ══ ADD EVENT MODAL — Google Calendar style ══ -->
 <div class="ev-modal-overlay" id="ev-modal-overlay" onclick="closeAddEventModal(event)">
  <div class="ev-modal" onclick="event.stopPropagation()">
 
   <!-- Top bar: drag handle + close -->
+  <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:10px auto 0;"></div>
   <div class="ev-modal-topbar">
    <span class="ev-modal-drag"></span>
-   <button class="ev-modal-close" onclick="closeAddEventModal()"></button>
+   <button class="ev-modal-close" onclick="closeAddEventModal()">✕</button>
   </div>
 
   <!-- Big title input -->
@@ -5843,8 +5874,10 @@ img, video, iframe { max-width: 100%; }
     <span class="wkt-drawer-stat-chip" id="wdr-chip-sets"></span>
     <span class="wkt-drawer-stat-chip" id="wdr-chip-vol"></span>
    </div>
-   <button class="wkt-drawer-close" onclick="closeWktDrawer()"></button>
+   <button class="wkt-drawer-close" onclick="closeWktDrawer()">✕</button>
   </div>
+  <!-- Summary strip -->
+  <div id="wdr-summary-strip" style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;"></div>
   <div class="wkt-drawer-body" id="wdr-body"></div>
  </div>
 </div>
@@ -6962,7 +6995,8 @@ async function loadPastLogs() {
   }
   _pastLogsData = [];
   container.innerHTML = '';
-  snap.forEach((doc, i) => {
+  snap.forEach((doc) => {
+   const i = _pastLogsData.length;
    const d = { ...doc.data(), _id: doc.id };
    _pastLogsData.push(d);
    const date = d.completedAt?.toDate
@@ -7005,24 +7039,60 @@ async function loadPastLogs() {
    card.addEventListener('click', () => openWktDrawer(i));
    container.appendChild(card);
   });
- } catch(e) { /* silently fail */ }
+ } catch(e) { console.error('loadPastLogs error:', e); }
 }
 
 // ─────────────────────────────────────────
 // WORKOUT DETAIL DRAWER
 // ─────────────────────────────────────────
+let _wdrCurrentData = null;
+
 function openWktDrawer(idx) {
  const d = _pastLogsData[idx];
  if (!d) return;
+ _wdrCurrentData = d;
 
  const date = d.completedAt?.toDate
   ? d.completedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', weekday:'long', month:'long', day:'numeric', year:'numeric' })
   : '';
 
+ const durationMin = d.durationSeconds ? Math.round(d.durationSeconds / 60) : null;
+ const durationStr = durationMin
+  ? (durationMin >= 60 ? `${Math.floor(durationMin/60)}h ${durationMin%60}m` : `${durationMin}m`)
+  : null;
+
  document.getElementById('wdr-title').textContent = d.workoutName || 'Workout';
  document.getElementById('wdr-date').textContent = date;
  document.getElementById('wdr-chip-sets').textContent = (d.totalSets || 0) + ' sets';
- document.getElementById('wdr-chip-vol').textContent = (d.totalVolume || 0) + ' kg volume';
+ document.getElementById('wdr-chip-vol').textContent = (d.totalVolume || 0) + ' kg';
+ if (durationStr) {
+  let durChip = document.getElementById('wdr-chip-dur');
+  if (!durChip) {
+   durChip = document.createElement('span');
+   durChip.id = 'wdr-chip-dur';
+   durChip.className = 'wkt-drawer-stat-chip';
+   document.querySelector('.wkt-drawer-meta').appendChild(durChip);
+  }
+  durChip.textContent = '⏱ ' + durationStr;
+ }
+
+ // Summary strip
+ const strip = document.getElementById('wdr-summary-strip');
+ const exCount = d.exercises?.length || 0;
+ const totalReps = d.totalReps || 0;
+ const totalVol  = d.totalVolume || 0;
+ const items = [
+  { val: exCount, lbl: 'Exercises' },
+  { val: (d.totalSets || 0), lbl: 'Sets' },
+  { val: totalReps, lbl: 'Total Reps' },
+  { val: totalVol + ' kg', lbl: 'Volume' },
+  ...(durationStr ? [{ val: durationStr, lbl: 'Duration' }] : []),
+ ];
+ strip.innerHTML = items.map(it => `
+  <div style="flex:1;text-align:center;padding:12px 4px;border-right:1px solid rgba(255,255,255,0.05);">
+   <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--gold);line-height:1;">${it.val}</div>
+   <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-top:3px;font-family:'Outfit',sans-serif;">${it.lbl}</div>
+  </div>`).join('').replace(/border-right[^;]+;(?=[^<]*<\/div>\s*$)/, '');
 
  const body = document.getElementById('wdr-body');
 
@@ -7033,34 +7103,42 @@ function openWktDrawer(idx) {
    const accent = WKT_ACCENT_COLORS[exIdx % WKT_ACCENT_COLORS.length];
    const sets  = ex.sets || [];
    const doneSets = sets.filter(s => s.done);
-   const totalVol = doneSets.reduce((sum, s) => sum + ((s.weight || 0) * (s.reps || 0)), 0);
+   const totalExVol = doneSets.reduce((sum, s) => sum + ((s.weight || 0) * (s.reps || 0)), 0);
+   const maxWeight = doneSets.reduce((mx, s) => Math.max(mx, s.weight || 0), 0);
+   const maxReps   = doneSets.reduce((mx, s) => Math.max(mx, s.reps || 0), 0);
 
-   const setRows = sets.map((s, si) => `
+   const setRows = sets.map((s, si) => {
+    const vol = s.done && s.weight ? Math.round(s.weight * (s.reps || 0)) : 0;
+    return `
     <tr class="wdr-set-row ${s.done ? 'done-row' : ''}">
      <td><span class="wdr-set-num">${si + 1}</span></td>
-     <td><span class="wdr-set-badge ${s.done ? 'done' : 'skip'}">${s.done ? '' : '—'}</span></td>
-     <td>${s.done ? (s.weight || 0) + ' kg' : '—'}</td>
-     <td>${s.done ? (s.reps || 0) : '—'}</td>
-     <td>${s.done && s.weight ? Math.round(s.weight * (s.reps || 0)) + ' kg' : '—'}</td>
-    </tr>`).join('');
+     <td><span class="wdr-set-badge ${s.done ? 'done' : 'skip'}">${s.done ? '✓' : '—'}</span></td>
+     <td>${s.done ? `<strong>${s.weight || 0}</strong> kg` : '—'}</td>
+     <td>${s.done ? `<strong>${s.reps || 0}</strong>` : '—'}</td>
+     <td>${vol ? vol + ' kg' : '—'}</td>
+    </tr>`;
+   }).join('');
+
+   const bestTag = maxWeight > 0
+    ? `<span style="font-size:10px;background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.25);padding:2px 8px;border-radius:100px;font-family:'Outfit',sans-serif;font-weight:700;">Best: ${maxWeight}kg × ${maxReps}</span>`
+    : '';
 
    return `
     <div class="wdr-ex-block">
      <div class="wdr-ex-header">
       <div class="wdr-ex-accent" style="background:${accent};"></div>
-      <div>
-       <div class="wdr-ex-name">${ex.name}</div>
-       <div class="wdr-ex-note">${doneSets.length} of ${sets.length} sets completed${totalVol > 0 ? ' · ' + Math.round(totalVol) + ' kg volume' : ''}</div>
+      <div style="flex:1;min-width:0;">
+       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div class="wdr-ex-name">${ex.name}</div>
+        ${bestTag}
+       </div>
+       <div class="wdr-ex-note">${doneSets.length}/${sets.length} sets · ${Math.round(totalExVol)} kg volume</div>
        ${ex.note ? `<div style="font-size:11px;color:var(--gold);margin-top:3px;font-family:'Outfit',sans-serif;font-style:italic;">"${ex.note}"</div>` : ''}
       </div>
      </div>
      ${sets.length ? `
      <table class="wdr-set-table">
-      <thead>
-       <tr>
-        <th>Set</th><th>Status</th><th>Weight</th><th>Reps</th><th>Volume</th>
-       </tr>
-      </thead>
+      <thead><tr><th>Set</th><th>✓</th><th>Weight</th><th>Reps</th><th>Volume</th></tr></thead>
       <tbody>${setRows}</tbody>
      </table>` : '<div style="font-size:12px;color:var(--text3);padding:6px 0;font-family:Outfit,sans-serif;">No sets recorded</div>'}
     </div>`;
@@ -7071,9 +7149,19 @@ function openWktDrawer(idx) {
  document.body.style.overflow = 'hidden';
 }
 
+function repeatWorkoutFromDrawer() {
+ const d = _wdrCurrentData;
+ if (!d) return;
+ closeWktDrawer();
+ // Switch to log tab — the workout will already be loaded from today's plan
+ // If no plan, we just pre-fill a note
+ showToast('Load your workout in the Log tab to repeat it');
+ setTab('log');
+}
+
 function closeWktDrawer(e) {
- // If called from overlay click, only close if clicking the backdrop itself
- if (e && e.target !== document.getElementById('wkt-drawer-overlay')) return;
+ // If called from overlay backdrop click, only close if clicking the backdrop itself
+ if (e instanceof Event && e.target !== document.getElementById('wkt-drawer-overlay')) return;
  document.getElementById('wkt-drawer-overlay').classList.remove('open');
  document.body.style.overflow = '';
 }
@@ -7685,7 +7773,8 @@ function setTab(tab) {
   // Show full-bleed calendar, hide the home screen entirely
   if (homeScreen) homeScreen.style.display = 'none';
   if (calScreen) calScreen.style.display = 'block';
-  document.getElementById('cal-fab').classList.add('visible');
+  const fab = document.getElementById('cal-fab');
+  if (fab) fab.style.display = 'flex';
   // Sync nav active state on both navbars
   ['home','log','progress','chat','calendar','profile','nutrition'].forEach(t => {
    const a = document.getElementById('nav-' + t);
@@ -7711,7 +7800,8 @@ function setTab(tab) {
  // Any other tab — hide calendar screen, show home screen
  if (calScreen) calScreen.style.display = 'none';
  if (homeScreen) homeScreen.style.display = '';
- document.getElementById('cal-fab').classList.remove('visible');
+ const fab = document.getElementById('cal-fab');
+ if (fab) fab.style.display = 'none';
 
  const tabs = ['home','log','progress','chat','calendar','profile','nutrition'];
  tabs.forEach(t => {
