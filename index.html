@@ -4699,10 +4699,337 @@ img, video, iframe { max-width: 100%; }
  .ev-modal { width: 100% !important; border-radius: 20px 20px 0 0 !important; border-bottom: none !important; }
  .ev-modal-overlay { align-items: flex-end !important; }
 }
+
+/* ══════════════════════════════════════════════════════
+   MOBILE FINAL OVERRIDE — beats all !important layers above
+   Must be LAST in the stylesheet.
+══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+ /* ── Kill the desktop sidebar grid — force single column ── */
+ .website-body {
+  display: block !important;
+  grid-template-columns: unset !important;
+ }
+
+ /* ── Hide desktop sidebar entirely ── */
+ .web-sidebar {
+  display: none !important;
+  width: 0 !important;
+ }
+
+ /* ── Main content area fills full width with left indent for side nav ── */
+ .web-main {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  background: transparent !important;
+  overflow-x: hidden !important;
+ }
+
+ /* ── All screens: left padding = side nav width, remove bottom padding ── */
+ #screen-home,
+ #screen-home-inner,
+ #screen-calendar-full {
+  padding-bottom: 0 !important;
+ }
+ #screen-home-inner > .website-body,
+ #screen-calendar-full > .website-body {
+  padding-left: 0 !important;
+ }
+
+ /* ── Greeting name: cap size so long names don't overflow ── */
+ .greeting-name {
+  font-size: clamp(20px, 6vw, 26px) !important;
+  letter-spacing: -0.5px !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+ }
+
+ /* ── Greeting section: restore mobile padding ── */
+ .greeting-section {
+  padding: 1.5rem 1.25rem 1rem 1.25rem !important;
+ }
+
+ /* ── Stat strip: restore mobile padding ── */
+ .stat-strip {
+  padding: 0 1.25rem 0 !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+ }
+
+ /* ── Section label: restore mobile padding ── */
+ .section-label {
+  padding: 1.25rem 1.25rem 0.6rem !important;
+ }
+
+ /* ── Workout card / BMI card: restore mobile margin ── */
+ .workout-card,
+ .bmi-card,
+ .activity-feed {
+  margin: 0 1.25rem !important;
+ }
+
+ /* ── Tab panels: give a consistent horizontal gutter ── */
+ #tab-home-panel,
+ #tab-log-panel,
+ #tab-progress-panel,
+ #tab-chat-panel,
+ #tab-profile-panel,
+ #tab-nutrition-panel {
+  min-width: 0 !important;
+ }
+
+ /* ── web-main: ensure the content has horizontal breathing room ── */
+ .web-main {
+  padding: 0 !important;
+  min-width: 0 !important;
+ }
+
+ /* ── Prevent any element from touching screen edges ── */
+ #screen-home,
+ #screen-calendar-full {
+  box-sizing: border-box !important;
+ }
+
+ /* ── Workout name in card header: prevent overflow ── */
+ .workout-name {
+  font-size: 20px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 60% !important;
+ }
+
+ /* ── Chat panel: fill full width ── */
+ #tab-chat-panel {
+  padding: 0 !important;
+ }
+ #tab-chat-panel > div:last-child {
+  height: calc(100dvh - 160px) !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+ }
+
+ /* ── Profile panel: full width ── */
+ .profile-panel {
+  padding: 0 !important;
+  max-width: 100% !important;
+ }
+
+ /* ── Progress / Nutrition panels ── */
+ #tab-progress-panel { padding: 0 !important; }
+ #tab-nutrition-panel { padding-left: 0 !important; padding-right: 0 !important; }
+
+ /* ── Photo strip: needs horizontal padding ── */
+ .home-photo-strip-wrap {
+  padding: 0 1.25rem !important;
+ }
+
+ /* ── Home tab: bottom padding so last card isn't clipped ── */
+ #tab-home-panel {
+  padding-bottom: 2rem !important;
+ }
+
+ /* ══════════════════════════════════════════
+    SIDE TAB NAV — replaces bottom nav
+ ══════════════════════════════════════════ */
+
+ .bottom-nav {
+  /* Reposition: left vertical strip */
+  position: fixed !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  right: auto !important;
+  width: 62px !important;
+  max-width: 62px !important;
+  height: 100dvh !important;
+  transform: none !important;
+
+  /* Layout */
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  overflow-x: visible !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important;
+
+  /* Visuals */
+  background: rgba(6,5,10,0.97) !important;
+  border-top: none !important;
+  border-right: 1px solid rgba(201,168,76,0.12) !important;
+  border-bottom: none !important;
+  padding: 0 0 env(safe-area-inset-bottom, 0) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  z-index: 200 !important;
+ }
+
+ .nav-item {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-width: unset !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  padding: 10px 4px !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+  color: var(--text3) !important;
+  position: relative !important;
+  border-radius: 0 !important;
+ }
+
+ /* Active indicator: gold bar on the RIGHT edge of the side nav */
+ .nav-item.active::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  right: 0 !important;
+  left: auto !important;
+  transform: translateY(-50%) !important;
+  width: 2px !important;
+  height: 22px !important;
+  background: var(--gold) !important;
+  border-radius: 2px 0 0 2px !important;
+ }
+
+ .nav-item.active { color: var(--gold) !important; }
+ .nav-item svg { width: 20px !important; height: 20px !important; }
+ .nav-item span { font-size: 8px !important; letter-spacing: 0.3px !important; text-align: center !important; line-height: 1.2 !important; }
+
+ /* Active item: subtle gold background pill */
+ .nav-item.active {
+  color: var(--gold) !important;
+ }
+ .nav-item.active svg {
+  filter: drop-shadow(0 0 5px rgba(201,168,76,0.5)) !important;
+ }
+
+ /* ── Push all screen content right so side nav doesn't overlap ── */
+ #screen-home,
+ #screen-calendar-full {
+  padding-left: 62px !important;
+ }
+ #screen-home-inner {
+  padding-left: 0 !important; /* already handled by parent */
+ }
+
+ /* ── Toast: keep at bottom center of the content area ── */
+ .toast {
+  left: calc(50% + 31px) !important;
+  bottom: 24px !important;
+ }
+
+ /* ── Calendar FAB: offset from right, not bottom ── */
+ .cal-fab {
+  bottom: 20px !important;
+  right: 20px !important;
+ }
+
+ /* ══════════════════════════════════════════
+    SIDE NAV TOGGLE BUTTON & COLLAPSED STATE
+ ══════════════════════════════════════════ */
+
+ /* Toggle arrow button inside the nav */
+ .side-nav-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  color: var(--text3) !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  flex-shrink: 0 !important;
+  margin: 8px 0 4px !important;
+ }
+ .side-nav-toggle:hover {
+  border-color: rgba(201,168,76,0.3) !important;
+  color: var(--gold) !important;
+  background: rgba(201,168,76,0.07) !important;
+ }
+ .side-nav-toggle svg {
+  width: 14px !important;
+  height: 14px !important;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+ }
+
+ /* Collapsed side nav */
+ .bottom-nav.side-nav-hidden {
+  transform: translateX(-100%) !important;
+  pointer-events: none !important;
+ }
+
+ /* Floating re-open tab */
+ .side-nav-open-tab {
+  display: none;
+  position: fixed !important;
+  left: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 20px !important;
+  height: 52px !important;
+  background: rgba(6,5,10,0.95) !important;
+  border: 1px solid rgba(201,168,76,0.2) !important;
+  border-left: none !important;
+  border-radius: 0 10px 10px 0 !important;
+  color: var(--gold) !important;
+  cursor: pointer !important;
+  z-index: 201 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  backdrop-filter: blur(12px) !important;
+  transition: all 0.2s !important;
+  padding: 0 !important;
+ }
+ .side-nav-open-tab:hover {
+  width: 26px !important;
+  background: rgba(201,168,76,0.12) !important;
+  border-color: rgba(201,168,76,0.4) !important;
+ }
+ .side-nav-open-tab svg {
+  width: 12px !important;
+  height: 12px !important;
+ }
+ .side-nav-open-tab.visible {
+  display: flex !important;
+ }
+
+ /* When nav is hidden, content uses full width */
+ body.side-nav-collapsed #screen-home,
+ body.side-nav-collapsed #screen-calendar-full {
+  padding-left: 0 !important;
+  transition: padding-left 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+ }
+ #screen-home,
+ #screen-calendar-full {
+  transition: padding-left 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+ }
+ .bottom-nav {
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+ }
+}
 </style>
 
 </head>
 <body>
+
+<!-- Side nav re-open tab -->
+<button class="side-nav-open-tab" id="side-nav-open-tab" onclick="toggleSideNav()" title="Show navigation" style="display:none">
+ <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+</button>
 
 <!-- ══════════ AUTH ══════════ -->
 <div class="screen active" id="screen-auth">
@@ -4966,14 +5293,14 @@ img, video, iframe { max-width: 100%; }
 
 
    <div class="section-label" style="margin-top:1.5rem">Exercise Library</div>
-   <div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="openExLib()">
+   <div style="padding:0 1.25rem"><div style="background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.2);border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="openExLib()">
     <div style="width:44px;height:44px;border-radius:12px;background:rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></div>
     <div style="flex:1;">
      <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Browse All Exercises</div>
      <div style="font-size:12px;color:#666;">350 exercises with demo videos</div>
     </div>
     <div style="font-size:18px;color:#c9a84c;opacity:0.7;">›</div>
-   </div>
+   </div></div>
 
    <div class="section-label">Body Mass Index</div>
    <div class="bmi-card">
@@ -5621,8 +5948,11 @@ img, video, iframe { max-width: 100%; }
    </main>
   </div><!-- .website-body -->
 
-  <!-- Mobile bottom nav (shown only on small screens) -->
-  <div class="bottom-nav">
+  <!-- Mobile side tab nav -->
+  <div class="bottom-nav" id="side-nav-main">
+   <button class="side-nav-toggle" onclick="toggleSideNav()" title="Hide navigation">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+   </button>
    <div class="nav-item active" id="nav-home" onclick="setTab('home')">
     <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Home</span>
@@ -5753,8 +6083,11 @@ img, video, iframe { max-width: 100%; }
   </main>
  </div>
 
- <!-- Mobile bottom nav -->
- <div class="bottom-nav">
+ <!-- Mobile side tab nav (calendar) -->
+ <div class="bottom-nav" id="side-nav-cal">
+  <button class="side-nav-toggle" onclick="toggleSideNav()" title="Hide navigation">
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
   <div class="nav-item" id="fnav-home" onclick="setTab('home')">
    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
    <span>Home</span>
@@ -10735,6 +11068,48 @@ function toggleClientSidebar() {
 
 document.addEventListener('DOMContentLoaded', applyClientSidebarState);
 setTimeout(applyClientSidebarState, 100);
+
+// ── SIDE NAV HIDE / SHOW ──
+let _sideNavHidden = (localStorage.getItem('sideNavHidden') === 'true');
+
+function toggleSideNav() {
+ _sideNavHidden = !_sideNavHidden;
+ localStorage.setItem('sideNavHidden', _sideNavHidden);
+ applySideNavState();
+}
+
+function applySideNavState() {
+ // Only applies on mobile (≤768px)
+ if (window.innerWidth > 768) return;
+
+ const navs = document.querySelectorAll('.bottom-nav');
+ const openTab = document.getElementById('side-nav-open-tab');
+
+ navs.forEach(nav => {
+  if (_sideNavHidden) {
+   nav.classList.add('side-nav-hidden');
+  } else {
+   nav.classList.remove('side-nav-hidden');
+  }
+ });
+
+ // Body class drives content width transition
+ if (_sideNavHidden) {
+  document.body.classList.add('side-nav-collapsed');
+ } else {
+  document.body.classList.remove('side-nav-collapsed');
+ }
+
+ // Show / hide the re-open tab
+ if (openTab) {
+  openTab.classList.toggle('visible', _sideNavHidden);
+ }
+}
+
+// Init on load
+document.addEventListener('DOMContentLoaded', applySideNavState);
+window.addEventListener('resize', applySideNavState);
+setTimeout(applySideNavState, 150);
 </script>
 
 </body>
