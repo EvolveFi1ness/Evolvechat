@@ -7704,39 +7704,34 @@ function handleAngleSelect(e, angle) {
   || file.name.toLowerCase().endsWith('.heic')
   || file.name.toLowerCase().endsWith('.heif');
 
- function processFile(useFile) {
+ function applyPreview(dataUrl, useFile) {
   _angleFiles[angle] = useFile;
-  const reader = new FileReader();
-  reader.onload = ev => {
-   _anglePreviews[angle] = ev.target.result;
-   const slot = document.getElementById('angle-slot-' + angle);
-   slot.classList.add('filled');
-   slot.querySelectorAll('img.angle-preview-img,.angle-slot-overlay,.angle-slot-label').forEach(i => i.remove());
-   const img = document.createElement('img');
-   img.className = 'angle-preview-img';
-   img.src = ev.target.result;
-   slot.insertBefore(img, slot.firstChild);
-   const overlay = document.createElement('div');
-   overlay.className = 'angle-slot-overlay';
-   slot.appendChild(overlay);
-   const lbl = document.createElement('div');
-   lbl.className = 'angle-slot-label';
-   lbl.textContent = ANGLE_LABELS[angle];
-   slot.appendChild(lbl);
-   document.getElementById('angle-submit-row').classList.add('visible');
-  };
-  reader.readAsDataURL(useFile);
+  _anglePreviews[angle] = dataUrl;
+  const slot = document.getElementById('angle-slot-' + angle);
+  slot.classList.add('filled');
+  slot.querySelectorAll('img.angle-preview-img,.angle-slot-overlay,.angle-slot-label').forEach(i => i.remove());
+  const img = document.createElement('img');
+  img.className = 'angle-preview-img';
+  img.src = dataUrl;
+  slot.insertBefore(img, slot.firstChild);
+  const overlay = document.createElement('div');
+  overlay.className = 'angle-slot-overlay';
+  slot.appendChild(overlay);
+  const lbl = document.createElement('div');
+  lbl.className = 'angle-slot-label';
+  lbl.textContent = ANGLE_LABELS[angle];
+  slot.appendChild(lbl);
+  document.getElementById('angle-submit-row').classList.add('visible');
  }
 
  if (isHeic) {
-  // Convert HEIC/HEIF → JPEG via canvas (Apple device fix)
   const objUrl = URL.createObjectURL(file);
-  const img = new Image();
-  img.onload = () => {
+  const tmpImg = new Image();
+  tmpImg.onload = () => {
    const canvas = document.createElement('canvas');
-   canvas.width  = img.width;
-   canvas.height = img.height;
-   canvas.getContext('2d').drawImage(img, 0, 0);
+   canvas.width  = tmpImg.width;
+   canvas.height = tmpImg.height;
+   canvas.getContext('2d').drawImage(tmpImg, 0, 0);
    canvas.toBlob(blob => {
     URL.revokeObjectURL(objUrl);
     if (blob) {
@@ -7745,19 +7740,23 @@ function handleAngleSelect(e, angle) {
       file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'),
       { type: 'image/jpeg' }
      );
-     processFile(converted);
+     const reader = new FileReader();
+     reader.onload = ev => applyPreview(ev.target.result, converted);
+     reader.readAsDataURL(converted);
     } else {
      showToast('Could not convert HEIC photo. Try a JPEG instead.', 'error');
     }
    }, 'image/jpeg', 0.92);
   };
-  img.onerror = () => {
+  tmpImg.onerror = () => {
    URL.revokeObjectURL(objUrl);
    showToast('Could not read this photo format. Please try a different photo.', 'error');
   };
-  img.src = objUrl;
+  tmpImg.src = objUrl;
  } else {
-  processFile(file);
+  const reader = new FileReader();
+  reader.onload = ev => applyPreview(ev.target.result, file);
+  reader.readAsDataURL(file);
  }
 }
 
@@ -7798,7 +7797,8 @@ async function submitAnglePhotos() {
  try {
   for (const angle of angles) {
    const file = _angleFiles[angle];
-   const base64raw = await new Promise((resolve, reject) => {
+   // Use already-stored base64 preview (avoids re-reading file, fixes iOS HEIC issue)
+   const base64raw = _anglePreviews[angle] || await new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = e => resolve(e.target.result);
     r.onerror = () => reject(new Error('Failed to read file'));
