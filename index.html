@@ -5571,7 +5571,7 @@ img, video, iframe { max-width: 100%; }
   <!-- ═══ TAB: HOME ═══ -->
   <div id="tab-home-panel" class="tab-visible">
    <div class="greeting-section">
-    <div class="greeting-time" id="greeting-time">Goods Morning</div>
+    <div class="greeting-time" id="greeting-time">Good Morning</div>
     <div class="greeting-name" id="greeting-name">Welcome back</div>
     <div class="greeting-sub" id="greeting-sub">Ready to crush today's session?</div>
     <div id="home-avatar" style="display:none"></div>
@@ -6564,7 +6564,7 @@ async function loadHomeScreen(data) {
 
  // Greeting
  const h = phNow().getHours();
- document.getElementById('greeting-time').textContent = h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening';
+ document.getElementById('greeting-time').textContent = h<12?'Goods Morning':h<17?'Goods Afternoon':'Goods Evening';
  document.getElementById('greeting-name').textContent = first + ' ' + last;
 
  // Avatars (null-guarded — some elements removed with topbar)
