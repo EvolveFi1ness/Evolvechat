@@ -9,32 +9,31 @@
  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
- @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
-
  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
  :root {
-  --gold:   #C9A84C;
-  --gold-2:  #E8C96A;
-  --gold-3:  #F5DFA0;
-  --gold-dim: rgba(201,168,76,0.13);
-  --gold-glow: rgba(201,168,76,0.07);
-  --bg: #06050A;
-  --bg2: #09080D;
-  --bg3: #0F0D14;
-  --bg4: #151220;
-  --border: rgba(255,255,255,0.055);
-  --border2: rgba(255,255,255,0.10);
-  --border-gold: rgba(201,168,76,0.22);
-  --text: #EDE9E1;
-  --text2: #635F5A;
-  --text3: #3A3838;
-  --muted: #635F5A;
-  --green: #3DCB72;
-  --green-dim: rgba(61,203,114,0.10);
-  --red:  #E8605A;
-  --red-dim: rgba(232,96,90,0.10);
-  --blue: #5A9FEF;
+  --gold:      #D4A843;
+  --gold-2:    #F0C866;
+  --gold-3:    #F8E0A0;
+  --gold-dim:  rgba(212,168,67,0.14);
+  --gold-glow: rgba(212,168,67,0.07);
+  --bg:        #040404;
+  --bg2:       #0A0A0A;
+  --bg3:       #101010;
+  --bg4:       #161616;
+  --border:    rgba(255,255,255,0.06);
+  --border2:   rgba(255,255,255,0.10);
+  --border-gold: rgba(212,168,67,0.2);
+  --text:      #F0EDE8;
+  --text2:     #6B6865;
+  --text3:     #3A3838;
+  --muted:     #6B6865;
+  --muted2:    #2E2C2A;
+  --green:     #4ADE80;
+  --green-dim: rgba(74,222,128,0.10);
+  --red:       #F87171;
+  --red-dim:   rgba(248,113,113,0.08);
+  --blue:      #60A5FA;
  }
 
  html, body {
@@ -360,7 +359,7 @@
  }
  .stat-box .s-lbl { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text3); margin-top: 5px; font-weight: 500; }
 
- .section-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); padding: 1.5rem 1.25rem 0.75rem; font-weight: 600; }
+ .section-label { font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(180,176,170,0.7); padding: 1.5rem 1.25rem 0.75rem; font-weight: 600; }
 
  /* ── WORKOUT CARD ── */
  .workout-card {
@@ -742,7 +741,7 @@
  /* ── Past logs ── */
  .past-logs-header {
   font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-  color: rgba(99,95,90,0.55); font-weight: 700; font-family:'Outfit',sans-serif;
+  color: rgba(180,176,170,0.75); font-weight: 700; font-family:'Outfit',sans-serif;
   padding: 20px 16px 10px;
  }
  .past-log-card {
@@ -759,23 +758,23 @@
  .past-log-card:active { transform: scale(0.985); background: #181818; }
  .plc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
  .plc-name { font-family:'Outfit',sans-serif; font-weight: 800; font-size: 15px; color: var(--text); }
- .plc-day { font-size: 11px; color: var(--text3); font-family:'Outfit',sans-serif; margin-top: 1px; }
- .plc-date { font-size: 11px; color: var(--text3); font-family:'Outfit',sans-serif; }
+ .plc-day { font-size: 11px; color: rgba(180,176,170,0.6); font-family:'Outfit',sans-serif; margin-top: 1px; }
+ .plc-date { font-size: 11px; color: rgba(180,176,170,0.6); font-family:'Outfit',sans-serif; }
  .plc-chevron { font-size: 18px; color: rgba(201,168,76,0.5); margin-top: 0; transition: color 0.15s; }
  .past-log-card:hover .plc-chevron { color: var(--gold); }
  .plc-stats { display: flex; gap: 0; margin-bottom: 8px; }
  .plc-stat-pill {
   font-size: 11px; font-weight: 600; font-family:'Outfit',sans-serif;
-  color: var(--text3); padding: 2px 0;
+  color: rgba(180,176,170,0.65); padding: 2px 0;
   display: flex; align-items: center; gap: 3px;
  }
- .plc-stat-pill + .plc-stat-pill::before { content: '·'; margin: 0 7px; color: rgba(99,95,90,0.35); }
- .plc-stat-pill strong { color: var(--text2); }
+ .plc-stat-pill + .plc-stat-pill::before { content: '·'; margin: 0 7px; color: rgba(180,176,170,0.3); }
+ .plc-stat-pill strong { color: rgba(220,216,210,0.9); }
  .plc-ex-tags { display: flex; gap: 5px; flex-wrap: wrap; }
  .plc-ex-tag {
   font-size: 10px; padding: 2px 8px; border-radius: 5px;
-  background: rgba(255,255,255,0.04); color: rgba(99,95,90,0.65);
-  font-family:'Outfit',sans-serif; border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.06); color: rgba(180,176,170,0.65);
+  font-family:'Outfit',sans-serif; border: 1px solid rgba(255,255,255,0.09);
  }
 
   /* ── Workout Detail Drawer ── */
@@ -960,59 +959,257 @@
  .angle-note-field::placeholder { color: var(--text3); }
  .angle-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
- /* ── Before / After layout ── */
- .ba-layout { padding: 0 1.25rem 2rem; }
- .ba-row {
-  margin-bottom: 1.5rem;
+ /* ═══════════════════════════════════════
+    GALLERY — VIEW TOGGLE
+ ═══════════════════════════════════════ */
+ .gallery-view-toggle {
+  display: flex; margin: 1.25rem 1.25rem 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px; padding: 3px; gap: 3px;
  }
+ .gvt-btn {
+  flex: 1; padding: 9px 8px; border-radius: 9px; font-size: 11px;
+  font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  cursor: pointer; border: none; background: transparent; color: #444;
+  transition: all 0.2s; font-family: 'Outfit', sans-serif;
+  display: flex; align-items: center; justify-content: center; gap: 5px;
+ }
+ .gvt-btn.active {
+  background: rgba(201,168,76,0.15); color: #c9a84c;
+  box-shadow: 0 1px 8px rgba(201,168,76,0.15);
+ }
+ .gvt-btn:hover:not(.active) { color: #666; background: rgba(255,255,255,0.03); }
+ .gvt-btn svg { flex-shrink: 0; }
+
+ /* ═══════════════════════════════════════
+    BEFORE / AFTER COMPARISON VIEW
+ ═══════════════════════════════════════ */
+ .ba-compare-view { display: none; padding: 0 0 3rem; }
+ .ba-compare-view.active { display: block; }
+
+ /* Angle selector chips */
+ .ba-angle-chips {
+  display: flex; gap: 6px; padding: 1rem 1.25rem 0; flex-wrap: wrap;
+ }
+ .ba-angle-chip {
+  padding: 6px 14px; border-radius: 100px; font-size: 10px; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  background: rgba(255,255,255,0.03); color: #444;
+  border: 1px solid rgba(255,255,255,0.07); transition: all 0.15s;
+  font-family: 'Outfit', sans-serif;
+ }
+ .ba-angle-chip:hover:not(.active) { color: #666; border-color: rgba(255,255,255,0.12); }
+ .ba-angle-chip.active {
+  background: rgba(201,168,76,0.12); color: #c9a84c;
+  border-color: rgba(201,168,76,0.35);
+ }
+ .ba-angle-chip.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+ /* Slider */
+ .ba-slider-outer { padding: 0.875rem 1.25rem 0; }
+ .ba-slider-wrap {
+  position: relative; border-radius: 20px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  user-select: none; touch-action: none;
+  background: var(--bg2);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+ }
+ .ba-img-after {
+  display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover;
+  max-height: 500px; pointer-events: none;
+ }
+ .ba-before-wrap {
+  position: absolute; inset: 0; overflow: hidden; width: 50%;
+ }
+ .ba-img-before {
+  display: block; object-fit: cover; max-height: 500px;
+  position: absolute; top: 0; left: 0; height: 100%;
+  pointer-events: none;
+ }
+ /* Labels overlaid on images */
+ .ba-img-label {
+  position: absolute; bottom: 14px; z-index: 4;
+  font-size: 9px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 100px; font-family: 'Inter', sans-serif;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+ }
+ .ba-img-label.before-side {
+  left: 12px; background: rgba(90,159,239,0.22); color: #93c5fd;
+  border: 1px solid rgba(90,159,239,0.3);
+ }
+ .ba-img-label.after-side {
+  right: 12px; background: rgba(61,203,114,0.2); color: #6ee7b7;
+  border: 1px solid rgba(61,203,114,0.28);
+ }
+ /* Divider line + handle */
+ .ba-divider {
+  position: absolute; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.9) 15%, rgba(255,255,255,0.9) 85%, transparent 100%);
+  left: 50%; transform: translateX(-50%);
+  cursor: ew-resize; z-index: 5; pointer-events: none;
+ }
+ .ba-handle {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 3px rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  cursor: ew-resize; z-index: 6; pointer-events: none;
+  transition: transform 0.1s, box-shadow 0.1s;
+ }
+ .ba-slider-wrap.dragging .ba-handle {
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.2);
+ }
+ .ba-handle-arrows {
+  display: flex; align-items: center; gap: 2px; color: #111; font-size: 14px; pointer-events: none;
+ }
+
+ /* Hint text */
+ .ba-drag-hint {
+  text-align: center; font-size: 10px; color: #333; letter-spacing: 0.5px;
+  margin-top: 8px; font-family: 'Outfit', sans-serif; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+ }
+ .ba-drag-hint::before, .ba-drag-hint::after {
+  content: ''; display: inline-block; width: 24px; height: 1px;
+  background: linear-gradient(90deg, transparent, #333);
+ }
+ .ba-drag-hint::after { background: linear-gradient(270deg, transparent, #333); }
+
+ /* No-compare state */
+ .ba-no-compare {
+  padding: 3.5rem 1.25rem; text-align: center;
+ }
+ .ba-no-compare-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px;
+ }
+ .ba-no-compare p { font-size: 13px; color: #444; line-height: 1.7; }
+ .ba-no-compare strong { color: rgba(201,168,76,0.7); }
+
+ /* Stats strip below slider */
+ .ba-stats-strip {
+  display: grid; grid-template-columns: 1fr 1px 1fr 1px 1fr;
+  margin: 0.875rem 1.25rem 0;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px; overflow: hidden;
+ }
+ .ba-stat {
+  padding: 14px 10px; text-align: center;
+ }
+ .ba-stat-divider {
+  background: rgba(255,255,255,0.06); align-self: stretch;
+ }
+ .ba-stat-lbl {
+  font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #333; margin-bottom: 5px; font-family: 'Outfit', sans-serif;
+ }
+ .ba-stat-val {
+  font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800;
+  line-height: 1; letter-spacing: -0.5px;
+ }
+ .ba-stat-sub {
+  font-size: 9px; color: #333; margin-top: 3px; font-family: 'Outfit', sans-serif;
+ }
+ .ba-stat-val.blue { color: var(--blue); }
+ .ba-stat-val.green { color: var(--green); }
+ .ba-stat-val.red { color: var(--red); }
+ .ba-stat-val.gold { color: var(--gold); }
+ .ba-stat-val.neutral { color: #555; }
+
+ /* ═══════════════════════════════════════
+    TIMELINE (ALL CHECK-INS) VIEW
+ ═══════════════════════════════════════ */
+ .ba-timeline-view { display: none; padding: 0 0 3rem; }
+ .ba-timeline-view.active { display: block; }
+ .ba-layout { padding: 0.75rem 1.25rem 0; }
+
+ /* Each session row */
+ .ba-row {
+  margin-bottom: 1.75rem;
+  animation: rowFadeIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+ }
+ @keyframes rowFadeIn {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+ }
+ .ba-row:nth-child(1) { animation-delay: 0.04s; }
+ .ba-row:nth-child(2) { animation-delay: 0.08s; }
+ .ba-row:nth-child(3) { animation-delay: 0.12s; }
+ .ba-row:nth-child(n+4) { animation-delay: 0.16s; }
+
  .ba-row-header {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 0.75rem;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 9px;
  }
  .ba-row-label {
-  font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
-  padding: 4px 14px; border-radius: 100px; font-family: 'Inter', sans-serif; flex-shrink: 0;
+  font-size: 9px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 100px; font-family: 'Inter', sans-serif; flex-shrink: 0;
  }
- .ba-row-label.after-lbl { color: #3dcb72; background: rgba(61,203,114,0.12); border: 1px solid rgba(61,203,114,0.35); }
- .ba-row-label.before-lbl { color: #5a9fef; background: rgba(90,159,239,0.12); border: 1px solid rgba(90,159,239,0.35); }
- .ba-row-label.checkin-lbl { color: #c9a84c; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); }
- .ba-row-meta {
-  font-size: 11px; color: var(--text3); font-family: 'Inter', sans-serif;
-  display: flex; align-items: center; gap: 8px;
+ .ba-row-label.after-lbl  { color: #6ee7b7; background: rgba(61,203,114,0.1);  border: 1px solid rgba(61,203,114,0.28); }
+ .ba-row-label.before-lbl { color: #93c5fd; background: rgba(90,159,239,0.1);  border: 1px solid rgba(90,159,239,0.25); }
+ .ba-row-label.checkin-lbl{ color: #c9a84c;  background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);  }
+ .ba-row-meta { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; overflow: hidden; }
+ .ba-row-date  { font-size: 11px; color: #444; font-family: 'Outfit', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+ .ba-row-weight{
+  font-size: 9px; color: #c9a84c; font-weight: 800;
+  background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.18);
+  border-radius: 100px; padding: 2px 8px; white-space: nowrap; flex-shrink: 0;
+  font-family: 'Outfit', sans-serif; letter-spacing: 0.3px;
  }
- .ba-row-divider { flex: 1; height: 1px; background: var(--border); }
- .ba-angle-row {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+ .ba-row-divider {
+  flex: 1; height: 1px; min-width: 8px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.06), transparent);
  }
+
+ /* 4-angle grid per session */
+ .ba-angle-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
  .ba-angle-card {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
-  overflow: hidden; cursor: pointer; transition: all 0.18s; position: relative;
+  background: var(--bg2); border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 11px; overflow: hidden; cursor: pointer;
+  transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+  position: relative;
  }
- .ba-angle-card:hover { border-color: rgba(212,168,67,0.35); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
+ .ba-angle-card:hover {
+  border-color: rgba(201,168,76,0.28); transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.5);
+ }
  .ba-angle-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+ .ba-angle-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 45%);
+ }
+ .ba-angle-name {
+  position: absolute; bottom: 0; left: 0; right: 0; z-index: 1;
+  padding: 14px 4px 6px; font-size: 8px; font-weight: 800;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: rgba(255,255,255,0.75); font-family: 'Inter', sans-serif; text-align: center;
+ }
  .ba-angle-empty {
   width: 100%; aspect-ratio: 3/4; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 6px;
-  background: var(--bg3); border-radius: 12px;
-  border: 1px dashed rgba(255,255,255,0.08);
+  align-items: center; justify-content: center; gap: 4px;
+  background: rgba(255,255,255,0.015); border-radius: 11px;
+  border: 1px dashed rgba(255,255,255,0.06);
  }
- .ba-angle-empty-icon { font-size: 20px; opacity: 0.35; }
- .ba-angle-empty-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
- .ba-angle-name {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  padding: 18px 8px 7px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.75));
-  font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
-  color: rgba(255,255,255,0.85); font-family: 'Inter', sans-serif; text-align: center;
- }
- .ba-only-before {
-  padding: 1.5rem; text-align: center; background: var(--bg2);
-  border: 1px dashed rgba(255,255,255,0.07); border-radius: 14px;
-  margin-bottom: 1.5rem;
- }
- .ba-only-before p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+ .ba-angle-empty-icon { font-size: 14px; opacity: 0.15; }
+ .ba-angle-empty-lbl   { font-size: 7px; color: rgba(99,95,90,0.3); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
 
- /* Legacy photo grid — kept for fallback */
+ /* Nudge when only one session */
+ .ba-only-before {
+  padding: 1.25rem; text-align: center; margin: 0 0 1.5rem;
+  background: rgba(201,168,76,0.03);
+  border: 1px dashed rgba(201,168,76,0.12); border-radius: 14px;
+ }
+ .ba-only-before p { font-size: 12px; color: #444; line-height: 1.7; }
+ .ba-only-before strong { color: rgba(61,203,114,0.7); }
+
+ /* Legacy photo grid fallback */
  .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 1.25rem; }
  .photo-card {
   background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
@@ -1029,78 +1226,6 @@
   border: 1px solid rgba(212,168,67,0.3); border-radius: 100px;
   padding: 2px 7px; margin-bottom: 3px;
  }
-
- /* ── BEFORE / AFTER COMPARISON ── */
- .ba-view { display: none; padding: 0 1.25rem 2rem; }
- .ba-view.active { display: block; }
- .ba-angle-tabs { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
- .ba-angle-tab {
-  padding: 6px 14px; border-radius: 100px; font-size: 11px; font-weight: 700;
-  letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer;
-  background: var(--bg3); color: var(--text3); border: 1px solid var(--border);
-  transition: all 0.15s;
- }
- .ba-angle-tab.active { background: var(--gold-dim); color: var(--gold); border-color: rgba(201,168,76,0.4); }
- .ba-slider-wrap {
-  position: relative; border-radius: 18px; overflow: hidden;
-  border: 1px solid var(--border); user-select: none; touch-action: none;
-  background: var(--bg2);
- }
- .ba-slider-wrap.empty { display: flex; align-items: center; justify-content: center; min-height: 300px; }
- .ba-img-after { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; max-height: 480px; }
- .ba-img-before-wrap {
-  position: absolute; inset: 0; overflow: hidden;
-  width: 50%;
- }
- .ba-img-before {
-  display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; max-height: 480px;
-  position: absolute; top: 0; left: 0;
-  /* match after image exactly */
- }
- .ba-divider {
-  position: absolute; top: 0; bottom: 0;
-  width: 3px; background: #fff; box-shadow: 0 0 12px rgba(0,0,0,0.5);
-  left: 50%; transform: translateX(-50%); cursor: ew-resize; z-index: 5;
- }
- .ba-handle {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%,-50%);
-  width: 40px; height: 40px; border-radius: 50%;
-  background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,0.5);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; cursor: ew-resize; z-index: 6;
- }
- .ba-label {
-  position: absolute; bottom: 14px;
-  font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 100px;
- }
- .ba-label.before-lbl { left: 12px; background: rgba(90,159,239,0.85); color: #fff; }
- .ba-label.after-lbl { right: 12px; background: rgba(61,203,114,0.85); color: #fff; }
- .ba-weight-row {
-  display: flex; gap: 12px; margin-top: 12px;
- }
- .ba-weight-pill {
-  flex: 1; background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px 14px; text-align: center;
- }
- .ba-weight-pill .wlbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); font-weight: 700; }
- .ba-weight-pill .wval { font-size: 20px; font-weight: 700; font-family: 'Syne', sans-serif; margin-top: 4px; }
- .ba-weight-pill .wdate { font-size: 10px; color: var(--text3); margin-top: 2px; }
- .ba-weight-pill.before-pill .wval { color: var(--blue); }
- .ba-weight-pill.after-pill .wval { color: var(--green); }
- .ba-diff-pill {
-  flex: 1; background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 12px 14px; text-align: center;
-  display: flex; flex-direction: column; justify-content: center;
- }
- .ba-diff-pill .wlbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); font-weight: 700; }
- .ba-diff-pill .wval { font-size: 20px; font-weight: 700; font-family: 'Syne', sans-serif; margin-top: 4px; }
- .ba-no-compare {
-  padding: 3rem 1rem; text-align: center; color: var(--text3);
- }
- .ba-no-compare .empty-icon { font-size: 2.5rem; margin-bottom: 8px; }
- .ba-no-compare p { font-size: 13px; line-height: 1.6; }
 
  /* ── VIEW TOGGLE in progress photos header ── */
  .prog-view-toggle {
@@ -1587,8 +1712,6 @@
  /* ════════════════════════════════════
    PREMIUM OVERRIDES — EVOLVE CLIENT
  ════════════════════════════════════ */
-
- @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap');
 
  :root {
   --gold: #C9A84C;
@@ -2882,7 +3005,7 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 .log-header { padding-left: 0 !important; }
 .log-ex-card { margin-left: 0 !important; margin-right: 0 !important; }
 
-#prog-panel-checkin { padding-left: 0 !important; padding-right: 0 !important; }
+
 .profile-panel { padding-left: 0 !important; padding-right: 0 !important; }
 
 /* Tab panels within home screen get no extra padding */
@@ -2914,13 +3037,44 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 
 /* Wider content grids on desktop */
 .stat-strip {
- grid-template-columns: repeat(3, 1fr) !important;
+ grid-template-columns: repeat(2, 1fr) !important;
 }
 
 /* Chat panel website layout */
 #tab-chat-panel > div:last-child {
- height: calc(100vh - 300px) !important;
+ flex: 1 !important;
+ min-height: 0 !important;
+ height: auto !important;
  margin: 0 !important;
+}
+
+/* ── Desktop chat: proper full-height layout ── */
+@media (min-width: 769px) {
+ #tab-chat-panel {
+  padding: 0 !important;
+  height: calc(100vh - 4rem) !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+ }
+ #tab-chat-panel.tab-visible {
+  display: flex !important;
+ }
+ #chat-title-row {
+  flex-shrink: 0 !important;
+  padding: 1.25rem 0 0.75rem !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  margin-bottom: 0 !important;
+ }
+ #client-chat-box {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  margin-top: 1rem !important;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+ }
 }
 
 /* Calendar on website */
@@ -3006,31 +3160,7 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
   COACH-MATCH OVERRIDES — aligns client UI to coach.html
   ══════════════════════════════════════════════ */
 
-/* ── Core color alignment ── */
-:root {
- --gold:   #D4A843 !important;
- --gold-2:  #F0C866 !important;
- --gold-3:  #F8E0A0 !important;
- --gold-dim: rgba(212,168,67,0.14) !important;
- --gold-glow: rgba(212,168,67,0.07) !important;
- --bg: #040404 !important;
- --bg2: #0A0A0A !important;
- --bg3: #101010 !important;
- --bg4: #161616 !important;
- --border: rgba(255,255,255,0.06) !important;
- --border2: rgba(255,255,255,0.10) !important;
- --text: #F0EDE8 !important;
- --text2: #6B6865 !important;
- --text3: #3A3838 !important;
- --muted: #6B6865 !important;
- --muted2: #2E2C2A !important;
- --green: #4ADE80 !important;
- --green-dim: rgba(74,222,128,0.10) !important;
- --red:  #F87171 !important;
- --red-dim: rgba(248,113,113,0.08) !important;
- --blue: #60A5FA !important;
- --border-gold: rgba(212,168,67,0.2) !important;
-}
+/* ── Core color alignment — defined in :root at top of file ── */
 
 /* ── Body background — coach style, no purple ── */
 html, body {
@@ -4514,7 +4644,8 @@ html, body {
  .home-topbar { padding: 0 1.5rem !important; }
  .web-nav { margin: 0 1.5rem; gap: 2px; }
  .web-nav-item { padding: 7px 10px; font-size: 12px; }
- #tab-chat-panel > div:last-child { height: calc(100vh - 280px) !important; }
+ #tab-chat-panel > div:last-child { height: auto !important; flex: 1 !important; }
+ #client-chat-box { flex: 1 !important; min-height: 0 !important; height: auto !important; margin-top: 0.75rem !important; }
 }
 
 /* ── Mobile (max 768px) — already handled, but strengthen ── */
@@ -4523,10 +4654,27 @@ html, body {
  .home-topbar { padding: 0 1rem !important; height: 56px !important; }
  .home-topbar .brand { font-size: 22px !important; }
 
- /* Chat panel better height on mobile */
- #tab-chat-panel > div:last-child {
-  height: calc(100vh - 200px) !important;
-  margin: 0 0.75rem !important;
+ /* Chat panel full height on mobile */
+ #tab-chat-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+ }
+ #client-chat-box {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+ }
+ #chat-title-row {
+  padding: 1rem 1.25rem 0.5rem !important;
+  flex-shrink: 0 !important;
  }
 
  /* Stat strip 2-up on small phones */
@@ -4610,7 +4758,8 @@ html, body {
 
 /* ── Landscape phone fix ── */
 @media (max-width: 768px) and (orientation: landscape) {
- #tab-chat-panel > div:last-child { height: calc(100vh - 160px) !important; }
+ #tab-chat-panel { height: 100dvh !important; }
+ #client-chat-box { height: auto !important; flex: 1 !important; }
  .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
  .bottom-nav { padding: 4px 0 calc(4px + env(safe-area-inset-bottom)); }
  .home-topbar { height: 48px !important; }
@@ -4679,9 +4828,9 @@ img, video, iframe { max-width: 100%; }
  .ev-modal-footer { padding: 10px 16px calc(16px + env(safe-area-inset-bottom)) !important; }
 
  /* ── Profile page full width ── */
- .profile-panel { padding: 1rem !important; }
- .pp-header { padding: 1rem !important; margin-bottom: 1rem !important; }
- .pp-name { font-size: 17px !important; }
+ .profile-panel { padding: 1.5rem 1.25rem 2rem !important; }
+ .pp-header { padding: 1.25rem !important; margin-bottom: 1.25rem !important; }
+ .pp-name { font-size: 18px !important; }
  .pp-email { font-size: 12px !important; }
 
  /* ── Call screen ── */
@@ -4704,6 +4853,11 @@ img, video, iframe { max-width: 100%; }
    MOBILE FINAL OVERRIDE — beats all !important layers above
    Must be LAST in the stylesheet.
 ══════════════════════════════════════════════════════ */
+/* ── Tab visibility: global rules that apply at ALL viewport sizes ── */
+.tab-hidden { display: none !important; }
+.tab-visible { display: block !important; }
+#tab-chat-panel.tab-visible { display: flex !important; }
+
 @media (max-width: 768px) {
 
  /* ── Kill the desktop sidebar grid — force single column ── */
@@ -4803,16 +4957,30 @@ img, video, iframe { max-width: 100%; }
   max-width: 60% !important;
  }
 
- /* ── Chat panel: fill full width ── */
+ /* ── Chat panel: fill full width and full height ── */
  #tab-chat-panel {
   padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
  }
- #tab-chat-panel > div:last-child {
-  height: calc(100dvh - 160px) !important;
+ #tab-chat-panel.tab-visible {
+  display: flex !important;
+ }
+ #chat-title-row {
+  padding: 1rem 1.25rem 0.5rem !important;
+  flex-shrink: 0 !important;
+ }
+ #client-chat-box {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: auto !important;
   margin: 0 !important;
   border-radius: 0 !important;
   border-left: none !important;
   border-right: none !important;
+  border-bottom: none !important;
  }
 
  /* ── Profile panel: full width ── */
@@ -4916,12 +5084,40 @@ img, video, iframe { max-width: 100%; }
 
  /* ── Push all screen content right so side nav doesn't overlap ── */
  #screen-home,
- #screen-calendar-full {
+ #screen-calendar-full,
+ #tab-log-panel,
+ #tab-progress-panel,
+ #tab-profile-panel,
+ #tab-nutrition-panel {
   padding-left: 62px !important;
  }
  #screen-home-inner {
-  padding-left: 0 !important; /* already handled by parent */
+  padding-left: 0 !important;
  }
+
+ /* ── Profile panel: more breathing room ── */
+ .profile-panel {
+  padding: 1.5rem 1.25rem 2rem !important;
+ }
+ .pp-header {
+  padding: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+  gap: 14px !important;
+ }
+ .pp-avatar {
+  width: 52px !important;
+  height: 52px !important;
+  font-size: 18px !important;
+  flex-shrink: 0 !important;
+ }
+ .pp-name { font-size: 18px !important; }
+ .pp-email { font-size: 12px !important; margin-top: 3px !important; }
+ .pp-section { margin-bottom: 1.25rem !important; border-radius: 14px !important; }
+ .pp-section-title { padding: 12px 16px !important; font-size: 10px !important; }
+ .pp-row { padding: 15px 16px !important; }
+ .pp-row .lbl { font-size: 14px !important; }
+ .pp-row .val { font-size: 14px !important; }
+ .logout-btn { margin-top: 0.5rem !important; padding: 14px !important; font-size: 13px !important; }
 
  /* ── Toast: keep at bottom center of the content area ── */
  .toast {
@@ -5009,7 +5205,11 @@ img, video, iframe { max-width: 100%; }
 
  /* When nav is hidden, content uses full width */
  body.side-nav-collapsed #screen-home,
- body.side-nav-collapsed #screen-calendar-full {
+ body.side-nav-collapsed #screen-calendar-full,
+ body.side-nav-collapsed #tab-log-panel,
+ body.side-nav-collapsed #tab-progress-panel,
+ body.side-nav-collapsed #tab-profile-panel,
+ body.side-nav-collapsed #tab-nutrition-panel {
   padding-left: 0 !important;
   transition: padding-left 0.25s cubic-bezier(0.4,0,0.2,1) !important;
  }
@@ -5020,7 +5220,27 @@ img, video, iframe { max-width: 100%; }
  .bottom-nav {
   transition: transform 0.25s cubic-bezier(0.4,0,0.2,1) !important;
  }
+
+ /* ── Chat panel: account for 62px side nav ── */
+ #tab-chat-panel {
+  padding-left: 62px !important;
+  height: 100dvh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+ }
+ #tab-chat-panel.tab-hidden {
+  display: none !important;
+ }
+ body.side-nav-collapsed #tab-chat-panel {
+  padding-left: 0 !important;
+ }
 }
+
+.nutr-modal-overlay.open { display: flex !important; }
 </style>
 
 </head>
@@ -5187,20 +5407,7 @@ img, video, iframe { max-width: 100%; }
 
 
 
-  <!-- NOTIFICATION PANEL (Client) -->
-  <div class="client-notif-panel" id="client-notif-panel">
-   <div class="client-notif-header">
-    <div class="client-notif-title">Notifications</div>
-    <button class="client-notif-mark-all" onclick="clientMarkAllRead()">Mark all read</button>
-   </div>
-   <div class="client-notif-list" id="client-notif-list">
-    <div class="client-notif-empty">
-     <div class="client-notif-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-     No notifications yet
-    </div>
-   </div>
-  </div>
-
+  
   <!-- ── Website Body: Sidebar + Content ── -->
   <div class="website-body" id="main-website-body">
 
@@ -5231,10 +5438,6 @@ img, video, iframe { max-width: 100%; }
      <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18"/></svg>
      <span class="sidebar-nav-label">Log Workout</span>
     </div>
-    <div class="sidebar-nav-item" id="snav-calendar" onclick="setTab('calendar')" data-label="Schedule">
-     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-     <span class="sidebar-nav-label">Schedule</span>
-    </div>
 
     <div class="sidebar-section-title">Tracking</div>
     <div class="sidebar-nav-item" id="snav-progress" onclick="setTab('progress')" data-label="Progress &amp; Photos">
@@ -5246,10 +5449,9 @@ img, video, iframe { max-width: 100%; }
      <span class="sidebar-nav-label">Coach Chat</span>
     </div>
     <div class="sidebar-nav-item" id="snav-nutrition" onclick="setTab('nutrition')" data-label="Nutrition">
-     <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c0 1.5-.5 2.8-1.3 3.8L12 22l-2.7-12.2C8.5 8.8 8 7.5 8 6a4 4 0 014-4z"/></svg>
+     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
      <span class="sidebar-nav-label">Nutrition</span>
     </div>
-
     <div class="sidebar-section-title">Account</div>
     <div class="sidebar-nav-item" id="snav-profile" onclick="setTab('profile')" data-label="Profile">
      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -5265,11 +5467,12 @@ img, video, iframe { max-width: 100%; }
    <main class="web-main">
 
   <!-- ═══ TAB: HOME ═══ -->
-  <div id="tab-home-panel">
+  <div id="tab-home-panel" class="tab-visible">
    <div class="greeting-section">
     <div class="greeting-time" id="greeting-time">Good Morning</div>
     <div class="greeting-name" id="greeting-name">Welcome back</div>
     <div class="greeting-sub" id="greeting-sub">Ready to crush today's session?</div>
+    <div id="home-avatar" style="display:none"></div>
    </div>
    <div class="stat-strip">
     <div class="stat-box"><div class="s-val" id="stat-streak">0</div><div class="s-lbl">Day Streak</div></div>
@@ -5342,7 +5545,7 @@ img, video, iframe { max-width: 100%; }
   </div>
 
   <!-- ═══ TAB: LOG WORKOUT ═══ -->
-  <div id="tab-log-panel" style="display:none">
+  <div id="tab-log-panel" class="tab-hidden" style="display:none">
 
    <!-- Sticky active-workout bar with live timer -->
    <div class="wkt-active-bar" id="wkt-active-bar">
@@ -5370,7 +5573,7 @@ img, video, iframe { max-width: 100%; }
    <div class="log-complete-area" id="log-complete-area">
     <div class="log-summary-bar">
      <div class="ls-item"><div class="ls-val" id="ls-sets">0</div><div class="ls-lbl">Sets Done</div></div>
-     <div class="ls-item"><div class="ls-val" id="ls-vol">0</div><div class="ls-lbl">Total Reps</div></div>
+     <div class="ls-item"><div class="ls-val" id="ls-reps">0</div><div class="ls-lbl">Total Reps</div></div>
      <div class="ls-item"><div class="ls-val" id="ls-weight">0</div><div class="ls-lbl">Volume kg</div></div>
     </div>
     <button class="complete-workout-btn" id="complete-btn" onclick="completeWorkout()">Complete Workout</button>
@@ -5378,24 +5581,36 @@ img, video, iframe { max-width: 100%; }
    </div>
 
    <!-- Past logs -->
-   <div class="past-logs-header">Previous Workouts</div>
+   <div style="display:flex;align-items:center;justify-content:space-between;padding:1.5rem 1.25rem 0.75rem">
+    <div class="past-logs-header" style="padding:0;margin:0">Previous Workouts</div>
+    <div style="display:flex;gap:4px">
+     <button onclick="setClientLogView('cards')" id="clv-cards-btn" style="padding:5px 12px;border-radius:8px;background:var(--gold);color:#0A0A0A;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Cards</button>
+     <button onclick="setClientLogView('chart')" id="clv-chart-btn" style="padding:5px 12px;border-radius:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.65);border:1px solid rgba(255,255,255,0.12);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Chart</button>
+    </div>
+   </div>
+   <div id="clv-metric-wrap" style="display:none;gap:4px;padding:0 1.25rem 0.75rem">
+    <button onclick="setClientChartMetric('volume')" id="clv-metric-volume" style="padding:4px 11px;border-radius:7px;background:var(--gold);color:#0A0A0A;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Volume</button>
+    <button onclick="setClientChartMetric('reps')" id="clv-metric-reps" style="padding:4px 11px;border-radius:7px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.65);border:1px solid rgba(255,255,255,0.12);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Reps</button>
+    <button onclick="setClientChartMetric('sets')" id="clv-metric-sets" style="padding:4px 11px;border-radius:7px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.65);border:1px solid rgba(255,255,255,0.12);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Sets</button>
+   </div>
    <div id="past-logs-container">
     <div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No logs yet</div><div class="empty-sub">Complete a workout to see your history</div></div>
+   </div>
+   <div id="clv-chart-view" style="display:none;padding:0 1.25rem">
+    <div id="clv-chart-summary" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap"></div>
+    <div style="position:relative;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:16px 16px 8px;overflow:hidden">
+     <canvas id="clv-chart-canvas" height="200" style="width:100%;display:block"></canvas>
+     <div id="clv-chart-tooltip" style="position:absolute;display:none;background:#1a1a1a;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 12px;font-size:12px;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
+    </div>
+    <div id="clv-chart-empty" style="display:none;text-align:center;padding:3rem 1rem;color:rgba(255,255,255,0.3);font-size:13px">Complete more workouts to see your trend.</div>
    </div>
    <div style="height:2rem"></div>
   </div>
 
   <!-- ═══ TAB: PROGRESS (Photos + Check-in) ═══ -->
-  <div id="tab-progress-panel" style="display:none">
-   <!-- Sub-tab switcher -->
-   <div style="display:flex;border-bottom:1px solid #1e1e1e;margin-bottom:0;background:#0a0a0a;position:sticky;top:0;z-index:10">
-    <div class="prog-subtab active" id="subtab-photos" onclick="setProgSubtab('photos')" style="flex:1;padding:13px 8px;text-align:center;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;color:#c9a84c;border-bottom:2px solid #c9a84c;transition:all .15s">Photos</div>
-    <div class="prog-subtab" id="subtab-checkin" onclick="setProgSubtab('checkin')" style="flex:1;padding:13px 8px;text-align:center;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;color:#555;border-bottom:2px solid transparent;transition:all .15s">Check-in</div>
-   </div>
-
+  <div id="tab-progress-panel" class="tab-hidden" style="display:none">
    <!-- ── PHOTOS panel ── -->
-   <div id="prog-panel-photos">
-    <div class="progress-photos-header">
+   <div class="progress-photos-header">
      <div class="progress-photos-title">Progress Photos</div>
      <div class="progress-photos-sub">Track your physique journey. Visible to your coach.</div>
     </div>
@@ -5477,143 +5692,95 @@ img, video, iframe { max-width: 100%; }
     </div>
 
 
-    <!-- Photo gallery — Before / After layout -->
-    <div class="section-label">Your Photos</div>
-    <div class="ba-layout" id="photo-grid">
-     <div class="empty-state" style="grid-column:1/-1">
-      <div class="empty-icon"></div>
-      <div class="empty-title">No photos yet</div>
-      <div class="empty-sub">Upload your first progress photo above</div>
+    <!-- ── GALLERY: VIEW TOGGLE ── -->
+    <div class="gallery-view-toggle" id="gallery-view-toggle" style="display:none">
+     <button class="gvt-btn active" id="gvt-compare" onclick="setGalleryView('compare')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1"/></svg>
+      Before &amp; After
+     </button>
+     <button class="gvt-btn" id="gvt-timeline" onclick="setGalleryView('timeline')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      All Check-ins
+     </button>
+    </div>
+
+    <!-- ── BEFORE / AFTER COMPARE VIEW ── -->
+    <div class="ba-compare-view active" id="ba-compare-view">
+
+     <!-- No compare state (< 2 sessions) -->
+     <div class="ba-no-compare" id="ba-no-compare" style="display:none">
+      <div class="ba-no-compare-icon">
+       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1"/></svg>
+      </div>
+      <p>Upload at least <strong>2 check-ins</strong> to unlock the Before &amp; After comparison.</p>
      </div>
-    </div>
-    <div style="height:1rem"></div>
 
-
-
-   </div><!-- end prog-panel-photos -->
-
-   <!-- ── CHECK-IN panel ── -->
-   <div id="prog-panel-checkin" style="display:none;padding:0 1.25rem 2rem">
-    <div style="padding:1.5rem 0 1rem">
-     <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:#e8e8e8">Weekly Check-in</div>
-     <div style="font-size:13px;color:#555;margin-top:4px">Submit your stats to your coach — no more Excel!</div>
-    </div>
-
-    <!-- Previous check-in summary strip -->
-    <div id="ci-last-strip" style="display:none;background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:12px 14px;margin-bottom:1.25rem;font-size:12px;color:#555">
-     Last check-in: <span id="ci-last-date" style="color:#c9a84c;font-weight:500">—</span>
-     <span id="ci-last-weight" style="margin-left:10px"></span>
-    </div>
-
-    <!-- Check-in Form -->
-    <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden;margin-bottom:1rem">
-     <div style="padding:13px 16px;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;color:#c9a84c">Body Stats</div>
-      <div style="font-size:11px;color:#555" id="ci-date-display"></div>
-     </div>
-     <div style="padding:14px 16px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:5px">Body Weight (kg)</label>
-        <input type="number" id="ci-weight" placeholder="e.g. 78.5" step="0.1" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s">
+     <!-- Compare content (≥ 2 sessions) -->
+     <div id="ba-content" style="display:none">
+      <div class="ba-angle-chips" id="ba-angle-tabs"></div>
+      <div class="ba-slider-outer">
+       <div class="ba-slider-wrap" id="ba-slider-wrap">
+        <img class="ba-img-after" id="ba-img-after" src="" alt="After">
+        <div class="ba-before-wrap" id="ba-before-wrap">
+         <img class="ba-img-before" id="ba-img-before" src="" alt="Before">
+        </div>
+        <div class="ba-divider" id="ba-divider">
+         <div class="ba-handle" id="ba-handle">
+          <div class="ba-handle-arrows">
+           <svg width="8" height="14" viewBox="0 0 8 14" fill="#111"><path d="M5 1L1 7L5 13" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+           <svg width="8" height="14" viewBox="0 0 8 14" fill="#111"><path d="M3 1L7 7L3 13" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+          </div>
+         </div>
+        </div>
+        <div class="ba-img-label before-side">Before</div>
+        <div class="ba-img-label after-side">After</div>
        </div>
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:5px">Body Fat %</label>
-        <input type="number" id="ci-bf" placeholder="e.g. 18.5" step="0.1" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s">
+       <div class="ba-drag-hint">Drag to compare</div>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="ba-stats-strip" id="ba-weight-row" style="display:none">
+       <div class="ba-stat">
+        <div class="ba-stat-lbl">Before</div>
+        <div class="ba-stat-val blue" id="ba-weight-before">—</div>
+        <div class="ba-stat-sub" id="ba-date-before"></div>
+       </div>
+       <div class="ba-stat-divider"></div>
+       <div class="ba-stat">
+        <div class="ba-stat-lbl">Change</div>
+        <div class="ba-stat-val" id="ba-weight-diff">—</div>
+        <div class="ba-stat-sub">weight</div>
+       </div>
+       <div class="ba-stat-divider"></div>
+       <div class="ba-stat">
+        <div class="ba-stat-lbl">After</div>
+        <div class="ba-stat-val green" id="ba-weight-after">—</div>
+        <div class="ba-stat-sub" id="ba-date-after"></div>
        </div>
       </div>
 
-      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#444;margin-bottom:8px">Measurements (cm)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#444;margin-bottom:5px">Waist</label>
-        <input type="number" id="ci-waist" placeholder="e.g. 80" step="0.5" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:9px 10px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
+     </div><!-- /ba-content -->
+    </div><!-- /ba-compare-view -->
+
+    <!-- ── TIMELINE VIEW ── -->
+    <div class="ba-timeline-view" id="ba-timeline-view">
+     <div class="ba-layout" id="photo-grid">
+      <div style="text-align:center;padding:2.5rem 1rem">
+       <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
        </div>
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#444;margin-bottom:5px">Chest</label>
-        <input type="number" id="ci-chest" placeholder="e.g. 95" step="0.5" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:9px 10px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
-       </div>
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#444;margin-bottom:5px">Hips</label>
-        <input type="number" id="ci-hips" placeholder="e.g. 92" step="0.5" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:9px 10px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
-       </div>
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#444;margin-bottom:5px">L Arm</label>
-        <input type="number" id="ci-arm" placeholder="e.g. 32" step="0.5" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:9px 10px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
-       </div>
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#444;margin-bottom:5px">Thigh</label>
-        <input type="number" id="ci-thigh" placeholder="e.g. 55" step="0.5" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:9px 10px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
-       </div>
-       <div>
-        <label style="display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#444;margin-bottom:5px">Sleep (hrs)</label>
-        <input type="number" id="ci-sleep" placeholder="e.g. 7" step="0.5" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:6px;padding:9px 10px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none">
-       </div>
+       <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:5px">No photos yet</div>
+       <div style="font-size:11px;color:var(--text3);line-height:1.6">Upload your first check-in above to start your journal.</div>
       </div>
      </div>
-    </div>
+    </div><!-- /ba-timeline-view -->
 
-    <!-- Wellbeing Ratings -->
-    <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden;margin-bottom:1rem">
-     <div style="padding:13px 16px;border-bottom:1px solid #1e1e1e">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1.5px;color:#c9a84c">How Did This Week Go?</div>
-     </div>
-     <div style="padding:14px 16px;display:flex;flex-direction:column;gap:14px">
 
-      <div>
-       <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:8px">Energy Level</div>
-       <div style="display:flex;gap:8px" id="ci-energy-row">
-        <button class="ci-rating-btn" data-val="1" onclick="setCiRating('energy',1)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">1<br><span style="font-size:9px">Low</span></button>
-        <button class="ci-rating-btn" data-val="2" onclick="setCiRating('energy',2)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">2</button>
-        <button class="ci-rating-btn" data-val="3" onclick="setCiRating('energy',3)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">3<br><span style="font-size:9px">Okay</span></button>
-        <button class="ci-rating-btn" data-val="4" onclick="setCiRating('energy',4)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">4</button>
-        <button class="ci-rating-btn" data-val="5" onclick="setCiRating('energy',5)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">5<br><span style="font-size:9px">High</span></button>
-       </div>
-      </div>
 
-      <div>
-       <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:8px">Nutrition Adherence</div>
-       <div style="display:flex;gap:8px" id="ci-nutrition-row">
-        <button class="ci-rating-btn" data-val="1" onclick="setCiRating('nutrition',1)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">1<br><span style="font-size:9px">Poor</span></button>
-        <button class="ci-rating-btn" data-val="2" onclick="setCiRating('nutrition',2)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">2</button>
-        <button class="ci-rating-btn" data-val="3" onclick="setCiRating('nutrition',3)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">3<br><span style="font-size:9px">Okay</span></button>
-        <button class="ci-rating-btn" data-val="4" onclick="setCiRating('nutrition',4)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">4</button>
-        <button class="ci-rating-btn" data-val="5" onclick="setCiRating('nutrition',5)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">5<br><span style="font-size:9px">On point</span></button>
-       </div>
-      </div>
-
-      <div>
-       <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:8px">Workout Adherence</div>
-       <div style="display:flex;gap:8px" id="ci-workout-row">
-        <button class="ci-rating-btn" data-val="1" onclick="setCiRating('workout',1)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">1<br><span style="font-size:9px">Missed</span></button>
-        <button class="ci-rating-btn" data-val="2" onclick="setCiRating('workout',2)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">2</button>
-        <button class="ci-rating-btn" data-val="3" onclick="setCiRating('workout',3)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">3<br><span style="font-size:9px">Okay</span></button>
-        <button class="ci-rating-btn" data-val="4" onclick="setCiRating('workout',4)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">4</button>
-        <button class="ci-rating-btn" data-val="5" onclick="setCiRating('workout',5)" style="flex:1;padding:10px 4px;border-radius:8px;background:#0e0e0e;border:1px solid #222;color:#555;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;text-align:center;transition:all .15s">5<br><span style="font-size:9px">Perfect</span></button>
-       </div>
-      </div>
-
-     </div>
-    </div>
-
-    <!-- Note to coach -->
-    <div style="background:#111;border:1px solid #1e1e1e;border-radius:12px;padding:14px 16px;margin-bottom:1.25rem">
-     <label style="display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#555;margin-bottom:8px">Note to Coach</label>
-     <textarea id="ci-note" placeholder="How are you feeling? Any struggles, wins, or questions for your coach this week?" style="width:100%;background:#0e0e0e;border:1px solid #222;border-radius:8px;padding:12px 14px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:none;min-height:90px;line-height:1.5;transition:border-color .2s"></textarea>
-    </div>
-
-    <button id="ci-submit-btn" onclick="submitCheckin()" style="width:100%;background:#c9a84c;color:#0a0a0a;border:none;border-radius:10px;padding:15px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:opacity .2s;margin-bottom:1.5rem">Submit Check-in</button>
-
-    <!-- Past check-ins -->
-    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#444;margin-bottom:10px">Past Check-ins</div>
-    <div id="ci-history-list">
-     <div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No check-ins yet</div><div class="empty-sub">Submit your first one above!</div></div>
-    </div>
-   </div>
   </div>
 
   <!-- ═══ TAB: PROFILE ═══ -->
-  <div id="tab-profile-panel" style="display:none">
+  <div id="tab-profile-panel" class="tab-hidden" style="display:none">
    <div class="profile-panel">
     <div class="pp-header" style="position:relative;">
      <div class="pp-avatar" id="pp-avatar">JC</div>
@@ -5647,303 +5814,143 @@ img, video, iframe { max-width: 100%; }
   </div>
 
   <!-- ═══ TAB: CHAT ═══ -->
-  <div id="tab-chat-panel" style="display:none;padding-bottom:100px">
-   <div style="padding:1.5rem 1.25rem 0.5rem">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:#e8e8e8">Messages</div>
-    <div style="font-size:13px;color:#555;margin-top:4px">Chat with your coach</div>
+  <div id="tab-chat-panel" class="tab-hidden" style="display:none">
+   <!-- Title row (hidden on desktop via CSS, shown on mobile) -->
+   <div id="chat-title-row" style="padding:1.25rem 1.25rem 0.5rem">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.5px;color:#e8e8e8">Messages</div>
+    <div style="font-size:12px;color:#555;margin-top:3px">Chat with your coach</div>
    </div>
-   <div style="margin:1rem 1.25rem;background:#111;border:1px solid #1e1e1e;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;height:calc(100vh - 220px)">
+   <!-- Chat box: flex column, min-height:0 prevents overflow -->
+   <div id="client-chat-box" style="display:flex;flex-direction:column;overflow:hidden;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:14px;margin:0 1.25rem 1.25rem">
     <!-- ── Coach Chat Topbar ── -->
-    <div id="client-chat-topbar" style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #1e1e1e;background:#0e0e0e;flex-shrink:0">
+    <div id="client-chat-topbar" style="display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid #1e1e1e;background:#0a0a0a;flex-shrink:0">
      <div style="width:38px;height:38px;border-radius:50%;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#c9a84c;flex-shrink:0;font-family:'Syne',sans-serif">E</div>
-     <div style="flex:1">
-      <div style="font-size:14px;font-weight:700;color:#e8e8e8;font-family:'DM Sans',sans-serif">Your Coach</div>
-      <div id="client-chat-coach-status" style="font-size:11px;color:#4ade80;margin-top:1px">● Online</div>
+     <div style="flex:1;min-width:0">
+      <div style="font-size:14px;font-weight:700;color:#e8e8e8;font-family:'Inter',sans-serif">Your Coach</div>
+      <div id="client-chat-coach-status" style="font-size:11px;color:#4ade80;margin-top:2px;font-family:'Inter',sans-serif">● Online</div>
      </div>
      <button id="client-call-btn" onclick="clientInitiateCall()" title="Video call your coach"
-      style="width:38px;height:38px;border-radius:50%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);color:#4ade80;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0">
-      
+      style="width:38px;height:38px;border-radius:50%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);color:#4ade80;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
      </button>
     </div>
-    <div id="client-chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+    <!-- Messages: flex:1 + min-height:0 is the critical fix for overflow -->
+    <div id="client-chat-messages" style="flex:1;min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
      <div style="text-align:center;color:#333;padding:2rem;font-size:13px">Loading messages…</div>
     </div>
-    <div style="padding:12px;border-top:1px solid #1e1e1e;display:flex;gap:10px;align-items:flex-end;background:#0e0e0e">
+    <!-- Input bar -->
+    <div style="padding:12px 14px;border-top:1px solid #1e1e1e;display:flex;gap:10px;align-items:flex-end;background:#0a0a0a;flex-shrink:0">
      <textarea id="client-chat-input" placeholder="Message your coach…" rows="1"
-      style="flex:1;background:#141414;border:1px solid #2a2a2a;border-radius:10px;padding:10px 14px;color:#e8e8e8;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:none;max-height:100px;line-height:1.5;transition:border-color .2s"
+      style="flex:1;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 14px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;resize:none;max-height:120px;line-height:1.5;transition:border-color .2s"
       onkeydown="clientChatKeydown(event)"></textarea>
      <button onclick="clientSendMessage()"
-      style="background:#c9a84c;border:none;color:#0a0a0a;width:40px;height:40px;border-radius:10px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"></button>
-    </div>
-   </div>
-  </div>
-
-  <!-- ═══ TAB: NUTRITION ═══ -->
-  <div id="tab-nutrition-panel" style="display:none;padding-bottom:120px">
-
-   <!-- ── NUTRITION HEADER ── -->
-   <div style="padding:1.5rem 1.25rem 0.5rem;display:flex;align-items:center;justify-content:space-between;">
-    <div>
-     <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.5px;color:#e8e8e8;">Nutrition</div>
-     <div id="nutr-date-label" style="font-size:12px;color:#555;margin-top:2px;">Today</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-     <button onclick="nutrChangeDay(-1)" style="background:#141414;border:1px solid #222;border-radius:8px;width:32px;height:32px;color:#888;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">‹</button>
-     <button onclick="nutrChangeDay(1)" style="background:#141414;border:1px solid #222;border-radius:8px;width:32px;height:32px;color:#888;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">›</button>
-    </div>
-   </div>
-
-   <!-- ── CALORIE RING + MACROS ── -->
-   <div style="padding:0 1.25rem;margin-bottom:14px;">
-    <div style="background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(20,16,40,0.6));border:1px solid rgba(201,168,76,0.18);border-radius:20px;padding:20px 18px;">
-     <!-- Ring + macro cols -->
-     <div style="display:flex;align-items:center;gap:20px;">
-      <!-- SVG Ring -->
-      <div style="position:relative;flex-shrink:0;width:110px;height:110px;">
-       <svg width="110" height="110" viewBox="0 0 110 110">
-        <circle cx="55" cy="55" r="46" fill="none" stroke="#1a1a1a" stroke-width="10"/>
-        <circle id="nutr-ring-bg" cx="55" cy="55" r="46" fill="none" stroke="rgba(201,168,76,0.12)" stroke-width="10" stroke-dasharray="289 289" stroke-linecap="round" transform="rotate(-90 55 55)"/>
-        <circle id="nutr-cal-ring" cx="55" cy="55" r="46" fill="none" stroke="#c9a84c" stroke-width="10" stroke-dasharray="0 289" stroke-linecap="round" transform="rotate(-90 55 55)" style="transition:stroke-dasharray .8s cubic-bezier(.4,0,.2,1);"/>
-       </svg>
-       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-        <div id="nutr-cal-eaten" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:#e8e8e8;line-height:1;">0</div>
-        <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-top:1px;">eaten</div>
-        <div id="nutr-cal-remain" style="font-size:11px;color:#c9a84c;font-weight:700;margin-top:3px;">— left</div>
-       </div>
-      </div>
-      <!-- Macro pills -->
-      <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
-       <div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#60A5FA;flex-shrink:0;"></div>
-        <div style="flex:1;">
-         <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
-          <span style="color:#888;text-transform:uppercase;letter-spacing:0.5px;">Protein</span>
-          <span style="color:#e8e8e8;font-weight:700;" id="nutr-p-val">0 / —g</span>
-         </div>
-         <div style="height:4px;background:#1a1a1a;border-radius:100px;overflow:hidden;">
-          <div id="nutr-p-bar" style="height:100%;width:0%;background:#60A5FA;border-radius:100px;transition:width .6s ease;"></div>
-         </div>
-        </div>
-       </div>
-       <div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#c9a84c;flex-shrink:0;"></div>
-        <div style="flex:1;">
-         <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
-          <span style="color:#888;text-transform:uppercase;letter-spacing:0.5px;">Carbs</span>
-          <span style="color:#e8e8e8;font-weight:700;" id="nutr-c-val">0 / —g</span>
-         </div>
-         <div style="height:4px;background:#1a1a1a;border-radius:100px;overflow:hidden;">
-          <div id="nutr-c-bar" style="height:100%;width:0%;background:#c9a84c;border-radius:100px;transition:width .6s ease;"></div>
-         </div>
-        </div>
-       </div>
-       <div style="display:flex;align-items:center;gap:8px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:#F87171;flex-shrink:0;"></div>
-        <div style="flex:1;">
-         <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
-          <span style="color:#888;text-transform:uppercase;letter-spacing:0.5px;">Fat</span>
-          <span style="color:#e8e8e8;font-weight:700;" id="nutr-f-val">0 / —g</span>
-         </div>
-         <div style="height:4px;background:#1a1a1a;border-radius:100px;overflow:hidden;">
-          <div id="nutr-f-bar" style="height:100%;width:0%;background:#F87171;border-radius:100px;transition:width .6s ease;"></div>
-         </div>
-        </div>
-       </div>
-      </div>
-     </div>
-     <!-- Target line -->
-     <div style="display:flex;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.05);font-size:11px;color:#555;">
-      <span>Target: <span id="nutr-target-cals" style="color:#c9a84c;font-weight:700;">— kcal</span></span>
-      <span>Fiber: <span id="nutr-fiber-val" style="color:#4ADE80;">0g</span></span>
-     </div>
-    </div>
-   </div>
-
-   <!-- ── ADD FOOD BUTTON ── -->
-   <div style="padding:0 1.25rem;margin-bottom:14px;">
-    <button onclick="openNutrFoodSearch('any')" style="width:100%;background:rgba(201,168,76,0.1);border:1px dashed rgba(201,168,76,0.4);border-radius:14px;padding:14px;color:#c9a84c;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;" onmouseover="this.style.background='rgba(201,168,76,0.16)'" onmouseout="this.style.background='rgba(201,168,76,0.1)'">
-     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-     Search & Add Food
-    </button>
-   </div>
-
-   <!-- ── MEAL SECTIONS ── -->
-   <div style="padding:0 1.25rem;" id="nutr-meal-sections">
-    <!-- Rendered by JS -->
-   </div>
-
-   <!-- ── ASSIGNED PLAN ── -->
-   <div style="padding:0 1.25rem;margin-top:4px;">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#444;margin-bottom:10px;">Assigned Plan</div>
-    <div id="nutr-assigned-plan">
-     <div style="color:#444;font-size:13px;padding:20px 0;text-align:center;">Loading...</div>
-    </div>
-   </div>
-
-  </div>
-
-  <!-- ══ FOOD SEARCH MODAL ══ -->
-  <div id="nutr-search-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:900;flex-direction:column;">
-   <!-- Header -->
-   <div style="background:#0a0a0a;border-bottom:1px solid #1a1a1a;padding:14px 16px 0;">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-     <button onclick="closeNutrFoodSearch()" style="background:none;border:none;color:#666;cursor:pointer;font-size:20px;padding:2px 6px;"></button>
-     <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:#e8e8e8;flex:1;">Add Food</div>
-     <div style="font-size:12px;color:#555;" id="nutr-search-meal-label"></div>
-    </div>
-    <!-- Search bar -->
-    <div style="position:relative;margin-bottom:10px;">
-     <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#555;" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-     <input id="nutr-search-input" type="text" placeholder="Search 2,500+ foods..." autocomplete="off"
-      style="width:100%;background:#141414;border:1px solid #222;border-radius:12px;padding:11px 12px 11px 36px;color:#e8e8e8;font-size:14px;outline:none;font-family:inherit;"
-      oninput="nutrSearchFoods(this.value)" />
-     <button id="nutr-search-clear" onclick="nutrClearSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;cursor:pointer;font-size:16px;"></button>
-    </div>
-    <!-- Category filter pills -->
-    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;scrollbar-width:none;" id="nutr-cat-pills">
-     <!-- filled by JS -->
-    </div>
-   </div>
-   <!-- Results list -->
-   <div style="flex:1;overflow-y:auto;padding:8px 0;" id="nutr-search-results">
-    <!-- filled by JS -->
-   </div>
-  </div>
-
-  <!-- ══ FOOD DETAIL / SERVING MODAL ══ -->
-  <div id="nutr-detail-modal" style="display:none;position:fixed;inset:0;z-index:950;align-items:flex-end;justify-content:center;">
-   <!-- Backdrop -->
-   <div onclick="closeNutrDetail()" style="position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);"></div>
-   <!-- Sheet -->
-   <div id="nutr-detail-sheet" style="position:relative;background:#0c0c0f;border:1px solid rgba(255,255,255,0.07);border-radius:26px 26px 0 0;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,1.2,.42,1);">
-
-    <!-- Drag handle -->
-    <div style="display:flex;justify-content:center;padding:12px 0 4px;">
-     <div style="width:36px;height:4px;background:#2a2a2a;border-radius:100px;"></div>
-    </div>
-
-    <!-- Header -->
-    <div style="padding:12px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;">
-     <div style="flex:1;min-width:0;">
-      <div id="nutr-detail-name" style="font-family:'Syne',sans-serif;font-weight:800;font-size:19px;color:#ede9e1;line-height:1.2;"></div>
-      <div id="nutr-detail-cat" style="font-size:11px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:5px;"></div>
-     </div>
-     <button onclick="closeNutrDetail()" style="background:#1a1a1a;border:1px solid #222;border-radius:50%;width:32px;height:32px;color:#666;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;margin-top:2px;"></button>
-    </div>
-
-    <!-- ── MACRO RING + STATS ── -->
-    <div style="padding:20px 20px 0;display:flex;align-items:center;gap:20px;">
-     <!-- Ring -->
-     <div style="position:relative;flex-shrink:0;width:120px;height:120px;">
-      <svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg);">
-       <!-- Track rings -->
-       <circle cx="60" cy="60" r="50" fill="none" stroke="#1a1a1a" stroke-width="11"/>
-       <!-- Fat (outermost) -->
-       <circle id="dd-fat-ring" cx="60" cy="60" r="50" fill="none" stroke="#F87171" stroke-width="11" stroke-dasharray="0 314" stroke-linecap="round" style="transition:stroke-dasharray .6s cubic-bezier(.4,0,.2,1);opacity:.85;"/>
-       <!-- Carbs -->
-       <circle id="dd-carb-ring" cx="60" cy="60" r="50" fill="none" stroke="#c9a84c" stroke-width="11" stroke-dasharray="0 314" stroke-linecap="round" style="transition:stroke-dasharray .6s cubic-bezier(.4,0,.2,1);opacity:.9;"/>
-       <!-- Protein (innermost visually on top) -->
-       <circle id="dd-prot-ring" cx="60" cy="60" r="50" fill="none" stroke="#60A5FA" stroke-width="11" stroke-dasharray="0 314" stroke-linecap="round" style="transition:stroke-dasharray .6s cubic-bezier(.4,0,.2,1);"/>
-      </svg>
-      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-       <div id="dd-cal-center" style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;color:#ede9e1;line-height:1;"></div>
-       <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">kcal</div>
-      </div>
-     </div>
-     <!-- Macro breakdown list -->
-     <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
-      <div>
-       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-        <span style="font-size:11px;color:#60A5FA;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Protein</span>
-        <span id="dd-prot-val" style="font-size:16px;font-weight:800;color:#ede9e1;font-family:'Syne',sans-serif;"></span>
-       </div>
-       <div style="height:5px;background:#181818;border-radius:100px;overflow:hidden;">
-        <div id="dd-prot-bar" style="height:100%;background:#60A5FA;border-radius:100px;width:0%;transition:width .6s ease;"></div>
-       </div>
-      </div>
-      <div>
-       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-        <span style="font-size:11px;color:#c9a84c;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Carbs</span>
-        <span id="dd-carb-val" style="font-size:16px;font-weight:800;color:#ede9e1;font-family:'Syne',sans-serif;"></span>
-       </div>
-       <div style="height:5px;background:#181818;border-radius:100px;overflow:hidden;">
-        <div id="dd-carb-bar" style="height:100%;background:#c9a84c;border-radius:100px;width:0%;transition:width .6s ease;"></div>
-       </div>
-      </div>
-      <div>
-       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
-        <span style="font-size:11px;color:#F87171;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Fat</span>
-        <span id="dd-fat-val" style="font-size:16px;font-weight:800;color:#ede9e1;font-family:'Syne',sans-serif;"></span>
-       </div>
-       <div style="height:5px;background:#181818;border-radius:100px;overflow:hidden;">
-        <div id="dd-fat-bar" style="height:100%;background:#F87171;border-radius:100px;width:0%;transition:width .6s ease;"></div>
-       </div>
-      </div>
-     </div>
-    </div>
-
-    <!-- ── QUANTITY / SERVING SECTION ── -->
-    <div style="padding:20px 20px 0;">
-     <div style="background:#111115;border:1px solid #1e1e24;border-radius:18px;padding:18px 16px;">
-      <!-- Label -->
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#444;font-weight:700;margin-bottom:14px;">Serving Amount</div>
-
-      <!-- Serving unit tabs -->
-      <div id="dd-unit-tabs" style="display:flex;background:#0a0a0d;border-radius:10px;padding:3px;gap:2px;margin-bottom:14px;">
-       <!-- filled by JS -->
-      </div>
-
-      <!-- Big number + stepper -->
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-       <button onclick="nutrAdjServing(-1)" style="width:44px;height:44px;background:#0a0a0d;border:1px solid #222;border-radius:12px;color:#aaa;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:300;flex-shrink:0;transition:all .15s;" onmouseover="this.style.borderColor='#c9a84c';this.style.color='#c9a84c'" onmouseout="this.style.borderColor='#222';this.style.color='#aaa'">−</button>
-       <div style="flex:1;text-align:center;">
-        <input id="nutr-serving-input" type="number" min="0.1" step="any"
-         style="background:transparent;border:none;outline:none;font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:#ede9e1;text-align:center;width:100%;max-width:180px;"
-         oninput="nutrUpdateServing()" />
-        <div id="dd-unit-label" style="font-size:12px;color:#555;margin-top:-4px;letter-spacing:0.5px;"></div>
-       </div>
-       <button onclick="nutrAdjServing(1)" style="width:44px;height:44px;background:#0a0a0d;border:1px solid #222;border-radius:12px;color:#aaa;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:300;flex-shrink:0;transition:all .15s;" onmouseover="this.style.borderColor='#c9a84c';this.style.color='#c9a84c'" onmouseout="this.style.borderColor='#222';this.style.color='#aaa'">+</button>
-      </div>
-
-      <!-- Slider -->
-      <div style="padding:0 2px;margin-bottom:14px;">
-       <input id="dd-serving-slider" type="range" min="1" max="500" step="1"
-        style="width:100%;accent-color:#c9a84c;height:4px;cursor:pointer;"
-        oninput="nutrSliderChange(this.value)" />
-      </div>
-
-      <!-- Quick presets -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="nutr-serving-presets"></div>
-     </div>
-    </div>
-
-    <!-- ── ADD TO MEAL ── -->
-    <div style="padding:16px 20px 0;">
-     <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#444;font-weight:700;margin-bottom:10px;">Add to Meal</div>
-     <div style="display:flex;gap:6px;flex-wrap:wrap;" id="nutr-meal-selector-btns"></div>
-    </div>
-
-    <!-- ── NUTRITION FACTS TABLE ── -->
-    <div style="padding:16px 20px 0;">
-     <div style="background:#111115;border:1px solid #1e1e24;border-radius:18px;padding:16px;">
-      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#444;font-weight:700;margin-bottom:12px;">Nutrition Facts</div>
-      <div id="nutr-detail-facts"></div>
-     </div>
-    </div>
-
-    <!-- ── ADD BUTTON ── -->
-    <div style="padding:20px 20px 36px;">
-     <button id="nutr-add-btn" onclick="nutrConfirmAdd()"
-      style="width:100%;background:linear-gradient(135deg,#d4a84b,#c9a84c);border:none;border-radius:16px;padding:17px;color:#0a0808;font-size:15px;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:0.5px;box-shadow:0 8px 28px rgba(201,168,76,0.35);transition:all .2s;"
-      onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 32px rgba(201,168,76,0.45)'"
-      onmouseout="this.style.transform='none';this.style.boxShadow='0 8px 28px rgba(201,168,76,0.35)'">
-      Add to Log
+      style="background:#c9a84c;border:none;color:#0a0a0a;width:42px;height:42px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
      </button>
     </div>
-
    </div>
   </div>
 
+
+
+  <!-- ══ NUTRITION PANEL ══ -->
+  <div id="tab-nutrition-panel" class="tab-hidden" style="display:none;padding:0 0 100px;">
+
+   <!-- Header -->
+   <div style="padding:1.25rem 1.25rem 0.5rem;">
+    <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:24px;letter-spacing:-0.5px;color:#e8e8e8;">Nutrition</div>
+    <div style="font-size:12px;color:#555;margin-top:3px;">Track your daily intake</div>
+   </div>
+
+   <!-- Date nav -->
+   <div style="display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem 1rem;">
+    <button onclick="nutrPrevDay()" style="background:rgba(255,255,255,0.04);border:1px solid #222;border-radius:10px;color:#aaa;width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">‹</button>
+    <div id="nutr-date-label" style="font-size:14px;font-weight:700;color:#e8e8e8;"></div>
+    <button onclick="nutrNextDay()" style="background:rgba(255,255,255,0.04);border:1px solid #222;border-radius:10px;color:#aaa;width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">›</button>
+   </div>
+
+   <!-- Calorie ring + summary -->
+   <div style="display:flex;align-items:center;gap:20px;background:#0d0d0d;border:1px solid #1a1a1a;border-radius:16px;margin:0 1.25rem 1rem;padding:16px;">
+    <div style="position:relative;flex-shrink:0;">
+     <svg width="100" height="100" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#1a1a1a" stroke-width="8"/>
+      <circle id="nutr-cal-ring" cx="50" cy="50" r="46" fill="none" stroke="#c9a84c" stroke-width="8"
+       stroke-linecap="round" stroke-dasharray="0 289" stroke-dashoffset="-72"
+       style="transition:stroke-dasharray 0.5s ease;"/>
+     </svg>
+     <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div id="nutr-cal-eaten" style="font-size:18px;font-weight:800;color:#e8e8e8;line-height:1;">0</div>
+      <div style="font-size:10px;color:#555;margin-top:2px;">kcal</div>
+     </div>
+    </div>
+    <div style="flex:1;min-width:0;">
+     <div id="nutr-target-cals" style="font-size:12px;color:#555;margin-bottom:10px;">— kcal target</div>
+     <!-- Protein -->
+     <div style="margin-bottom:7px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:#aaa;">Protein</span><span id="nutr-p-val" style="color:#c9a84c;font-weight:700;">0g</span></div>
+      <div style="height:4px;background:#1a1a1a;border-radius:4px;overflow:hidden;"><div id="nutr-p-bar" style="height:100%;width:0%;background:#c9a84c;border-radius:4px;transition:width 0.4s;"></div></div>
+     </div>
+     <!-- Carbs -->
+     <div style="margin-bottom:7px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:#aaa;">Carbs</span><span id="nutr-c-val" style="color:#6ea8fe;font-weight:700;">0g</span></div>
+      <div style="height:4px;background:#1a1a1a;border-radius:4px;overflow:hidden;"><div id="nutr-c-bar" style="height:100%;width:0%;background:#6ea8fe;border-radius:4px;transition:width 0.4s;"></div></div>
+     </div>
+     <!-- Fats -->
+     <div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:#aaa;">Fats</span><span id="nutr-f-val" style="color:#f87171;font-weight:700;">0g</span></div>
+      <div style="height:4px;background:#1a1a1a;border-radius:4px;overflow:hidden;"><div id="nutr-f-bar" style="height:100%;width:0%;background:#f87171;border-radius:4px;transition:width 0.4s;"></div></div>
+     </div>
+     <!-- Fiber -->
+     <div style="margin-top:7px;font-size:11px;color:#555;">Fiber: <span id="nutr-fiber-val" style="color:#aaa;">0g</span></div>
+    </div>
+   </div>
+
+   <!-- Calories remaining chip -->
+   <div style="text-align:center;margin:0 1.25rem 1rem;">
+    <div style="display:inline-block;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:100px;padding:6px 18px;font-size:12px;color:#c9a84c;font-weight:700;">
+     <span id="nutr-cal-remain">— left</span>
+    </div>
+   </div>
+
+   <!-- Macro donut rings (animated by initClientNutrition via dd-prot-ring / dd-carb-ring / dd-fat-ring) -->
+   <div id="nutr-ring-wrap" style="display:flex;justify-content:center;gap:16px;margin:0 1.25rem 1rem;">
+    <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
+     <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+     <circle id="dd-prot-ring" cx="36" cy="36" r="30" fill="none" stroke="#c9a84c" stroke-width="7"
+      stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
+      style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
+     <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Protein</text>
+    </svg>
+    <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
+     <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+     <circle id="dd-carb-ring" cx="36" cy="36" r="30" fill="none" stroke="#7b9e5a" stroke-width="7"
+      stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
+      style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
+     <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Carbs</text>
+    </svg>
+    <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
+     <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+     <circle id="dd-fat-ring" cx="36" cy="36" r="30" fill="none" stroke="#5a7eb5" stroke-width="7"
+      stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
+      style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
+     <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Fat</text>
+    </svg>
+   </div>
+
+   <!-- Meal sections -->
+   <div style="padding:0 1.25rem;">
+    <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Meals</div>
+    <div id="nutr-meal-sections"></div>
+   </div>
+
+   <!-- Assigned plan -->
+   <div style="padding:0 1.25rem;margin-top:16px;">
+    <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Coach's Plan</div>
+    <div id="nutr-assigned-plan"></div>
+   </div>
+
+  </div>
+  <!-- ══ END NUTRITION PANEL ══ -->
 
    </main>
   </div><!-- .website-body -->
@@ -5961,6 +5968,10 @@ img, video, iframe { max-width: 100%; }
     <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M3 6.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM3 20.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 6.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 20.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
     <span>Log</span>
    </div>
+   <div class="nav-item" id="nav-nutrition" onclick="setTab('nutrition')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+    <span>Nutrition</span>
+   </div>
    <div class="nav-item" id="nav-progress" onclick="setTab('progress')">
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
     <span>Progress</span>
@@ -5968,14 +5979,6 @@ img, video, iframe { max-width: 100%; }
    <div class="nav-item" id="nav-chat" onclick="setTab('chat')">
     <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
     <span>Chat</span>
-   </div>
-   <div class="nav-item" id="nav-calendar" onclick="setTab('calendar')">
-    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    <span>Calendar</span>
-   </div>
-   <div class="nav-item" id="nav-nutrition" onclick="setTab('nutrition')">
-    <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c0 1.5-.5 2.8-1.3 3.8L12 22l-2.7-12.2C8.5 8.8 8 7.5 8 6a4 4 0 014-4z"/><path d="M3 6s2-1 4 0 4 2 5 2"/></svg>
-    <span>Nutrition</span>
    </div>
    <div class="nav-item" id="nav-profile" onclick="setTab('profile')">
     <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -5985,213 +5988,96 @@ img, video, iframe { max-width: 100%; }
  </div>
 </div>
 
-<!-- ═══════════ CALENDAR SCREEN ═══════════ -->
-<div id="screen-calendar-full">
+<!-- ══════════════════════════════
+   CALENDAR FULL SCREEN
+══════════════════════════════ -->
 
-
-
- <!-- Same sidebar + content layout -->
- <div class="website-body" id="cal-website-body">
-
-  <!-- Left Sidebar -->
-  <aside class="web-sidebar" id="cal-web-sidebar">
-   <!-- Collapse toggle row -->
-   <div class="sidebar-collapse-row" style="display:flex;align-items:center;padding:0 10px 1rem">
-    <span style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;letter-spacing:-0.3px;background:linear-gradient(135deg,var(--gold-2),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;" class="sidebar-brand-text">EVOLVE</span>
-    <button class="sidebar-collapse-btn" onclick="toggleClientSidebar()" title="Collapse sidebar">
-     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
+<!-- ══ NUTRITION FOOD SEARCH MODAL ══ -->
+<div id="nutr-search-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.85);align-items:flex-end;justify-content:center;" class="nutr-modal-overlay">
+ <div style="background:#0a0a0a;border:1px solid #1e1e1e;border-radius:20px 20px 0 0;width:100%;max-width:600px;height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+  <!-- Modal header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+   <div>
+    <div style="font-size:15px;font-weight:800;color:#e8e8e8;font-family:'Syne',sans-serif;">Add Food <span id="nutr-search-meal-label" style="color:#c9a84c;font-size:13px;font-weight:600;"></span></div>
    </div>
-   <div class="sidebar-user-card" onclick="setTab('profile')">
-    <div class="sidebar-user-avatar" id="cal-sidebar-avatar">JC</div>
-    <div class="sidebar-user-info">
-     <div class="sidebar-user-name" id="cal-sidebar-name">Welcome back</div>
-     <div class="sidebar-user-plan">⭐ Premium</div>
-    </div>
-   </div>
-   <div class="sidebar-section-title">Main</div>
-   <div class="sidebar-nav-item" id="csnav-home" onclick="setTab('home')" data-label="Dashboard">
-    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span class="sidebar-nav-label">Dashboard</span>
-   </div>
-   <div class="sidebar-nav-item" id="csnav-log" onclick="setTab('log')" data-label="Log Workout">
-    <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18"/></svg>
-    <span class="sidebar-nav-label">Log Workout</span>
-   </div>
-   <div class="sidebar-nav-item active" id="csnav-calendar" onclick="setTab('calendar')" data-label="Schedule">
-    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-    <span class="sidebar-nav-label">Schedule</span>
-   </div>
-   <div class="sidebar-section-title">Tracking</div>
-   <div class="sidebar-nav-item" id="csnav-progress" onclick="setTab('progress')" data-label="Progress &amp; Photos">
-    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span class="sidebar-nav-label">Progress &amp; Photos</span>
-   </div>
-   <div class="sidebar-nav-item" id="csnav-chat" onclick="setTab('chat')" data-label="Coach Chat">
-    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-    <span class="sidebar-nav-label">Coach Chat</span>
-   </div>
-   <div class="sidebar-nav-item" id="csnav-nutrition" onclick="setTab('nutrition')" data-label="Nutrition">
-    <svg viewBox="0 0 24 24"><path d="M12 2a4 4 0 014 4c0 1.5-.5 2.8-1.3 3.8L12 22l-2.7-12.2C8.5 8.8 8 7.5 8 6a4 4 0 014-4z"/></svg>
-    <span class="sidebar-nav-label">Nutrition</span>
-   </div>
-   <div class="sidebar-section-title">Account</div>
-   <div class="sidebar-nav-item" id="csnav-profile" onclick="setTab('profile')" data-label="Profile">
-    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span class="sidebar-nav-label">Profile</span>
-   </div>
-   <div class="sidebar-nav-item" onclick="logout()" style="margin-top:0.5rem" data-label="Sign Out">
-    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    <span class="sidebar-nav-label">Sign Out</span>
-   </div>
-  </aside>
-
-  <!-- Calendar main content -->
-  <main class="web-main" style="padding-top: 2rem; overflow-y: auto;">
-
-   <!-- Calendar toolbar -->
-   <div class="fcal-page-header" style="position:static; padding: 0 0 1.5rem; border-bottom: none; background: transparent; backdrop-filter: none; box-shadow: none;">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-     <button class="fcal-today-btn" onclick="cliCalGoToday()">Today</button>
-     <div class="fcal-nav-group">
-      <button class="fcal-arrow" onclick="cliCalPrev()">&#8249;</button>
-      <button class="fcal-arrow" onclick="cliCalNext()">&#8250;</button>
-     </div>
-     <span class="fcal-month-title" id="cli-cal-month-label">May 2026</span>
-     <div style="flex:1"></div>
-     <button class="fcal-today-btn" onclick="openAddEventModal()" style="color:var(--gold);border-color:rgba(201,168,76,0.3)">+ Add Event</button>
-    </div>
-   </div>
-
-   <!-- Calendar grid -->
-   <div class="fcal-grid-wrap" style="border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.06);">
-    <div class="fcal-dow">
-     <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-    </div>
-    <div class="fcal-days" id="cli-cal-days"></div>
-   </div>
-
-   <!-- Upcoming events -->
-   <div class="fcal-upcoming" style="margin-top:2rem; padding:0 0 0.75rem; border-top: none; background: transparent; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); font-weight:600;">Upcoming Events</div>
-   <div style="background:var(--bg2); border:1px solid rgba(255,255,255,0.06); border-radius:16px; overflow:hidden;">
-    <div class="fcal-ev-list" id="cli-ev-list">
-     <div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No upcoming events</div><div class="empty-sub">Tap + to add your own, or wait for your coach to schedule sessions</div></div>
-    </div>
-   </div>
-
-   <div style="height:2rem"></div>
-  </main>
- </div>
-
- <!-- Mobile side tab nav (calendar) -->
- <div class="bottom-nav" id="side-nav-cal">
-  <button class="side-nav-toggle" onclick="toggleSideNav()" title="Hide navigation">
-   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-  </button>
-  <div class="nav-item" id="fnav-home" onclick="setTab('home')">
-   <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-   <span>Home</span>
+   <button onclick="closeNutrFoodSearch()" style="background:rgba(255,255,255,0.06);border:none;color:#888;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
-  <div class="nav-item" id="fnav-log" onclick="setTab('log')">
-   <svg viewBox="0 0 24 24"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18"/></svg>
-   <span>Log</span>
+  <!-- Search input -->
+  <div style="padding:12px 16px;border-bottom:1px solid #141414;flex-shrink:0;position:relative;">
+   <input id="nutr-search-input" type="text" placeholder="Search foods…" oninput="nutrSearchFoods(this.value)"
+    style="width:100%;background:#141414;border:1px solid #252525;border-radius:12px;padding:10px 36px 10px 14px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+   <button id="nutr-search-clear" onclick="nutrClearSearch()" style="display:none;position:absolute;right:26px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;cursor:pointer;font-size:16px;">✕</button>
   </div>
-  <div class="nav-item" id="fnav-progress" onclick="setTab('progress')">
-   <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-   <span>Progress</span>
-  </div>
-  <div class="nav-item" id="fnav-chat" onclick="setTab('chat')">
-   <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-   <span>Chat</span>
-  </div>
-  <div class="nav-item active" id="fnav-calendar" onclick="setTab('calendar')">
-   <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-   <span>Calendar</span>
-  </div>
-  <div class="nav-item" id="fnav-profile" onclick="setTab('profile')">
-   <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-   <span>Profile</span>
-  </div>
+  <!-- Category pills -->
+  <div id="nutr-cat-pills" style="display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;"></div>
+  <!-- Results -->
+  <div id="nutr-search-results" style="flex:1;overflow-y:auto;"></div>
  </div>
 </div>
 
-<!-- ══ ADD EVENT FAB — calendar tab only, managed by JS ══ -->
-<button class="cal-fab" id="cal-fab" onclick="openAddEventModal()" title="Add Event" style="display:none;">+</button>
-
-<!-- ══ ADD EVENT MODAL — Google Calendar style ══ -->
-<div class="ev-modal-overlay" id="ev-modal-overlay" onclick="closeAddEventModal(event)">
- <div class="ev-modal" onclick="event.stopPropagation()">
-
-  <!-- Top bar: drag handle + close -->
-  <div style="width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:10px auto 0;"></div>
-  <div class="ev-modal-topbar">
-   <span class="ev-modal-drag"></span>
-   <button class="ev-modal-close" onclick="closeAddEventModal()">✕</button>
+<!-- ══ NUTRITION FOOD DETAIL MODAL ══ -->
+<div id="nutr-detail-modal" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,0.88);align-items:flex-end;justify-content:center;">
+ <div id="nutr-detail-sheet" style="background:#0a0a0a;border:1px solid #1e1e1e;border-radius:20px 20px 0 0;width:100%;max-width:600px;padding:0;box-sizing:border-box;transform:translateY(100%);transition:transform 0.3s ease;overflow:hidden;">
+  <!-- Header -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:20px 20px 12px;">
+   <div style="flex:1;min-width:0;">
+    <div id="nutr-detail-name" style="font-size:16px;font-weight:800;color:#e8e8e8;font-family:'Syne',sans-serif;"></div>
+    <div id="nutr-detail-cat" style="font-size:12px;color:#555;margin-top:3px;"></div>
+   </div>
+   <button onclick="closeNutrDetail()" style="background:rgba(255,255,255,0.06);border:none;color:#888;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;">✕</button>
   </div>
-
-  <!-- Big title input -->
-  <div class="ev-title-input-wrap">
-   <input class="ev-title-input" type="text" id="nev-title" placeholder="Add title and time" maxlength="60" autofocus>
-  </div>
-
-  <!-- Type tabs -->
-  <div class="ev-type-tabs">
-   <div class="ev-type-tab selected" data-type="workout" onclick="selectEvType(this,'workout')">
-    <span class="et-icon"></span> Workout
+  <!-- Macro chips grid -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 20px 16px;">
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 8px;text-align:center;">
+    <div id="dd-cal-center" style="font-size:18px;font-weight:800;color:#c9a84c;">—</div>
+    <div style="font-size:10px;color:#555;margin-top:2px;">kcal</div>
    </div>
-   <div class="ev-type-tab" data-type="rest" onclick="selectEvType(this,'rest')">
-    <span class="et-icon"></span> Rest Day
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 8px;text-align:center;">
+    <div id="dd-prot-val" style="font-size:15px;font-weight:700;color:#60a5fa;">—</div>
+    <div style="font-size:10px;color:#555;margin-top:2px;">Protein</div>
    </div>
-   <div class="ev-type-tab" data-type="checkin" onclick="selectEvType(this,'checkin')">
-    <span class="et-icon"></span> Check-in
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 8px;text-align:center;">
+    <div id="dd-carb-val" style="font-size:15px;font-weight:700;color:#c9a84c;">—</div>
+    <div style="font-size:10px;color:#555;margin-top:2px;">Carbs</div>
    </div>
-   <div class="ev-type-tab" data-type="other" onclick="selectEvType(this,'other')">
-    <span class="et-icon"></span> Other
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 8px;text-align:center;">
+    <div id="dd-fat-val" style="font-size:15px;font-weight:700;color:#f87171;">—</div>
+    <div style="font-size:10px;color:#555;margin-top:2px;">Fats</div>
    </div>
   </div>
-
-  <!-- Date row -->
-  <div class="ev-row">
-   <div class="ev-row-icon">
-    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-   </div>
-   <div class="ev-row-content">
-    <div class="ev-date-pill">
-     <input type="date" id="nev-date">
-    </div>
-    <!-- Time row (always visible) -->
-    <div class="ev-time-inline">
-     <input class="ev-time-input" type="time" id="nev-time-start" placeholder="Start time">
-     <span class="ev-time-sep">–</span>
-     <input class="ev-time-input" type="time" id="nev-time-end" placeholder="End time">
-    </div>
-   </div>
+  <!-- Unit tabs -->
+  <div style="padding:0 20px 10px;">
+   <div id="dd-unit-tabs" style="display:flex;gap:4px;background:#0d0d10;border-radius:10px;padding:4px;"></div>
   </div>
-
-  <!-- Notes row -->
-  <div class="ev-row">
-   <div class="ev-row-icon">
-    <svg viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+  <!-- Serving presets -->
+  <div id="nutr-serving-presets" style="display:flex;gap:6px;padding:0 20px 12px;overflow-x:auto;flex-wrap:wrap;"></div>
+  <!-- Serving input row -->
+  <div style="display:flex;align-items:center;gap:8px;padding:0 20px 16px;">
+   <button onclick="nutrAdjServing(-1)" style="background:#141414;border:1px solid #222;color:#aaa;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">−</button>
+   <div style="flex:1;display:flex;align-items:center;gap:8px;">
+    <input id="nutr-serving-input" type="number" min="0.1" step="any" oninput="nutrUpdateServing()"
+     style="flex:1;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:16px;font-family:'Inter',sans-serif;outline:none;text-align:center;min-width:0;"/>
+    <span id="dd-unit-label" style="font-size:13px;color:#555;flex-shrink:0;min-width:28px;"></span>
    </div>
-   <div class="ev-row-content">
-    <textarea class="ev-notes-input" id="nev-notes" rows="2" placeholder="Add description or notes…"></textarea>
-   </div>
+   <button onclick="nutrAdjServing(1)" style="background:#141414;border:1px solid #222;color:#aaa;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
   </div>
-
-  <!-- Footer -->
-  <div class="ev-modal-footer">
-   <button class="ev-cancel-btn" onclick="closeAddEventModal()">Cancel</button>
-   <button class="ev-save-btn" id="ev-save-btn" onclick="saveClientEvent()">Save</button>
+  <!-- Slider -->
+  <div style="padding:0 20px 16px;">
+   <input id="dd-serving-slider" type="range" min="0.1" step="0.1" max="10" oninput="nutrSliderChange(this.value)"
+    style="width:100%;accent-color:#c9a84c;"/>
   </div>
-
-  <!-- Hidden legacy fields (still needed by saveClientEvent JS) -->
-  <div style="display:none">
-   <div class="ev-type-grid">
-    <div class="ev-type-btn selected" data-type="workout"></div>
-    <div class="ev-type-btn" data-type="rest"></div>
-    <div class="ev-type-btn" data-type="checkin"></div>
-    <div class="ev-type-btn" data-type="other"></div>
-   </div>
+  <!-- Meal selector -->
+  <div style="padding:0 20px 16px;">
+   <div style="font-size:11px;color:#444;margin-bottom:8px;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Add to meal</div>
+   <div id="nutr-meal-selector-btns" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+  </div>
+  <!-- Nutrition facts (optional detail) -->
+  <div id="nutr-detail-facts" style="padding:0 20px 12px;font-size:12px;"></div>
+  <!-- Log button -->
+  <div style="padding:0 20px 40px;">
+   <button id="nutr-add-btn" onclick="nutrConfirmAdd()" style="width:100%;background:#c9a84c;border:none;color:#0a0a0a;font-size:14px;font-weight:800;border-radius:12px;padding:14px;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:0.3px;">
+    Log Food
+   </button>
   </div>
  </div>
 </div>
@@ -6306,6 +6192,7 @@ let weightUnit = 'kg';
 let step1Data  = {};
 let todayWorkout = null;
 let selectedPhotoFile = null;
+let explicitAuthInProgress = false;
 
 // ─────────────────────────────────────────
 
@@ -6378,10 +6265,7 @@ let WORKOUTS = {};
 function showScreen(id) {
  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
  document.getElementById(id).classList.add('active');
- // Always hide the calendar full-screen when navigating via showScreen
- const calFull = document.getElementById('screen-calendar-full');
- if (calFull) calFull.style.display = 'none';
- window.scrollTo({ top:0, behavior:'smooth' });
+  window.scrollTo({ top:0, behavior:'smooth' });
 }
 function showStatus(id, msg, type) {
  const el = document.getElementById(id);
@@ -6571,7 +6455,7 @@ async function handleFinish() {
 // ─────────────────────────────────────────
 // LOAD HOME SCREEN
 // ─────────────────────────────────────────
-function loadHomeScreen(data) {
+async function loadHomeScreen(data) {
  const first  = data.firstName || (auth.currentUser?.displayName?.split(' ')[0]) || 'Athlete';
  const last   = data.lastName || '';
  const initials = ((first[0]||'E') + (last[0]||'')).toUpperCase();
@@ -6638,7 +6522,7 @@ function loadHomeScreen(data) {
   if (chipEl) chipEl.textContent = w.exercises.length + ' exercise' + (w.exercises.length !== 1 ? 's' : '');
   const barNameEl = document.getElementById('wkt-bar-name');
   if (barNameEl) barNameEl.textContent = w.name || 'Workout';
-  buildWorkoutLogger(w);
+  await buildWorkoutLogger(w);
  } else {
   // No workout assigned for today
   const hasAnyPlan = Object.keys(WORKOUTS).length > 0;
@@ -6672,7 +6556,7 @@ function loadHomeScreen(data) {
   if (startBtn) startBtn.style.display = 'none';
   const cardFooter = document.querySelector('.workout-card-footer');
   if (cardFooter) cardFooter.style.display = 'none';
-  buildWorkoutLogger(null);
+  await buildWorkoutLogger(null);
  }
 
  // Show log button + footer whenever there is a workout
@@ -6717,7 +6601,7 @@ function loadHomeScreen(data) {
 
  showScreen('screen-home');
  setTab('home');
- loadPastLogs();
+ await loadPastLogs();
  loadProgressPhotos();
  // Start realtime listener for workout plan changes from coach
  const uid = currentUid || auth.currentUser?.uid;
@@ -6950,9 +6834,9 @@ async function buildWorkoutLogger(workout) {
   card.className = 'log-ex-card';
   card.dataset.exIdx = exIdx;
 
-  const match = ex.target.match(/(\d+)[×x](\d+)/);
-  const defaultSets = match ? parseInt(match[1]) : 3;
-  const defaultReps = match ? parseInt(match[2]) : 10;
+  const match = (ex.target || '').match(/(\d+)[×x](\d+)/);
+  const defaultSets = match ? parseInt(match[1], 10) : 3;
+  const defaultReps = match ? parseInt(match[2], 10) : 10;
 
   card.innerHTML = `
    <div class="log-ex-header">
@@ -7059,14 +6943,14 @@ function updateSummary() {
  document.querySelectorAll('.log-set-row').forEach(row => {
   if (row.dataset.done === '1') {
    const w = parseFloat(row.querySelector('.weight-input').value) || 0;
-   const r = parseInt(row.querySelector('.reps-input').value) || 0;
+   const r = parseInt(row.querySelector('.reps-input').value, 10) || 0;
    totalSets++;
    totalReps  += r;
    totalWeight += w * r;
   }
  });
  document.getElementById('ls-sets').textContent  = totalSets;
- document.getElementById('ls-vol').textContent  = totalReps;
+ document.getElementById('ls-reps').textContent = totalReps;
  document.getElementById('ls-weight').textContent = Math.round(totalWeight);
  // Update header chip
  const chip = document.getElementById('wkt-chip-sets');
@@ -7077,8 +6961,8 @@ function updateSummary() {
 // LOGGER STATE PERSISTENCE (localStorage)
 // ─────────────────────────────────────────
 function _loggerStorageKey() {
- // Key is scoped to today's date so yesterday's incomplete session doesn't bleed in
- const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+ // Key is scoped to today's date (PH timezone) so yesterday's session doesn't bleed in
+ const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
  return 'evolve_logger_' + today;
 }
 
@@ -7208,7 +7092,7 @@ function lockLoggerCards() {
   banner.className = 'wkt-done-inline-banner';
   banner.innerHTML = `
    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:rgba(61,203,114,0.07);border:1px solid rgba(61,203,114,0.2);border-radius:12px;margin-bottom:14px;">
-    <span style="font-size:22px;"></span>
+    <span style="font-size:22px;">✅</span>
     <div>
      <div style="font-size:14px;font-weight:700;color:#3DCB72;font-family:'Outfit',sans-serif;">Workout Complete!</div>
      <div style="font-size:12px;color:var(--muted);font-family:'Outfit',sans-serif;margin-top:2px;">Great work today. Your session has been saved.</div>
@@ -7233,7 +7117,7 @@ async function completeWorkout() {
   card.querySelectorAll('.log-set-row').forEach(row => {
    sets.push({
     weight: parseFloat(row.querySelector('.weight-input').value) || 0,
-    reps:  parseInt(row.querySelector('.reps-input').value)   || 0,
+    reps:  parseInt(row.querySelector('.reps-input').value, 10)   || 0,
     done:  row.dataset.done === '1'
    });
   });
@@ -7241,9 +7125,9 @@ async function completeWorkout() {
   exercises.push({ name: exName, sets, note });
  });
 
- const doneSets  = parseInt(document.getElementById('ls-sets').textContent)  || 0;
- const doneReps  = parseInt(document.getElementById('ls-vol').textContent)   || 0;
- const doneWeight = parseInt(document.getElementById('ls-weight').textContent) || 0;
+ const doneSets  = parseInt(document.getElementById('ls-sets').textContent, 10)  || 0;
+ const doneReps  = parseInt(document.getElementById('ls-reps').textContent, 10)  || 0;
+ const doneWeight = parseInt(document.getElementById('ls-weight').textContent, 10) || 0;
 
  const btn = document.getElementById('complete-btn');
  btn.disabled = true; btn.textContent = 'Saving…';
@@ -7265,7 +7149,7 @@ async function completeWorkout() {
 
   // Update UI
   const sessEl = document.getElementById('stat-sessions');
-  sessEl.textContent = parseInt(sessEl.textContent || 0) + 1;
+  sessEl.textContent = parseInt(sessEl.textContent || 0, 10) + 1;
 
   // Add to activity feed
   const feedEl = document.getElementById('activity-feed');
@@ -7304,7 +7188,7 @@ async function completeWorkout() {
    window._pendingPlanUpdate = null;
   }
 
-  loadPastLogs();
+  await loadPastLogs();
  } catch(e) {
   showStatus('log-status', e.message, 'error');
  } finally {
@@ -7328,20 +7212,21 @@ async function loadPastLogs() {
  const container = document.getElementById('past-logs-container');
  try {
   const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-   .orderBy('completedAt', 'desc').limit(10).get();
+   .orderBy('completedAt', 'desc').limit(30).get();
   if (snap.empty) {
    container.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No logs yet</div><div class="empty-sub">Complete a workout to see your history</div></div>`;
    return;
   }
   _pastLogsData = [];
+  _clientChartData = [];
   container.innerHTML = '';
   snap.forEach((doc) => {
    const i = _pastLogsData.length;
    const d = { ...doc.data(), _id: doc.id };
    _pastLogsData.push(d);
-   const date = d.completedAt?.toDate
-    ? d.completedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', weekday:'short', month:'short', day:'numeric', year:'numeric' })
-    : 'Recent';
+   const dateObj = d.completedAt?.toDate ? d.completedAt.toDate() : new Date();
+   const date = dateObj.toLocaleDateString('en-PH', { timeZone:'Asia/Manila', weekday:'short', month:'short', day:'numeric', year:'numeric' });
+   const shortDate = dateObj.toLocaleDateString('en-PH', { timeZone:'Asia/Manila', month:'short', day:'numeric' });
 
    // Count done sets across exercises
    const doneSets = d.exercises
@@ -7378,8 +7263,189 @@ async function loadPastLogs() {
 
    card.addEventListener('click', () => openWktDrawer(i));
    container.appendChild(card);
+
+   // Collect for chart
+   _clientChartData.push({
+    date: date,
+    shortDate: shortDate,
+    name: d.workoutName || 'Workout',
+    volume: d.totalVolume || 0,
+    reps: d.totalReps || 0,
+    sets: d.totalSets || 0
+   });
   });
  } catch(e) { console.error('loadPastLogs error:', e); }
+}
+
+// ─────────────────────────────────────────
+//  CLIENT WORKOUT CHART
+// ─────────────────────────────────────────
+let _clientChartData = [];
+let _clientChartMetric = 'volume';
+let _clientLogView = 'cards';
+
+function setClientLogView(v) {
+ _clientLogView = v;
+ const cardsView  = document.getElementById('past-logs-container');
+ const chartView  = document.getElementById('clv-chart-view');
+ const metricWrap = document.getElementById('clv-metric-wrap');
+ const cardsBtn   = document.getElementById('clv-cards-btn');
+ const chartBtn   = document.getElementById('clv-chart-btn');
+
+ const goldStyle  = 'padding:5px 12px;border-radius:8px;background:var(--gold);color:#0A0A0A;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s';
+ const dimStyle   = 'padding:5px 12px;border-radius:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.65);border:1px solid rgba(255,255,255,0.12);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s';
+
+ if (v === 'cards') {
+  cardsView.style.display = '';
+  chartView.style.display = 'none';
+  metricWrap.style.display = 'none';
+  cardsBtn.style.cssText = goldStyle;
+  chartBtn.style.cssText = dimStyle;
+ } else {
+  cardsView.style.display = 'none';
+  chartView.style.display = '';
+  metricWrap.style.display = 'flex';
+  chartBtn.style.cssText = goldStyle;
+  cardsBtn.style.cssText = dimStyle;
+  drawClientChart();
+ }
+}
+
+function setClientChartMetric(m) {
+ _clientChartMetric = m;
+ const goldStyle = 'padding:4px 11px;border-radius:7px;background:var(--gold);color:#0A0A0A;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s';
+ const dimStyle  = 'padding:4px 11px;border-radius:7px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.65);border:1px solid rgba(255,255,255,0.12);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s';
+ ['volume','reps','sets'].forEach(id => {
+  const b = document.getElementById('clv-metric-' + id);
+  if (b) b.style.cssText = id === m ? goldStyle : dimStyle;
+ });
+ drawClientChart();
+}
+
+function drawClientChart() {
+ const canvas  = document.getElementById('clv-chart-canvas');
+ const empty   = document.getElementById('clv-chart-empty');
+ const summary = document.getElementById('clv-chart-summary');
+ if (!canvas) return;
+
+ const data = [..._clientChartData].reverse(); // chronological
+ if (data.length < 2) {
+  canvas.style.display = 'none';
+  empty.style.display = '';
+  summary.innerHTML = '';
+  return;
+ }
+ canvas.style.display = 'block';
+ empty.style.display = 'none';
+
+ const vals    = data.map(d => d[_clientChartMetric]);
+ const latest  = vals[vals.length - 1];
+ const max     = Math.max(...vals);
+ const avg     = Math.round(vals.reduce((a,b) => a+b, 0) / vals.length);
+ const diff    = latest - vals[0];
+ const diffPct = vals[0] > 0 ? Math.round(diff / vals[0] * 100) : 0;
+ const trend   = diff >= 0 ? '↑' : '↓';
+ const trendCol = diff >= 0 ? '#4ADE80' : '#F87171';
+ const unit    = _clientChartMetric === 'volume' ? ' kg' : '';
+
+ const cardStyle = 'flex:1;min-width:70px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:10px 12px';
+ const lblStyle  = 'font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:3px;font-family:Outfit,sans-serif';
+ const valStyle  = "font-family:'Syne',sans-serif;font-size:20px;font-weight:700;line-height:1;color:var(--gold)";
+
+ summary.innerHTML = `
+  <div style="${cardStyle}"><div style="${lblStyle}">Latest</div><div style="${valStyle}">${latest}${unit}</div></div>
+  <div style="${cardStyle}"><div style="${lblStyle}">Peak</div><div style="${valStyle.replace('var(--gold)','rgba(255,255,255,0.85)')}">${max}${unit}</div></div>
+  <div style="${cardStyle}"><div style="${lblStyle}">Avg</div><div style="${valStyle.replace('var(--gold)','rgba(255,255,255,0.85)')}">${avg}${unit}</div></div>
+  <div style="${cardStyle}"><div style="${lblStyle}">Trend</div><div style="${valStyle.replace('var(--gold)',trendCol)}">${trend}${Math.abs(diffPct)}%</div></div>`;
+
+ // Canvas sizing
+ const dpr = window.devicePixelRatio || 1;
+ const W   = canvas.parentElement.clientWidth - 32;
+ const H   = 200;
+ canvas.width  = W * dpr;
+ canvas.height = H * dpr;
+ canvas.style.width  = W + 'px';
+ canvas.style.height = H + 'px';
+
+ const ctx = canvas.getContext('2d');
+ ctx.scale(dpr, dpr);
+ ctx.clearRect(0, 0, W, H);
+
+ const PAD  = { top: 14, right: 16, bottom: 44, left: 50 };
+ const cW   = W - PAD.left - PAD.right;
+ const cH   = H - PAD.top  - PAD.bottom;
+ const maxV = (Math.max(...vals) || 1) * 1.12;
+ const toX  = i => PAD.left + (i / (data.length - 1)) * cW;
+ const toY  = v => PAD.top  + cH - (v / maxV) * cH;
+
+ // Grid
+ for (let i = 0; i <= 4; i++) {
+  const gv = maxV * (i / 4);
+  const gy = toY(gv);
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.left, gy); ctx.lineTo(PAD.left + cW, gy); ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '10px Inter,sans-serif';
+  ctx.textAlign = 'right';
+  const lbl = _clientChartMetric === 'volume' ? Math.round(gv) + 'kg' : Math.round(gv) + '';
+  ctx.fillText(lbl, PAD.left - 5, gy + 3.5);
+ }
+
+ // Gradient fill
+ const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
+ grad.addColorStop(0, 'rgba(212,168,67,0.25)');
+ grad.addColorStop(1, 'rgba(212,168,67,0)');
+ ctx.beginPath();
+ ctx.moveTo(toX(0), toY(vals[0]));
+ for (let i = 1; i < data.length; i++) ctx.lineTo(toX(i), toY(vals[i]));
+ ctx.lineTo(toX(data.length - 1), PAD.top + cH);
+ ctx.lineTo(toX(0), PAD.top + cH);
+ ctx.closePath();
+ ctx.fillStyle = grad;
+ ctx.fill();
+
+ // Line
+ ctx.beginPath();
+ ctx.moveTo(toX(0), toY(vals[0]));
+ for (let i = 1; i < data.length; i++) ctx.lineTo(toX(i), toY(vals[i]));
+ ctx.strokeStyle = '#D4A843';
+ ctx.lineWidth   = 2.2;
+ ctx.lineJoin    = 'round';
+ ctx.stroke();
+
+ // Dots + labels
+ const step = data.length <= 7 ? 1 : data.length <= 14 ? 2 : Math.ceil(data.length / 7);
+ data.forEach((d, i) => {
+  const x = toX(i); const y = toY(vals[i]);
+  ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fillStyle = '#D4A843'; ctx.fill();
+  ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fillStyle = '#111'; ctx.fill();
+  if (i % step === 0 || i === data.length - 1) {
+   ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '10px Inter,sans-serif'; ctx.textAlign = 'center';
+   ctx.fillText(d.shortDate, x, H - 8);
+  }
+ });
+
+ // Tooltip
+ const tooltip = document.getElementById('clv-chart-tooltip');
+ canvas.onmousemove = function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  let best = 0, bestDist = Infinity;
+  data.forEach((d, i) => { const dist = Math.abs(toX(i) - mx); if (dist < bestDist) { bestDist = dist; best = i; } });
+  if (bestDist > cW / data.length) { tooltip.style.display = 'none'; return; }
+  const d = data[best];
+  const unit2 = _clientChartMetric === 'volume' ? ' kg' : '';
+  const ml = _clientChartMetric.charAt(0).toUpperCase() + _clientChartMetric.slice(1);
+  tooltip.innerHTML = `<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:3px">${d.date}</div>
+   <div style="color:#D4A843;font-weight:700;font-size:13px">${ml}: ${d[_clientChartMetric]}${unit2}</div>
+   ${_clientChartMetric !== 'volume' ? '' : `<div style="font-size:11px;color:rgba(255,255,255,0.4)">${d.sets} sets · ${d.reps} reps</div>`}`;
+  tooltip.style.display = 'block';
+  let tx = toX(best) + 12; if (tx + 160 > W) tx = toX(best) - 164;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top  = (toY(vals[best]) - 10) + 'px';
+ };
+ canvas.onmouseleave = () => { tooltip.style.display = 'none'; };
 }
 
 // ─────────────────────────────────────────
@@ -7509,9 +7575,6 @@ function closeWktDrawer(e) {
 // ─────────────────────────────────────────
 // PROGRESS PHOTOS
 // ─────────────────────────────────────────
-function triggerFileInput() {
- document.getElementById('photo-file-input').click();
-}
 
 // ─────────────────────────────────────────
 // 4-ANGLE PHOTO UPLOAD
@@ -7621,7 +7684,7 @@ async function submitAnglePhotos() {
      lastPhotoSubmitted: phIsoDate()
     });
    }
-  } catch(_) {}
+  } catch(e) { console.warn('Photo schedule update failed:', e); }
   if (reqId) {
    const reqBase64 = _anglePreviews['front'] || Object.values(_anglePreviews)[0];
    const reqCompressed = await compressImageBase64(reqBase64, 1600, 0.88);
@@ -7647,7 +7710,7 @@ async function submitAnglePhotos() {
      source: 'photo_upload',
      loggedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    } catch(_) {}
+    } catch(e) { console.warn('Weight log failed:', e); }
   }
   cancelAngleUpload();
   loadProgressPhotos();
@@ -7655,7 +7718,7 @@ async function submitAnglePhotos() {
  } catch(e) {
   console.error('Photo upload error:', e);
   btn.disabled = false;
-  btn.textContent = ' Failed — tap to retry';
+  btn.textContent = 'Failed — tap to retry';
   btn.style.cssText = 'background:#2a0d0d;color:#f09595;border:1px solid #5a1a1a';
   showToast('Upload failed: ' + (e.message || 'Unknown error'), 'error');
   setTimeout(() => { btn.style.cssText = ''; btn.textContent = 'Upload Photos'; }, 3000);
@@ -7687,232 +7750,258 @@ function compressImageBase64(dataUrl, maxWidth, quality) {
  });
 }
 
+// ─────────────────────────────────────────
+// GALLERY VIEW TOGGLE
+// ─────────────────────────────────────────
+let _currentGalleryView = 'compare';
+
+function setGalleryView(view) {
+ _currentGalleryView = view;
+ document.getElementById('gvt-compare').classList.toggle('active', view === 'compare');
+ document.getElementById('gvt-timeline').classList.toggle('active', view === 'timeline');
+ document.getElementById('ba-compare-view').classList.toggle('active', view === 'compare');
+ document.getElementById('ba-timeline-view').classList.toggle('active', view === 'timeline');
+}
+
+// ─────────────────────────────────────────
+// PROGRESS PHOTOS — MAIN LOADER
+// ─────────────────────────────────────────
+let _baSessions = [];
+let _baCurrentAngle = null;
+
 async function loadProgressPhotos() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid) return;
- const grid = document.getElementById('photo-grid');
+
+ const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+ const ANGLES = ['front', 'back', 'left', 'right'];
+
  try {
   const snap = await db.collection('members').doc(uid).collection('progressPhotos')
    .orderBy('uploadedAt', 'desc').limit(60).get();
+
+  // Show empty state in both views if no data
   if (snap.empty) {
-   grid.innerHTML = `<div class="empty-state" style="text-align:center;padding:2.5rem 1rem"><div class="empty-icon"></div><div class="empty-title">No photos yet</div><div class="empty-sub">Upload your first progress photo above</div></div>`;
+   document.getElementById('ba-no-compare').style.display = '';
+   document.getElementById('ba-content').style.display = 'none';
+   document.getElementById('gallery-view-toggle').style.display = 'none';
    return;
   }
 
-  // Group photos by calendar date (en-PH) — each date = one upload session
+  // ── Group into sessions by calendar date ──
   const sessions = {};
   snap.forEach(doc => {
    const d = doc.data();
    const dt = d.uploadedAt?.toDate ? d.uploadedAt.toDate() : new Date();
-   const dateKey = dt.toLocaleDateString('en-PH', { timeZone:'Asia/Manila', year:'numeric', month:'2-digit', day:'2-digit' });
+   const dateKey   = dt.toLocaleDateString('en-PH', { timeZone:'Asia/Manila', year:'numeric', month:'2-digit', day:'2-digit' });
    const dateLabel = dt.toLocaleDateString('en-PH', { timeZone:'Asia/Manila', month:'long', day:'numeric', year:'numeric' });
    if (!sessions[dateKey]) sessions[dateKey] = { dateKey, dateLabel, ts: dt.getTime(), photos: [] };
    sessions[dateKey].photos.push({ doc, d });
   });
 
-  // Sort sessions newest → oldest
   const sorted = Object.values(sessions).sort((a,b) => b.ts - a.ts);
   const total = sorted.length;
+  _baSessions = sorted;
 
-  const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
-  const ANGLES = ['front', 'back', 'left', 'right'];
+  // Show view toggle once we have data
+  document.getElementById('gallery-view-toggle').style.display = '';
 
+  // ── BEFORE / AFTER COMPARE ──
+  renderBeforeAfter(sorted);
+
+  // ── TIMELINE ──
+  const grid = document.getElementById('photo-grid');
   grid.innerHTML = '';
 
-  // Helper: build a row for one session
   function buildRow(session, labelClass, labelText, idx) {
    const row = document.createElement('div');
    row.className = 'ba-row';
 
-   const weight = session.photos[0]?.d?.weight;
+   const weight     = session.photos[0]?.d?.weight;
    const weightUnit = session.photos[0]?.d?.weightUnit || 'kg';
-   const weightHtml = weight
-    ? `<span style="font-size:11px;color:#c9a84c;font-weight:700;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:100px;padding:2px 9px;font-family:Inter,sans-serif">️ ${weight} ${weightUnit}</span>`
-    : '';
 
    row.innerHTML = `
     <div class="ba-row-header">
      <div class="ba-row-label ${labelClass}">${labelText}</div>
      <div class="ba-row-meta">
-      ${weightHtml}
-      <span>${session.dateLabel}</span>
+      ${weight ? `<div class="ba-row-weight">⚖ ${weight} ${weightUnit}</div>` : ''}
+      <div class="ba-row-date">${session.dateLabel}</div>
      </div>
      <div class="ba-row-divider"></div>
     </div>
     <div class="ba-angle-row" id="ba-angle-row-${idx}"></div>
    `;
-
    grid.appendChild(row);
 
    const angleRow = document.getElementById(`ba-angle-row-${idx}`);
-
    ANGLES.forEach(angle => {
     const photo = session.photos.find(p => (p.d.angle || 'front') === angle) || null;
-    const cell = document.createElement('div');
-
+    const cell  = document.createElement('div');
     if (photo) {
-     const src = photo.d.base64 || photo.d.url || '';
+     const src  = photo.d.base64 || photo.d.url || '';
      const date = photo.d.uploadedAt?.toDate
       ? photo.d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', month:'short', day:'numeric', year:'numeric' })
       : '';
      cell.className = 'ba-angle-card';
      cell.onclick = () => openLightbox(src, date, photo.d.note, photo.doc.id, angle);
-     cell.innerHTML = `
-      <img src="${src}" alt="${ANGLE_NAMES[angle]}" loading="lazy">
-      <div class="ba-angle-name">${ANGLE_NAMES[angle]}</div>
-     `;
+     cell.innerHTML = `<img src="${src}" alt="${ANGLE_NAMES[angle]}" loading="lazy"><div class="ba-angle-name">${ANGLE_NAMES[angle]}</div>`;
     } else {
      cell.className = 'ba-angle-empty';
-     cell.innerHTML = `
-      <div class="ba-angle-empty-icon"></div>
-      <div class="ba-angle-empty-lbl">${ANGLE_NAMES[angle]}</div>
-     `;
+     cell.innerHTML = `<div class="ba-angle-empty-icon">📷</div><div class="ba-angle-empty-lbl">${ANGLE_NAMES[angle]}</div>`;
     }
     angleRow.appendChild(cell);
    });
   }
 
   if (total === 1) {
-   // Only one session — label it "Before" so the next upload becomes "After"
-   buildRow(sorted[0], 'before-lbl', 'Before', 0);
+   buildRow(sorted[0], 'before-lbl', 'First Check-in', 0);
    const nudge = document.createElement('div');
    nudge.className = 'ba-only-before';
-   nudge.innerHTML = `<p>Upload another set of photos and an <strong>After</strong> row will appear automatically.</p>`;
+   nudge.innerHTML = `<p>Upload another check-in and your <strong>After</strong> will appear here.</p>`;
    grid.appendChild(nudge);
   } else {
-   // After row = newest (idx 0)
    buildRow(sorted[0], 'after-lbl', 'After', 0);
-
-   // Middle check-in rows (2nd newest to 2nd oldest), newest first
    for (let i = 1; i < total - 1; i++) {
     buildRow(sorted[i], 'checkin-lbl', `Check-in ${total - 1 - i}`, i);
    }
-
-   // Before row = oldest (last idx)
    buildRow(sorted[total - 1], 'before-lbl', 'Before', total - 1);
   }
 
  } catch(e) {
-  grid.innerHTML = `<div class="empty-state" style="text-align:center;padding:2rem"><div class="empty-icon"></div><div class="empty-title">Configure Firebase Storage</div><div class="empty-sub">Enable Storage rules in your Firebase console to display photos.</div></div>`;
+  console.error('loadProgressPhotos error', e);
+  document.getElementById('photo-grid').innerHTML = `
+   <div style="text-align:center;padding:2rem;color:var(--text3)">
+    <div style="font-size:13px;margin-bottom:4px">Storage not configured</div>
+    <div style="font-size:11px">Enable Firebase Storage rules to display photos.</div>
+   </div>`;
  }
 }
 
-// ── VIEW TOGGLE ──
-function setProgPhotoView(view) {
- // View toggle removed — Before/After labels are shown directly on photos
-}
-
-// ── BEFORE / AFTER RENDER ──
-let _baSessions = [];
-let _baCurrentAngle = null;
-
+// ─────────────────────────────────────────
+// BEFORE / AFTER — render compare section
+// ─────────────────────────────────────────
 function renderBeforeAfter(sorted) {
- _baSessions = sorted;
- const noPhotos = document.getElementById('ba-no-photos');
- const content = document.getElementById('ba-content');
- if (!noPhotos || !content) return;
+ const noCompare = document.getElementById('ba-no-compare');
+ const content   = document.getElementById('ba-content');
+ if (!noCompare || !content) return;
 
  if (sorted.length < 2) {
-  noPhotos.style.display = '';
+  noCompare.style.display = '';
   content.style.display = 'none';
+  // Hide toggle too — only timeline makes sense with 0-1 sessions
+  const toggle = document.getElementById('gallery-view-toggle');
+  if (toggle) toggle.style.display = 'none';
   return;
  }
- noPhotos.style.display = 'none';
+
+ noCompare.style.display = 'none';
  content.style.display = '';
 
- // Find all angles that exist in BOTH first and last session
+ const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
  const oldest = sorted[sorted.length - 1];
- const newest = sorted[0];
+ const newest  = sorted[0];
  const oldAngles = new Set(oldest.photos.map(p => p.d.angle || 'front'));
  const newAngles = new Set(newest.photos.map(p => p.d.angle || 'front'));
  const commonAngles = [...oldAngles].filter(a => newAngles.has(a));
- const allAngles = [...new Set([...oldAngles, ...newAngles])];
-
- // Build angle tabs (show all available; grey out if only in one)
- const tabsEl = document.getElementById('ba-angle-tabs');
- const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
- const angles = allAngles.length ? allAngles : ['front'];
- const preferred = _baCurrentAngle && angles.includes(_baCurrentAngle) ? _baCurrentAngle : (commonAngles[0] || angles[0]);
+ const allAngles    = [...new Set([...oldAngles, ...newAngles])];
+ const angles    = allAngles.length ? allAngles : ['front'];
+ const preferred = (_baCurrentAngle && angles.includes(_baCurrentAngle))
+  ? _baCurrentAngle : (commonAngles[0] || angles[0]);
  _baCurrentAngle = preferred;
 
- tabsEl.innerHTML = angles.map(a =>
-  `<button class="ba-angle-tab${a===preferred?' active':''}" onclick="switchBaAngle('${a}')">${ANGLE_NAMES[a]||a}</button>`
- ).join('');
+ // Build angle chips
+ const tabsEl = document.getElementById('ba-angle-tabs');
+ tabsEl.innerHTML = angles.map(a => {
+  const hasInBoth = commonAngles.includes(a);
+  return `<button class="ba-angle-chip${a===preferred?' active':''}${!hasInBoth?' disabled':''}"
+   onclick="switchBaAngle('${a}')">${ANGLE_NAMES[a]||a}</button>`;
+ }).join('');
 
  showBaAngle(preferred, oldest, newest);
+ // Reset slider init so it re-calibrates after images load
+ const wrap = document.getElementById('ba-slider-wrap');
+ if (wrap) wrap._sliderInit = false;
+ initBaSlider();
 }
 
 function switchBaAngle(angle) {
  _baCurrentAngle = angle;
- document.querySelectorAll('.ba-angle-tab').forEach(t => t.classList.toggle('active', t.textContent.trim().toLowerCase().replace(' ','') === angle.replace(' ','')));
- // Re-select by angle name
- document.querySelectorAll('.ba-angle-tab').forEach(t => {
-  const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+ const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+ document.querySelectorAll('.ba-angle-chip').forEach(t => {
   t.classList.toggle('active', (ANGLE_NAMES[angle]||angle) === t.textContent.trim());
  });
  if (_baSessions.length >= 2) {
-  showBaAngle(angle, _baSessions[_baSessions.length-1], _baSessions[0]);
+  showBaAngle(angle, _baSessions[_baSessions.length - 1], _baSessions[0]);
  }
 }
 
 function showBaAngle(angle, oldest, newest) {
- const findPhoto = (session, ang) => {
-  const exact = session.photos.find(p => (p.d.angle || 'front') === ang);
-  return exact || session.photos[0];
- };
+ const findPhoto = (session, ang) =>
+  session.photos.find(p => (p.d.angle || 'front') === ang) || session.photos[0];
+
  const beforeItem = findPhoto(oldest, angle);
- const afterItem = findPhoto(newest, angle);
+ const afterItem  = findPhoto(newest, angle);
  if (!beforeItem || !afterItem) return;
 
  const beforeSrc = beforeItem.d.base64 || beforeItem.d.url || '';
- const afterSrc = afterItem.d.base64 || afterItem.d.url || '';
+ const afterSrc  = afterItem.d.base64  || afterItem.d.url  || '';
 
  const imgBefore = document.getElementById('ba-img-before');
- const imgAfter = document.getElementById('ba-img-after');
+ const imgAfter  = document.getElementById('ba-img-after');
+ // Fade transition on image swap
+ [imgBefore, imgAfter].forEach(img => { img.style.opacity = '0'; img.style.transition = 'opacity 0.25s'; });
  imgBefore.src = beforeSrc;
- imgAfter.src = afterSrc;
+ imgAfter.src  = afterSrc;
+ imgAfter.onload = () => { imgAfter.style.opacity = '1'; };
+ imgBefore.onload = () => { imgBefore.style.opacity = '1'; };
 
- // Reset divider to 50%
  setBaDivider(50);
 
- // Weight pills
+ // Stats strip
  const bw = beforeItem.d.weight;
  const aw = afterItem.d.weight;
  const bu = beforeItem.d.weightUnit || 'kg';
- const au = afterItem.d.weightUnit || 'kg';
+ const au = afterItem.d.weightUnit  || 'kg';
  const wRow = document.getElementById('ba-weight-row');
+
  if (bw && aw && bu === au) {
-  const diff = (parseFloat(aw) - parseFloat(bw)).toFixed(1);
-  const diffSign = diff > 0 ? '+' : '';
-  const diffColor = diff < 0 ? 'var(--green)' : (diff > 0 ? 'var(--red)' : 'var(--text3)');
-  document.getElementById('ba-weight-before').textContent = bw + ' ' + bu;
-  document.getElementById('ba-weight-after').textContent = aw + ' ' + au;
-  document.getElementById('ba-weight-diff').textContent  = diffSign + diff + ' ' + bu;
-  document.getElementById('ba-weight-diff').style.color  = diffColor;
-  const bd = beforeItem.d.uploadedAt?.toDate ? beforeItem.d.uploadedAt.toDate().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
-  const ad = afterItem.d.uploadedAt?.toDate ? afterItem.d.uploadedAt.toDate().toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}) : '';
+  const diff      = (parseFloat(aw) - parseFloat(bw)).toFixed(1);
+  const diffSign  = diff > 0 ? '+' : '';
+  const diffClass = diff < 0 ? 'green' : (diff > 0 ? 'red' : 'neutral');
+  const bd = beforeItem.d.uploadedAt?.toDate
+   ? beforeItem.d.uploadedAt.toDate().toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'}) : '';
+  const ad = afterItem.d.uploadedAt?.toDate
+   ? afterItem.d.uploadedAt.toDate().toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'}) : '';
+
+  document.getElementById('ba-weight-before').textContent = `${bw} ${bu}`;
+  document.getElementById('ba-weight-after').textContent  = `${aw} ${au}`;
+
+  const diffEl = document.getElementById('ba-weight-diff');
+  diffEl.textContent = `${diffSign}${diff} ${bu}`;
+  diffEl.className = `ba-stat-val ${diffClass}`;
+
   document.getElementById('ba-date-before').textContent = bd;
-  document.getElementById('ba-date-after').textContent = ad;
+  document.getElementById('ba-date-after').textContent  = ad;
   wRow.style.display = '';
  } else {
   wRow.style.display = 'none';
  }
-
- initBaSlider();
 }
 
-// ── SLIDER DRAG ──
+// ─────────────────────────────────────────
+// SLIDER DRAG
+// ─────────────────────────────────────────
 function setBaDivider(pct) {
- pct = Math.max(5, Math.min(95, pct));
- const div = document.getElementById('ba-divider');
- const wrap = document.getElementById('ba-before-wrap');
- if (div) div.style.left = pct + '%';
- if (wrap) wrap.style.width = pct + '%';
- // Stretch before image to fill the clip
+ pct = Math.max(4, Math.min(96, pct));
+ const divider   = document.getElementById('ba-divider');
+ const beforeWrap = document.getElementById('ba-before-wrap');
+ if (divider)   divider.style.left    = pct + '%';
+ if (beforeWrap) beforeWrap.style.width = pct + '%';
+ // Keep before image full-width so the clip reveals it correctly
  const imgB = document.getElementById('ba-img-before');
  if (imgB) {
-  const containerW = document.getElementById('ba-slider-wrap')?.offsetWidth || 400;
-  imgB.style.width = (containerW) + 'px';
+  const containerW = document.getElementById('ba-slider-wrap')?.offsetWidth || 360;
+  imgB.style.width = containerW + 'px';
  }
 }
 
@@ -7928,23 +8017,41 @@ function initBaSlider() {
  };
 
  let dragging = false;
+
+ const onStart = (clientX) => {
+  dragging = true;
+  wrap.classList.add('dragging');
+  setBaDivider(getPct(clientX));
+ };
  const onMove = (e) => {
   if (!dragging) return;
   e.preventDefault();
-  const x = e.touches ? e.touches[0].clientX : e.clientX;
-  setBaDivider(getPct(x));
+  setBaDivider(getPct(e.touches ? e.touches[0].clientX : e.clientX));
  };
- const onUp = () => { dragging = false; };
+ const onUp = () => {
+  dragging = false;
+  wrap.classList.remove('dragging');
+ };
 
- // Mouse
- wrap.addEventListener('mousedown', (e) => { dragging = true; setBaDivider(getPct(e.clientX)); });
+ wrap.addEventListener('mousedown',  (e) => onStart(e.clientX));
  window.addEventListener('mousemove', onMove);
- window.addEventListener('mouseup', onUp);
- // Touch
- wrap.addEventListener('touchstart', (e) => { dragging = true; setBaDivider(getPct(e.touches[0].clientX)); }, { passive: true });
- wrap.addEventListener('touchmove', (e) => { if(dragging){ e.preventDefault(); setBaDivider(getPct(e.touches[0].clientX)); } }, { passive: false });
- wrap.addEventListener('touchend', onUp);
+ window.addEventListener('mouseup',   onUp);
+ wrap.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), { passive: true });
+ wrap.addEventListener('touchmove',  onMove, { passive: false });
+ wrap.addEventListener('touchend',   onUp);
+
+ // Recalibrate image width on resize
+ window.addEventListener('resize', () => {
+  const wrap = document.getElementById('ba-slider-wrap');
+  if (wrap && wrap._sliderInit) {
+   const pct = parseFloat(document.getElementById('ba-divider')?.style.left) || 50;
+   setBaDivider(pct);
+  }
+ }, { passive: true });
 }
+
+// Keep compat
+function setProgPhotoView(v) {}
 
 async function loadHomePhotoStrip() {
  const uid = currentUid || auth.currentUser?.uid;
@@ -8054,7 +8161,7 @@ function _updateNextDueLabel(dayOfWeek) {
 function initPhotoSchedule() {
  document.querySelectorAll('.psc-day').forEach(btn => {
   btn.addEventListener('click', () => {
-   _selectedScheduleDay = parseInt(btn.dataset.day);
+   _selectedScheduleDay = parseInt(btn.dataset.day, 10);
    document.querySelectorAll('.psc-day').forEach(b => b.classList.remove('selected'));
    btn.classList.add('selected');
    document.getElementById('psc-save-btn').classList.add('active');
@@ -8071,7 +8178,7 @@ function initPhotoSchedule() {
   if (day !== undefined && day !== null) {
    _selectedScheduleDay = day;
    document.querySelectorAll('.psc-day').forEach(b => {
-    if (parseInt(b.dataset.day) === day) b.classList.add('selected');
+    if (parseInt(b.dataset.day, 10) === day) b.classList.add('selected');
    });
    document.getElementById('psc-save-btn').classList.add('active');
    _updateNextDueLabel(day); // always recompute — don't trust stale stored date
@@ -8106,63 +8213,38 @@ async function savePhotoSchedule() {
 // BOTTOM NAV TABS
 // ─────────────────────────────────────────
 function setTab(tab) {
- const calScreen = document.getElementById('screen-calendar-full');
  const homeScreen = document.getElementById('screen-home');
+ if (homeScreen) homeScreen.style.display = '';
 
- if (tab === 'calendar') {
-  // Show full-bleed calendar, hide the home screen entirely
-  if (homeScreen) homeScreen.style.display = 'none';
-  if (calScreen) calScreen.style.display = 'block';
-  const fab = document.getElementById('cal-fab');
-  if (fab) fab.style.display = 'flex';
-  // Sync nav active state on both navbars
-  ['home','log','progress','chat','calendar','profile','nutrition'].forEach(t => {
-   const a = document.getElementById('nav-' + t);
-   const b = document.getElementById('fnav-' + t);
-   const sn = document.getElementById('snav-' + t);
-   const wn = document.getElementById('wnav-' + t);
-   const csn = document.getElementById('csnav-' + t);
-   const cwn = document.getElementById('cwnav-' + t);
-   if (a) a.className = 'nav-item' + (t==='calendar' ? ' active' : '');
-   if (b) b.className = 'nav-item' + (t==='calendar' ? ' active' : '');
-   if (sn) sn.className = 'sidebar-nav-item' + (t==='calendar' ? ' active' : '');
-   if (wn) wn.className = 'web-nav-item' + (t==='calendar' ? ' active' : '');
-   if (csn) csn.className = 'sidebar-nav-item' + (t==='calendar' ? ' active' : '');
-   if (cwn) cwn.className = 'web-nav-item' + (t==='calendar' ? ' active' : '');
-  });
-  // Always render grid immediately so it's visible, then start Firestore listener
-  renderCliCalGrid();
-  initClientCalendar();
-  window.scrollTo({ top:0, behavior:'smooth' });
-  return;
+ const tabs = ['home','log','progress','chat','profile','nutrition'];
+ tabs.forEach(t => {
+  const el   = document.getElementById('nav-'  + t);
+  const sn   = document.getElementById('snav-' + t);
+  const cls  = 'nav-item'         + (t===tab ? ' active' : '');
+  const scls = 'sidebar-nav-item' + (t===tab ? ' active' : '');
+  if (el) el.className = cls;
+  if (sn) sn.className = scls;
+ });
+
+ // Hide ALL panels first, then show the right one
+ ['home','log','progress','chat','profile','nutrition'].forEach(t => {
+  const panel = document.getElementById('tab-' + t + '-panel');
+  if (panel) {
+   panel.classList.add('tab-hidden');
+   panel.classList.remove('tab-visible');
+   panel.style.display = '';
+  }
+ });
+ const active = document.getElementById('tab-' + tab + '-panel');
+ if (active) {
+  active.classList.remove('tab-hidden');
+  active.classList.add('tab-visible');
+  active.style.display = '';
  }
 
- // Any other tab — hide calendar screen, show home screen
- if (calScreen) calScreen.style.display = 'none';
- if (homeScreen) homeScreen.style.display = '';
- const fab = document.getElementById('cal-fab');
- if (fab) fab.style.display = 'none';
-
- const tabs = ['home','log','progress','chat','calendar','profile','nutrition'];
- tabs.forEach(t => {
-  const el = document.getElementById('nav-' + t);
-  if (el) el.className = 'nav-item' + (t===tab ? ' active' : '');
-  // Sync sidebar nav
-  const sn = document.getElementById('snav-' + t);
-  if (sn) sn.className = 'sidebar-nav-item' + (t===tab ? ' active' : '');
-  // Sync top web-nav
-  const wn = document.getElementById('wnav-' + t);
-  if (wn) wn.className = 'web-nav-item' + (t===tab ? ' active' : '');
- });
- document.getElementById('tab-home-panel').style.display   = tab==='home'   ? 'block':'none';
- document.getElementById('tab-log-panel').style.display    = tab==='log'    ? 'block':'none';
- document.getElementById('tab-progress-panel').style.display = tab==='progress' ? 'block':'none';
- document.getElementById('tab-chat-panel').style.display   = tab==='chat'   ? 'block':'none';
- document.getElementById('tab-profile-panel').style.display  = tab==='profile'  ? 'block':'none';
- document.getElementById('tab-nutrition-panel').style.display = tab==='nutrition' ? 'block':'none';
- if (tab==='chat') initClientChat();
- if (tab==='home') { setTimeout(checkHomePhotoRequestAlert, 300); loadHomePhotoStrip(); }
- if (tab==='progress') { loadProgressPhotos(); loadCheckinHistory(); updateCheckinDateDisplay(); }
+ if (tab==='chat')     initClientChat();
+ if (tab==='home')     { setTimeout(checkHomePhotoRequestAlert, 300); loadHomePhotoStrip(); }
+ if (tab==='progress') { loadProgressPhotos(); }
  if (tab==='nutrition') initClientNutrition();
  window.scrollTo({ top:0, behavior:'smooth' });
 }
@@ -8261,9 +8343,9 @@ async function handleLogout() {
 // ─────────────────────────────────────────
 // AUTH STATE OBSERVER
 // ─────────────────────────────────────────
-// Flag set to true by handleLogin/handleSignup so onAuthStateChanged
+// explicitAuthInProgress is declared in the STATE section above.
+// It is set to true by handleLogin/handleSignup so onAuthStateChanged
 // does not interfere with explicit auth flows — it only handles page-refresh auto-login.
-let explicitAuthInProgress = false;
 
 auth.onAuthStateChanged(async user => {
  if (explicitAuthInProgress) return;
@@ -8282,8 +8364,12 @@ auth.onAuthStateChanged(async user => {
     db.collection('members').doc(user.uid).update({ profileComplete: true }).catch(() => {});
    }
    loadHomeScreen(data);
+  } else {
+   // Doc missing on refresh (not mid-signup) — redirect to auth to avoid blank state
+   await auth.signOut();
+   showScreen('screen-auth');
   }
-  // If doc doesn't exist, signup is in progress — handleSignup handles the redirect
+  // If doc doesn't exist during active signup, handleSignup handles the redirect
  }
 });
 
@@ -8318,7 +8404,7 @@ function initClientCalendar() {
  if (cliCalUnsub) return; // already listening
  listenMyEvents(); // also listen for personal events
  // Listen for events assigned to this client OR all clients
- const COACH_UID = 'evolve_coach_001';
+ const COACH_UID = (typeof COACH_FIXED_UID !== 'undefined' && COACH_FIXED_UID) || 'evolve_coach_001';
  cliCalUnsub = db.collection('calendarEvents')
   .where('coachId', '==', COACH_UID)
   .onSnapshot(snap => {
@@ -8353,7 +8439,7 @@ function cliCalNext() {
  renderCliCalGrid();
 }
 function cliCalGoToday() {
- const now = new Date();
+ const now = (typeof phNow === 'function') ? phNow() : new Date();
  cliCalYear = now.getFullYear();
  cliCalMonth = now.getMonth();
  renderCliCalGrid();
@@ -8683,157 +8769,8 @@ function checkHomePhotoRequestAlert() {
 }
 
 
-</script>
-<!-- CHECK-IN MODULE -->
-<script>
-// ─────────────────────────────────────────
-// PROGRESS SUB-TABS
-// ─────────────────────────────────────────
-function setProgSubtab(sub) {
- document.getElementById('prog-panel-photos').style.display = sub==='photos' ? 'block' : 'none';
- document.getElementById('prog-panel-checkin').style.display = sub==='checkin' ? 'block' : 'none';
- const tabPhotos = document.getElementById('subtab-photos');
- const tabCheckin = document.getElementById('subtab-checkin');
- [tabPhotos, tabCheckin].forEach(t => { if(t){t.style.color='#555'; t.style.borderBottomColor='transparent';} });
- const active = {photos:tabPhotos, checkin:tabCheckin}[sub];
- if (active) { active.style.color='#c9a84c'; active.style.borderBottomColor='#c9a84c'; }
- if (sub==='checkin') loadCheckinHistory();
-}
 
-// ─────────────────────────────────────────
-// CLIENT CHECK-IN
-// ─────────────────────────────────────────
-let ciEnergy=0, ciNutrition=0, ciWorkout=0;
 
-function updateCheckinDateDisplay() {
- const el = document.getElementById('ci-date-display');
- if (el) el.textContent = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila',weekday:'short',month:'long',day:'numeric',year:'numeric'});
-}
-
-function setCiRating(type, val) {
- if (type==='energy')  ciEnergy  = val;
- if (type==='nutrition') ciNutrition = val;
- if (type==='workout')  ciWorkout  = val;
- document.querySelectorAll(`#ci-${type}-row .ci-rating-btn`).forEach(btn => {
-  const active = parseInt(btn.dataset.val) <= val;
-  btn.style.background  = active ? '#1e1800' : '#0e0e0e';
-  btn.style.borderColor  = active ? '#c9a84c' : '#222';
-  btn.style.color     = active ? '#c9a84c' : '#555';
-  btn.style.fontWeight  = active ? '600' : '400';
- });
-}
-
-async function submitCheckin() {
- const uid = currentUid || auth.currentUser?.uid;
- if (!uid) { showClientToast('Please log in first'); return; }
- const btn = document.getElementById('ci-submit-btn');
- btn.disabled=true; btn.textContent='Checking…';
- // Guard: prevent duplicate same-day submission
- try {
-  const db = firebase.firestore();
-  const todayKey = phIsoDate();
-  const existing = await db.collection('members').doc(uid).collection('checkIns')
-   .where('date','==',todayKey).limit(1).get();
-  if (!existing.empty) {
-   const confirmed = confirm("You already submitted a check-in today. Submit another one anyway?\n\n(Your coach will see both — the latest will be used for the chart.)");
-   if (!confirmed) { btn.disabled=false; btn.textContent='Submit Check-in'; return; }
-  }
- } catch(e) { /* allow submission if check fails */ }
- btn.textContent='Submitting…';
- const fv = id => { const v=document.getElementById(id)?.value; return v ? parseFloat(v)||v : null; };
- const entry = {
-  date:   phIsoDate(),
-  weight:  fv('ci-weight'),
-  bodyFat:  fv('ci-bf'),
-  waist:   fv('ci-waist'),
-  chest:   fv('ci-chest'),
-  hips:   fv('ci-hips'),
-  armLeft:  fv('ci-arm'),
-  thigh:   fv('ci-thigh'),
-  sleep:   fv('ci-sleep'),
-  energy:  ciEnergy||null,
-  nutrition: ciNutrition||null,
-  workout:  ciWorkout||null,
-  notes:   document.getElementById('ci-note')?.value?.trim()||null,
-  source:  'client',
-  createdAt: firebase.firestore.FieldValue.serverTimestamp()
- };
- Object.keys(entry).forEach(k => entry[k]===null && delete entry[k]);
- try {
-  const db = firebase.firestore();
-  await db.collection('members').doc(uid).collection('checkIns').add(entry);
-  ['ci-weight','ci-bf','ci-waist','ci-chest','ci-hips','ci-arm','ci-thigh','ci-sleep','ci-note']
-   .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-  ciEnergy=0; ciNutrition=0; ciWorkout=0;
-  document.querySelectorAll('.ci-rating-btn').forEach(b => {
-   b.style.background='#0e0e0e'; b.style.borderColor='#222'; b.style.color='#555'; b.style.fontWeight='400';
-  });
-  showClientToast('Check-in submitted. Your coach has been notified.');
-  loadCheckinHistory();
- } catch(e) { showClientToast('Error: '+e.message); }
- finally { btn.disabled=false; btn.textContent='Submit Check-in'; }
-}
-
-async function loadCheckinHistory() {
- const uid = currentUid || auth.currentUser?.uid;
- if (!uid) return;
- const list = document.getElementById('ci-history-list');
- if (!list) return;
- list.innerHTML = '<div style="text-align:center;padding:1.5rem;color:#444;font-size:13px">Loading…</div>';
- try {
-  const db = firebase.firestore();
-  const snap = await db.collection('members').doc(uid).collection('checkIns')
-   .orderBy('date','desc').limit(20).get();
-  if (snap.empty) {
-   list.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No check-ins yet</div><div class="empty-sub">Submit your first one above!</div></div>`;
-   return;
-  }
-  const last = snap.docs[0].data();
-  const strip = document.getElementById('ci-last-strip');
-  if (strip) {
-   strip.style.display='block';
-   const dateEl = document.getElementById('ci-last-date');
-   const wtEl  = document.getElementById('ci-last-weight');
-   if (dateEl) dateEl.textContent = last.date||'—';
-   if (wtEl) wtEl.textContent = last.weight ? '· '+last.weight+' kg' : '';
-  }
-  const stars = n => n ? ''.repeat(Math.round(n))+''.repeat(5-Math.round(n)) : '—';
-  list.innerHTML = snap.docs.map(d => {
-   const c = d.data();
-   const srcColor = c.source==='coach' ? '#c9a84c' : '#4a9edd';
-   const srcLabel = c.source==='coach' ? 'Coach' : 'You';
-   return `<div style="background:#111;border:1px solid #1e1e1e;border-radius:10px;padding:14px 16px;margin-bottom:10px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-     <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1px;color:#c9a84c">${c.date||'—'}</div>
-     <span style="font-size:10px;color:${srcColor};letter-spacing:1px;text-transform:uppercase">${srcLabel}</span>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:${(c.notes||c.coachNotes)?'10px':'0'}">
-     ${c.weight ? `<div style="background:#0e0e0e;border-radius:6px;padding:8px 10px"><div style="font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase">Weight</div><div style="font-size:15px;font-weight:600;color:#e8e8e8;margin-top:2px">${c.weight}kg</div></div>` : ''}
-     ${c.waist  ? `<div style="background:#0e0e0e;border-radius:6px;padding:8px 10px"><div style="font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase">Waist</div><div style="font-size:15px;font-weight:600;color:#e8e8e8;margin-top:2px">${c.waist}cm</div></div>` : ''}
-     ${c.bodyFat ? `<div style="background:#0e0e0e;border-radius:6px;padding:8px 10px"><div style="font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase">Body Fat</div><div style="font-size:15px;font-weight:600;color:#e8e8e8;margin-top:2px">${c.bodyFat}%</div></div>` : ''}
-     ${c.energy  ? `<div style="background:#0e0e0e;border-radius:6px;padding:8px 10px"><div style="font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase">Energy</div><div style="font-size:13px;color:#c9a84c;margin-top:2px">${stars(c.energy)}</div></div>` : ''}
-     ${c.nutrition ? `<div style="background:#0e0e0e;border-radius:6px;padding:8px 10px"><div style="font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase">Nutrition</div><div style="font-size:13px;color:#c9a84c;margin-top:2px">${stars(c.nutrition)}</div></div>` : ''}
-     ${c.sleep   ? `<div style="background:#0e0e0e;border-radius:6px;padding:8px 10px"><div style="font-size:10px;color:#444;letter-spacing:1px;text-transform:uppercase">Sleep</div><div style="font-size:15px;font-weight:600;color:#e8e8e8;margin-top:2px">${c.sleep}h</div></div>` : ''}
-    </div>
-    ${(c.notes||c.coachNotes) ? `<div style="font-size:12px;color:#666;padding:8px 10px;background:#0e0e0e;border-radius:6px;line-height:1.5;font-style:italic">${c.coachNotes ? c.coachNotes : c.notes}</div>` : ''}
-   </div>`;
-  }).join('');
- } catch(e) {
-  list.innerHTML = `<div class="empty-state"><div class="empty-title" style="color:#f09595">${e.message}</div></div>`;
- }
-}
-
-function showClientToast(msg) {
- let t = document.getElementById('client-toast');
- if (!t) {
-  t = document.createElement('div');
-  t.id='client-toast';
-  t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#222;border:1px solid #333;color:#e8e8e8;padding:11px 18px;border-radius:8px;font-size:13px;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;max-width:90vw;text-align:center';
-  document.body.appendChild(t);
- }
- t.textContent=msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
- setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; }, 3200);
-}
 </script>
 
 
@@ -8935,8 +8872,8 @@ function getWorkoutMedia(exerciseName) {
   'stair climber':'elliptical machine walk','cycling':'air bike','treadmill run':'run on treadmill',
   'rowing machine':'rowing machine',
   // General abbreviations
-  'db fly':'dumbbell fly','db row':'dumbbell bent over row',
- };;
+  'db row':'dumbbell bent over row',
+ };
  const aliasKey = _ALIAS[key];
  if (aliasKey && _WORKOUTS_RAW[aliasKey]) { const e=_WORKOUTS_RAW[aliasKey]; return {video:e.v,thumbnail:e.t}; }
 
@@ -9040,7 +8977,7 @@ const EXLIB_COLORS = {
 };
 
 const EXLIB_DB = [
- { name:'Bycicle Twisting Crunch', muscles:'Abs, Core', category:'Core', sets:'3×15' },
+ { name:'Bicycle Twisting Crunch', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Dumbbell Incline Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Medicine Ball Slam', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Dumbbell Seated Lateral Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
@@ -9059,9 +8996,9 @@ const EXLIB_DB = [
  { name:'Dumbbell Sit up', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Dumbbell Incline Bench Press', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Lever Seated Hip Adduction', muscles:'Full Body', category:'Full Body', sets:'3×8' },
- { name:'Barbell Incline Shoulders Press (inside Squat Cage', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Barbell Incline Shoulders Press (inside Squat Cage)', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Dumbbell Standing Triceps Extension', muscles:'Triceps', category:'Arms', sets:'3×12' },
- { name:'Dumbbell Revers Grip Biceps Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
+ { name:'Dumbbell Reverse Grip Biceps Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Barbell Pause Full Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Cable Overhead Triceps Extension', muscles:'Triceps', category:'Arms', sets:'3×12' },
  { name:'Cable Standing Single Arm Fly', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
@@ -9430,7 +9367,7 @@ function renderExLib() {
    ? `<img src="${media.thumbUrl}" alt="${ex.name}" onerror="this.style.display='none';this.nextSibling.style.display='flex';" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
      <span style="font-size:22px;display:none;width:100%;height:100%;align-items:center;justify-content:center;">${c.icon}</span>`
    : `<span style="font-size:22px;">${c.icon}</span>`;
-  const nameEsc = ex.name.replace(/'/g,"\'");
+  const nameEsc = ex.name.replace(/'/g, "&#39;");
   return `<div class="exlib-item" onclick="openWorkoutVidModal('${nameEsc}','')">
    <div class="exlib-thumb" style="background:${c.bg};">
     ${thumbHtml}
@@ -9529,6 +9466,8 @@ function nutrChangeDay(delta) {
 
 async function initClientNutrition() {
  const uid = auth.currentUser?.uid;
+ // Render immediately with whatever data we have (even empty), don't bail on no auth
+ renderNutritionTab();
  if (!uid) return;
  // Load macro targets
  try {
@@ -9653,13 +9592,13 @@ function renderNutrMealSections(dateKey) {
      const c  = Math.round(item.carbs_g||item.carbs||0);
      const fa = Math.round(item.fat_g||item.fats||0);
      return `
-     <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;${idx>0?'border-top:1px solid #161616;':''}">
+     <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;${idx>0?'border-top:1px solid #161616;':''}cursor:pointer;" onclick="nutrEditLog('${item.logId}','${meal}')">
       <div style="flex:1;min-width:0;">
        <div style="font-size:13px;color:#ddd;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.food_name||item.mealName||'Food'}</div>
        <div style="font-size:11px;color:#444;margin-top:2px;">${g}g · P:${p} C:${c} F:${fa}</div>
       </div>
       <div style="font-size:13px;font-weight:700;color:#c9a84c;flex-shrink:0;">${cal}</div>
-      <button onclick="nutrDeleteLog('${item.logId}','${meal}')" style="background:none;border:none;color:#333;cursor:pointer;font-size:15px;padding:2px 4px;flex-shrink:0;" title="Remove"></button>
+      <button onclick="event.stopPropagation();nutrDeleteLog('${item.logId}','${meal}')" style="background:none;border:none;color:#333;cursor:pointer;font-size:15px;padding:2px 4px;flex-shrink:0;" title="Remove"></button>
      </div>`;
     }).join('')}
    </div>` : `<div style="text-align:center;padding:14px 0;font-size:12px;color:#333;">Tap + Add to log food</div>`}
@@ -9764,7 +9703,7 @@ function openNutrFoodSearch(meal) {
  nutrSearchMeal = meal;
  nutrCatFilter = 'All';
  const modal = document.getElementById('nutr-search-modal');
- modal.style.display = 'flex';
+ modal.style.display = 'flex'; modal.classList.add('open');
  const lbl = document.getElementById('nutr-search-meal-label');
  if (lbl) lbl.textContent = meal !== 'any' ? '→ ' + meal : '';
  // Category pills
@@ -9795,7 +9734,7 @@ function nutrShowDefaultFoods() {
 }
 
 function closeNutrFoodSearch() {
- document.getElementById('nutr-search-modal').style.display = 'none';
+ const _nsm2 = document.getElementById('nutr-search-modal'); _nsm2.style.display = 'none'; _nsm2.classList.remove('open');
 }
 
 function nutrSetCat(cat) {
@@ -9855,9 +9794,6 @@ function nutrRenderFoodList(items) {
   <div onclick="openNutrDetail(nutrSearchResultsCache[${idx}])"
    style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #111;cursor:pointer;transition:background .15s;"
    onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-   <div style="width:40px;height:40px;border-radius:10px;background:#141414;border:1px solid #1e1e1e;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
-    ${nutrCatEmoji(f.category)}
-   </div>
    <div style="flex:1;min-width:0;">
     <div style="font-size:13px;font-weight:600;color:#ddd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.food_name}</div>
     <div style="font-size:11px;color:#444;margin-top:1px;">${f.category} · ${f.serving_label||f.serving_size_g+'g'}</div>
@@ -10250,11 +10186,261 @@ async function nutrDeleteLog(logId, meal) {
  } catch(e) { showClientToast('Error: ' + e.message); }
 }
 
+// ── EDIT LOGGED FOOD ──
+let _editLogId = null, _editMeal = null, _editItem = null, _editServing = 100;
+let _editUnits = [], _editUnitIdx = 0;
+
+function nutrEditLog(logId, meal) {
+ const dateKey = nutrDateKey(nutrCurrentDate);
+ const item = (nutrFoodLogs[dateKey]?.[meal] || []).find(i => i.logId === logId);
+ if (!item) return;
+ _editLogId = logId; _editMeal = meal; _editItem = item;
+ _editServing = item.servingG || item.serving_size_g || 100;
+
+ // Build unit options (same logic as detail view)
+ const base = item.serving_size_g || 100;
+ const isBev = item.category && /beverage|drink|juice|water|coffee|tea|soda|milk|smoothie|shake|alcohol|wine|beer|spirit/i.test(item.category);
+ _editUnits = isBev
+  ? [{ label: '100ml', grams: 100 }, { label: '1ml', grams: 1 }, { label: '1 cup (240ml)', grams: 240 }]
+  : [{ label: '100g', grams: 100 }, { label: '1g', grams: 1 }, { label: '1 oz (28g)', grams: 28 }];
+ if (item.serving_label && item.serving_label !== '100g' && item.serving_label !== '100ml') {
+  _editUnits.unshift({ label: item.serving_label, grams: base });
+ }
+ _editUnitIdx = 0;
+
+ _renderEditModal();
+}
+
+function _renderEditModal() {
+ document.getElementById('nutr-edit-modal')?.remove();
+ document.getElementById('nutr-edit-backdrop')?.remove();
+
+ const item = _editItem;
+ const unit = _editUnits[_editUnitIdx];
+ const displayVal = Math.round((_editServing / unit.grams) * 10) / 10;
+
+ const ratio = _editServing / (item.serving_size_g || 100);
+ const cal = Math.round((item.calories / (item.servingG / (item.serving_size_g || 100))) * ratio) || Math.round(item.calories);
+ const p = Math.round(((item.protein_g || item.protein || 0) / ((item.servingG||100) / (item.serving_size_g||100))) * ratio * 10)/10;
+ const c = Math.round(((item.carbs_g || item.carbs || 0) / ((item.servingG||100) / (item.serving_size_g||100))) * ratio * 10)/10;
+ const fa= Math.round(((item.fat_g || item.fats || 0) / ((item.servingG||100) / (item.serving_size_g||100))) * ratio * 10)/10;
+
+ // Find original food in DB for accurate per-100g macros
+ const orig = NUTR_FOODS.find(f => f.food_name === item.food_name);
+ const perG = orig ? orig : null;
+ const oRatio = _editServing / (orig ? orig.serving_size_g : 100);
+ const oCal = orig ? Math.round(orig.calories * oRatio) : cal;
+ const oP  = orig ? Math.round(orig.protein_g * oRatio * 10)/10 : p;
+ const oC  = orig ? Math.round(orig.carbs_g * oRatio * 10)/10 : c;
+ const oFa = orig ? Math.round(orig.fat_g * oRatio * 10)/10 : fa;
+
+ const backdrop = document.createElement('div');
+ backdrop.id = 'nutr-edit-backdrop';
+ backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1050;backdrop-filter:blur(4px);';
+ backdrop.onclick = () => { backdrop.remove(); document.getElementById('nutr-edit-modal')?.remove(); };
+
+ const modal = document.createElement('div');
+ modal.id = 'nutr-edit-modal';
+ modal.style.cssText = 'position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:480px;background:#09080D;border:1px solid rgba(255,255,255,0.07);border-radius:22px 22px 0 0;z-index:1060;padding:20px 20px 36px;box-shadow:0 -20px 60px rgba(0,0,0,0.8);';
+
+ modal.innerHTML = `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+   <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#635F5A;">Edit Food</div>
+   <button onclick="document.getElementById('nutr-edit-modal').remove();document.getElementById('nutr-edit-backdrop').remove();" style="background:none;border:none;color:#555;cursor:pointer;font-size:20px;padding:0;line-height:1;">✕</button>
+  </div>
+  <div style="font-size:16px;font-weight:700;color:#EDE9E1;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.food_name}</div>
+  <div style="font-size:11px;color:#635F5A;margin-bottom:16px;">${item.category || ''}</div>
+
+  <!-- Macro preview -->
+  <div style="display:flex;gap:8px;margin-bottom:18px;">
+   <div style="flex:1;background:#0F0D14;border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:10px;text-align:center;">
+    <div id="em-cal" style="font-size:20px;font-weight:800;color:#C9A84C;font-family:'Syne',sans-serif;">${oCal}</div>
+    <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">kcal</div>
+   </div>
+   <div style="flex:1;background:#0F0D14;border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:10px;text-align:center;">
+    <div id="em-p" style="font-size:16px;font-weight:700;color:#E8C96A;">${oP}g</div>
+    <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Protein</div>
+   </div>
+   <div style="flex:1;background:#0F0D14;border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:10px;text-align:center;">
+    <div id="em-c" style="font-size:16px;font-weight:700;color:#5A9FEF;">${oC}g</div>
+    <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Carbs</div>
+   </div>
+   <div style="flex:1;background:#0F0D14;border:1px solid rgba(255,255,255,0.05);border-radius:12px;padding:10px;text-align:center;">
+    <div id="em-f" style="font-size:16px;font-weight:700;color:#E8605A;">${oFa}g</div>
+    <div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Fat</div>
+   </div>
+  </div>
+
+  <!-- Unit selector -->
+  <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;">
+   ${_editUnits.map((u,i) => `
+    <button id="eu-${i}" onclick="nutrEditSetUnitIdx(${i})"
+     style="flex-shrink:0;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all 0.15s;font-family:inherit;
+     ${i===_editUnitIdx ? 'background:rgba(201,168,76,0.13);color:#C9A84C;border-color:#C9A84C;' : 'background:#0F0D14;color:#635F5A;border-color:rgba(255,255,255,0.08);'}"
+    >${u.label}</button>`).join('')}
+  </div>
+
+  <!-- Serving input row -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+   <button onclick="nutrEditAdjServing(-1)" style="width:38px;height:38px;border-radius:50%;background:#141220;border:1px solid rgba(255,255,255,0.1);color:#C9A84C;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">−</button>
+   <input id="nutr-edit-serving-input" type="number" min="0.1" step="0.1" value="${displayVal}"
+    oninput="nutrEditUpdateServing()"
+    style="flex:1;background:#0F0D14;border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;color:#EDE9E1;font-size:16px;font-weight:600;text-align:center;outline:none;font-family:inherit;"
+   />
+   <button onclick="nutrEditAdjServing(1)" style="width:38px;height:38px;border-radius:50%;background:#141220;border:1px solid rgba(255,255,255,0.1);color:#C9A84C;font-size:20px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">+</button>
+   <div style="font-size:12px;color:#635F5A;flex-shrink:0;min-width:36px;" id="em-unit-lbl">${unit.label}</div>
+  </div>
+
+  <!-- Slider -->
+  <input type="range" min="0.1" max="${unit.grams===1?1000:10}" step="0.1" value="${Math.min(unit.grams===1?1000:10, displayVal)}"
+   oninput="nutrEditSlider(this.value)"
+   style="width:100%;accent-color:#C9A84C;margin-bottom:18px;cursor:pointer;"
+  />
+
+  <!-- Save button -->
+  <button id="nutr-edit-save-btn" onclick="nutrEditSave()"
+   style="width:100%;background:#C9A84C;color:#0A0A0A;border:none;border-radius:12px;padding:14px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.3);transition:all 0.2s;">
+   Save Changes
+  </button>
+ `;
+ document.body.appendChild(backdrop);
+ document.body.appendChild(modal);
+}
+
+function nutrEditUpdateMacroPreview() {
+ const item = _editItem;
+ const orig = NUTR_FOODS.find(f => f.food_name === item.food_name);
+ const baseFood = orig || item;
+ const baseG = orig ? orig.serving_size_g : (item.serving_size_g || 100);
+ const ratio = _editServing / baseG;
+ const oCal = Math.round((orig ? orig.calories : item.calories) * ratio);
+ const oP  = Math.round((orig ? orig.protein_g : (item.protein_g||item.protein||0)) * ratio * 10)/10;
+ const oC  = Math.round((orig ? orig.carbs_g : (item.carbs_g||item.carbs||0)) * ratio * 10)/10;
+ const oFa = Math.round((orig ? orig.fat_g : (item.fat_g||item.fats||0)) * ratio * 10)/10;
+ const el = id => document.getElementById(id);
+ if (el('em-cal')) el('em-cal').textContent = oCal;
+ if (el('em-p'))   el('em-p').textContent   = oP + 'g';
+ if (el('em-c'))   el('em-c').textContent   = oC + 'g';
+ if (el('em-f'))   el('em-f').textContent   = oFa + 'g';
+}
+
+function nutrEditSetUnitIdx(i) {
+ _editUnitIdx = i;
+ _editUnits.forEach((_,idx) => {
+  const btn = document.getElementById('eu-' + idx);
+  if (!btn) return;
+  if (idx === i) { btn.style.background='rgba(201,168,76,0.13)'; btn.style.color='#C9A84C'; btn.style.borderColor='#C9A84C'; }
+  else { btn.style.background='#0F0D14'; btn.style.color='#635F5A'; btn.style.borderColor='rgba(255,255,255,0.08)'; }
+ });
+ const unit = _editUnits[i];
+ const displayVal = Math.round((_editServing / unit.grams) * 10) / 10;
+ const inp = document.getElementById('nutr-edit-serving-input');
+ if (inp) inp.value = displayVal;
+ const lbl = document.getElementById('em-unit-lbl');
+ if (lbl) lbl.textContent = unit.label;
+ const slider = document.querySelector('#nutr-edit-modal input[type=range]');
+ if (slider) { slider.max = unit.grams===1?1000:10; slider.value = Math.min(unit.grams===1?1000:10, displayVal); }
+}
+
+function nutrEditAdjServing(delta) {
+ const unit = _editUnits[_editUnitIdx];
+ _editServing = Math.max(unit.grams * 0.1, _editServing + delta * unit.grams);
+ const displayVal = Math.round((_editServing / unit.grams) * 10) / 10;
+ const inp = document.getElementById('nutr-edit-serving-input');
+ if (inp) inp.value = displayVal;
+ const slider = document.querySelector('#nutr-edit-modal input[type=range]');
+ if (slider) slider.value = Math.min(parseFloat(slider.max), displayVal);
+ nutrEditUpdateMacroPreview();
+}
+
+function nutrEditUpdateServing() {
+ const v = parseFloat(document.getElementById('nutr-edit-serving-input')?.value) || 0.1;
+ const unit = _editUnits[_editUnitIdx];
+ _editServing = v * unit.grams;
+ const slider = document.querySelector('#nutr-edit-modal input[type=range]');
+ if (slider) slider.value = Math.min(parseFloat(slider.max), v);
+ nutrEditUpdateMacroPreview();
+}
+
+function nutrEditSlider(val) {
+ const unit = _editUnits[_editUnitIdx];
+ _editServing = parseFloat(val) * unit.grams;
+ const inp = document.getElementById('nutr-edit-serving-input');
+ if (inp) inp.value = Math.round(parseFloat(val) * 10)/10;
+ nutrEditUpdateMacroPreview();
+}
+
+async function nutrEditSave() {
+ const uid = auth.currentUser?.uid;
+ if (!uid || !_editLogId) return;
+ const item = _editItem;
+ const orig = NUTR_FOODS.find(f => f.food_name === item.food_name);
+ const baseFood = orig || item;
+ const baseG = orig ? orig.serving_size_g : (item.serving_size_g || 100);
+ const ratio = _editServing / baseG;
+
+ const updates = {
+  servingG:  Math.round(_editServing),
+  calories:  Math.round((orig ? orig.calories : item.calories) * ratio),
+  protein_g: Math.round((orig ? orig.protein_g : (item.protein_g||0)) * ratio * 10)/10,
+  carbs_g:   Math.round((orig ? orig.carbs_g : (item.carbs_g||0)) * ratio * 10)/10,
+  fat_g:     Math.round((orig ? orig.fat_g : (item.fat_g||0)) * ratio * 10)/10,
+  fiber_g:   Math.round((orig ? orig.fiber_g : (item.fiber_g||0)) * ratio * 10)/10,
+  sugar_g:   Math.round((orig ? orig.sugar_g : (item.sugar_g||0)) * ratio * 10)/10,
+  sodium_mg: Math.round((orig ? orig.sodium_mg : (item.sodium_mg||0)) * ratio),
+  protein:   Math.round((orig ? orig.protein_g : (item.protein_g||0)) * ratio * 10)/10,
+  carbs:     Math.round((orig ? orig.carbs_g : (item.carbs_g||0)) * ratio * 10)/10,
+  fats:      Math.round((orig ? orig.fat_g : (item.fat_g||0)) * ratio * 10)/10,
+  editedAt:  firebase.firestore.FieldValue.serverTimestamp()
+ };
+
+ const btn = document.getElementById('nutr-edit-save-btn');
+ if (btn) { btn.disabled=true; btn.textContent='Saving…'; }
+ try {
+  await db.collection('members').doc(uid).collection('mealLogs').doc(_editLogId).update(updates);
+  // Update local cache
+  const dateKey = nutrDateKey(nutrCurrentDate);
+  const arr = nutrFoodLogs[dateKey]?.[_editMeal];
+  if (arr) {
+   const idx = arr.findIndex(i => i.logId === _editLogId);
+   if (idx >= 0) arr[idx] = { ...arr[idx], ...updates };
+  }
+  showClientToast('Updated!');
+  document.getElementById('nutr-edit-modal')?.remove();
+  document.getElementById('nutr-edit-backdrop')?.remove();
+  renderNutritionTab();
+ } catch(e) {
+  showClientToast('Error: ' + e.message);
+  if (btn) { btn.disabled=false; btn.textContent='Save Changes'; }
+ }
+}
+
 // Legacy compat stubs
 function openCliMealLogger() { openNutrFoodSearch('any'); }
 function closeCliMealLogger() { closeNutrFoodSearch(); }
 function renderCliMacroBars() { renderNutritionTab(); }
 function loadCliTodayLogs(uid) { return nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate)).then(() => renderNutritionTab()); }
+
+// Date navigation
+function nutrPrevDay() {
+ nutrCurrentDate = new Date(nutrCurrentDate);
+ nutrCurrentDate.setDate(nutrCurrentDate.getDate() - 1);
+ const uid = auth.currentUser?.uid;
+ if (uid) nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate)).then(() => renderNutritionTab());
+ else renderNutritionTab();
+}
+function nutrNextDay() {
+ const next = new Date(nutrCurrentDate);
+ next.setDate(next.getDate() + 1);
+ if (next > new Date()) return; // don't go into future
+ nutrCurrentDate = next;
+ const uid = auth.currentUser?.uid;
+ if (uid) nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate)).then(() => renderNutritionTab());
+ else renderNutritionTab();
+}
+
+// Alias for detail modal log button
+function nutrLogDetailFood() { nutrConfirmAdd(); }
 
 function showClientToast(msg) {
  if (typeof showToast === 'function') { showToast(msg); return; }
@@ -10562,13 +10748,13 @@ async function cliEndCall() {
  if (pendingCallDoc) {
   db.collection('callRequests').doc(pendingCallDoc).update({ status: 'ended' }).catch(()=>{});
  }
- if (cliLkRoom) { try { await cliLkRoom.disconnect(); } catch(_){} cliLkRoom = null; }
+ if (cliLkRoom) { try { await cliLkRoom.disconnect(); } catch(_){ /* disconnect may fail if already closed */ } cliLkRoom = null; }
  cliCleanupCall();
 }
 
 function cliCleanupCall() {
  if (cliCallTimerInterval) { clearInterval(cliCallTimerInterval); cliCallTimerInterval = null; }
- if (cliLkRoom) { try { cliLkRoom.disconnect(); } catch(_){} cliLkRoom = null; }
+ if (cliLkRoom) { try { cliLkRoom.disconnect(); } catch(_){ /* disconnect may fail if already closed */ } cliLkRoom = null; }
  document.querySelectorAll('audio[data-lk-cli]').forEach(a => a.remove());
  // Clean up video elements
  const remoteVid = document.getElementById('cli-remote-video');
@@ -10759,17 +10945,11 @@ function clientGetTimeAgo(date) {
 window.pushClientNotif = addClientNotification;
 
 // Hook into message events from coach
+// Notification hook: patches into existing message pipeline (no extra auth observer needed)
 (function hookClientNotifications() {
- // Listen for new messages from the coach via Firestore (after auth)
- firebase.auth().onAuthStateChanged(function(user) {
-  if (!user) return;
-  // When a new coach message arrives (chat), notify
-  // This patches into the existing message render pipeline
-  const _origShowToastFn = window.showToast;
-  if (_origShowToastFn && !window._clientNotifHooked) {
-   window._clientNotifHooked = true;
-  }
- });
+ if (!window._clientNotifHooked) {
+  window._clientNotifHooked = true;
+ }
 })();
 </script>
 
@@ -10823,6 +11003,70 @@ window.pushClientNotif = addClientNotification;
  background:#c9a84c;color:#0a0a0a;padding:10px 20px;border-radius:10px;
  font-size:13px;font-weight:700;z-index:9999;white-space:nowrap; }
 .pe-toast.show { display:block; }
+</style>
+
+<style>
+/* ── SIMPLIFICATION OVERRIDES ── */
+
+/* Flatten stat/summary cards */
+.stat-card, .home-stat-card, .home-summary-card {
+  background: rgba(255,255,255,0.03) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.stat-card::before, .home-stat-card::before { display: none !important; }
+.stat-card:hover, .home-stat-card:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Simpler workout cards */
+.workout-card, .past-log-card, .wkt-card {
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+.workout-card:hover, .past-log-card:hover { transform: none !important; box-shadow: none !important; }
+
+/* Flatten sidebar */
+.sidebar-nav-item {
+  border-radius: 10px !important;
+  margin: 1px 0 !important;
+}
+.sidebar-nav-item:hover { background: rgba(255,255,255,0.04) !important; }
+.sidebar-nav-item.active { background: rgba(212,168,67,0.1) !important; box-shadow: none !important; }
+.sidebar-nav-item.active::before, .sidebar-nav-item.active::after { display: none !important; }
+
+/* Remove page decorative lines */
+.page-header::after, .tab-header::after { display: none !important; }
+
+/* Tighter spacing */
+.home-section { margin-bottom: 1.25rem !important; }
+.home-section-title {
+  font-size: 11px !important;
+  letter-spacing: 0.8px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Flatten action buttons */
+.start-btn, .log-btn, .action-btn {
+  box-shadow: none !important;
+  border-radius: 12px !important;
+}
+.start-btn:hover { transform: none !important; box-shadow: none !important; }
+
+/* Simpler bottom nav */
+.bottom-nav {
+  box-shadow: none !important;
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+  background: #0f0f0f !important;
+}
+
+/* Tighter section headers */
+.past-logs-header {
+  font-size: 13px !important;
+  letter-spacing: 0.3px !important;
+}
 </style>
 
 <div class="pe-backdrop" id="pe-backdrop" onclick="closeProfileEdit()"></div>
@@ -10943,7 +11187,7 @@ async function saveProfileEdit() {
  const btn = document.getElementById('pe-save-btn');
  btn.disabled = true; btn.textContent = 'Saving…';
 
- const age    = parseInt(document.getElementById('pe-age').value) || null;
+ const age    = parseInt(document.getElementById('pe-age').value, 10) || null;
  const heightCm = parseFloat(document.getElementById('pe-height').value) || null;
  const weightKg = parseFloat(document.getElementById('pe-weight').value) || null;
  const goal   = document.getElementById('pe-goal').value || null;
@@ -10999,7 +11243,7 @@ function refreshProfileDisplay(data) {
 
  // Update name everywhere it appears
  ['pp-name'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = fullName; });
- ['home-avatar','pp-avatar','cal-avatar'].forEach(id => {
+ ['home-avatar','pp-avatar'].forEach(id => {
   const el = document.getElementById(id);
   if(el) el.textContent = (first[0]||'')+(last[0]||'') || fullName[0]||'?';
  });
@@ -11036,11 +11280,9 @@ let clientSidebarCollapsed = (localStorage.getItem('clientSidebarCollapsed') ===
 function applyClientSidebarState() {
   const sidebars = [
     document.getElementById('main-web-sidebar'),
-    document.getElementById('cal-web-sidebar')
   ];
   const bodies = [
-    document.getElementById('main-website-body'),
-    document.getElementById('cal-website-body')
+    document.getElementById('main-website-body')
   ];
   sidebars.forEach(sb => {
     if (!sb) return;
@@ -11111,6 +11353,20 @@ document.addEventListener('DOMContentLoaded', applySideNavState);
 window.addEventListener('resize', applySideNavState);
 setTimeout(applySideNavState, 150);
 </script>
+
+<!-- NOTIFICATION PANEL (Client) — rendered at body level to avoid fixed positioning issues -->
+<div class="client-notif-panel" id="client-notif-panel">
+  <div class="client-notif-header">
+   <div class="client-notif-title">Notifications</div>
+   <button class="client-notif-mark-all" onclick="clientMarkAllRead()">Mark all read</button>
+  </div>
+  <div class="client-notif-list" id="client-notif-list">
+   <div class="client-notif-empty">
+    <div class="client-notif-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+    No notifications yet
+   </div>
+  </div>
+</div>
 
 </body>
 </html>
