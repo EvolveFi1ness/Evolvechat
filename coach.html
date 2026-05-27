@@ -890,6 +890,66 @@
   }
   .ex-sets-cancel:hover { color: var(--text); border-color: var(--border2); }
 
+  /* ── Reps/Sets modal (mobile-friendly overlay) ── */
+  #sets-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.7); align-items: flex-end; justify-content: center;
+  }
+  #sets-modal-overlay.open { display: flex; }
+  #sets-modal-box {
+    width: 100%; max-width: 480px;
+    background: var(--bg3); border-radius: 20px 20px 0 0;
+    border: 1px solid var(--border2); border-bottom: none;
+    padding: 24px 20px 36px; box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+    animation: slideUpIn 0.25s cubic-bezier(0.22,1,0.36,1);
+  }
+  @keyframes slideUpIn {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  #sets-modal-handle {
+    width: 36px; height: 4px; background: var(--border2);
+    border-radius: 2px; margin: 0 auto 18px; 
+  }
+  #sets-modal-label {
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; margin-bottom: 6px;
+  }
+  #sets-modal-exname {
+    font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700;
+    color: var(--gold); margin-bottom: 18px; line-height: 1.3;
+  }
+  .sets-modal-fields {
+    display: flex; gap: 10px; margin-bottom: 16px;
+  }
+  .sets-modal-field { flex: 1; }
+  .sets-modal-field label {
+    display: block; font-size: 11px; color: var(--muted);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .sets-modal-field input {
+    width: 100%; background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: 10px; padding: 12px 14px; color: var(--text);
+    font-size: 18px; font-weight: 700; font-family: 'Syne', sans-serif;
+    outline: none; text-align: center; transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  .sets-modal-field input::-webkit-outer-spin-button,
+  .sets-modal-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .sets-modal-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.12); }
+  .sets-modal-btns { display: flex; gap: 10px; }
+  .sets-modal-confirm {
+    flex: 1; background: var(--gold); border: none; color: #0A0A0A;
+    border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 800;
+    font-family: 'Syne', sans-serif; cursor: pointer; transition: opacity 0.2s;
+  }
+  .sets-modal-confirm:active { opacity: 0.85; }
+  .sets-modal-cancel {
+    background: transparent; border: 1px solid var(--border2); color: var(--muted);
+    border-radius: 12px; padding: 14px 20px; font-size: 14px;
+    font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s;
+  }
+
   .builder-footer { padding: 14px 18px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .assign-btn {
     background: var(--gold); border: none; color: #0A0A0A; padding: 11px 24px;
@@ -7005,15 +7065,42 @@ async function loadClientCheckins(uid) {
             </div>
           </div>
           <div id="${chartUid}_slist">
-          ${wlDocs.slice(0,4).map(w=>{
+          ${wlDocs.slice(0,4).map((w, wi)=>{
             const d = w.completedAt?.toDate ? w.completedAt.toDate().toLocaleDateString('en-PH',{timeZone:'Asia/Manila',month:'short',day:'numeric'}) : (w.date||'—');
-            return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);margin-bottom:5px"
-              data-vol="${w.totalVolume||0}" data-reps="${w.totalReps||0}" data-sets="${w.totalSets||0}">
-              <div>
-                <div style="font-size:12px;font-weight:600;color:var(--text)">${w.workoutName||'Workout'}</div>
-                <div style="font-size:10px;color:rgba(200,196,190,0.75);margin-top:1px">${d} · ${w.totalSets||0} sets · ${w.totalReps||0} reps</div>
+            const detailId = `${chartUid}_sdet_${wi}`;
+            const hasExs = w.exercises && w.exercises.length > 0;
+            const exDetail = hasExs ? w.exercises.map(ex => {
+              const sets = (ex.sets||[]);
+              const done = sets.filter(s=>s.done);
+              const setRows = sets.map((s,si)=>`
+                <div style="display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+                  <span style="font-size:10px;color:var(--muted);width:38px">Set ${si+1}</span>
+                  <span style="font-size:11px;color:var(--text);min-width:48px">${s.weight>0?s.weight+' kg':'—'}</span>
+                  <span style="font-size:11px;color:var(--text);min-width:36px">${s.reps>0?s.reps+' reps':'—'}</span>
+                  <span style="font-size:10px;font-weight:700;color:${s.done?'#4ade80':'var(--muted)'}">${s.done?'✓':'✗'}</span>
+                </div>`).join('');
+              return `<div style="margin-bottom:10px">
+                <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:4px">${ex.name||'Exercise'} <span style="color:var(--muted);font-weight:400">${done.length}/${sets.length} sets</span></div>
+                ${setRows}
+              </div>`;
+            }).join('') : '<span style="font-size:11px;color:var(--muted)">No exercise detail recorded</span>';
+
+            return `<div style="border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);margin-bottom:5px;overflow:hidden">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;cursor:pointer"
+                data-vol="${w.totalVolume||0}" data-reps="${w.totalReps||0}" data-sets="${w.totalSets||0}"
+                onclick="(function(el){var det=document.getElementById('${detailId}');if(!det)return;var open=det.style.display!=='none';det.style.display=open?'none':'block';el.querySelector('.sdet-arrow').style.transform=open?'rotate(0deg)':'rotate(90deg)';})(this)">
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:var(--text)">${w.workoutName||'Workout'}</div>
+                  <div style="font-size:10px;color:rgba(200,196,190,0.75);margin-top:1px">${d} · ${w.totalSets||0} sets · ${w.totalReps||0} reps</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div class="sstat-val" style="font-size:13px;font-weight:700;color:#4ade80">${(w.totalVolume||0).toLocaleString()} kg</div>
+                  <span class="sdet-arrow" style="font-size:10px;color:var(--muted);transition:transform 0.2s">▶</span>
+                </div>
               </div>
-              <div class="sstat-val" style="font-size:13px;font-weight:700;color:#4ade80">${(w.totalVolume||0).toLocaleString()} kg</div>
+              <div id="${detailId}" style="display:none;padding:10px 12px 12px;border-top:1px solid rgba(255,255,255,0.05);background:rgba(0,0,0,0.15)">
+                ${exDetail}
+              </div>
             </div>`;
           }).join('')}
           </div>
@@ -7148,9 +7235,18 @@ async function loadClientCheckins(uid) {
       ${section('Workout Performance', '🏋️', workoutContent)}
       ${section('Nutrition', '🥗', nutritionContent)}`;
 
-    // Register chart after DOM is updated
+    // Register nutrition chart after DOM is updated
     if (typeof nutrChartUid !== 'undefined' && window.nutrChartRegister) {
       window.nutrChartRegister(nutrChartUid, chartDataAll || []);
+    }
+
+    // Attach interactive dot tooltips to workout performance chart — call directly, no timeout
+    if (typeof chartUid !== 'undefined' && window.attachWorkoutChartHover) {
+      var stored0 = window['__chartData_' + chartUid];
+      if (stored0 && stored0.chartData && stored0.chartDates) {
+        var m0 = stored0.chartData[stored0.currentMetric || 'volume'];
+        window.attachWorkoutChartHover(chartUid, m0.vals, stored0.chartDates, m0.unit, m0.color, 400, 36, 356, 174);
+      }
     }
 
   } catch(e) {
@@ -7235,7 +7331,8 @@ window.switchWorkoutChart = function(chartUid, metric) {
   const dots=vals.map((v,i)=>`<circle cx="${tx(i).toFixed(2)}" cy="${ty(v).toFixed(2)}" r="4" fill="${color}"/><circle cx="${tx(i).toFixed(2)}" cy="${ty(v).toFixed(2)}" r="2" fill="#0d0d0d"/>`).join('');
 
   const body = document.getElementById(chartUid+'_body');
-  if (body) body.innerHTML = `
+  if (body) {
+    body.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <span style="font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.6)">Performance Chart</span>
       <div style="display:flex;gap:4px" id="${chartUid}_tabs">
@@ -7261,6 +7358,11 @@ window.switchWorkoutChart = function(chartUid, metric) {
       <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
       ${dots}${labelRows}
     </svg>`;
+    // Attach interactive dot tooltips
+    if (window.attachWorkoutChartHover) {
+      window.attachWorkoutChartHover(chartUid, entry.vals, chartDates, entry.unit, entry.color, CW, pL, iW, CH+24);
+    }
+  }
 
   const TABS = {
     volume: { active:'#4ade80', bg:'rgba(74,222,128,0.15)'  },
@@ -7362,6 +7464,12 @@ window.switchWorkoutPeriod = function(chartUid, period) {
       <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
       ${dots}${labelRows}
     </svg>`;
+
+  // Attach interactive dot tooltips
+  if (window.attachWorkoutChartHover) {
+    const _pL = pX, _iW = iW;
+    window.attachWorkoutChartHover(chartUid, vals, labels, unit, color, CW, _pL, _iW, CH+18);
+  }
 
   // Update period tab styles
   ['day','week','month'].forEach(function(p) {
@@ -8948,12 +9056,28 @@ async function assignWorkoutToClient() {
       }
     });
 
-    // Use set+merge so it works even if the member doc is brand new
-    await db.collection('members').doc(clientUid).set({
-      assignedWorkoutPlan: plan,
-      workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      workoutAssignedBy: coachUid
-    }, { merge: true });
+    // Use dot-notation field paths so only the assigned days are written,
+    // leaving any previously-assigned days untouched.
+    const ref = db.collection('members').doc(clientUid);
+    const memberDoc = await ref.get();
+    if (!memberDoc.exists) {
+      // Doc doesn't exist yet — safe to set the whole thing
+      await ref.set({
+        assignedWorkoutPlan: plan,
+        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        workoutAssignedBy: coachUid
+      }, { merge: true });
+    } else {
+      // Doc exists — update only the specific days being assigned
+      const updateData = {
+        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        workoutAssignedBy: coachUid
+      };
+      Object.entries(plan).forEach(([day, d]) => {
+        updateData[`assignedWorkoutPlan.${day}`] = d;
+      });
+      await ref.update(updateData);
+    }
 
     // Chat notification
     const client = allClients.find(c=>c.uid===clientUid);
@@ -10460,21 +10584,31 @@ function closeExVideo() {
 
 function startLibraryAdd(idx, btn) {
   libPendingExercise = { ...EXERCISE_DB[idx], btnEl: btn };
-  document.getElementById('ex-sets-pending-name').textContent = EXERCISE_DB[idx].name;
-  document.getElementById('ex-sets-input').value = EXERCISE_DB[idx].sets || '3×10';
-  document.getElementById('ex-sets-bar').classList.add('visible');
-  document.getElementById('ex-sets-input').focus();
-  document.getElementById('ex-sets-input').select();
+  // Show new modal
+  document.getElementById('sets-modal-exname').textContent = EXERCISE_DB[idx].name;
+  // Parse existing sets string if present (e.g. "3×10")
+  const existing = EXERCISE_DB[idx].sets || '3×10';
+  const m = existing.match(/(\d+)[×x](\d+)/);
+  document.getElementById('setsm-sets').value   = m ? m[1] : '3';
+  document.getElementById('setsm-reps').value   = m ? m[2] : '10';
+  document.getElementById('setsm-weight').value = '';
+  document.getElementById('sets-modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('setsm-reps').focus(), 120);
+  // Also keep old bar hidden
+  document.getElementById('ex-sets-bar').classList.remove('visible');
 }
 
 function cancelLibraryAdd() {
   libPendingExercise = null;
+  document.getElementById('sets-modal-overlay').classList.remove('open');
   document.getElementById('ex-sets-bar').classList.remove('visible');
 }
 
 function confirmLibraryAdd() {
   if (!libPendingExercise) return;
-  const target = document.getElementById('ex-sets-input').value.trim() || libPendingExercise.sets || '3×10';
+  const sets   = parseInt(document.getElementById('setsm-sets')?.value)   || 3;
+  const reps   = parseInt(document.getElementById('setsm-reps')?.value)   || 10;
+  const target = `${sets}×${reps}`;
   workoutPlan[currentDay].exercises.push({
     name:   libPendingExercise.name,
     detail: libPendingExercise.muscles,
@@ -10923,6 +11057,30 @@ function exportCheckinsCsv() {
   </div>
 </div>
 
+
+<!-- Sets & Reps Modal -->
+<div id="sets-modal-overlay" onclick="if(event.target===this)cancelLibraryAdd()">
+  <div id="sets-modal-box">
+    <div id="sets-modal-handle"></div>
+    <div id="sets-modal-label">Sets &amp; Reps for</div>
+    <div id="sets-modal-exname">—</div>
+    <div class="sets-modal-fields">
+      <div class="sets-modal-field">
+        <label>Sets</label>
+        <input type="number" id="setsm-sets" value="3" min="1" max="99" inputmode="numeric">
+      </div>
+      <div class="sets-modal-field">
+        <label>Reps</label>
+        <input type="number" id="setsm-reps" value="10" min="1" max="999" inputmode="numeric">
+      </div>
+
+    </div>
+    <div class="sets-modal-btns">
+      <button class="sets-modal-cancel" onclick="cancelLibraryAdd()">Cancel</button>
+      <button class="sets-modal-confirm" onclick="confirmLibraryAdd()">＋ Add to Plan</button>
+    </div>
+  </div>
+</div>
 
 <!-- Workout Video Modal -->
 <div id="wvm-overlay" onclick="if(event.target===this)closeWorkoutVidModal()" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:flex-end;justify-content:center;">
@@ -15414,6 +15572,210 @@ setTimeout(applySidebarState, 100);
   window.addEventListener('resize', function(){
     Object.keys(_reg).forEach(function(uid){ drawChart(uid, _reg[uid].currentMode); });
   });
+})();
+</script>
+
+<script>
+// ─────────────────────────────────────────
+//  WORKOUT CHART — Interactive Dot Tooltips
+//  Tooltip anchors to the dot, matches
+//  the nutrition chart tooltip style.
+// ─────────────────────────────────────────
+(function(){
+
+  /* ── Shared tooltip element ── */
+  function getWCTooltip() {
+    var t = document.getElementById('wc-chart-tooltip');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'wc-chart-tooltip';
+      t.style.cssText = [
+        'position:fixed',
+        'pointer-events:none',
+        'z-index:9999',
+        'background:rgba(14,14,18,0.96)',
+        'border:1px solid rgba(255,255,255,0.10)',
+        'border-radius:8px',
+        'padding:8px 12px',
+        'font-size:11px',
+        'font-family:Inter,sans-serif',
+        'line-height:1.6',
+        'box-shadow:0 4px 20px rgba(0,0,0,0.6)',
+        'display:none',
+        'white-space:nowrap'
+      ].join(';');
+      document.body.appendChild(t);
+    }
+    return t;
+  }
+
+  /* ── Draw glowing highlight on the active dot ── */
+  function highlightDot(svg, cx, cy, color) {
+    svg.querySelectorAll('.wc-dot-hl').forEach(function(el){ el.remove(); });
+    var NS = 'http://www.w3.org/2000/svg';
+
+    // Outer glow ring
+    var g1 = document.createElementNS(NS,'circle');
+    g1.setAttribute('cx',cx); g1.setAttribute('cy',cy);
+    g1.setAttribute('r','10');
+    g1.setAttribute('fill',color); g1.setAttribute('fill-opacity','0.18');
+    g1.setAttribute('class','wc-dot-hl'); g1.setAttribute('pointer-events','none');
+    svg.appendChild(g1);
+
+    // Solid dot (same color, slightly larger than original r=4)
+    var g2 = document.createElementNS(NS,'circle');
+    g2.setAttribute('cx',cx); g2.setAttribute('cy',cy);
+    g2.setAttribute('r','5');
+    g2.setAttribute('fill',color);
+    g2.setAttribute('class','wc-dot-hl'); g2.setAttribute('pointer-events','none');
+    svg.appendChild(g2);
+
+    // Bright white centre
+    var g3 = document.createElementNS(NS,'circle');
+    g3.setAttribute('cx',cx); g3.setAttribute('cy',cy);
+    g3.setAttribute('r','2.2');
+    g3.setAttribute('fill','#ffffff');
+    g3.setAttribute('class','wc-dot-hl'); g3.setAttribute('pointer-events','none');
+    svg.appendChild(g3);
+  }
+
+  /* ── Main attach function ─────────────────────────────
+     chartUid : string  — e.g. 'wc_abc123'
+     vals     : number[]
+     dates    : string[]
+     unit     : string  — 'kg' | 'reps' | 'sets'
+     color    : string  — hex colour for this metric
+     CW       : number  — SVG viewBox width  (400 for main, 300 for period)
+     pL       : number  — left padding in SVG coords
+     iW       : number  — inner width in SVG coords (CW - pL - pR)
+     VH       : number  — SVG viewBox total height (174 for main, 90 for period)
+  ── */
+  window.attachWorkoutChartHover = function(chartUid, vals, dates, unit, color, CW, pL, iW, VH) {
+    CW = CW !== undefined ? CW : 400;
+    pL = pL !== undefined ? pL : 36;
+    iW = iW !== undefined ? iW : 356;
+    VH = VH !== undefined ? VH : 174;
+
+    var body = document.getElementById(chartUid + '_body');
+    if (!body) return;
+    var svg = body.querySelector('svg');
+    if (!svg || !vals || vals.length < 2) return;
+
+    var n = vals.length;
+    var tooltip = getWCTooltip();
+    svg.style.cursor = 'crosshair';
+    svg.style.overflow = 'visible'; // let glow rings show near edges
+
+    /* Clone to wipe old event listeners */
+    var fresh = svg.cloneNode(true);
+    svg.parentNode.replaceChild(fresh, svg);
+    svg = fresh;
+
+    /* Build invisible wide hit-targets over each dot */
+    svg.querySelectorAll('.wc-hit').forEach(function(el){ el.remove(); });
+    var existingCircles = svg.querySelectorAll('circle');
+    for (var i = 0; i < n; i++) {
+      var dotCx = pL + (i / (n - 1)) * iW;
+      // Read cy from the rendered dot (every dot is 2 circles: outer + inner)
+      var dotCy = existingCircles[i * 2] ? existingCircles[i * 2].getAttribute('cy') : '0';
+
+      var hit = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      hit.setAttribute('cx', dotCx.toFixed(2));
+      hit.setAttribute('cy', dotCy);
+      hit.setAttribute('r', '16');
+      hit.setAttribute('fill', 'transparent');
+      hit.setAttribute('class', 'wc-hit');
+      hit.setAttribute('data-idx', String(i));
+      hit.setAttribute('data-cx',  dotCx.toFixed(2));
+      hit.setAttribute('data-cy',  dotCy);
+      hit.style.cursor = 'pointer';
+      svg.appendChild(hit);
+    }
+
+    /* Convert SVG-space coords → screen coords for tooltip anchoring */
+    function dotScreenPos(cx, cy) {
+      var rect = svg.getBoundingClientRect();
+      // With preserveAspectRatio="none", ratio maps linearly
+      return {
+        x: rect.left + (parseFloat(cx) / CW) * rect.width,
+        y: rect.top  + (parseFloat(cy) / VH) * rect.height
+      };
+    }
+
+    /* Show tooltip anchored to dot position */
+    function showAtIdx(idx) {
+      if (idx < 0 || idx >= n) return;
+
+      var hits = svg.querySelectorAll('.wc-hit');
+      var hit  = hits[idx];
+      if (!hit) return;
+
+      var cx = hit.getAttribute('data-cx');
+      var cy = hit.getAttribute('data-cy');
+
+      // Highlight the dot
+      highlightDot(svg, cx, cy, color);
+
+      // Build tooltip content — matches nutrition chart style
+      var val  = vals[idx];
+      var date = dates[idx] || '';
+      var metricLabel = unit === 'kg' ? 'Volume' : unit === 'reps' ? 'Reps' : 'Sets';
+      tooltip.innerHTML =
+        '<span style="color:#999;font-size:10px">' + date + '</span><br>' +
+        '<span style="color:' + color + '">' + metricLabel + ': <b>' +
+          Number(val).toLocaleString() + '</b></span>';
+      tooltip.style.display = 'block';
+
+      // Anchor to screen position of the dot
+      var pos = dotScreenPos(cx, cy);
+      var tw = tooltip.offsetWidth  || 130;
+      var th = tooltip.offsetHeight || 48;
+
+      var tx = pos.x + 14;
+      var ty = pos.y - th / 2;
+
+      // Flip left if would overflow
+      if (tx + tw + 10 > window.innerWidth)  tx = pos.x - tw - 14;
+      // Keep within viewport vertically
+      if (ty < 8)                             ty = 8;
+      if (ty + th > window.innerHeight - 8)  ty = window.innerHeight - th - 8;
+
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top  = ty + 'px';
+    }
+
+    /* Find nearest index from mouse/touch X */
+    function idxFromEvent(e) {
+      var rect = svg.getBoundingClientRect();
+      var ratioX = (e.clientX - rect.left) / rect.width;
+      var svgX = ratioX * CW;
+      var idx = Math.round((svgX - pL) / iW * (n - 1));
+      return Math.max(0, Math.min(n - 1, idx));
+    }
+
+    svg.addEventListener('mousemove', function(e) {
+      showAtIdx(idxFromEvent(e));
+    });
+
+    svg.addEventListener('click', function(e) {
+      showAtIdx(idxFromEvent(e));
+    });
+
+    svg.addEventListener('mouseleave', function() {
+      tooltip.style.display = 'none';
+      svg.querySelectorAll('.wc-dot-hl').forEach(function(el){ el.remove(); });
+    });
+
+    svg.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      showAtIdx(idxFromEvent(e.touches[0]));
+    }, { passive: false });
+
+    svg.addEventListener('touchend', function() {
+      setTimeout(function(){ tooltip.style.display = 'none'; }, 1600);
+    });
+  };
+
 })();
 </script>
 
