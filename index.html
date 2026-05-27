@@ -1029,7 +1029,7 @@
  .angle-slot:hover { border-color: rgba(212,168,67,0.5); background: var(--gold-glow); }
  .angle-slot.filled { border-color: rgba(212,168,67,0.4); border-style: solid; }
  .angle-slot.filled:hover { border-color: var(--gold); }
- .angle-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+ .angle-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; image-orientation: from-image; }
  .angle-slot-overlay {
   position: absolute; inset: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 55%);
@@ -5343,6 +5343,8 @@ img, video, iframe { max-width: 100%; }
 .nutr-modal-overlay.open { display: flex !important; }
 </style>
 
+ <!-- heic2any: converts HEIC/HEIF to JPEG in-browser (Apple device fix) -->
+ <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 </head>
 <body>
 
@@ -7690,6 +7692,12 @@ let _angleFiles  = {};
 let _anglePreviews = {};
 
 function triggerAngleInput(angle) {
+ // Only programmatically trigger when the slot is FILLED (preview image covers the hidden input).
+ // When unfilled, the transparent position:absolute input already receives the tap directly on iOS.
+ // Calling input.click() on an unfilled slot causes a double file-picker open on iOS Safari,
+ // which cancels the change event so the photo never shows.
+ const slot = document.getElementById('angle-slot-' + angle);
+ if (!slot || !slot.classList.contains('filled')) return;
  const input = document.getElementById('angle-input-' + angle);
  if (input) input.click();
 }
@@ -7725,35 +7733,26 @@ function handleAngleSelect(e, angle) {
  }
 
  if (isHeic) {
-  // Convert HEIC/HEIF to JPEG first (Apple device fix)
-  const objUrl = URL.createObjectURL(file);
-  const tmpImg = new Image();
-  tmpImg.onload = () => {
-   const canvas = document.createElement('canvas');
-   canvas.width  = tmpImg.width;
-   canvas.height = tmpImg.height;
-   canvas.getContext('2d').drawImage(tmpImg, 0, 0);
-   canvas.toBlob(blob => {
-    URL.revokeObjectURL(objUrl);
-    if (blob) {
-     const converted = new File(
-      [blob],
-      file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'),
-      { type: 'image/jpeg' }
-     );
-     const reader = new FileReader();
-     reader.onload = ev => applyPreview(ev.target.result, converted);
-     reader.readAsDataURL(converted);
-    } else {
-     showToast('Could not convert HEIC photo. Try a JPEG instead.', 'error');
-    }
-   }, 'image/jpeg', 0.92);
-  };
-  tmpImg.onerror = () => {
-   URL.revokeObjectURL(objUrl);
-   showToast('Could not read this photo format. Please try a different photo.', 'error');
-  };
-  tmpImg.src = objUrl;
+  // Convert HEIC/HEIF → JPEG using heic2any (browsers cannot decode HEIC natively).
+  // The old canvas approach silently failed on iOS because <img> can't load HEIC.
+  if (typeof heic2any === 'undefined') {
+   showToast('HEIC converter not loaded. Please refresh and try again.', 'error');
+   return;
+  }
+  heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 })
+   .then(blob => {
+    const converted = new File(
+     [blob],
+     file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'),
+     { type: 'image/jpeg' }
+    );
+    const reader = new FileReader();
+    reader.onload = ev => applyPreview(ev.target.result, converted);
+    reader.readAsDataURL(converted);
+   })
+   .catch(() => {
+    showToast('Could not convert this Apple photo. Please try selecting it again.', 'error');
+   });
  } else {
   const reader = new FileReader();
   reader.onload = ev => applyPreview(ev.target.result, file);
