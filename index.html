@@ -7699,27 +7699,66 @@ function handleAngleSelect(e, angle) {
  const file = e.target.files[0];
  if (!file) return;
  if (file.size > 25 * 1024 * 1024) { showToast('File too large. Max 25MB.', 'error'); return; }
- _angleFiles[angle] = file;
- const reader = new FileReader();
- reader.onload = ev => {
-  _anglePreviews[angle] = ev.target.result;
-  const slot = document.getElementById('angle-slot-' + angle);
-  slot.classList.add('filled');
-  slot.querySelectorAll('img.angle-preview-img,.angle-slot-overlay,.angle-slot-label').forEach(i => i.remove());
-  const img = document.createElement('img');
-  img.className = 'angle-preview-img';
-  img.src = ev.target.result;
-  slot.insertBefore(img, slot.firstChild);
-  const overlay = document.createElement('div');
-  overlay.className = 'angle-slot-overlay';
-  slot.appendChild(overlay);
-  const lbl = document.createElement('div');
-  lbl.className = 'angle-slot-label';
-  lbl.textContent = ANGLE_LABELS[angle];
-  slot.appendChild(lbl);
-  document.getElementById('angle-submit-row').classList.add('visible');
- };
- reader.readAsDataURL(file);
+
+ const isHeic = file.type === 'image/heic' || file.type === 'image/heif'
+  || file.name.toLowerCase().endsWith('.heic')
+  || file.name.toLowerCase().endsWith('.heif');
+
+ function processFile(useFile) {
+  _angleFiles[angle] = useFile;
+  const reader = new FileReader();
+  reader.onload = ev => {
+   _anglePreviews[angle] = ev.target.result;
+   const slot = document.getElementById('angle-slot-' + angle);
+   slot.classList.add('filled');
+   slot.querySelectorAll('img.angle-preview-img,.angle-slot-overlay,.angle-slot-label').forEach(i => i.remove());
+   const img = document.createElement('img');
+   img.className = 'angle-preview-img';
+   img.src = ev.target.result;
+   slot.insertBefore(img, slot.firstChild);
+   const overlay = document.createElement('div');
+   overlay.className = 'angle-slot-overlay';
+   slot.appendChild(overlay);
+   const lbl = document.createElement('div');
+   lbl.className = 'angle-slot-label';
+   lbl.textContent = ANGLE_LABELS[angle];
+   slot.appendChild(lbl);
+   document.getElementById('angle-submit-row').classList.add('visible');
+  };
+  reader.readAsDataURL(useFile);
+ }
+
+ if (isHeic) {
+  // Convert HEIC/HEIF → JPEG via canvas (Apple device fix)
+  const objUrl = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+   const canvas = document.createElement('canvas');
+   canvas.width  = img.width;
+   canvas.height = img.height;
+   canvas.getContext('2d').drawImage(img, 0, 0);
+   canvas.toBlob(blob => {
+    URL.revokeObjectURL(objUrl);
+    if (blob) {
+     const converted = new File(
+      [blob],
+      file.name.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg'),
+      { type: 'image/jpeg' }
+     );
+     processFile(converted);
+    } else {
+     showToast('Could not convert HEIC photo. Try a JPEG instead.', 'error');
+    }
+   }, 'image/jpeg', 0.92);
+  };
+  img.onerror = () => {
+   URL.revokeObjectURL(objUrl);
+   showToast('Could not read this photo format. Please try a different photo.', 'error');
+  };
+  img.src = objUrl;
+ } else {
+  processFile(file);
+ }
 }
 
 function cancelAngleUpload() {
