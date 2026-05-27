@@ -7725,6 +7725,7 @@ function handleAngleSelect(e, angle) {
  }
 
  if (isHeic) {
+  // Convert HEIC/HEIF to JPEG first (Apple device fix)
   const objUrl = URL.createObjectURL(file);
   const tmpImg = new Image();
   tmpImg.onload = () => {
@@ -7797,7 +7798,7 @@ async function submitAnglePhotos() {
  try {
   for (const angle of angles) {
    const file = _angleFiles[angle];
-   // Use already-stored base64 preview (avoids re-reading file, fixes iOS HEIC issue)
+   // Use already-stored base64 preview (fixes iOS HEIC re-read issue)
    const base64raw = _anglePreviews[angle] || await new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = e => resolve(e.target.result);
