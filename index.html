@@ -7788,6 +7788,25 @@ function cancelAngleUpload() {
  if (noteEl) noteEl.value = '';
 }
 
+// Convert a base64 data URL to a Blob for Firebase Storage upload
+function dataURLtoBlob(dataUrl) {
+ const [header, data] = dataUrl.split(',');
+ const mime = header.match(/:(.*?);/)[1];
+ const binary = atob(data);
+ const arr = new Uint8Array(binary.length);
+ for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+ return new Blob([arr], { type: mime });
+}
+
+// Upload a compressed base64 image to Firebase Storage, return the download URL
+async function uploadPhotoToStorage(uid, base64DataUrl, angle) {
+ const blob = dataURLtoBlob(base64DataUrl);
+ const fileName = `${Date.now()}_${angle}.jpg`;
+ const ref = storage.ref(`progressPhotos/${uid}/${fileName}`);
+ const snapshot = await ref.put(blob, { contentType: 'image/jpeg' });
+ return await snapshot.ref.getDownloadURL();
+}
+
 async function submitAnglePhotos() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid) return;
@@ -7814,11 +7833,14 @@ async function submitAnglePhotos() {
     r.onerror = () => reject(new Error('Failed to read file'));
     r.readAsDataURL(file);
    });
-   const compressed = await compressImageBase64(base64raw, 1600, 0.88);
+   // Compress before uploading (1200px / 0.82 keeps file well under Storage limits)
+   const compressed = await compressImageBase64(base64raw, 1200, 0.82);
    const _uploadWt  = parseFloat(document.getElementById('upload-weight-input')?.value);
    const _uploadWtUnit = (document.getElementById('upload-wt-lbs')?.style.background?.includes('201') ? 'lbs' : 'kg');
+   // Upload to Firebase Storage — avoids Firestore 1 MB document size limit
+   const photoUrl = await uploadPhotoToStorage(uid, compressed, angle);
    await db.collection('members').doc(uid).collection('progressPhotos').add({
-    base64: compressed,
+    url: photoUrl,
     angle: angle,
     note: note || null,
     fileName: file.name,
@@ -7841,11 +7863,13 @@ async function submitAnglePhotos() {
    }
   } catch(e) { console.warn('Photo schedule update failed:', e); }
   if (reqId) {
-   const reqBase64 = _anglePreviews['front'] || Object.values(_anglePreviews)[0];
-   const reqCompressed = await compressImageBase64(reqBase64, 1600, 0.88);
+   // Upload the front photo (or first available) to Storage for the request doc
+   const reqBase64raw = _anglePreviews['front'] || Object.values(_anglePreviews)[0];
+   const reqCompressed = await compressImageBase64(reqBase64raw, 1200, 0.82);
+   const reqUrl = await uploadPhotoToStorage(uid, reqCompressed, 'req_front');
    await db.collection('photoRequests').doc(reqId).update({
     fulfilled: true,
-    base64: reqCompressed,
+    url: reqUrl,
     submittedNote: note,
     fulfilledAt: firebase.firestore.FieldValue.serverTimestamp(),
     fulfilledBy: uid
@@ -8878,7 +8902,7 @@ async function submitPhotoAndFulfill() {
  }
  const reqId = activeReqId;
  activeReqId = null;
- // Call the main submitPhoto which now saves base64 to Firestore
+ // Call the main submitPhoto which now uploads to Firebase Storage
  if (typeof submitPhoto === 'function') {
   await submitPhoto();
   // After upload, find the latest photo and mark request fulfilled
@@ -8888,10 +8912,10 @@ async function submitPhotoAndFulfill() {
    try {
     const snap = await db.collection('members').doc(uid).collection('progressPhotos')
      .orderBy('uploadedAt','desc').limit(1).get();
-    const photoBase64 = snap.empty ? '' : (snap.docs[0].data().base64 || snap.docs[0].data().url || '');
+    const photoUrl = snap.empty ? '' : (snap.docs[0].data().url || snap.docs[0].data().base64 || '');
     await db.collection('photoRequests').doc(reqId).update({
      fulfilled: true,
-     base64: photoBase64,
+     url: photoUrl,
      submittedNote: note,
      fulfilledAt: firebase.firestore.FieldValue.serverTimestamp(),
      fulfilledBy: uid
