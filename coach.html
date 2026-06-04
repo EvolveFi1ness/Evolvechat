@@ -639,6 +639,49 @@
   .builder-sidebar { display: flex; flex-direction: column; gap: 12px; }
   .client-select-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
   .cs-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 600; }
+
+  /* Custom client dropdown */
+  .custom-client-select { position: relative; }
+  .ccs-trigger {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; color: var(--text);
+    font-size: 13px; font-family: 'Inter', sans-serif; outline: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s; text-align: left; font-weight: 500;
+  }
+  .ccs-trigger:hover { border-color: rgba(212,168,67,0.4); }
+  .ccs-trigger.open { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(212,168,67,0.12); }
+  .ccs-trigger span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .ccs-dropdown {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 9999;
+    background: #1a1814; border: 1px solid rgba(212,168,67,0.25);
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+    max-height: 260px; overflow-y: auto;
+  }
+  .ccs-dropdown::-webkit-scrollbar { width: 4px; }
+  .ccs-dropdown::-webkit-scrollbar-track { background: transparent; }
+  .ccs-dropdown::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.3); border-radius: 4px; }
+  .ccs-option {
+    padding: 10px 14px; font-size: 13px; font-family: 'Inter', sans-serif;
+    color: var(--text); cursor: pointer; transition: background 0.12s;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ccs-option:last-child { border-bottom: none; }
+  .ccs-option:hover { background: rgba(212,168,67,0.08); color: var(--gold); }
+  .ccs-option.selected { background: rgba(212,168,67,0.1); color: var(--gold); }
+  .ccs-option.ccs-placeholder { color: var(--muted); font-style: italic; }
+  .ccs-option.ccs-placeholder:hover { color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04); }
+  .ccs-avatar {
+    width: 26px; height: 26px; border-radius: 50%; background: rgba(212,168,67,0.15);
+    border: 1px solid rgba(212,168,67,0.25); display: flex; align-items: center;
+    justify-content: center; font-size: 10px; font-weight: 700; color: var(--gold);
+    flex-shrink: 0; text-transform: uppercase;
+  }
+  .ccs-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+  .ccs-name { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ccs-email { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   select.field-select {
     width: 100%; background: var(--bg3); border: 1px solid var(--border);
     border-radius: 8px; padding: 10px 12px; color: var(--text);
@@ -4236,7 +4279,18 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="builder-sidebar">
           <div class="client-select-card">
             <div class="cs-label">Assign to Client</div>
-            <select class="field-select" id="assign-client-select" onchange="loadClientAssignedWorkout(this.value)">
+            <div class="custom-client-select" id="custom-client-select-wrap">
+              <button type="button" class="ccs-trigger" id="ccs-trigger" onclick="toggleCCS()">
+                <span id="ccs-display">Select a client…</span>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;transition:transform 0.2s" id="ccs-chevron"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <div class="ccs-dropdown" id="ccs-dropdown" style="display:none" onclick="(function(e){var o=e.target.closest('.ccs-option');if(o)selectCCS(o.dataset.value,o.dataset.name);})(event)">
+                <div class="ccs-option ccs-placeholder" data-value="" data-name="">Select a client…</div>
+                <div id="ccs-options-list"></div>
+              </div>
+            </div>
+            <!-- hidden real select for value reading -->
+            <select id="assign-client-select" style="display:none" onchange="loadClientAssignedWorkout(this.value)">
               <option value="">Select a client…</option>
             </select>
             <div id="assigned-plan-banner" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.25);border-radius:10px;font-size:11px;color:var(--gold);line-height:1.6;">
@@ -4362,14 +4416,17 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="nutr-client-pick" style="position:relative;">
             <div class="nutr-pick-label">Client</div>
             <div style="position:relative;">
+              <div style="position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
               <input type="text" id="nutr-client-search" placeholder="Search any client…"
                 autocomplete="off"
                 oninput="nutrSearchClient(this.value)"
                 onfocus="nutrSearchClient(this.value)"
-                style="width:220px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;"
-                onmouseover="" onfocusin="this.style.borderColor='var(--gold)'" onfocusout="this.style.borderColor='var(--border2)'">
+                style="width:220px;background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 12px 10px 34px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s,box-shadow 0.2s;"
+                onfocusin="this.style.borderColor='var(--gold)';this.style.boxShadow='0 0 0 3px rgba(212,168,67,0.12)'" onfocusout="this.style.borderColor='var(--border2)';this.style.boxShadow='none'">
               <div id="nutr-client-dropdown"
-                style="display:none;position:absolute;top:calc(100% + 4px);left:0;width:280px;background:var(--bg3);border:1px solid var(--border2);border-radius:12px;z-index:999;max-height:220px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+                style="display:none;position:absolute;top:calc(100% + 6px);left:0;width:300px;background:#1a1814;border:1px solid rgba(212,168,67,0.25);border-radius:12px;z-index:9999;max-height:260px;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.04);">
               </div>
             </div>
             <!-- hidden real select keeps existing logic intact -->
@@ -4602,7 +4659,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <button onclick="setLogPeriod('month')" id="log-period-month" style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.4);font-family:inherit;transition:all .15s">Month</button>
             </div>
           </div>
-          <div style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:16px 16px 8px;overflow:hidden">
+          <div style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:16px 16px 16px;overflow:visible">
             <canvas id="log-chart-canvas" height="200" style="width:100%;display:block"></canvas>
             <div id="log-chart-tooltip" style="position:absolute;display:none;background:var(--bg4);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;font-size:12px;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
           </div>
@@ -4810,6 +4867,9 @@ document.addEventListener('DOMContentLoaded', () => {
 .nutr-client-pick select { background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 13px; font-family: 'Inter',sans-serif; outline: none; cursor: pointer; transition: border-color 0.2s; }
 .nutr-client-pick select:focus { border-color: var(--gold); }
 .nutr-pick-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; }
+#nutr-client-dropdown::-webkit-scrollbar { width: 4px; }
+#nutr-client-dropdown::-webkit-scrollbar-track { background: transparent; }
+#nutr-client-dropdown::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.3); border-radius: 4px; }
 .nutr-macro-strip { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 10px 16px; flex-wrap: wrap; }
 .nutr-macro-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .nmc-val { font-family: 'Syne',sans-serif; font-size: 18px; font-weight: 700; color: var(--text); }
@@ -6502,10 +6562,11 @@ function drawLogChart() {
       <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:${trendCol};line-height:1">${trend}${Math.abs(diffPct)}%</div>
     </div>`;
 
-  // Canvas size
+  // Canvas size — taller when rotated labels needed
   const dpr = window.devicePixelRatio || 1;
   const W   = canvas.parentElement.clientWidth - 32;
-  const H   = 200;
+  const needsRotation = data.length > 10;
+  const H   = needsRotation ? 260 : 200;
   canvas.width  = W * dpr;
   canvas.height = H * dpr;
   canvas.style.width  = W + 'px';
@@ -6515,7 +6576,7 @@ function drawLogChart() {
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, W, H);
 
-  const PAD  = { top: 14, right: 20, bottom: 44, left: 54 };
+  const PAD  = { top: 14, right: 20, bottom: needsRotation ? 80 : 36, left: 54 };
   const cW   = W - PAD.left - PAD.right;
   const cH   = H - PAD.top  - PAD.bottom;
 
@@ -6532,8 +6593,7 @@ function drawLogChart() {
     const gv  = minV + (maxV - minV) * (i / STEPS);
     const gy  = toY(gv);
     ctx.beginPath(); ctx.moveTo(PAD.left, gy); ctx.lineTo(PAD.left + cW, gy); ctx.stroke();
-    // Y-axis labels
-    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
     ctx.font = '10px Inter, sans-serif';
     ctx.textAlign = 'right';
     const lbl = _logMetric === 'volume' ? Math.round(gv) + 'kg' : Math.round(gv) + '';
@@ -6562,6 +6622,10 @@ function drawLogChart() {
   ctx.lineJoin    = 'round';
   ctx.stroke();
 
+  // Smart step: max labels based on available width
+  const maxLabels = needsRotation ? Math.min(data.length, 10) : Math.max(2, Math.floor(cW / 60));
+  const step = data.length <= maxLabels ? 1 : Math.ceil(data.length / maxLabels);
+
   // Dots + X labels
   data.forEach((d, i) => {
     const x = toX(i);
@@ -6577,13 +6641,22 @@ function drawLogChart() {
     ctx.fillStyle = '#161616';
     ctx.fill();
 
-    // X label - show every nth for readability
-    const step = data.length <= 7 ? 1 : data.length <= 14 ? 2 : Math.ceil(data.length / 7);
+    // X label
     if (i % step === 0 || i === data.length - 1) {
-      ctx.fillStyle = 'rgba(255,255,255,0.65)';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.font = '10px Inter, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(d.shortDate, x, H - 8);
+      const labelY = PAD.top + cH + (needsRotation ? 14 : 16);
+      if (needsRotation) {
+        ctx.save();
+        ctx.translate(x, labelY);
+        ctx.rotate(-Math.PI / 5);
+        ctx.textAlign = 'right';
+        ctx.fillText(d.shortDate, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.textAlign = 'center';
+        ctx.fillText(d.shortDate, x, labelY);
+      }
     }
   });
 
@@ -7296,7 +7369,7 @@ async function loadClientCheckins(uid) {
               ${name}
             </button>`).join('')}
         </div>
-        <div id="${exProgressUID}_chart" style="position:relative;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 14px 8px;overflow:hidden">
+        <div id="${exProgressUID}_chart" style="position:relative;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 14px 16px;overflow:visible">
           <canvas id="${exProgressUID}_canvas" height="140" style="width:100%;display:block"></canvas>
           <div id="${exProgressUID}_tooltip" style="position:absolute;display:none;background:rgba(15,15,15,0.95);border:1px solid rgba(212,168,67,0.3);border-radius:8px;padding:7px 11px;font-size:11px;pointer-events:none;white-space:nowrap"></div>
         </div>` : '<span style="color:var(--muted);font-size:12px">Not enough data — exercises need 2+ sessions to show progress</span>';
@@ -7329,7 +7402,7 @@ async function loadClientCheckins(uid) {
                 <button onclick="sumWLPeriod('${chartUid}','month')" id="${chartUid}_ptab_month" style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.4);font-family:'Inter',sans-serif;transition:all .15s">Month</button>
               </div>
             </div>
-            <div style="position:relative;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 16px 8px;overflow:hidden">
+            <div style="position:relative;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:16px 16px 16px;overflow:visible">
               <canvas id="${chartUid}_canvas" height="200" style="width:100%;display:block"></canvas>
               <div id="${chartUid}_tooltip" style="position:absolute;display:none;background:rgba(15,15,15,0.95);border:1px solid rgba(212,168,67,0.3);border-radius:10px;padding:8px 12px;font-size:12px;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
             </div>
@@ -7579,11 +7652,13 @@ function drawSumWLChart(chartUid) {
   if (data.length < 2) { canvas.style.display='none'; return; }
   canvas.style.display = 'block';
 
-  const dpr=window.devicePixelRatio||1, W=canvas.parentElement.clientWidth-32, H=200;
+  const dpr=window.devicePixelRatio||1, W=canvas.parentElement.clientWidth-32;
+  const needsRotation = data.length > 10;
+  const H = needsRotation ? 260 : 200;
   canvas.width=W*dpr; canvas.height=H*dpr; canvas.style.width=W+'px'; canvas.style.height=H+'px';
   const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
 
-  const PAD={top:14,right:20,bottom:44,left:54};
+  const PAD={top:14,right:20,bottom: needsRotation ? 80 : 44,left:54};
   const cW=W-PAD.left-PAD.right, cH=H-PAD.top-PAD.bottom;
   const maxV=Math.max(...vals)*1.08||1, minV=0;
   const toX=i=>PAD.left+(i/(data.length-1))*cW;
@@ -7612,14 +7687,25 @@ function drawSumWLChart(chartUid) {
   ctx.strokeStyle='#D4A843'; ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.stroke();
 
   // Dots + X labels
-  const step=data.length<=7?1:data.length<=14?2:Math.ceil(data.length/7);
+  const step=data.length<=7?1:needsRotation?Math.ceil(data.length/10):Math.ceil(data.length/7);
   data.forEach((d,i)=>{
     const x=toX(i),y=toY(vals[i]);
     ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle='#D4A843'; ctx.fill();
     ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fillStyle='#161616'; ctx.fill();
     if(i%step===0||i===data.length-1){
-      ctx.fillStyle='rgba(255,255,255,0.65)'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='center';
-      ctx.fillText(d.shortDate,x,H-8);
+      ctx.fillStyle='rgba(255,255,255,0.65)'; ctx.font='10px Inter,sans-serif';
+      const labelY = PAD.top + (H - PAD.top - PAD.bottom) + (needsRotation ? 14 : 16);
+      if (needsRotation) {
+        ctx.save();
+        ctx.translate(x, labelY);
+        ctx.rotate(-Math.PI / 5);
+        ctx.textAlign='right';
+        ctx.fillText(d.shortDate, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.textAlign='center';
+        ctx.fillText(d.shortDate,x,H-10);
+      }
     }
   });
 
@@ -7691,7 +7777,8 @@ window.showExProgress = function(uid, idx) {
 
   const dpr = window.devicePixelRatio || 1;
   const W   = canvas.parentElement.clientWidth - 28;
-  const H   = 140;
+  const needsRotation = pts.length > 8;
+  const H   = needsRotation ? 190 : 150;
   canvas.width  = W*dpr; canvas.height = H*dpr;
   canvas.style.width = W+'px'; canvas.style.height = H+'px';
 
@@ -7700,7 +7787,7 @@ window.showExProgress = function(uid, idx) {
   ctx.clearRect(0, 0, W, H);
 
   const vals  = pts.map(p => p.weight);
-  const PAD   = { top:14, right:16, bottom:36, left:48 };
+  const PAD   = { top:14, right:16, bottom: needsRotation ? 64 : 36, left:48 };
   const cW    = W - PAD.left - PAD.right;
   const cH    = H - PAD.top  - PAD.bottom;
   const minV  = Math.min(...vals) * 0.92;
@@ -7749,8 +7836,19 @@ window.showExProgress = function(uid, idx) {
     ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fillStyle = lineCol; ctx.fill();
     ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fillStyle = '#161616'; ctx.fill();
     if (i % step === 0 || i === pts.length - 1) {
-      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '9px Inter,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(p.dateLabel, x, H - 4);
+      ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.font = '9px Inter,sans-serif';
+      const labelY = PAD.top + cH + (needsRotation ? 14 : 16);
+      if (needsRotation) {
+        ctx.save();
+        ctx.translate(x, labelY);
+        ctx.rotate(-Math.PI / 5);
+        ctx.textAlign = 'right';
+        ctx.fillText(p.dateLabel, 0, 0);
+        ctx.restore();
+      } else {
+        ctx.textAlign = 'center';
+        ctx.fillText(p.dateLabel, x, H - 8);
+      }
     }
   });
 
@@ -8116,7 +8214,10 @@ window.switchWorkoutChart = function(chartUid, metric) {
 
   const {vals, unit} = entry;
   const lineColor = '#D4A843';
-  const CW=560,CH=200,pL=48,pR=16,pT=16,pB=32,iW=CW-pL-pR,iH=CH-pT-pB;
+  const needsRotation = vals.length > 9;
+  const CW=560, pL=48, pR=16, pT=16, pB=needsRotation?68:40, CH=200;
+  const iW=CW-pL-pR, iH=CH-pT-pB;
+  const SVG_H = CH + (needsRotation ? 56 : 28);
   const mn=vals.length?Math.min(...vals)*0.88:0, mx=vals.length?Math.max(...vals)*1.08:1, rng=mx-mn||1;
   const tx=i=>vals.length>1?pL+(i/(vals.length-1))*iW:pL+iW/2;
   const ty=v=>pT+iH-((v-mn)/rng)*iH;
@@ -8125,9 +8226,15 @@ window.switchWorkoutChart = function(chartUid, metric) {
   const rawTrend=vals.length>=2?vals[vals.length-1]-vals[0]:0;
   const tc=rawTrend>=0?'#4ade80':'#f87171';
   const gradId='vg_sw_'+metric;
-  const maxLabels=Math.min(vals.length,6);
-  const labelIdxs=vals.length<=6?vals.map((_,i)=>i):Array.from({length:maxLabels},(_,k)=>Math.round(k*(vals.length-1)/(maxLabels-1)));
-  const labelRows=labelIdxs.map(i=>`<text x="${tx(i).toFixed(1)}" y="${CH+14}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.5)" font-family="Inter,sans-serif">${chartDates[i]||''}</text>`).join('');
+  const maxLabels=needsRotation?Math.min(vals.length,12):Math.min(vals.length,6);
+  const labelIdxs=vals.length<=maxLabels?vals.map((_,i)=>i):Array.from({length:maxLabels},(_,k)=>Math.round(k*(vals.length-1)/(maxLabels-1)));
+  const labelY = pT+iH+14;
+  const labelRows=labelIdxs.map(i=>{
+    const lx=tx(i).toFixed(1);
+    const txt=chartDates[i]||'';
+    if(needsRotation) return `<text transform="translate(${lx},${labelY}) rotate(45)" text-anchor="start" font-size="9" fill="rgba(255,255,255,0.55)" font-family="Inter,sans-serif">${txt}</text>`;
+    return `<text x="${lx}" y="${labelY}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" font-family="Inter,sans-serif">${txt}</text>`;
+  }).join('');
   const gridLines=[0,0.25,0.5,0.75,1].map(t=>{
     const gv=mn+(mx-mn)*t, gy=(pT+iH-t*iH).toFixed(1);
     const lbl=gv>=1000?(gv/1000).toFixed(1)+'k':Math.round(gv)+'';
@@ -8185,7 +8292,7 @@ window.switchWorkoutChart = function(chartUid, metric) {
           style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border:none;background:transparent;color:rgba(255,255,255,0.4);transition:all .15s;letter-spacing:0.3px">Month</button>
       </div>
     </div>
-    <svg width="100%" height="232" viewBox="0 0 ${CW} ${CH+32}" preserveAspectRatio="xMidYMid meet" style="display:block;overflow:visible;cursor:pointer">
+    <svg width="100%" height="${SVG_H}" viewBox="0 0 ${CW} ${SVG_H}" preserveAspectRatio="xMidYMid meet" style="display:block;overflow:visible;cursor:pointer">
       <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.18"/>
         <stop offset="100%" stop-color="${lineColor}" stop-opacity="0.01"/>
@@ -8199,8 +8306,8 @@ window.switchWorkoutChart = function(chartUid, metric) {
   // Re-attach hover + click interactivity after DOM update
   requestAnimationFrame(function() {
     if (window.attachWorkoutChartHover) {
-      // CW=560, pL=48, iW=CW-pL-pR=496, VH=CH+32=232
-      window.attachWorkoutChartHover(chartUid, vals, chartDates, unit, lineColor, 560, 48, 496, 232);
+      // CW=560, pL=48, iW=CW-pL-pR=496
+      window.attachWorkoutChartHover(chartUid, vals, chartDates, unit, lineColor, 560, 48, 496, SVG_H);
     }
   });
 };
@@ -8258,7 +8365,10 @@ window.switchWorkoutPeriod = function(chartUid, period) {
   if (!body) return;
 
   const lineColor = '#D4A843';
-  const CW=560,CH=200,pL=48,pR=16,pT=16,pB=32,iW=CW-pL-pR,iH=CH-pT-pB;
+  const needsRotation = vals.length > 9;
+  const CW=560, pL=48, pR=16, pT=16, pB=needsRotation?68:40, CH=200;
+  const iW=CW-pL-pR, iH=CH-pT-pB;
+  const SVG_H = CH + (needsRotation ? 56 : 28);
   const mn  = vals.length ? Math.min(...vals)*0.88 : 0;
   const mx  = vals.length ? Math.max(...vals)*1.08 : 1;
   const rng = mx-mn || 1;
@@ -8269,9 +8379,15 @@ window.switchWorkoutPeriod = function(chartUid, period) {
   const rawTrend  = vals.length>=2 ? vals[vals.length-1]-vals[0] : 0;
   const tc        = rawTrend>=0 ? '#4ade80' : '#f87171';
   const gradId    = 'vg_period_'+metric;
-  const maxLabels = Math.min(vals.length, 7);
-  const labelIdxs = vals.length<=7 ? vals.map((_,i)=>i) : Array.from({length:maxLabels},(_,k)=>Math.round(k*(vals.length-1)/(maxLabels-1)));
-  const labelRows = labelIdxs.map(i=>`<text x="${tx(i).toFixed(1)}" y="${CH+14}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.5)" font-family="Inter,sans-serif">${labels[i]||''}</text>`).join('');
+  const maxLabels = needsRotation ? Math.min(vals.length,12) : Math.min(vals.length,7);
+  const labelIdxs = vals.length<=maxLabels ? vals.map((_,i)=>i) : Array.from({length:maxLabels},(_,k)=>Math.round(k*(vals.length-1)/(maxLabels-1)));
+  const labelY = pT+iH+14;
+  const labelRows = labelIdxs.map(i=>{
+    const lx = tx(i).toFixed(1);
+    const txt = labels[i]||'';
+    if(needsRotation) return `<text transform="translate(${lx},${labelY}) rotate(45)" text-anchor="start" font-size="9" fill="rgba(255,255,255,0.55)" font-family="Inter,sans-serif">${txt}</text>`;
+    return `<text x="${lx}" y="${labelY}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" font-family="Inter,sans-serif">${txt}</text>`;
+  }).join('');
   const gridLines = [0,0.25,0.5,0.75,1].map(t=>{
     const gv=mn+(mx-mn)*t, gy=(pT+iH-t*iH).toFixed(1);
     const lbl=gv>=1000?(gv/1000).toFixed(1)+'k':Math.round(gv)+'';
@@ -8335,7 +8451,7 @@ window.switchWorkoutPeriod = function(chartUid, period) {
         ${pBtn('day','Day')}${pBtn('week','Week')}${pBtn('month','Month')}
       </div>
     </div>
-    <svg width="100%" height="232" viewBox="0 0 ${CW} ${CH+32}" preserveAspectRatio="xMidYMid meet" style="display:block;overflow:visible;cursor:pointer">
+    <svg width="100%" height="${SVG_H}" viewBox="0 0 ${CW} ${SVG_H}" preserveAspectRatio="xMidYMid meet" style="display:block;overflow:visible;cursor:pointer">
       <defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${lineColor}" stop-opacity="0.18"/>
         <stop offset="100%" stop-color="${lineColor}" stop-opacity="0.01"/>
@@ -8349,7 +8465,7 @@ window.switchWorkoutPeriod = function(chartUid, period) {
   // Re-attach hover + click interactivity
   requestAnimationFrame(function() {
     if (window.attachWorkoutChartHover) {
-      window.attachWorkoutChartHover(chartUid, vals, labels, m.unit, lineColor, 560, 48, 496, 232);
+      window.attachWorkoutChartHover(chartUid, vals, labels, m.unit, lineColor, 560, 48, 496, SVG_H);
     }
   });
 };
@@ -9708,12 +9824,86 @@ function populateClientSelect() {
   const sel = document.getElementById('assign-client-select');
   sel.innerHTML = '<option value="">Select a client…</option>' +
     allClients.map(c=>`<option value="${c.uid}">${c.firstName||''} ${c.lastName||''} (${c.email||''})</option>`).join('');
+  // Also populate custom dropdown
+  const list = document.getElementById('ccs-options-list');
+  if (list) {
+    list.innerHTML = allClients.map(c => {
+      const name = ((c.firstName||'') + ' ' + (c.lastName||'')).trim() || c.email || '?';
+      const initials = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?';
+      const email = c.email || '';
+      // Use data attributes to avoid any string escaping issues in onclick
+      const safeUid = (c.uid||'').replace(/"/g,'&quot;');
+      return `<div class="ccs-option" data-value="${safeUid}" data-name="${name.replace(/"/g,'&quot;')}">
+        <div class="ccs-avatar">${initials}</div>
+        <div class="ccs-info">
+          <div class="ccs-name">${name}</div>
+          <div class="ccs-email">${email}</div>
+        </div>
+      </div>`;
+    }).join('');
+    // Single delegated click handler — no inline onclick, no escaping issues
+    list.onclick = function(e) {
+      const opt = e.target.closest('.ccs-option');
+      if (opt) selectCCS(opt.dataset.value, opt.dataset.name);
+    };
+  }
+}
+
+function toggleCCS() {
+  const dd = document.getElementById('ccs-dropdown');
+  const trigger = document.getElementById('ccs-trigger');
+  const chevron = document.getElementById('ccs-chevron');
+  const open = dd.style.display !== 'none';
+  dd.style.display = open ? 'none' : 'block';
+  trigger.classList.toggle('open', !open);
+  if (chevron) chevron.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) {
+    // close on outside click
+    setTimeout(() => {
+      document.addEventListener('click', function ccsClose(e) {
+        if (!document.getElementById('custom-client-select-wrap').contains(e.target)) {
+          dd.style.display = 'none';
+          trigger.classList.remove('open');
+          if (chevron) chevron.style.transform = '';
+          document.removeEventListener('click', ccsClose);
+        }
+      });
+    }, 0);
+  }
+}
+
+function selectCCS(uid, name) {
+  const sel = document.getElementById('assign-client-select');
+  const display = document.getElementById('ccs-display');
+  const dd = document.getElementById('ccs-dropdown');
+  const trigger = document.getElementById('ccs-trigger');
+  const chevron = document.getElementById('ccs-chevron');
+  sel.value = uid;
+  display.textContent = uid ? name : 'Select a client…';
+  display.style.color = uid ? '' : '';
+  // update selected highlight
+  document.querySelectorAll('#ccs-dropdown .ccs-option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.value === uid);
+  });
+  dd.style.display = 'none';
+  trigger.classList.remove('open');
+  if (chevron) chevron.style.transform = '';
+  loadClientAssignedWorkout(uid);
 }
 
 function openAssignFor(uid) {
   showPage('workouts');
   populateClientSelect();
   document.getElementById('assign-client-select').value = uid;
+  // Sync custom dropdown display
+  const opt = document.querySelector(`#ccs-options-list .ccs-option[data-value="${uid}"]`);
+  if (opt) {
+    const nameEl = opt.querySelector('.ccs-name');
+    if (nameEl && document.getElementById('ccs-display')) {
+      document.getElementById('ccs-display').textContent = nameEl.textContent;
+      document.querySelectorAll('#ccs-dropdown .ccs-option').forEach(o => o.classList.toggle('selected', o.dataset.value === uid));
+    }
+  }
   loadClientAssignedWorkout(uid);
 }
 
@@ -12219,18 +12409,24 @@ function renderNutrClientDropdown(clients, q) {
   const dd = document.getElementById('nutr-client-dropdown');
   if (!dd) return;
   if (!clients.length) {
-    dd.innerHTML = `<div style="padding:12px 14px;font-size:13px;color:var(--muted);">${q ? 'No clients found' : 'No clients available'}</div>`;
+    dd.innerHTML = `<div style="padding:14px 16px;font-size:13px;color:var(--muted);font-style:italic;">${q ? 'No clients found' : 'No clients available'}</div>`;
     dd.style.display = 'block';
     return;
   }
-  dd.innerHTML = clients.slice(0, 30).map(c => {
+  dd.innerHTML = clients.slice(0, 30).map((c, idx) => {
     const name = ((c.firstName || '') + ' ' + (c.lastName || '')).trim() || c.email || c.uid;
-    const email = c.email ? `<div style="font-size:11px;color:var(--muted);margin-top:1px;">${c.email}</div>` : '';
-    return `<div onclick="selectNutrClient('${c.uid}','${name.replace(/'/g,"\\'")}','${(c.email||'').replace(/'/g,"\\'")}',this)"
-      style="padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);transition:background 0.12s;"
-      onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background=''"
-    >
-      <div style="font-size:13px;font-weight:500;color:var(--text);">${name}</div>${email}
+    const initials = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?';
+    const email = c.email || '';
+    const borderBottom = idx < Math.min(clients.length, 30) - 1 ? 'border-bottom:1px solid rgba(255,255,255,0.04);' : '';
+    return `<div onclick="selectNutrClient('${c.uid}','${name.replace(/'/g,"\\'")}','${email.replace(/'/g,"\\'")}',this)"
+      style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.12s;${borderBottom}"
+      onmouseover="this.style.background='rgba(212,168,67,0.08)';this.style.color='var(--gold)'"
+      onmouseout="this.style.background='';this.style.color=''">
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;">${initials}</div>
+      <div style="display:flex;flex-direction:column;gap:1px;overflow:hidden;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+        ${email ? `<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${email}</div>` : ''}
+      </div>
     </div>`;
   }).join('');
   dd.style.display = 'block';
@@ -15385,7 +15581,6 @@ async function assignFoodToClient() {
   if (!clientUid) { showToast(' Select a client first'); return; }
   if (!foodDbSelected) { showToast(' Select a food first'); return; }
 
-  const dateKey = new Date().toISOString().slice(0, 10);
   const servingG = parseFloat(document.getElementById('fd-serving')?.value) || foodDbSelected.serving_size_g || 100;
   const ratio = servingG / (foodDbSelected.serving_size_g || 100);
 
@@ -15398,8 +15593,8 @@ async function assignFoodToClient() {
     protein_g:      Math.round((foodDbSelected.protein_g || 0) * ratio * 10) / 10,
     carbs_g:        Math.round((foodDbSelected.carbs_g   || 0) * ratio * 10) / 10,
     fat_g:          Math.round((foodDbSelected.fat_g     || 0) * ratio * 10) / 10,
-    date:           dateKey,
     assignedByCoach: true,
+    persistent:     true,
     assignedAt:     firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -15422,10 +15617,9 @@ async function assignFoodToClient() {
 async function loadAssignedFoodsPanel() {
   const clientUid = document.getElementById('nutr-assign-client')?.value;
   const list = document.getElementById('assigned-foods-list');
-  const dateKey = new Date().toISOString().slice(0, 10);
 
   const lbl = document.getElementById('assign-day-label');
-  if (lbl) lbl.textContent = '— ' + dateKey;
+  if (lbl) lbl.textContent = '— Active Plan';
   updateFdContextLabel();
 
   if (!clientUid) {
@@ -15435,9 +15629,9 @@ async function loadAssignedFoodsPanel() {
   if (list) list.innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading…</div>';
 
   try {
-    const snap = await db.collection('members').doc(clientUid).collection('mealLogs').where('date','==',dateKey).get();
+    const snap = await db.collection('members').doc(clientUid).collection('mealLogs').where('assignedByCoach','==',true).get();
     if (snap.empty) {
-      if (list) list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">No foods assigned for this date yet.</div>';
+      if (list) list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">No foods assigned yet. Assigned foods will stay until you remove them.</div>';
       return;
     }
 
@@ -15907,20 +16101,33 @@ async function openMonitorClient(el) {
   panel.style.display = 'flex';
 
   try {
-    const snap = await db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).orderBy('loggedAt','desc').get().catch(() =>
-      db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).get()
-    );
-    const logs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-
-    // Deduplicate: if a food has a Logged entry, suppress the Pending coach-assigned duplicate
+    const [snap, coachSnap] = await Promise.all([
+      db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).orderBy('loggedAt','desc').get().catch(() =>
+        db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).get()
+      ),
+      db.collection('members').doc(uid).collection('mealLogs').where('assignedByCoach','==',true).where('persistent','==',true).get()
+    ]);
+    const todayLogs   = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    const coachFoods  = coachSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    // Merge: coach-assigned persistent foods show alongside today's logs,
+    // but suppress a coach food if the client already logged something with the same name today
     const loggedNames = new Set(
+      todayLogs.filter(l => l.completed || !!l.loggedAt).map(l => (l.food_name || l.mealName || '').toLowerCase().trim())
+    );
+    const pendingCoachFoods = coachFoods.filter(f =>
+      !loggedNames.has((f.food_name || '').toLowerCase().trim()) &&
+      !todayLogs.some(l => l.id === f.id) // avoid duplicates if it also matched date query
+    );
+    const logs = [...todayLogs, ...pendingCoachFoods];
+
+    // Deduplicate: keep all logged entries; suppress pending if a logged entry exists for same food name
+    const allLoggedNames = new Set(
       logs.filter(l => l.completed || !!l.loggedAt).map(l => (l.food_name || l.mealName || '').toLowerCase().trim())
     );
     const dedupedLogs = logs.filter(l => {
-      const isLogged  = l.completed || !!l.loggedAt;
-      const foodKey   = (l.food_name || l.mealName || '').toLowerCase().trim();
-      // Keep all Logged entries; only keep Pending if no Logged entry exists for this food
-      return isLogged || !loggedNames.has(foodKey);
+      const isLogged = l.completed || !!l.loggedAt;
+      const foodKey  = (l.food_name || l.mealName || '').toLowerCase().trim();
+      return isLogged || !allLoggedNames.has(foodKey);
     });
 
     // Compute totals from deduped logs only
