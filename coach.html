@@ -5026,6 +5026,45 @@ document.addEventListener('DOMContentLoaded', () => {
   color: #F87171;
 }
 
+/* Meal slot buttons in food detail panel */
+.fd-meal-slot-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  border-radius: 9px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.3px;
+}
+.fd-meal-slot-btn:hover {
+  color: var(--text);
+  border-color: rgba(212,168,67,0.4);
+}
+.fd-meal-slot-btn.active {
+  background: var(--gold-dim);
+  border-color: rgba(212,168,67,0.5);
+  color: var(--gold);
+}
+
+/* Meal slot section in assigned foods panel */
+.assigned-meal-section { margin-bottom: 12px; }
+.assigned-meal-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--muted);
+  padding: 6px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.assigned-meal-label span { color: var(--gold); font-size: 13px; }
+
 /* Macro chips */
 .food-detail-macros {
   display: grid;
@@ -5743,6 +5782,16 @@ document.addEventListener('DOMContentLoaded', () => {
   <div style="padding:0 20px 10px;">
     <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Assigning to</div>
     <div id="fd-context-label" style="font-size:13px;font-weight:600;color:var(--gold);">— select client above —</div>
+  </div>
+  <div style="padding:0 20px 14px;">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;font-weight:600;">Meal Slot</div>
+    <div id="fd-meal-slots" style="display:flex;gap:7px;flex-wrap:wrap;">
+      <button class="fd-meal-slot-btn active" data-slot="Meal 1" onclick="selectFdMealSlot(this)">Meal 1</button>
+      <button class="fd-meal-slot-btn" data-slot="Meal 2" onclick="selectFdMealSlot(this)">Meal 2</button>
+      <button class="fd-meal-slot-btn" data-slot="Meal 3" onclick="selectFdMealSlot(this)">Meal 3</button>
+      <button class="fd-meal-slot-btn" data-slot="Meal 4" onclick="selectFdMealSlot(this)">Meal 4</button>
+      <button class="fd-meal-slot-btn" data-slot="Meal 5" onclick="selectFdMealSlot(this)">Meal 5</button>
+    </div>
   </div>
   <div style="padding:0 20px 36px;">
     <button id="fd-add-btn" onclick="assignFoodToClient()" style="width:100%;background:var(--gold);border:none;color:#0a0a0a;font-size:14px;font-weight:800;border-radius:12px;padding:14px;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:0.3px;">＋ Assign to Client</button>
@@ -12334,7 +12383,8 @@ let foodDbSelected = null;
 let foodDbTargetMeal = null;
 const FOOD_CAT_ICONS = {
   'Protein':'','Carbs':'','Fats':'','Vegetables':'','Dairy':'',
-  'Fruits':'','Snacks':'🫙','Drinks':'','Condiments':'','Other':''
+  'Fruits':'','Snacks':'🫙','Drinks':'','Condiments':'','Other':'',
+  'Raw Meat':'🥩'
 };
 
 function switchNutrTab(tab) {
@@ -15437,6 +15487,20 @@ function getBuiltinFoods() {
     {food_name:'Muesli (No Sugar)',category:'Oats',serving_label:'50g',serving_size_g:50.0,calories:185.0,protein_g:5.0,carbs_g:32.0,fat_g:4.0,fiber_g:4.0,sugar_g:5.0,sodium_mg:15.0,notes:''},
     {food_name:'Oat Pancakes',category:'Oats',serving_label:'2 pieces (100g)',serving_size_g:100.0,calories:210.0,protein_g:8.0,carbs_g:34.0,fat_g:5.0,fiber_g:3.0,sugar_g:6.0,sodium_mg:280.0,notes:'Made with oat flour'},
     {food_name:'Cassava (Kamoteng Kahoy), Boiled',category:'Vegetables',serving_label:'100g',serving_size_g:100.0,calories:160.0,protein_g:1.4,carbs_g:38.0,fat_g:0.3,fiber_g:1.8,sugar_g:1.7,sodium_mg:14.0,notes:'Starchy root crop'},
+    {food_name:'Beef, Raw (Ground 80/20)',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:215.0,protein_g:17.0,carbs_g:0.0,fat_g:17.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:72.0,notes:''},
+    {food_name:'Beef, Raw (Sirloin)',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:187.0,protein_g:21.0,carbs_g:0.0,fat_g:11.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:60.0,notes:''},
+    {food_name:'Beef, Raw (Ribeye)',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:250.0,protein_g:18.0,carbs_g:0.0,fat_g:19.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:63.0,notes:''},
+    {food_name:'Beef, Raw (Tenderloin)',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:180.0,protein_g:20.0,carbs_g:0.0,fat_g:11.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:55.0,notes:''},
+    {food_name:'Chicken Breast, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:120.0,protein_g:23.0,carbs_g:0.0,fat_g:2.6,fiber_g:0.0,sugar_g:0.0,sodium_mg:69.0,notes:''},
+    {food_name:'Chicken Thigh, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:177.0,protein_g:19.0,carbs_g:0.0,fat_g:11.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:79.0,notes:''},
+    {food_name:'Pork Tenderloin, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:109.0,protein_g:20.0,carbs_g:0.0,fat_g:2.7,fiber_g:0.0,sugar_g:0.0,sodium_mg:62.0,notes:''},
+    {food_name:'Pork Belly, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:518.0,protein_g:9.0,carbs_g:0.0,fat_g:53.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:38.0,notes:''},
+    {food_name:'Pork Shoulder, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:186.0,protein_g:17.0,carbs_g:0.0,fat_g:13.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:73.0,notes:''},
+    {food_name:'Lamb Leg, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:205.0,protein_g:20.0,carbs_g:0.0,fat_g:13.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:72.0,notes:''},
+    {food_name:'Salmon, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:142.0,protein_g:20.0,carbs_g:0.0,fat_g:6.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:44.0,notes:''},
+    {food_name:'Tuna, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:132.0,protein_g:28.0,carbs_g:0.0,fat_g:1.3,fiber_g:0.0,sugar_g:0.0,sodium_mg:39.0,notes:''},
+    {food_name:'Shrimp, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:85.0,protein_g:18.0,carbs_g:1.0,fat_g:1.2,fiber_g:0.0,sugar_g:0.0,sodium_mg:119.0,notes:''},
+    {food_name:'Turkey Breast, Raw',category:'Raw Meat',serving_label:'100g',serving_size_g:100.0,calories:104.0,protein_g:22.0,carbs_g:0.0,fat_g:1.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:63.0,notes:''},
   ];
 }
 
@@ -15550,6 +15614,11 @@ function adjServing(delta) {
   updateFdMacros();
 }
 
+function selectFdMealSlot(btn) {
+  document.querySelectorAll('#fd-meal-slots .fd-meal-slot-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
 function closeFoodDetail() {
   document.getElementById('food-detail-panel').style.display = 'none';
   const bd2=document.getElementById('food-detail-backdrop');if(bd2){bd2.classList.remove('open');bd2.style.display='none';}
@@ -15584,6 +15653,10 @@ async function assignFoodToClient() {
   const servingG = parseFloat(document.getElementById('fd-serving')?.value) || foodDbSelected.serving_size_g || 100;
   const ratio = servingG / (foodDbSelected.serving_size_g || 100);
 
+  // Get selected meal slot
+  const activeSlotBtn = document.querySelector('#fd-meal-slots .fd-meal-slot-btn.active');
+  const mealSlot = activeSlotBtn?.dataset?.slot || 'Meal 1';
+
   const entry = {
     food_name:      foodDbSelected.food_name,
     category:       foodDbSelected.category || '',
@@ -15593,6 +15666,7 @@ async function assignFoodToClient() {
     protein_g:      Math.round((foodDbSelected.protein_g || 0) * ratio * 10) / 10,
     carbs_g:        Math.round((foodDbSelected.carbs_g   || 0) * ratio * 10) / 10,
     fat_g:          Math.round((foodDbSelected.fat_g     || 0) * ratio * 10) / 10,
+    mealSlot:       mealSlot,
     assignedByCoach: true,
     persistent:     true,
     assignedAt:     firebase.firestore.FieldValue.serverTimestamp()
@@ -15604,7 +15678,7 @@ async function assignFoodToClient() {
   try {
     await db.collection('members').doc(clientUid).collection('mealLogs').add(entry);
     const clientName = document.querySelector('#nutr-assign-client option:checked')?.textContent?.trim() || 'Client';
-    showToast(' ' + foodDbSelected.food_name + ' → ' + clientName);
+    showToast(' ' + foodDbSelected.food_name + ' → ' + mealSlot + ' · ' + clientName);
     closeFoodDetail();
     loadAssignedFoodsPanel();
   } catch(e) {
@@ -15635,8 +15709,8 @@ async function loadAssignedFoodsPanel() {
       return;
     }
 
-    const MEAL_ORDER = ['Breakfast','Morning Snack','Lunch','Afternoon Snack','Dinner','Evening Snack'];
-    const MEAL_ICONS = {'Breakfast':'','Morning Snack':'','Lunch':'','Afternoon Snack':'','Dinner':'','Evening Snack':''};
+    const MEAL_ORDER = ['Meal 1','Meal 2','Meal 3','Meal 4','Meal 5'];
+    const MEAL_ICONS = {'Meal 1':'1️⃣','Meal 2':'2️⃣','Meal 3':'3️⃣','Meal 4':'4️⃣','Meal 5':'5️⃣'};
     const byMeal = {};
     MEAL_ORDER.forEach(m => byMeal[m] = []);
 
@@ -15657,7 +15731,9 @@ async function loadAssignedFoodsPanel() {
 
     let totalCal = 0, totalP = 0, totalC = 0, totalF = 0;
     dedupedDocs.forEach(d => {
-      const slot = d.mealSlot || d.mealName || 'Lunch';
+      // Normalize legacy slot names (Breakfast/Lunch etc.) → Meal 1
+      const rawSlot = d.mealSlot || d.mealName || '';
+      const slot = MEAL_ORDER.includes(rawSlot) ? rawSlot : 'Meal 1';
       if (!byMeal[slot]) byMeal[slot] = [];
       byMeal[slot].push(d);
       totalCal += d.calories || 0;
@@ -15666,8 +15742,8 @@ async function loadAssignedFoodsPanel() {
       totalF   += d.fat_g     || 0;
     });
 
-    // Day totals bar + prominent Refresh button
-    let html = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
+    // Day totals bar
+    let html = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
       <div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
         <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--gold);">${Math.round(totalCal)}</div>
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:3px;">kcal</div>
@@ -15687,39 +15763,53 @@ async function loadAssignedFoodsPanel() {
     </div>
     `;
 
-    // Collect all items across all meals into one flat list (already deduped)
-    const allItems = [];
-    MEAL_ORDER.forEach(meal => { (byMeal[meal] || []).forEach(item => allItems.push(item)); });
+    // Render each meal slot as a grouped section
+    MEAL_ORDER.forEach(meal => {
+      const items = byMeal[meal] || [];
+      if (!items.length) return;
 
-    if (allItems.length) {
-      html += `<div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-        ${allItems.map((item, idx) => {
-          const isLogged = item.completed || !!item.loggedAt;
-          const statusBadge = isLogged
-            ? `<span style="font-size:9px;font-weight:700;background:rgba(74,222,128,0.12);color:#4ADE80;border:1px solid rgba(74,222,128,0.3);border-radius:100px;padding:2px 7px;margin-left:6px;">✓ Logged</span>`
-            : `<span style="font-size:9px;font-weight:700;background:var(--bg3);color:var(--muted);border:1px solid var(--border);border-radius:100px;padding:2px 7px;margin-left:6px;">Pending</span>`;
-          return `
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;${idx > 0 ? 'border-top:1px solid var(--border);' : ''}${isLogged?'opacity:0.7;':''}">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;">
-                ${item.food_name||'Food'}${statusBadge}
+      const mealCal  = items.reduce((s,e) => s + (e.calories||0), 0);
+      const mealP    = items.reduce((s,e) => s + (e.protein_g||0), 0);
+      const mealC    = items.reduce((s,e) => s + (e.carbs_g||0), 0);
+      const mealF    = items.reduce((s,e) => s + (e.fat_g||0), 0);
+
+      html += `<div style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 2px 6px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span style="font-size:14px;">${MEAL_ICONS[meal]||'🍽'}</span>
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--gold);">${meal}</span>
+          </div>
+          <span style="font-size:11px;color:var(--muted);font-weight:500;">${Math.round(mealCal)} kcal · P:${Math.round(mealP)}g C:${Math.round(mealC)}g F:${Math.round(mealF)}g</span>
+        </div>
+        <div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          ${items.map((item, idx) => {
+            const isLogged = item.completed || !!item.loggedAt;
+            const statusBadge = isLogged
+              ? `<span style="font-size:9px;font-weight:700;background:rgba(74,222,128,0.12);color:#4ADE80;border:1px solid rgba(74,222,128,0.3);border-radius:100px;padding:2px 7px;margin-left:6px;">✓ Logged</span>`
+              : `<span style="font-size:9px;font-weight:700;background:var(--bg3);color:var(--muted);border:1px solid var(--border);border-radius:100px;padding:2px 7px;margin-left:6px;">Pending</span>`;
+            return `
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;${idx > 0 ? 'border-top:1px solid var(--border);' : ''}${isLogged?'opacity:0.7;':''}">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;">
+                  ${item.food_name||'Food'}${statusBadge}
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:2px;">${item.servingG||item.serving_size_g||100}g · P:${Math.round(item.protein_g||0)}g C:${Math.round(item.carbs_g||0)}g F:${Math.round(item.fat_g||0)}g</div>
               </div>
-              <div style="font-size:11px;color:var(--muted);margin-top:2px;">${item.servingG||item.serving_size_g||100}g · P:${Math.round(item.protein_g||0)}g C:${Math.round(item.carbs_g||0)}g F:${Math.round(item.fat_g||0)}g</div>
-            </div>
-            <div style="font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;">${item.calories||0} kcal</div>
-            ${!isLogged ? `<button onclick="coachDeleteAssignedFood('${clientUid}','${item.logId}')"
-              title="Remove food"
-              style="background:none;border:1px solid transparent;border-radius:7px;color:var(--muted);cursor:pointer;font-size:13px;flex-shrink:0;padding:5px 7px;line-height:1;transition:all .15s;display:flex;align-items:center;justify-content:center;"
-              onmouseover="this.style.color='#F87171';this.style.borderColor='rgba(248,113,113,0.3)';this.style.background='rgba(248,113,113,0.08)'"
-              onmouseout="this.style.color='var(--muted)';this.style.borderColor='transparent';this.style.background='none'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-              </svg>
-            </button>` : `<div style="width:28px"></div>`}
-          </div>`;
-        }).join('')}
+              <div style="font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;">${item.calories||0} kcal</div>
+              ${!isLogged ? `<button onclick="coachDeleteAssignedFood('${clientUid}','${item.logId}')"
+                title="Remove food"
+                style="background:none;border:1px solid transparent;border-radius:7px;color:var(--muted);cursor:pointer;font-size:13px;flex-shrink:0;padding:5px 7px;line-height:1;transition:all .15s;display:flex;align-items:center;justify-content:center;"
+                onmouseover="this.style.color='#F87171';this.style.borderColor='rgba(248,113,113,0.3)';this.style.background='rgba(248,113,113,0.08)'"
+                onmouseout="this.style.color='var(--muted)';this.style.borderColor='transparent';this.style.background='none'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                </svg>
+              </button>` : `<div style="width:28px"></div>`}
+            </div>`;
+          }).join('')}
+        </div>
       </div>`;
-    }
+    });
 
     if (list) list.innerHTML = html;
   } catch(e) {
