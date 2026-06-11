@@ -9756,6 +9756,7 @@ let nutrDetailMeal  = 'Meal 1';
 let nutrDetailServing = 100;
 let nutrCatFilter   = 'All';
 let nutrSearchTimer  = null;
+let nutrRenderOffset = 0;
 let nutrSearchResultsCache = [];
 
 // ── MIDNIGHT RESET ──────────────────────────────────────────────────────────
@@ -10112,9 +10113,8 @@ function openNutrFoodSearch(meal) {
 function nutrShowDefaultFoods() {
  const res = document.getElementById('nutr-search-results');
  if (!res) return;
- // Show first 30 from selected category or all
  const pool = nutrCatFilter === 'All' ? NUTR_FOODS : NUTR_FOODS.filter(f => f.category === nutrCatFilter);
- nutrRenderFoodList(pool.slice(0, 40));
+ nutrRenderFoodList(pool, true);
 }
 
 function closeNutrFoodSearch() {
@@ -10162,20 +10162,26 @@ function nutrSearchFoods(q) {
     return {...f, _score: score};
    }).filter(f => f._score > 0).sort((a,b) => b._score - a._score);
   }
-  nutrRenderFoodList(pool.slice(0, 60));
+  nutrRenderFoodList(pool, true);
  }, 150);
 }
 
-function nutrRenderFoodList(items) {
- nutrSearchResultsCache = items;
+function nutrRenderFoodList(items, reset) {
+ const BATCH = 60;
+ if (reset) {
+  nutrSearchResultsCache = items;
+  nutrRenderOffset = 0;
+ }
  const res = document.getElementById('nutr-search-results');
  if (!res) return;
  if (items.length === 0) {
   res.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#444;font-size:14px;">No foods found.<br><span style="font-size:12px;color:#333;">Try a different search term</span></div>';
   return;
  }
- res.innerHTML = items.map((f, idx) => `
-  <div onclick="openNutrDetail(nutrSearchResultsCache[${idx}])"
+ const slice = items.slice(nutrRenderOffset, nutrRenderOffset + BATCH);
+ const html = slice.map((f, i) => {
+  const globalIdx = nutrRenderOffset + i;
+  return `<div onclick="openNutrDetail(nutrSearchResultsCache[${globalIdx}])"
    style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #111;cursor:pointer;transition:background .15s;"
    onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
    <div style="flex:1;min-width:0;">
@@ -10186,8 +10192,33 @@ function nutrRenderFoodList(items) {
     <div style="font-size:14px;font-weight:700;color:#c9a84c;">${Math.round(f.calories)}</div>
     <div style="font-size:10px;color:#444;">kcal</div>
    </div>
-  </div>
- `).join('');
+  </div>`;
+ }).join('');
+ if (reset) {
+  res.innerHTML = html;
+ } else {
+  // Remove sentinel before appending
+  const old = res.querySelector('#nutr-load-sentinel');
+  if (old) old.remove();
+  res.insertAdjacentHTML('beforeend', html);
+ }
+ nutrRenderOffset += slice.length;
+ // Add scroll sentinel if more items remain
+ if (nutrRenderOffset < items.length) {
+  const sentinel = document.createElement('div');
+  sentinel.id = 'nutr-load-sentinel';
+  sentinel.style.cssText = 'height:1px;';
+  res.appendChild(sentinel);
+  // Observe sentinel
+  if (window._nutrObserver) window._nutrObserver.disconnect();
+  window._nutrObserver = new IntersectionObserver(entries => {
+   if (entries[0].isIntersecting) {
+    window._nutrObserver.disconnect();
+    nutrRenderFoodList(nutrSearchResultsCache, false);
+   }
+  }, { root: res, rootMargin: '200px' });
+  window._nutrObserver.observe(sentinel);
+ }
 }
 
 function nutrCatEmoji(cat) {
