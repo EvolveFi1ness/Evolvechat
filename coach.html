@@ -5793,6 +5793,36 @@ document.addEventListener('DOMContentLoaded', () => {
       <button class="fd-meal-slot-btn" data-slot="Meal 5" onclick="selectFdMealSlot(this)">Meal 5</button>
     </div>
   </div>
+  <!-- ── Plan Total Preview ── -->
+  <div id="fd-plan-total-wrap" style="display:none;padding:0 20px 12px;">
+    <div style="background:rgba(212,168,67,0.06);border:1px solid rgba(212,168,67,0.18);border-radius:12px;padding:11px 14px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/></svg>
+        Plan Total After Adding
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px;">
+        <div style="text-align:center;">
+          <div id="fd-pt-cal" style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--gold);line-height:1;">—</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">kcal</div>
+        </div>
+        <div style="text-align:center;">
+          <div id="fd-pt-p" style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#60A5FA;line-height:1;">—</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">Protein</div>
+        </div>
+        <div style="text-align:center;">
+          <div id="fd-pt-c" style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--gold);line-height:1;">—</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">Carbs</div>
+        </div>
+        <div style="text-align:center;">
+          <div id="fd-pt-f" style="font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:#F87171;line-height:1;">—</div>
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">Fats</div>
+        </div>
+      </div>
+      <!-- This food's contribution -->
+      <div id="fd-pt-delta" style="margin-top:7px;padding-top:6px;border-top:1px solid rgba(212,168,67,0.12);font-size:11px;color:var(--muted);text-align:center;"></div>
+    </div>
+  </div>
+
   <div style="padding:0 20px 36px;">
     <button id="fd-add-btn" onclick="assignFoodToClient()" style="width:100%;background:var(--gold);border:none;color:#0a0a0a;font-size:14px;font-weight:800;border-radius:12px;padding:14px;cursor:pointer;font-family:'Syne',sans-serif;letter-spacing:0.3px;">＋ Assign to Client</button>
   </div>
@@ -15813,6 +15843,60 @@ function selectFoodDbItem(idx) {
   showFoodDetail(foodDbSelected);
 }
 
+// ── Live plan-total cache (refreshed when assigned-foods panel loads) ──
+window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
+
+function refreshPlanTotalsCache() {
+  // Parse the already-rendered day-total tiles in assigned-foods-list
+  // They are the four Syne number divs at the top of the list.
+  // Fallback: re-sum from DOM kcal/macro spans (always reliable).
+  let cal = 0, p = 0, c = 0, f = 0;
+  const list = document.getElementById('assigned-foods-list');
+  if (list) {
+    // Each food row has a span with id "afg-kcal-*" and "afg-macro-*"
+    list.querySelectorAll('[id^="afg-kcal-"]').forEach(el => {
+      cal += parseFloat(el.textContent) || 0;
+    });
+    list.querySelectorAll('[id^="afg-macro-"]').forEach(el => {
+      // text: "· P:10g C:30g F:5g"
+      const m = el.textContent.match(/P:([\d.]+)g.*C:([\d.]+)g.*F:([\d.]+)g/);
+      if (m) { p += parseFloat(m[1])||0; c += parseFloat(m[2])||0; f += parseFloat(m[3])||0; }
+    });
+  }
+  window._planTotals = { cal, p, c, f, loaded: true };
+}
+
+function updatePlanTotalPreview(deltaCal, deltaP, deltaC, deltaF) {
+  const wrap = document.getElementById('fd-plan-total-wrap');
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  if (!wrap) return;
+
+  // Only show when a client is selected
+  if (!clientUid) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  if (!window._planTotals.loaded) refreshPlanTotalsCache();
+  const t = window._planTotals;
+
+  const newCal = Math.round(t.cal + deltaCal);
+  const newP   = Math.round((t.p + deltaP) * 10) / 10;
+  const newC   = Math.round((t.c + deltaC) * 10) / 10;
+  const newF   = Math.round((t.f + deltaF) * 10) / 10;
+
+  const el = id => document.getElementById(id);
+  if (el('fd-pt-cal')) el('fd-pt-cal').textContent = newCal;
+  if (el('fd-pt-p'))   el('fd-pt-p').textContent   = newP + 'g';
+  if (el('fd-pt-c'))   el('fd-pt-c').textContent   = newC + 'g';
+  if (el('fd-pt-f'))   el('fd-pt-f').textContent   = newF + 'g';
+
+  // Delta line — show how much this food adds
+  if (el('fd-pt-delta')) {
+    const sign = n => n >= 0 ? '+' : '';
+    el('fd-pt-delta').textContent =
+      `This food adds: ${sign(Math.round(deltaCal))}${Math.round(deltaCal)} kcal · P:${sign(Math.round(deltaP*10)/10)}${Math.round(deltaP*10)/10}g · C:${sign(Math.round(deltaC*10)/10)}${Math.round(deltaC*10)/10}g · F:${sign(Math.round(deltaF*10)/10)}${Math.round(deltaF*10)/10}g`;
+  }
+}
+
 function showFoodDetail(food) {
   const panel = document.getElementById('food-detail-panel');
   if (!panel) return;
@@ -15823,6 +15907,8 @@ function showFoodDetail(food) {
   const servingEl = document.getElementById('fd-serving');
   if (servingEl) servingEl.value = food.serving_size_g || 100;
   const serving = food.serving_size_g || 100;
+  // Refresh plan totals cache whenever a new food is opened
+  refreshPlanTotalsCache();
   renderFdMacros(food, serving);
   updateFdContextLabel();
 }
@@ -15844,6 +15930,8 @@ function renderFdMacros(food, servingG) {
   }
   const addBtn = document.getElementById('fd-add-btn');
   if (addBtn) addBtn.textContent = `＋ Add ${cal}kcal to Meal`;
+  // Update plan-total preview
+  updatePlanTotalPreview(cal, p, c, f);
 }
 
 function updateFdMacros() {
@@ -15869,6 +15957,8 @@ function closeFoodDetail() {
   const bd2=document.getElementById('food-detail-backdrop');if(bd2){bd2.classList.remove('open');bd2.style.display='none';}
   foodDbSelected = null;
   document.querySelectorAll('.food-db-item').forEach(el => el.classList.remove('selected'));
+  const ptw = document.getElementById('fd-plan-total-wrap');
+  if (ptw) ptw.style.display = 'none';
 }
 
 // ── DIRECT FOOD ASSIGNMENT TO CLIENT ──────────────────────
@@ -15876,6 +15966,8 @@ function closeFoodDetail() {
 function onAssignClientChange() {
   updateFdContextLabel();
   loadAssignedFoodsPanel();
+  // Reset plan totals cache for new client
+  window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
 }
 
 function updateFdContextLabel() {
@@ -15924,6 +16016,8 @@ async function assignFoodToClient() {
     await db.collection('members').doc(clientUid).collection('mealLogs').add(entry);
     const clientName = document.querySelector('#nutr-assign-client option:checked')?.textContent?.trim() || 'Client';
     showToast(' ' + foodDbSelected.food_name + ' → ' + mealSlot + ' · ' + clientName);
+    // Invalidate plan totals so next food shows fresh running total
+    window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
     closeFoodDetail();
     loadAssignedFoodsPanel();
   } catch(e) {
