@@ -5645,6 +5645,67 @@ img, video, iframe { max-width: 100%; }
 </div>
 
 <!-- ══════════════════════════════
+   ACCESS BLOCKED SCREEN
+══════════════════════════════ -->
+<div class="screen" id="screen-blocked">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:radial-gradient(ellipse 60% 50% at 50% -5%,rgba(248,113,113,0.08) 0%,transparent 55%),#040404;">
+    <div style="width:100%;max-width:380px;text-align:center;">
+      <div style="font-size:64px;margin-bottom:20px;line-height:1;">🔒</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-1px;color:#F0EDE8;margin-bottom:10px;">Access Suspended</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.7;margin-bottom:28px;">Your access to the app has been suspended by your coach.<br>All your data — workouts, progress, and nutrition history — is safely preserved.</div>
+      <div style="background:rgba(248,113,113,0.07);border:1px solid rgba(248,113,113,0.18);border-radius:14px;padding:18px 20px;margin-bottom:28px;text-align:left;">
+        <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(248,113,113,0.6);font-weight:700;margin-bottom:10px;">What this means</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;"><span style="color:#F87171;flex-shrink:0;margin-top:1px;">✕</span>App access is currently disabled</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;"><span style="color:#4ADE80;flex-shrink:0;margin-top:1px;">✓</span>Your data is fully preserved</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;"><span style="color:#4ADE80;flex-shrink:0;margin-top:1px;">✓</span>Access will be restored when you renew</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:20px;">Contact your coach to renew your plan and restore access.</div>
+      <button onclick="handleBlockedSignOut()" style="width:100%;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.2s;">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+   AWAITING COACH APPROVAL SCREEN
+══════════════════════════════ -->
+<div class="screen" id="screen-pending-approval">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:radial-gradient(ellipse 60% 50% at 50% -5%,rgba(212,168,67,0.1) 0%,transparent 55%),#040404;">
+    <div style="width:100%;max-width:380px;text-align:center;">
+      <div style="font-size:64px;margin-bottom:20px;line-height:1;">⏳</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-1px;color:#F0EDE8;margin-bottom:10px;">Awaiting Approval</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.7;margin-bottom:28px;">Your account has been created. Your coach just needs to confirm you before you can access the app.</div>
+      <div style="background:rgba(212,168,67,0.07);border:1px solid rgba(212,168,67,0.18);border-radius:14px;padding:18px 20px;margin-bottom:28px;text-align:left;">
+        <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:rgba(212,168,67,0.7);font-weight:700;margin-bottom:10px;">What happens next</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;"><span style="color:#4ADE80;flex-shrink:0;margin-top:1px;">✓</span>Your profile is saved and ready</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;"><span style="color:#D4A843;flex-shrink:0;margin-top:1px;">⏳</span>Waiting on your coach to confirm you</div>
+          <div style="display:flex;align-items:flex-start;gap:10px;font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;"><span style="color:#4ADE80;flex-shrink:0;margin-top:1px;">✓</span>You'll be let in automatically once approved</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:20px;">This page updates automatically — no need to refresh.</div>
+      <button onclick="handleBlockedSignOut()" style="width:100%;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.2s;">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+   ACCESS DENIED SCREEN
+══════════════════════════════ -->
+<div class="screen" id="screen-access-denied">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;background:radial-gradient(ellipse 60% 50% at 50% -5%,rgba(248,113,113,0.08) 0%,transparent 55%),#040404;">
+    <div style="width:100%;max-width:380px;text-align:center;">
+      <div style="font-size:64px;margin-bottom:20px;line-height:1;">🚫</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:26px;letter-spacing:-1px;color:#F0EDE8;margin-bottom:10px;">Access Denied</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.7;margin-bottom:28px;">Your coach was unable to confirm this account, so access to the site has not been granted.</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:20px;">If you believe this is a mistake, please reach out to your coach directly.</div>
+      <button onclick="handleBlockedSignOut()" style="width:100%;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.2s;">Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
    HOME SCREEN
 ══════════════════════════════ -->
 <div class="screen" id="screen-home">
@@ -5807,7 +5868,7 @@ img, video, iframe { max-width: 100%; }
     </div>
    </div>
 
-   <!-- Exercise cards injected here -->
+   <!-- Exercise cards injected here (unit toggle moved per-card) -->
    <div id="log-exercises-container"></div>
 
    <!-- Finish section -->
@@ -5815,7 +5876,7 @@ img, video, iframe { max-width: 100%; }
     <div class="log-summary-bar">
      <div class="ls-item"><div class="ls-val" id="ls-sets">0</div><div class="ls-lbl">Sets Done</div></div>
      <div class="ls-item"><div class="ls-val" id="ls-reps">0</div><div class="ls-lbl">Total Reps</div></div>
-     <div class="ls-item"><div class="ls-val" id="ls-weight">0</div><div class="ls-lbl">Volume kg</div></div>
+     <div class="ls-item"><div class="ls-val" id="ls-weight">0</div><div class="ls-lbl">Volume <span id="ls-weight-unit">kg</span></div></div>
     </div>
     <button class="complete-workout-btn" id="complete-btn" onclick="completeWorkout()">Complete Workout</button>
     <div class="status" id="log-status" style="margin-top:10px"></div>
@@ -6350,7 +6411,7 @@ img, video, iframe { max-width: 100%; }
  <div class="done-stats">
   <div class="done-stat"><div class="done-stat-val" id="done-sets">0</div><div class="done-stat-lbl">Sets</div></div>
   <div class="done-stat"><div class="done-stat-val" id="done-reps">0</div><div class="done-stat-lbl">Total Reps</div></div>
-  <div class="done-stat"><div class="done-stat-val" id="done-vol">0</div><div class="done-stat-lbl">kg Lifted</div></div>
+  <div class="done-stat"><div class="done-stat-val" id="done-vol">0</div><div class="done-stat-lbl"><span id="done-vol-unit">kg</span> Lifted</div></div>
  </div>
  <button class="done-close" onclick="closeDoneOverlay()">Back to Home</button>
 </div>
@@ -6597,6 +6658,23 @@ async function handleLogin() {
   const doc = await db.collection('members').doc(currentUid).get();
   if (doc.exists) {
    const data = doc.data();
+   // Block archived clients immediately
+   if (data.status === 'archived') {
+    showScreen('screen-blocked');
+    return;
+   }
+   // Coach declined this signup — block access entirely
+   if (data.approvalStatus === 'rejected') {
+    await auth.signOut();
+    showScreen('screen-access-denied');
+    return;
+   }
+   // Awaiting coach approval — show waiting screen, not the app
+   if (data.approvalStatus === 'pending') {
+    showScreen('screen-pending-approval');
+    listenPendingApproval(currentUid);
+    return;
+   }
    // User already has an account — always go home, never show onboarding on sign-in
    if (!data.profileComplete) {
     db.collection('members').doc(currentUid).update({ profileComplete: true }).catch(() => {});
@@ -6629,7 +6707,8 @@ async function handleSignup() {
   await db.collection('members').doc(currentUid).set({
    uid: currentUid, firstName: first, lastName: last, email: email,
    goal: goal||null, memberSince: firebase.firestore.FieldValue.serverTimestamp(),
-   plan: 'free', attendanceCount: 0, profileComplete: false
+   plan: 'free', attendanceCount: 0, profileComplete: false,
+   approvalStatus: 'pending'
   });
   await cred.user.updateProfile({ displayName: first+' '+last });
   showScreen('screen-step1');
@@ -6688,7 +6767,13 @@ async function handleFinish() {
   };
   await db.collection('members').doc(uid).update(healthData);
   const doc = await db.collection('members').doc(uid).get();
-  loadHomeScreen(doc.data());
+  const finishedData = doc.data();
+  if (finishedData.approvalStatus === 'pending') {
+   showScreen('screen-pending-approval');
+   listenPendingApproval(uid);
+  } else {
+   loadHomeScreen(finishedData);
+  }
  } catch(e) { showStatus('step2-status', e.message, 'error'); }
  finally { btn.disabled=false; btn.textContent='Complete Profile'; }
 }
@@ -6697,6 +6782,16 @@ async function handleFinish() {
 // LOAD HOME SCREEN
 // ─────────────────────────────────────────
 async function loadHomeScreen(data) {
+ // Real-time listener: if coach archives this client mid-session, redirect immediately
+ const _uid = currentUid || auth.currentUser?.uid;
+ if (_uid && !window._accessWatcher) {
+  window._accessWatcher = db.collection('members').doc(_uid).onSnapshot(snap => {
+   if (snap.exists && snap.data().status === 'archived') {
+    showScreen('screen-blocked');
+   }
+  });
+ }
+
  const first  = data.firstName || (auth.currentUser?.displayName?.split(' ')[0]) || 'Athlete';
  const last   = data.lastName || '';
  const initials = ((first[0]||'E') + (last[0]||'')).toUpperCase();
@@ -7009,7 +7104,7 @@ function showCompletedWorkoutView(workout, log) {
     <div class="set-table-head">
      <div class="set-th">SET</div>
      <div class="set-th" style="text-align:left;padding-left:4px;">PREVIOUS</div>
-     <div class="set-th">KG</div>
+     <div class="set-th wku-col-header">KG</div>
      <div class="set-th">REPS</div>
      <div class="set-th"></div>
     </div>
@@ -7118,7 +7213,10 @@ async function buildWorkoutLogger(workout) {
     <div class="set-table-head">
      <div class="set-th">SET</div>
      <div class="set-th" style="text-align:left;padding-left:4px;">PREVIOUS</div>
-     <div class="set-th">KG</div>
+     <div class="set-th" style="display:flex;align-items:center;gap:0;">
+      <button class="ex-unit-btn" id="exu-kg-${exIdx}" onclick="setExerciseUnit(${exIdx},'kg')" style="padding:3px 7px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(212,168,67,0.35);border-right:none;border-radius:5px 0 0 5px;background:var(--gold-dim);color:var(--gold);font-family:'Outfit',sans-serif;transition:background .15s,color .15s;letter-spacing:0.3px;">KG</button>
+      <button class="ex-unit-btn" id="exu-lbs-${exIdx}" onclick="setExerciseUnit(${exIdx},'lbs')" style="padding:3px 7px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--border2);border-radius:0 5px 5px 0;background:var(--bg3);color:var(--text3);font-family:'Outfit',sans-serif;transition:background .15s,color .15s;letter-spacing:0.3px;">LBS</button>
+     </div>
      <div class="set-th">REPS</div>
      <div class="set-th"></div>
     </div>
@@ -7130,6 +7228,11 @@ async function buildWorkoutLogger(workout) {
    </div>`;
 
   container.appendChild(card);
+
+  // Set default unit from global preference (can be overridden per-card)
+  card.dataset.weightUnit = workoutWeightUnit;
+  // Apply correct active state on the new per-card buttons
+  _applyExerciseUnit(exIdx, workoutWeightUnit);
 
   // Load thumbnail
   (() => {
@@ -7154,6 +7257,64 @@ async function buildWorkoutLogger(workout) {
 
  restoreLoggerState();
 }
+
+// ─────────────────────────────────────────
+// PER-EXERCISE WEIGHT UNIT (kg / lbs per card)
+// ─────────────────────────────────────────
+// Global default unit (used when building new cards)
+let workoutWeightUnit = localStorage.getItem('evolve_wkt_weight_unit') || 'kg';
+
+function setExerciseUnit(exIdx, u) {
+ const card = document.querySelector('.log-ex-card[data-ex-idx="' + exIdx + '"]');
+ if (!card) return;
+ const prev = card.dataset.weightUnit || 'kg';
+ if (u === prev) return;
+ card.dataset.weightUnit = u;
+ // Save global preference so new cards default to the last-used unit
+ workoutWeightUnit = u;
+ localStorage.setItem('evolve_wkt_weight_unit', u);
+
+ // Convert existing weight inputs in THIS card only
+ card.querySelectorAll('.weight-input').forEach(inp => {
+  const val = parseFloat(inp.value);
+  if (!isNaN(val) && val > 0) {
+   inp.value = u === 'lbs'
+    ? Math.round(val * 2.20462 * 10) / 10
+    : Math.round(val / 2.20462 * 10) / 10;
+  }
+ });
+
+ _applyExerciseUnit(exIdx, u);
+ updateSummary();
+ if (!window._loggerRestoring) saveLoggerState();
+}
+
+function _applyExerciseUnit(exIdx, u) {
+ const kgBtn  = document.getElementById('exu-kg-'  + exIdx);
+ const lbsBtn = document.getElementById('exu-lbs-' + exIdx);
+ if (!kgBtn || !lbsBtn) return;
+ if (u === 'kg') {
+  kgBtn.style.background  = 'var(--gold-dim)'; kgBtn.style.color  = 'var(--gold)';  kgBtn.style.borderColor  = 'rgba(212,168,67,0.35)';
+  lbsBtn.style.background = 'var(--bg3)';      lbsBtn.style.color = 'var(--text3)'; lbsBtn.style.borderColor = 'var(--border2)';
+ } else {
+  lbsBtn.style.background = 'var(--gold-dim)'; lbsBtn.style.color = 'var(--gold)';  lbsBtn.style.borderColor = 'rgba(212,168,67,0.35)';
+  kgBtn.style.background  = 'var(--bg3)';      kgBtn.style.color  = 'var(--text3)'; kgBtn.style.borderColor  = 'var(--border2)';
+ }
+}
+
+// Kept for backward compat — applies unit to ALL cards (called on restore if saved unit differs)
+function _applyWorkoutWeightUnit() {
+ document.querySelectorAll('.log-ex-card').forEach((card, exIdx) => {
+  _applyExerciseUnit(exIdx, card.dataset.weightUnit || workoutWeightUnit);
+ });
+ const lsUnit = document.getElementById('ls-weight-unit');
+ if (lsUnit) lsUnit.textContent = '';
+ const doneUnit = document.getElementById('done-vol-unit');
+ if (doneUnit) doneUnit.textContent = '';
+}
+
+document.addEventListener('DOMContentLoaded', _applyWorkoutWeightUnit);
+setTimeout(_applyWorkoutWeightUnit, 200);
 
 function addSet(exIdx, weight, reps, done) {
  const container = document.getElementById('sets-' + exIdx);
@@ -7190,14 +7351,19 @@ function toggleSetDone(btn) {
 
 function updateSummary() {
  let totalSets = 0, totalReps = 0, totalWeight = 0;
- document.querySelectorAll('.log-set-row').forEach(row => {
-  if (row.dataset.done === '1') {
-   const w = parseFloat(row.querySelector('.weight-input').value) || 0;
-   const r = parseInt(row.querySelector('.reps-input').value, 10) || 0;
-   totalSets++;
-   totalReps  += r;
-   totalWeight += w * r;
-  }
+ document.querySelectorAll('.log-ex-card').forEach(card => {
+  const cardUnit = card.dataset.weightUnit || 'kg';
+  card.querySelectorAll('.log-set-row').forEach(row => {
+   if (row.dataset.done === '1') {
+    const w = parseFloat(row.querySelector('.weight-input').value) || 0;
+    const r = parseInt(row.querySelector('.reps-input').value, 10) || 0;
+    // Normalize to kg for the summary total
+    const wKg = cardUnit === 'lbs' ? w * 0.453592 : w;
+    totalSets++;
+    totalReps  += r;
+    totalWeight += wKg * r;
+   }
+  });
  });
  document.getElementById('ls-sets').textContent  = totalSets;
  document.getElementById('ls-reps').textContent = totalReps;
@@ -7205,6 +7371,9 @@ function updateSummary() {
  // Update header chip
  const chip = document.getElementById('wkt-chip-sets');
  if (chip) chip.textContent = totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' done';
+ // Summary always shows kg (normalized)
+ const lsUnit = document.getElementById('ls-weight-unit');
+ if (lsUnit) lsUnit.textContent = 'kg';
 }
 
 // ─────────────────────────────────────────
@@ -7229,10 +7398,10 @@ function saveLoggerState() {
     });
    });
    const note = document.getElementById('note-' + exIdx)?.value || '';
-   exercises.push({ sets, note });
+   exercises.push({ sets, note, weightUnit: card.dataset.weightUnit || 'kg' });
   });
   const timerElapsed = _wktStartTime ? Math.floor((Date.now() - _wktStartTime) / 1000) : 0;
-  localStorage.setItem(_loggerStorageKey(), JSON.stringify({ exercises, timerElapsed }));
+  localStorage.setItem(_loggerStorageKey(), JSON.stringify({ exercises, timerElapsed, weightUnit: workoutWeightUnit }));
  } catch(e) { /* localStorage unavailable — silent fail */ }
 }
 
@@ -7249,6 +7418,13 @@ function restoreLoggerState() {
   saved.exercises.forEach((exData, exIdx) => {
    const container = document.getElementById('sets-' + exIdx);
    if (!container) return;
+   // Restore per-card weight unit
+   const card = container.closest('.log-ex-card');
+   const savedUnit = exData.weightUnit || saved.weightUnit || 'kg';
+   if (card) {
+    card.dataset.weightUnit = savedUnit;
+    _applyExerciseUnit(exIdx, savedUnit);
+   }
    // Wipe the default sets, then restore exactly what was saved
    container.innerHTML = '';
    exData.sets.forEach(s => {
@@ -7363,21 +7539,30 @@ async function completeWorkout() {
  const exercises = [];
  document.querySelectorAll('.log-ex-card').forEach((card, exIdx) => {
   const exName = card.querySelector('.log-ex-name').textContent;
+  const cardUnit = card.dataset.weightUnit || 'kg'; // per-exercise unit
   const sets  = [];
   card.querySelectorAll('.log-set-row').forEach(row => {
+   const rawW = parseFloat(row.querySelector('.weight-input').value) || 0;
+   // Always store in kg for consistency; also save display value + unit
+   const weightInKg = cardUnit === 'lbs' ? Math.round(rawW / 2.20462 * 100) / 100 : rawW;
    sets.push({
-    weight: parseFloat(row.querySelector('.weight-input').value) || 0,
-    reps:  parseInt(row.querySelector('.reps-input').value, 10)   || 0,
+    weight: weightInKg,
+    weightDisplay: rawW,    // original value as entered by client
+    weightUnit: cardUnit,   // per-set unit for coach display
+    reps:  parseInt(row.querySelector('.reps-input').value, 10) || 0,
     done:  row.dataset.done === '1'
    });
   });
   const note = document.getElementById('note-' + exIdx)?.value.trim() || '';
-  exercises.push({ name: exName, sets, note });
+  exercises.push({ name: exName, sets, note, weightUnit: cardUnit });
  });
 
  const doneSets  = parseInt(document.getElementById('ls-sets').textContent, 10)  || 0;
  const doneReps  = parseInt(document.getElementById('ls-reps').textContent, 10)  || 0;
- const doneWeight = parseInt(document.getElementById('ls-weight').textContent, 10) || 0;
+ const doneWeightDisplay = parseInt(document.getElementById('ls-weight').textContent, 10) || 0;
+ // Always store volume in kg
+ // Summary bar (ls-weight) is always normalized to kg, so doneWeight = doneWeightDisplay
+ const doneWeight = doneWeightDisplay;
 
  const btn = document.getElementById('complete-btn');
  btn.disabled = true; btn.textContent = 'Saving…';
@@ -7389,6 +7574,8 @@ async function completeWorkout() {
    dayName:   todayWorkout?.dayName || '',
    exercises,
    totalSets: doneSets, totalReps: doneReps, totalVolume: doneWeight,
+   totalVolumeDisplay: doneWeightDisplay, // in kg (normalized)
+   weightUnit: 'kg',                     // totalVolume is always in kg (per-exercise units are per-set)
    completedAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
@@ -7423,7 +7610,7 @@ async function completeWorkout() {
   // Show done overlay
   document.getElementById('done-sets').textContent = doneSets;
   document.getElementById('done-reps').textContent = doneReps;
-  document.getElementById('done-vol').textContent = doneWeight;
+  document.getElementById('done-vol').textContent = doneWeightDisplay;
   document.getElementById('done-sub').textContent = todayWorkout?.name + ' complete!';
   document.getElementById('done-overlay').classList.add('open');
   stopWktTimer();
@@ -8684,6 +8871,49 @@ async function handleLogout() {
  switchTab('login');
 }
 
+async function handleBlockedSignOut() {
+ if (currentUid) {
+  await db.collection('members').doc(currentUid).set({
+   isOnline: false, lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).catch(()=>{});
+ }
+ await auth.signOut();
+ currentUid = null;
+ showScreen('screen-auth');
+ switchTab('login');
+}
+
+// ─────────────────────────────────────────
+// PENDING COACH APPROVAL
+// ─────────────────────────────────────────
+// Watches the member doc in real time while the user sits on the
+// "awaiting approval" screen, so they're moved into the app the moment
+// the coach approves them — or shown the denied screen if declined —
+// without needing to refresh or sign in again.
+let _pendingApprovalUnsub = null;
+function listenPendingApproval(uid) {
+ if (_pendingApprovalUnsub) return; // already listening
+ _pendingApprovalUnsub = db.collection('members').doc(uid).onSnapshot(snap => {
+  if (!snap.exists) return;
+  const d = snap.data();
+  if (d.status === 'archived') {
+   _pendingApprovalUnsub(); _pendingApprovalUnsub = null;
+   showScreen('screen-blocked');
+   return;
+  }
+  if (d.approvalStatus === 'rejected') {
+   _pendingApprovalUnsub(); _pendingApprovalUnsub = null;
+   showScreen('screen-access-denied');
+   return;
+  }
+  if (!d.approvalStatus || d.approvalStatus === 'approved') {
+   _pendingApprovalUnsub(); _pendingApprovalUnsub = null;
+   loadHomeScreen(d);
+  }
+  // else: still 'pending' — stay on the waiting screen
+ });
+}
+
 // ─────────────────────────────────────────
 // AUTH STATE OBSERVER
 // ─────────────────────────────────────────
@@ -8703,6 +8933,29 @@ auth.onAuthStateChanged(async user => {
   const doc = await db.collection('members').doc(user.uid).get();
   if (doc.exists) {
    const data = doc.data();
+   // Block archived clients — show access suspended screen
+   if (data.status === 'archived') {
+    showScreen('screen-blocked');
+    // Listen for real-time restore so they regain access without re-logging in
+    db.collection('members').doc(user.uid).onSnapshot(snap => {
+     if (snap.exists && snap.data().status !== 'archived') {
+      loadHomeScreen(snap.data());
+     }
+    });
+    return;
+   }
+   // Coach declined this signup — block access entirely
+   if (data.approvalStatus === 'rejected') {
+    await auth.signOut();
+    showScreen('screen-access-denied');
+    return;
+   }
+   // Awaiting coach approval — show waiting screen, not the app
+   if (data.approvalStatus === 'pending') {
+    showScreen('screen-pending-approval');
+    listenPendingApproval(user.uid);
+    return;
+   }
    // Doc exists = returning user — always go home, never show onboarding on sign-in
    if (!data.profileComplete) {
     db.collection('members').doc(user.uid).update({ profileComplete: true }).catch(() => {});
@@ -9327,32 +9580,32 @@ const EXLIB_DB = [
  { name:'Dumbbell Seated Lateral Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
  { name:'Barbell Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Single Leg Squat with Support', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
- { name:'Bodyweight Muscle up', muscles:'Full Body', category:'Full Body', sets:'3×8' },
+ { name:'Bodyweight Muscle Up', muscles:'Back, Chest, Arms', category:'Back', sets:'3×6' },
  { name:'Hanging Knee Raise', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Weighted Hyperextension', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Cable Seated Chest Fly', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Kettlebell Single Arm Clean', muscles:'Full Body', category:'Full Body', sets:'3×8' },
- { name:'Dumbbell Bench Seated Press', muscles:'Full Body', category:'Full Body', sets:'3×8' },
+ { name:'Dumbbell Seated Bench Press', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Cable Seated Row with V Bar', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Barbell Snatch', muscles:'Full Body', category:'Full Body', sets:'3×8' },
- { name:'Barbell Jm Bench Press', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
- { name:'Lying Neck Extension', muscles:'Triceps', category:'Arms', sets:'3×12' },
+ { name:'Barbell JM Bench Press', muscles:'Triceps, Chest', category:'Arms', sets:'4×10' },
+ { name:'Lying Neck Extension', muscles:'Neck, Trapezius', category:'Shoulders', sets:'3×15' },
  { name:'Dumbbell Sit up', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Dumbbell Incline Bench Press', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
- { name:'Lever Seated Hip Adduction', muscles:'Full Body', category:'Full Body', sets:'3×8' },
- { name:'Barbell Incline Shoulders Press (inside Squat Cage)', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Lever Seated Hip Adduction', muscles:'Inner Thighs, Adductors', category:'Legs', sets:'4×12' },
+ { name:'Barbell Incline Shoulder Press', muscles:'Shoulders, Triceps', category:'Shoulders', sets:'4×12' },
  { name:'Dumbbell Standing Triceps Extension', muscles:'Triceps', category:'Arms', sets:'3×12' },
  { name:'Dumbbell Reverse Grip Biceps Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Barbell Pause Full Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Cable Overhead Triceps Extension', muscles:'Triceps', category:'Arms', sets:'3×12' },
  { name:'Cable Standing Single Arm Fly', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Dumbbell Single Leg Calf Raise', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
- { name:'Walking Lunge Male', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Walking Lunge', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Lever Preacher Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Alternate Heel Touchers', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Air Bike', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
  { name:'Lever Reverse Grip High Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
- { name:'Side Step Deep Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Side Step Deep Squat', muscles:'Quads, Glutes, Inner Thighs', category:'Legs', sets:'3×12' },
  { name:'45 Side Bend', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Jumping Jack', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
  { name:'Barbell Pendlay Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
@@ -9371,9 +9624,9 @@ const EXLIB_DB = [
  { name:'Lying Leg Raise', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Band Assisted Pull up', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Bent Over Lateral Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
- { name:'Dumbbell Around Pullover', muscles:'Full Body', category:'Full Body', sets:'3×8' },
+ { name:'Dumbbell Around Pullover', muscles:'Chest, Lats, Triceps', category:'Chest', sets:'3×12' },
  { name:'Elliptical Machine Walk', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
- { name:'Barbell Straight Leg Deadlift', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
+ { name:'Barbell Straight Leg Deadlift', muscles:'Hamstrings, Glutes, Lower Back', category:'Glutes', sets:'4×10' },
  { name:'Barbell Bench Press', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Inverted Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Dumbbell Pullover', muscles:'Full Body', category:'Full Body', sets:'3×8' },
@@ -9381,14 +9634,14 @@ const EXLIB_DB = [
  { name:'Cable Overhead Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Smith Hip Thrust', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
  { name:'Smith Machine Bench Press', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
- { name:'Downward Facing Dog', muscles:'Full Body', category:'Full Body', sets:'3×8' },
+ { name:'Downward Facing Dog', muscles:'Shoulders, Hamstrings, Calves', category:'Full Body', sets:'3×30s' },
  { name:'Cable Horizontal Pallof Press', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Cable Donkey Kickback', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
  { name:'Barbell Sumo Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Sled 45 Leg Press', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Weighted Front Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
  { name:'Weighted Plate Lu Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
- { name:'Sit', muscles:'Full Body', category:'Full Body', sets:'3×8' },
+ { name:'Seated Leg Raise', muscles:'Abs, Hip Flexors', category:'Core', sets:'3×15' },
  { name:'Dumbbell Renegade Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Lever Low Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Flutter Kicks', muscles:'Abs, Core', category:'Core', sets:'3×15' },
@@ -9400,18 +9653,18 @@ const EXLIB_DB = [
  { name:'Front Plank', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Weighted Sissy Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Lever Reverse Hyperextension', muscles:'Back, Lats', category:'Back', sets:'4×8' },
- { name:'Lever Rotary Calf', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
- { name:'Kettlebell Sumo High Pull', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Lever Rotary Calf', muscles:'Calves, Soleus', category:'Legs', sets:'4×15' },
+ { name:'Kettlebell Sumo High Pull', muscles:'Full Body, Traps, Shoulders', category:'Full Body', sets:'3×10' },
  { name:'Run on Treadmill', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
  { name:'Dumbbell Tate Press', muscles:'Triceps', category:'Arms', sets:'3×12' },
  { name:'Suspender Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Cable Bar Lateral Pulldown', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Lever Seated Crunch', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Step up on Box', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
- { name:'Resistance Band Pull Apart', muscles:'Full Body', category:'Full Body', sets:'3×8' },
- { name:'Single Leg Bridge with Outstretched Leg (ma', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
+ { name:'Resistance Band Pull Apart', muscles:'Shoulders, Rear Deltoids, Traps', category:'Shoulders', sets:'3×15' },
+ { name:'Single Leg Bridge with Outstretched Leg', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
  { name:'Cable Reverse Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
- { name:'Dumbbell Incline Y Raise', muscles:'Full Body', category:'Full Body', sets:'3×8' },
+ { name:'Dumbbell Incline Y Raise', muscles:'Shoulders, Rear Deltoids, Traps', category:'Shoulders', sets:'3×12' },
  { name:'High Knee Skips', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
  { name:'Dumbbell Incline Biceps Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Barbell Clean Pull', muscles:'Full Body', category:'Full Body', sets:'3×8' },
@@ -9421,7 +9674,7 @@ const EXLIB_DB = [
  { name:'Hanging Straight Leg Hip Raise', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Barbell Single Leg Deadlift', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
  { name:'Band Lateral Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
- { name:'Dumbbell Single Leg Romanian Deadlift Leg Raise (m', muscles:'Abs, Core', category:'Core', sets:'3×15' },
+ { name:'Dumbbell Single Leg Romanian Deadlift', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
  { name:'Barbell Hang Snatch Below the Knees', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Jump Split', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
  { name:'Dumbbell Prone Incline Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
@@ -9432,7 +9685,7 @@ const EXLIB_DB = [
  { name:'Lever Triceps Dip', muscles:'Triceps', category:'Arms', sets:'3×12' },
  { name:'Dumbbell Bulgarian Split Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Lever Seated Reverse Fly', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
- { name:'Standing Single Side Leg Raise Chair Supported (fe', muscles:'Abs, Core', category:'Core', sets:'3×15' },
+ { name:'Standing Side Leg Raise (Chair Supported)', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Push Press', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Dumbbell Curtsey Lunge', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Barbell Kas Glute Bridge', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
@@ -9441,15 +9694,15 @@ const EXLIB_DB = [
  { name:'Dumbbell Bent Over Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Dumbbell Step up', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Barbell Rear Lunge', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
- { name:'Lever Standing Single Leg Calf Raise', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Lever Standing Single Leg Calf Raise', muscles:'Calves, Soleus', category:'Legs', sets:'4×15' },
  { name:'Barbell Hip Thrust', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
  { name:'Burpee', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
  { name:'Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Barbell Overhead Squat', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Dumbbell Seated Shoulder Press', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
  { name:'Barbell Lunge', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
- { name:'Dumbbell Upright Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
- { name:'L Sit', muscles:'Abs, Core', category:'Core', sets:'3×15' },
+ { name:'Dumbbell Upright Row', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
+ { name:'L-Sit Hold', muscles:'Abs, Core, Hip Flexors', category:'Core', sets:'3×20s' },
  { name:'Lever Seated Dip', muscles:'Triceps', category:'Arms', sets:'3×12' },
  { name:'Barbell Hang Clean', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Barbell Clean and Press', muscles:'Full Body', category:'Full Body', sets:'3×8' },
@@ -9469,14 +9722,14 @@ const EXLIB_DB = [
  { name:'Dumbbell Front Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
  { name:'Dumbbell One Arm Snatch', muscles:'Full Body', category:'Full Body', sets:'3×8' },
  { name:'Kettlebell Around Head Rotation', muscles:'Full Body', category:'Full Body', sets:'3×8' },
- { name:'Ez Barbell Standing Back Wrist Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
+ { name:'EZ Bar Reverse Wrist Curl', muscles:'Forearms, Wrist Extensors', category:'Arms', sets:'3×15' },
  { name:'Crunch Floor', muscles:'Abs, Core', category:'Core', sets:'3×15' },
  { name:'Cable Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Dumbbell Cross Body Hammer Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Lever Seated Leg Curl', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
- { name:'Lever Seated Calf Raise', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Lever Seated Calf Raise', muscles:'Calves, Soleus', category:'Legs', sets:'4×15' },
  { name:'Burpee Over the Bar', muscles:'Cardio', category:'Cardio', sets:'3×30s' },
- { name:'Dumbbell Romanian Deadlift', muscles:'Back, Lats', category:'Back', sets:'4×8' },
+ { name:'Dumbbell Romanian Deadlift', muscles:'Glutes, Hamstrings, Lower Back', category:'Glutes', sets:'4×10' },
  { name:'Lever Seated Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Lever Seated Shoulder Press', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
  { name:'Nordic Hamstring Curl', muscles:'Glutes, Hamstrings', category:'Glutes', sets:'4×12' },
@@ -9496,7 +9749,7 @@ const EXLIB_DB = [
  { name:'Dumbbell Concentration Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
  { name:'Dumbbell Squeeze Bench Press', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Lever Pec Deck Fly', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
- { name:'Lever Seated Hip Abduction', muscles:'Full Body', category:'Full Body', sets:'3×8' },
+ { name:'Lever Seated Hip Abduction', muscles:'Glutes, Hip Abductors', category:'Glutes', sets:'4×12' },
  { name:'Barbell Sumo Deadlift', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Cable Reverse Grip Straight Back Seated High Row', muscles:'Back, Lats', category:'Back', sets:'4×8' },
  { name:'Ab Wheel Rollout', muscles:'Abs, Core', category:'Core', sets:'3×15' },
@@ -9628,7 +9881,7 @@ const EXLIB_DB = [
  { name:'Cable Low Fly', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Cable 45 Degrees Single Arm Reverse Fly', muscles:'Chest, Triceps', category:'Chest', sets:'4×10' },
  { name:'Cable One Arm Lateral Raise', muscles:'Shoulders, Traps', category:'Shoulders', sets:'4×12' },
- { name:'Lever Standing Calf Raise', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
+ { name:'Lever Standing Calf Raise', muscles:'Calves, Soleus', category:'Legs', sets:'4×15' },
  { name:'Cable Alternate Triceps Extension', muscles:'Triceps', category:'Arms', sets:'3×12' },
  { name:'Single Leg Calf Raise Off Step', muscles:'Quads, Glutes, Hamstrings', category:'Legs', sets:'4×10' },
  { name:'Dumbbell Seated Preacher Curl', muscles:'Biceps, Forearms', category:'Arms', sets:'3×12' },
