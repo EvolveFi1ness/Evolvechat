@@ -4132,6 +4132,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="nav-item" onclick="showPage('clients')" id="nav-clients" data-label="Clients">
         <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
         <span class="nav-label">Clients</span>
+        <span class="nav-badge" id="clients-pending-badge" style="display:none">0</span>
       </div>
       <div class="nav-item" onclick="showPage('workouts')" id="nav-workouts" data-label="Workouts">
         <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></span>
@@ -4260,12 +4261,41 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="page-title">Clients</div>
         <div class="page-sub" id="clients-count">Loading…</div>
       </div>
-      <div class="online-strip" id="online-strip">
-        <div class="online-strip-label"> Online Now</div>
-        <div class="online-avatar-row" id="online-avatar-row"></div>
+      <!-- Tab switcher: Active / Pending / Archived -->
+      <div style="display:flex;gap:8px;padding:0 0 18px 0;">
+        <button id="clients-tab-active" onclick="switchClientsTab('active')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--gold);background:var(--gold);color:#0a0a0a;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Active</button>
+        <button id="clients-tab-pending" onclick="switchClientsTab('pending')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Pending Requests <span id="pending-count-badge" style="display:none;background:rgba(212,168,67,0.25);color:var(--gold);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;">0</span></button>
+        <button id="clients-tab-archived" onclick="switchClientsTab('archived')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Archived <span id="archived-count-badge" style="display:none;background:rgba(248,113,113,0.2);color:var(--red);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;">0</span></button>
       </div>
-      <div class="client-grid" id="client-grid">
-        <div class="loading-dots"><span></span><span></span><span></span></div>
+      <!-- Active clients -->
+      <div id="clients-active-panel">
+        <div class="online-strip" id="online-strip">
+          <div class="online-strip-label"> Online Now</div>
+          <div class="online-avatar-row" id="online-avatar-row"></div>
+        </div>
+        <div class="client-grid" id="client-grid">
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <!-- Pending signup requests, awaiting coach confirmation -->
+      <div id="clients-pending-panel" style="display:none;">
+        <div style="background:rgba(212,168,67,0.06);border:1px solid rgba(212,168,67,0.18);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4A843" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span style="font-size:12px;color:rgba(212,168,67,0.9);line-height:1.5;">These people signed up but haven't been confirmed as real clients yet. Approve to grant site access, or decline to remove them completely — declined accounts disappear from your roster and can't access the site.</span>
+        </div>
+        <div class="client-grid" id="pending-client-grid">
+          <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No pending signup requests</div>
+        </div>
+      </div>
+      <!-- Archived clients -->
+      <div id="clients-archived-panel" style="display:none;">
+        <div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+          <span style="font-size:12px;color:rgba(248,113,113,0.85);line-height:1.5;">Archived clients cannot access the app. Their data is fully preserved — restore them anytime to re-enable access.</span>
+        </div>
+        <div class="client-grid" id="archived-client-grid">
+          <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No archived clients</div>
+        </div>
       </div>
     </div>
 
@@ -5760,6 +5790,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* Tighter content padding */
 .page { padding: 1.5rem 1.5rem !important; }
+
+/* Remove client button */
+.remove-client-btn {
+  background: rgba(220,50,50,0.08) !important;
+  color: rgba(255,100,100,0.75) !important;
+  border-color: rgba(220,50,50,0.2) !important;
+  font-size: 11px !important;
+  padding: 7px 10px !important;
+}
+.remove-client-btn:hover {
+  background: rgba(220,50,50,0.18) !important;
+  color: #ff6b6b !important;
+  border-color: rgba(220,50,50,0.4) !important;
+}
 </style>
 
 <!-- ══ FOOD DETAIL PANEL ══ -->
@@ -6159,15 +6203,31 @@ function populateEvAssignDropdown() {
 }
 
 let clientsUnsub = null;
+let archivedClients = [];
+let pendingClients = [];
+let _currentClientsTab = 'active';
 
 function loadAllClients() {
   if (clientsUnsub) clientsUnsub();
   console.log('[COACH] Starting members onSnapshot listener...');
   clientsUnsub = db.collection('members').onSnapshot(snap => {
-    allClients = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    const all = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    // Rejected signups are hidden everywhere — coach already declined them.
+    const visible = all.filter(c => c.approvalStatus !== 'rejected');
+    // Active = not archived, not awaiting approval
+    allClients = visible.filter(c => c.status !== 'archived' && c.approvalStatus !== 'pending');
+    archivedClients = visible.filter(c => c.status === 'archived');
+    // Pending = signed up but not yet confirmed as a real client by the coach
+    const newPending = visible.filter(c => c.approvalStatus === 'pending' && c.status !== 'archived');
+    notifyNewPendingRequests(newPending);
+    pendingClients = newPending;
     const onlineClients = allClients.filter(c => c.isOnline);
-    console.log('[COACH] onSnapshot fired — total:', allClients.length, '| online:', onlineClients.length, '| online UIDs:', onlineClients.map(c=>c.uid));
+    console.log('[COACH] onSnapshot fired — active:', allClients.length, '| pending:', pendingClients.length, '| archived:', archivedClients.length, '| online:', onlineClients.length);
     renderClientGrid();
+    renderArchivedGrid();
+    renderPendingGrid();
+    updateArchivedBadge();
+    updatePendingBadge();
     updateOnlineStrip();
     updateDashboardStats();
     loadDashboardPhotos();
@@ -6177,6 +6237,175 @@ function loadAllClients() {
     console.error('[COACH] members onSnapshot FAILED:', e.code, e.message);
     document.getElementById('client-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">️</div><div class="empty-text">Could not load clients</div><div class="empty-sub">${e.message}</div></div>`;
   });
+}
+
+// Toast the coach when a brand-new signup request shows up, so requests
+// awaiting approval aren't missed even if they're on another tab/page.
+let _prevPendingUids = new Set();
+let _pendingNotifyReady = false; // suppress toast on first snapshot load
+function notifyNewPendingRequests(newPending) {
+  const nowSet = new Set(newPending.map(c => c.uid));
+  if (_pendingNotifyReady) {
+    newPending.forEach(c => {
+      if (!_prevPendingUids.has(c.uid)) {
+        const name = `${c.firstName||''} ${c.lastName||''}`.trim() || 'Someone';
+        showToast(`${name} just signed up — review in Clients → Pending`, '');
+      }
+    });
+  }
+  _prevPendingUids = nowSet;
+  _pendingNotifyReady = true;
+}
+
+function switchClientsTab(tab) {
+  _currentClientsTab = tab;
+  const panels = {
+    active:   document.getElementById('clients-active-panel'),
+    pending:  document.getElementById('clients-pending-panel'),
+    archived: document.getElementById('clients-archived-panel')
+  };
+  const tabs = {
+    active:   document.getElementById('clients-tab-active'),
+    pending:  document.getElementById('clients-tab-pending'),
+    archived: document.getElementById('clients-tab-archived')
+  };
+  const styles = {
+    active:   { bg: 'var(--gold)', color: '#0a0a0a', border: 'var(--gold)' },
+    pending:  { bg: 'rgba(212,168,67,0.15)', color: 'var(--gold)', border: 'rgba(212,168,67,0.4)' },
+    archived: { bg: 'rgba(248,113,113,0.15)', color: 'var(--red)', border: 'rgba(248,113,113,0.4)' }
+  };
+  Object.keys(panels).forEach(key => {
+    panels[key].style.display = (key === tab) ? '' : 'none';
+    const s = (key === tab) ? styles[key] : { bg: 'transparent', color: 'var(--muted)', border: 'var(--border2)' };
+    tabs[key].style.background  = s.bg;
+    tabs[key].style.color       = s.color;
+    tabs[key].style.borderColor = s.border;
+  });
+  if (tab === 'pending')  renderPendingGrid();
+  if (tab === 'archived') renderArchivedGrid();
+}
+
+function updateArchivedBadge() {
+  const badge = document.getElementById('archived-count-badge');
+  if (!badge) return;
+  if (archivedClients.length > 0) {
+    badge.textContent = archivedClients.length;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function updatePendingBadge() {
+  const tabBadge = document.getElementById('pending-count-badge');
+  if (tabBadge) {
+    if (pendingClients.length > 0) {
+      tabBadge.textContent = pendingClients.length;
+      tabBadge.style.display = 'inline';
+    } else {
+      tabBadge.style.display = 'none';
+    }
+  }
+  const navBadge = document.getElementById('clients-pending-badge');
+  if (navBadge) {
+    if (pendingClients.length > 0) {
+      navBadge.textContent = pendingClients.length;
+      navBadge.style.display = 'inline';
+    } else {
+      navBadge.style.display = 'none';
+    }
+  }
+}
+
+function renderArchivedGrid() {
+  const grid = document.getElementById('archived-client-grid');
+  if (!grid) return;
+  if (!archivedClients.length) {
+    grid.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No archived clients</div>`;
+    return;
+  }
+  grid.innerHTML = archivedClients.map(c => {
+    const name = `${c.firstName||''} ${c.lastName||''}`.trim() || 'Unknown';
+    const ini  = initials(c.firstName, c.lastName);
+    const archivedDate = c.archivedAt ? new Date(c.archivedAt.toDate ? c.archivedAt.toDate() : c.archivedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Unknown date';
+    return `
+    <div class="client-card" style="opacity:0.75;border-color:rgba(248,113,113,0.2);">
+      <div class="client-card-top">
+        <div class="client-av-wrap">
+          <div class="client-av" style="background:rgba(248,113,113,0.15);color:var(--red);">${ini}</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="client-name">${name}</div>
+          <div class="client-email">${c.email||''}</div>
+          <div style="font-size:10px;color:rgba(248,113,113,0.6);margin-top:3px;letter-spacing:0.3px;">Archived ${archivedDate}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.25);border-radius:100px;padding:3px 10px;font-weight:700;">Archived</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="action-btn" onclick="confirmRestoreClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Restore Access
+        </button>
+        <button onclick="confirmDeleteClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" title="Delete Permanently" style="flex-shrink:0;width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(220,50,50,0.18);border-radius:8px;color:rgba(255,107,107,0.45);cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.background='rgba(220,50,50,0.12)';this.style.color='#ff6b6b';this.style.borderColor='rgba(220,50,50,0.4)';" onmouseleave="this.style.background='transparent';this.style.color='rgba(255,107,107,0.45)';this.style.borderColor='rgba(220,50,50,0.18)';">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _goalLabel(goal) {
+  if (!goal) return null;
+  return goal.replace(/_/g,' ').replace(/\b\w/g, ch => ch.toUpperCase());
+}
+
+function renderPendingGrid() {
+  const grid = document.getElementById('pending-client-grid');
+  if (!grid) return;
+  if (!pendingClients.length) {
+    grid.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No pending signup requests</div>`;
+    return;
+  }
+  // Newest requests first
+  const sorted = [...pendingClients].sort((a,b) => {
+    const at = a.memberSince ? (a.memberSince.toMillis ? a.memberSince.toMillis() : 0) : 0;
+    const bt = b.memberSince ? (b.memberSince.toMillis ? b.memberSince.toMillis() : 0) : 0;
+    return bt - at;
+  });
+  grid.innerHTML = sorted.map(c => {
+    const name = `${c.firstName||''} ${c.lastName||''}`.trim() || 'Unknown';
+    const ini  = initials(c.firstName, c.lastName);
+    const signedUp = c.memberSince ? fmtDate(c.memberSince) : 'Just now';
+    const goal = _goalLabel(c.goal);
+    return `
+    <div class="client-card" style="border-color:rgba(212,168,67,0.25);">
+      <div class="client-card-top">
+        <div class="client-av-wrap">
+          <div class="client-av" style="background:rgba(212,168,67,0.15);color:var(--gold);">${ini}</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="client-name">${name}</div>
+          <div class="client-email">${c.email||''}</div>
+          <div style="font-size:10px;color:rgba(212,168,67,0.7);margin-top:3px;letter-spacing:0.3px;">Signed up ${signedUp}${goal ? ' · Goal: '+goal : ''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(212,168,67,0.12);color:var(--gold);border:1px solid rgba(212,168,67,0.3);border-radius:100px;padding:3px 10px;font-weight:700;">Pending</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button class="action-btn" onclick="confirmApproveClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+          Approve
+        </button>
+        <button class="action-btn remove-client-btn" onclick="confirmDeclineClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" style="flex:1;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Decline
+        </button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function updateOnlineStrip() {
@@ -6215,6 +6444,9 @@ function snap_onlineNotify(onlineNow) {
   _onlineNotifyReady = true; // ready after first run
 }
 
+// Cache of UIDs whose photo strips have already been loaded
+window._photoStripLoaded = window._photoStripLoaded || {};
+
 function renderClientGrid() {
   const grid = document.getElementById('client-grid');
   document.getElementById('clients-count').textContent = allClients.length + ' clients registered';
@@ -6224,6 +6456,16 @@ function renderClientGrid() {
   }
   // Sort: online first
   const sorted = [...allClients].sort((a,b) => (b.isOnline?1:0) - (a.isOnline?1:0));
+
+  // Preserve existing photo strip HTML before re-render to avoid flicker/stuck loading
+  const savedPhotoHTML = {};
+  sorted.forEach(c => {
+    const existing = document.getElementById('cc-photos-' + c.uid);
+    if (existing && !existing.querySelector('.cc-photo-none[data-loading]')) {
+      savedPhotoHTML[c.uid] = existing.innerHTML;
+    }
+  });
+
   grid.innerHTML = sorted.map(c => {
     const online = !!c.isOnline;
     const lastSeen = c.lastSeenAt ? timeAgo(c.lastSeenAt.toDate ? c.lastSeenAt.toDate() : new Date(c.lastSeenAt)) : '';
@@ -6254,14 +6496,28 @@ function renderClientGrid() {
       <div class="client-actions">
         <button class="action-btn" onclick="event.stopPropagation();openChatWith('${c.uid}')">Chat</button>
         <button class="action-btn primary" onclick="event.stopPropagation();openAssignFor('${c.uid}')">Assign Plan</button>
+        <button class="action-btn remove-client-btn" onclick="event.stopPropagation();confirmRemoveClient('${c.uid}','${(c.firstName||'').replace(/'/g,'&#39;')} ${(c.lastName||'').replace(/'/g,'&#39;')}')" title="Remove client">Remove</button>
       </div>
       <div class="cc-photo-strip" id="cc-photos-${c.uid}">
-        <div class="cc-photo-none">Loading photos…</div>
+        <div class="cc-photo-none" data-loading="1">Loading photos…</div>
       </div>
     </div>`;
   }).join('');
-  // Load photo strips async after grid renders
-  sorted.forEach(c => loadCardPhotoStrip(c.uid, c.firstName));
+
+  // Restore previously loaded photo strips — no re-fetch needed
+  sorted.forEach(c => {
+    if (savedPhotoHTML[c.uid]) {
+      const strip = document.getElementById('cc-photos-' + c.uid);
+      if (strip) strip.innerHTML = savedPhotoHTML[c.uid];
+    }
+  });
+
+  // Only fetch photos for strips not yet loaded
+  sorted.forEach(c => {
+    if (!window._photoStripLoaded[c.uid]) {
+      loadCardPhotoStrip(c.uid, c.firstName);
+    }
+  });
 }
 
 function timeAgo(date) {
@@ -6420,7 +6676,8 @@ async function loadClientLogs(uid) {
           const doneSets = sets.filter(s => s.done);
           const setRows = sets.map((s, si) => {
             const isDone = s.done;
-            const wt = s.weight > 0 ? s.weight + ' kg' : '—';
+            const sUnit = s.weightUnit || 'kg';
+            const wt = s.weight > 0 ? (s.weightDisplay !== undefined ? s.weightDisplay : s.weight) + ' ' + sUnit : '—';
             const rp = s.reps > 0 ? s.reps : '—';
             return `<tr class="${isDone ? 'set-done' : 'set-skipped'}">
               <td><span class="${isDone ? 'log-set-done-badge' : 'log-set-skip-badge'}"></span>Set ${si+1}</td>
@@ -6446,7 +6703,7 @@ async function loadClientLogs(uid) {
         <td style="font-weight:500">${l.workoutName||'—'}</td>
         <td>${l.totalSets||0}</td>
         <td>${l.totalReps||0}</td>
-        <td>${l.totalVolume||0} kg</td>
+        <td>${l.totalVolumeDisplay !== undefined ? l.totalVolumeDisplay : (l.totalVolume||0)} ${l.weightUnit||'kg'}</td>
         <td><span class="log-badge done">Completed</span></td>
       </tr>`;
 
@@ -7975,6 +8232,9 @@ function buildSumExDetail(doc) {
   var exercises = doc.exercises || [];
   if (!exercises.length) return '<div style="padding:16px 4px;font-size:12px;color:rgba(255,255,255,0.3);text-align:center">No exercise breakdown recorded for this session</div>';
 
+  // Per-set units are stored on each set; doc.weightUnit is 'kg' (normalized total)
+  // We'll read per-set unit from s.weightUnit in the loop.
+
   // Session-level summary bar
   var totalExVol = 0;
   exercises.forEach(function(ex) {
@@ -7995,16 +8255,25 @@ function buildSumExDetail(doc) {
 
     // Exercise volume
     var exVol = 0;
-    doneSets.forEach(function(s){ if(s.weight>0&&s.reps>0) exVol += s.weight*s.reps; });
+    doneSets.forEach(function(s){
+      if(s.weight>0&&s.reps>0) {
+        var displayW = s.weightDisplay !== undefined ? s.weightDisplay : s.weight;
+        exVol += displayW*s.reps;
+      }
+    });
+    var exUnit = (doneSets[0] && doneSets[0].weightUnit) || 'kg';
 
     // Completion color
     var pctColor = pct===100 ? '#4ade80' : pct>=50 ? '#D4A843' : '#f87171';
 
     // Set rows
     var setRows = sets.map(function(s, si) {
-      var wt    = s.weight > 0 ? s.weight + ' kg' : '—';
+      var sUnit = s.weightUnit || 'kg';
+      var wt    = s.weight > 0 ? (s.weightDisplay !== undefined ? s.weightDisplay : s.weight) + ' ' + sUnit : '—';
       var rp    = s.reps   > 0 ? s.reps           : '—';
-      var setVol = (s.weight>0 && s.reps>0) ? Math.round(s.weight*s.reps) : null;
+      var setWtDisplay = s.weightDisplay !== undefined ? s.weightDisplay : s.weight;
+      var setVol = (s.weight>0 && s.reps>0) ? Math.round(setWtDisplay*s.reps) : null;
+      var sUnitLabel = s.weightUnit || 'kg';
       var isBest = bestSet && s === bestSet;
       return '<tr style="border-bottom:1px solid rgba(255,255,255,0.035);'+(s.done?'':'opacity:0.45;')+'">' +
         '<td style="padding:7px 10px;font-size:11px;color:rgba(255,255,255,0.45);white-space:nowrap">' +
@@ -8013,7 +8282,7 @@ function buildSumExDetail(doc) {
         '</td>' +
         '<td style="padding:7px 10px;font-size:12px;color:#F0EDE8;font-weight:700">'+wt+'</td>' +
         '<td style="padding:7px 10px;font-size:12px;color:#F0EDE8">'+rp+' reps</td>' +
-        '<td style="padding:7px 10px;font-size:11px;color:rgba(255,255,255,0.4)">'+(setVol ? setVol+' kg' : '—')+'</td>' +
+        '<td style="padding:7px 10px;font-size:11px;color:rgba(255,255,255,0.4)">'+(setVol ? setVol+' '+sUnitLabel : '—')+'</td>' +
         '<td style="padding:7px 10px;text-align:right">' +
           '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;'+(s.done?'background:rgba(74,222,128,0.12);color:#4ade80':'background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.2)')+'">'+(s.done?'✓':'✗')+'</span>' +
         '</td>' +
@@ -8049,11 +8318,11 @@ function buildSumExDetail(doc) {
         '</div>' +
         (bestSet ? '<div style="background:rgba(212,168,67,0.06);border:1px solid rgba(212,168,67,0.15);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:60px">' +
           '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(212,168,67,0.5);margin-bottom:3px">Best</div>' +
-          '<div style="font-size:14px;font-weight:700;color:#D4A843">'+bestSet.weight+' kg</div>' +
+          '<div style="font-size:14px;font-weight:700;color:#D4A843">'+(bestSet.weightDisplay !== undefined ? bestSet.weightDisplay : bestSet.weight)+' '+(bestSet.weightUnit||'kg')+'</div>' +
         '</div>' : '') +
         (exVol > 0 ? '<div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:60px">' +
           '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,255,255,0.3);margin-bottom:3px">Volume</div>' +
-          '<div style="font-size:14px;font-weight:700;color:#F0EDE8">'+exVol.toLocaleString()+' <span style="font-size:10px;font-weight:400">kg</span></div>' +
+          '<div style="font-size:14px;font-weight:700;color:#F0EDE8">'+Math.round(exVol).toLocaleString()+' <span style="font-size:10px;font-weight:400">'+exUnit+'</span></div>' +
         '</div>' : '') +
       '</div>' +
 
@@ -8118,7 +8387,8 @@ window.wlSumOpenChartDetail = function(chartUid, dotIdx, directDoc, directDate) 
   drawer.style.display   = 'block';
 
   var name = doc.workoutName || doc.name || 'Workout';
-  var vol  = (doc.totalVolume||0).toLocaleString();
+  var vol  = (doc.totalVolumeDisplay !== undefined ? doc.totalVolumeDisplay : (doc.totalVolume||0)).toLocaleString();
+  var volUnit = doc.weightUnit || 'kg';
   var closeJs = "var d=document.getElementById('"+drawerId+"');d.style.display='none';d.dataset.openKey='';";
 
   // Session-level stat chips
@@ -8138,7 +8408,7 @@ window.wlSumOpenChartDetail = function(chartUid, dotIdx, directDoc, directDate) 
       '</div>' +
       '<div style="flex:1;min-width:70px;text-align:center">' +
         '<div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(212,168,67,0.6);margin-bottom:4px">Volume</div>' +
-        '<div style="font-size:18px;font-weight:800;color:#D4A843;font-family:\'Syne\',sans-serif">'+vol+' <span style="font-size:11px;font-weight:400">kg</span></div>' +
+        '<div style="font-size:18px;font-weight:800;color:#D4A843;font-family:\'Syne\',sans-serif">'+vol+' <span style="font-size:11px;font-weight:400">'+volUnit+'</span></div>' +
       '</div>' +
     '</div>';
 
@@ -8241,7 +8511,7 @@ window.setWLView = function(chartUid, view) {
           <td style="padding:9px 10px;font-size:12px;font-weight:600;color:var(--text)">${w.workoutName||'Workout'}</td>
           <td style="padding:9px 10px;font-size:12px;color:rgba(255,255,255,0.7);text-align:right">${w.totalSets||0}</td>
           <td style="padding:9px 10px;font-size:12px;color:rgba(255,255,255,0.7);text-align:right">${w.totalReps||0}</td>
-          <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#D4A843;text-align:right">${(w.totalVolume||0).toLocaleString()} kg</td>
+          <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#D4A843;text-align:right">${(w.totalVolumeDisplay !== undefined ? w.totalVolumeDisplay : (w.totalVolume||0)).toLocaleString()} ${w.weightUnit||'kg'}</td>
           <td style="padding:9px 10px;text-align:right">
             <span id="${arrowId}" style="font-size:10px;color:rgba(255,255,255,0.3);transition:transform .2s;display:inline-block">${hasEx?'▶':''}</span>
           </td>
@@ -9784,16 +10054,22 @@ function openLightbox(url,date,note) {
 async function loadCardPhotoStrip(uid, firstName) {
   const strip = document.getElementById('cc-photos-' + uid);
   if (!strip) return;
+  // Mark as in-flight so concurrent re-renders don't double-fetch
+  window._photoStripLoaded = window._photoStripLoaded || {};
+  window._photoStripLoaded[uid] = true;
   try {
     const snap = await db.collection('members').doc(uid).collection('progressPhotos')
       .orderBy('uploadedAt','desc').limit(3).get();
+    // Strip may have been removed from DOM if client was archived while fetch was in-flight
+    const currentStrip = document.getElementById('cc-photos-' + uid);
+    if (!currentStrip) return;
     if (snap.empty) {
-      strip.innerHTML = `<div class="cc-photo-none">No photos yet</div>`;
+      currentStrip.innerHTML = `<div class="cc-photo-none">No photos yet</div>`;
       return;
     }
     window._photoCache = window._photoCache || {};
     snap.docs.forEach(d => { window._photoCache[d.id] = d.data(); });
-    strip.innerHTML = snap.docs.map((d, i) => {
+    currentStrip.innerHTML = snap.docs.map((d, i) => {
       const p = d.data();
       const src = p.base64 || p.url || '';
       return `<div class="cc-photo-item" onclick="event.stopPropagation();openLightboxById('${d.id}','${fmtDate(p.uploadedAt)}','${(p.note||'').replace(/'/g,"\\'")}')">
@@ -9801,16 +10077,16 @@ async function loadCardPhotoStrip(uid, firstName) {
       </div>`;
     }).join('');
     // Fix onclick using JS refs (base64 strings too large for inline attrs)
-    const items = strip.querySelectorAll('.cc-photo-item');
+    const items = currentStrip.querySelectorAll('.cc-photo-item');
     snap.docs.forEach((d, i) => {
       const p = d.data();
-      const src = p.base64 || p.url || '';
       if (items[i]) {
         items[i].onclick = (e) => { e.stopPropagation(); openLightboxById(d.id, fmtDate(p.uploadedAt), p.note||''); };
       }
     });
   } catch(_) {
-    strip.innerHTML = '';
+    const currentStrip = document.getElementById('cc-photos-' + uid);
+    if (currentStrip) currentStrip.innerHTML = '<div class="cc-photo-none">No photos yet</div>';
   }
 }
 
@@ -12469,6 +12745,7 @@ async function nutrSearchClient(query) {
         const snap = await db.collection('members').get();
         snap.docs.forEach(doc => {
           const d = doc.data();
+          if (d.removedFromCoachAt) return; // removed from roster — skip
           const name = ((d.firstName || '') + ' ' + (d.lastName || '')).toLowerCase();
           const email = (d.email || '').toLowerCase();
           if ((name.includes(q) || email.includes(q)) && !local.find(c => c.uid === doc.id)) {
@@ -17724,7 +18001,431 @@ setTimeout(applySidebarState, 100);
   };
 
 })();
+
+// ─────────────────────────────────────────
+// REMOVE CLIENT
+// ─────────────────────────────────────────
+let _removeClientUid = null;
+
+function confirmRemoveClient(uid, name) {
+  _removeClientUid = uid;
+  document.getElementById('remove-client-name').textContent = name.trim() || 'this client';
+  const modal = document.getElementById('remove-client-modal');
+  modal.style.display = 'flex';
+}
+
+function closeRemoveClientModal() {
+  document.getElementById('remove-client-modal').style.display = 'none';
+  _removeClientUid = null;
+  // Always reset button state so it's ready next time
+  const btn = document.getElementById('confirm-remove-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Remove Client'; }
+}
+
+async function executeRemoveClient() {
+  if (!_removeClientUid) return;
+  const uid = _removeClientUid;
+  const btn = document.getElementById('confirm-remove-btn');
+  btn.disabled = true;
+  btn.textContent = 'Removing…';
+
+  const withTimeout = (p, ms) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out. Check your connection and try again.')), ms))
+  ]);
+
+  try {
+    const coachUser = firebase.auth().currentUser;
+    if (!coachUser) throw new Error('Not authenticated');
+
+    // Archive the client: set status to 'archived', preserve all data.
+    // The client's index.html will check this field and block access.
+    await withTimeout(db.collection('members').doc(uid).update({
+      status: 'archived',
+      archivedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      removedFromCoachAt: firebase.firestore.FieldValue.serverTimestamp(),
+      coachId: firebase.firestore.FieldValue.delete(),
+      coachCode: firebase.firestore.FieldValue.delete()
+    }), 15000);
+
+    // Remove from coach's clients sub-collection (if it exists)
+    try {
+      await db.collection('coaches').doc(coachUser.uid).collection('clients').doc(uid).delete();
+    } catch(e) { /* sub-collection may not exist — ignore */ }
+
+    // Clear photo strip cache for this client so restore gets a fresh load
+    if (window._photoStripLoaded) delete window._photoStripLoaded[uid];
+
+    // Reset button BEFORE closing so it's ready for the next use
+    btn.disabled = false;
+    btn.textContent = 'Remove Client';
+    _removeClientUid = null;
+
+    closeRemoveClientModal();
+    _showRemoveToast('Client removed — their data is preserved.');
+  } catch(err) {
+    console.error('Remove client error:', err);
+    btn.disabled = false;
+    btn.textContent = 'Remove Client';
+    _showRemoveToast('Error: ' + (err.message || 'Could not remove client.'), true);
+  }
+}
+
+// ── RESTORE CLIENT ──────────────────────────────────────────────────
+let _restoreClientUid = null;
+
+function confirmRestoreClient(uid, name) {
+  _restoreClientUid = uid;
+  document.getElementById('restore-client-name').textContent = name.trim() || 'this client';
+  document.getElementById('restore-client-modal').style.display = 'flex';
+}
+
+function closeRestoreClientModal() {
+  document.getElementById('restore-client-modal').style.display = 'none';
+  _restoreClientUid = null;
+  // Always reset button so it's ready for the next restore
+  const btn = document.getElementById('confirm-restore-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Restore Access'; }
+}
+
+async function executeRestoreClient() {
+  if (!_restoreClientUid) return;
+  const uid = _restoreClientUid;
+  const btn = document.getElementById('confirm-restore-btn');
+  btn.disabled = true;
+  btn.textContent = 'Restoring…';
+
+  const withTimeout = (p, ms) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out.')), ms))
+  ]);
+
+  try {
+    const coachUser = firebase.auth().currentUser;
+    if (!coachUser) throw new Error('Not authenticated');
+
+    // Remove archived status — client regains full access immediately.
+    await withTimeout(db.collection('members').doc(uid).update({
+      status: firebase.firestore.FieldValue.delete(),
+      archivedAt: firebase.firestore.FieldValue.delete(),
+      removedFromCoachAt: firebase.firestore.FieldValue.delete()
+    }), 15000);
+
+    // Clear photo strip cache so the restored client's strip reloads fresh
+    if (window._photoStripLoaded) delete window._photoStripLoaded[uid];
+
+    // Reset button BEFORE closing so it's ready for the next use
+    btn.disabled = false;
+    btn.textContent = 'Restore Access';
+    _restoreClientUid = null;
+
+    closeRestoreClientModal();
+    switchClientsTab('active');
+    _showRemoveToast('Client restored — they can now access the app again.', false);
+  } catch(err) {
+    console.error('Restore client error:', err);
+    btn.disabled = false;
+    btn.textContent = 'Restore Access';
+    _showRemoveToast('Error: ' + (err.message || 'Could not restore client.'), true);
+  }
+}
+
+// ── PERMANENTLY DELETE CLIENT ────────────────────────────────────────
+let _deleteClientUid = null;
+
+function confirmDeleteClient(uid, name) {
+  _deleteClientUid = uid;
+  document.getElementById('delete-client-name').textContent = name.trim() || 'this client';
+  document.getElementById('delete-client-modal').style.display = 'flex';
+}
+
+function closeDeleteClientModal() {
+  document.getElementById('delete-client-modal').style.display = 'none';
+  _deleteClientUid = null;
+  const btn = document.getElementById('confirm-delete-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Yes, Delete Permanently'; }
+}
+
+async function executeDeleteClient() {
+  if (!_deleteClientUid) return;
+  const uid = _deleteClientUid;
+  const btn = document.getElementById('confirm-delete-btn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting…';
+
+  const withTimeout = (p, ms) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out. Check your connection and try again.')), ms))
+  ]);
+
+  try {
+    const coachUser = firebase.auth().currentUser;
+    if (!coachUser) throw new Error('Not authenticated');
+
+    // Permanently delete the member document from Firestore.
+    // This removes them from all queries so they never appear in the dashboard again.
+    await withTimeout(db.collection('members').doc(uid).delete(), 15000);
+
+    // Also remove from coach's clients sub-collection if it exists
+    try {
+      await db.collection('coaches').doc(coachUser.uid).collection('clients').doc(uid).delete();
+    } catch(e) { /* may not exist — ignore */ }
+
+    // Clear any cached data for this client
+    if (window._photoStripLoaded) delete window._photoStripLoaded[uid];
+
+    btn.disabled = false;
+    btn.textContent = 'Yes, Delete Permanently';
+    _deleteClientUid = null;
+
+    closeDeleteClientModal();
+    _showRemoveToast('Client permanently deleted — they will no longer appear anywhere in the dashboard.');
+  } catch(err) {
+    console.error('Delete client error:', err);
+    btn.disabled = false;
+    btn.textContent = 'Yes, Delete Permanently';
+    _showRemoveToast('Error: ' + (err.message || 'Could not delete client.'), true);
+  }
+}
+
+// ── APPROVE PENDING SIGNUP ──────────────────────────────────────────
+// A stranger signing up should NOT be treated as a real client until
+// the coach explicitly confirms them. This grants that confirmation.
+let _approveClientUid = null;
+
+function confirmApproveClient(uid, name) {
+  _approveClientUid = uid;
+  document.getElementById('approve-client-name').textContent = name.trim() || 'this person';
+  document.getElementById('approve-client-modal').style.display = 'flex';
+}
+
+function closeApproveClientModal() {
+  document.getElementById('approve-client-modal').style.display = 'none';
+  _approveClientUid = null;
+  const btn = document.getElementById('confirm-approve-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Approve as Client'; }
+}
+
+async function executeApproveClient() {
+  if (!_approveClientUid) return;
+  const uid = _approveClientUid;
+  const btn = document.getElementById('confirm-approve-btn');
+  btn.disabled = true;
+  btn.textContent = 'Approving…';
+
+  const withTimeout = (p, ms) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out. Check your connection and try again.')), ms))
+  ]);
+
+  try {
+    const coachUser = firebase.auth().currentUser;
+    if (!coachUser) throw new Error('Not authenticated');
+
+    // Clear the pending flag — the client's app will let them in immediately.
+    await withTimeout(db.collection('members').doc(uid).update({
+      approvalStatus: firebase.firestore.FieldValue.delete(),
+      approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }), 15000);
+
+    btn.disabled = false;
+    btn.textContent = 'Approve as Client';
+    _approveClientUid = null;
+
+    closeApproveClientModal();
+    switchClientsTab('active');
+    _showRemoveToast('Client approved — they now have full access.', false);
+  } catch(err) {
+    console.error('Approve client error:', err);
+    btn.disabled = false;
+    btn.textContent = 'Approve as Client';
+    _showRemoveToast('Error: ' + (err.message || 'Could not approve client.'), true);
+  }
+}
+
+// ── DECLINE PENDING SIGNUP ──────────────────────────────────────────
+// For signups that are just random people, not real clients. This hides
+// them everywhere in coach.html and blocks them from the app entirely.
+let _declineClientUid = null;
+
+function confirmDeclineClient(uid, name) {
+  _declineClientUid = uid;
+  document.getElementById('decline-client-name').textContent = name.trim() || 'this person';
+  document.getElementById('decline-client-modal').style.display = 'flex';
+}
+
+function closeDeclineClientModal() {
+  document.getElementById('decline-client-modal').style.display = 'none';
+  _declineClientUid = null;
+  const btn = document.getElementById('confirm-decline-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Decline & Remove'; }
+}
+
+async function executeDeclineClient() {
+  if (!_declineClientUid) return;
+  const uid = _declineClientUid;
+  const btn = document.getElementById('confirm-decline-btn');
+  btn.disabled = true;
+  btn.textContent = 'Declining…';
+
+  const withTimeout = (p, ms) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('Request timed out. Check your connection and try again.')), ms))
+  ]);
+
+  try {
+    const coachUser = firebase.auth().currentUser;
+    if (!coachUser) throw new Error('Not authenticated');
+
+    // Mark as rejected. They disappear from every list in coach.html and
+    // are blocked from the app the moment this writes (real-time listener
+    // on their end shows an Access Denied screen).
+    await withTimeout(db.collection('members').doc(uid).update({
+      approvalStatus: 'rejected',
+      rejectedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }), 15000);
+
+    btn.disabled = false;
+    btn.textContent = 'Decline & Remove';
+    _declineClientUid = null;
+
+    closeDeclineClientModal();
+    _showRemoveToast('Signup declined — they no longer have access.', false);
+  } catch(err) {
+    console.error('Decline client error:', err);
+    btn.disabled = false;
+    btn.textContent = 'Decline & Remove';
+    _showRemoveToast('Error: ' + (err.message || 'Could not decline this signup.'), true);
+  }
+}
+
+function _showRemoveToast(msg, isError) {
+  let toast = document.getElementById('remove-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'remove-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:10000;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:600;font-family:Outfit,sans-serif;transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.background = isError ? 'rgba(220,50,50,0.9)' : 'rgba(61,203,114,0.9)';
+  toast.style.color = '#fff';
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+}
+
+// Close modals on backdrop click
+document.addEventListener('click', function(e) {
+  const removeModal = document.getElementById('remove-client-modal');
+  if (removeModal && removeModal.style.display === 'flex' && e.target === removeModal) {
+    closeRemoveClientModal();
+  }
+  const restoreModal = document.getElementById('restore-client-modal');
+  if (restoreModal && restoreModal.style.display === 'flex' && e.target === restoreModal) {
+    closeRestoreClientModal();
+  }
+  const approveModal = document.getElementById('approve-client-modal');
+  if (approveModal && approveModal.style.display === 'flex' && e.target === approveModal) {
+    closeApproveClientModal();
+  }
+  const declineModal = document.getElementById('decline-client-modal');
+  if (declineModal && declineModal.style.display === 'flex' && e.target === declineModal) {
+    closeDeclineClientModal();
+  }
+  const deleteModal = document.getElementById('delete-client-modal');
+  if (deleteModal && deleteModal.style.display === 'flex' && e.target === deleteModal) {
+    closeDeleteClientModal();
+  }
+});
+
 </script>
+
+
+<!-- Permanently Delete Client Confirmation Modal -->
+<div id="delete-client-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a1e;border:1px solid rgba(220,50,50,0.35);border-radius:18px;padding:32px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.7);">
+    <div style="font-size:40px;margin-bottom:14px;">🗑️</div>
+    <div style="font-size:17px;font-weight:700;color:#F0EDE8;font-family:'Syne',sans-serif;margin-bottom:8px;">Permanently Delete Client?</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to permanently delete</div>
+    <div id="delete-client-name" style="font-size:15px;font-weight:700;color:#ff6b6b;margin-bottom:14px;"></div>
+    <div style="font-size:12px;color:rgba(255,100,100,0.9);background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);border-radius:8px;padding:10px 14px;margin-bottom:22px;line-height:1.6;">
+      ⚠️ This action <strong>cannot be undone</strong>. The client's record will be permanently removed from the database and will no longer appear anywhere in this dashboard. Their Firebase Auth account (login credentials) will remain unless deleted separately.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeDeleteClientModal()" style="flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:background 0.15s;">Cancel</button>
+      <button id="confirm-delete-btn" onclick="executeDeleteClient()" style="flex:1;padding:12px;border-radius:10px;background:rgba(220,50,50,0.2);color:#ff6b6b;border:1px solid rgba(220,50,50,0.45);font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;">Yes, Delete Permanently</button>
+    </div>
+  </div>
+</div>
+
+<!-- Remove/Archive Client Confirmation Modal -->
+<div id="remove-client-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a1e;border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:32px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+    <div style="font-size:40px;margin-bottom:14px;">⚠️</div>
+    <div style="font-size:17px;font-weight:700;color:#F0EDE8;font-family:'Syne',sans-serif;margin-bottom:8px;">Remove Client?</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to remove</div>
+    <div id="remove-client-name" style="font-size:15px;font-weight:700;color:#D4A843;margin-bottom:14px;"></div>
+    <div style="font-size:12px;color:rgba(255,200,100,0.8);background:rgba(255,160,60,0.08);border:1px solid rgba(255,160,60,0.18);border-radius:8px;padding:10px 14px;margin-bottom:22px;line-height:1.6;">
+      The client will immediately lose access to the app. All their data — workouts, nutrition, photos, and history — is fully preserved. You can restore them anytime.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeRemoveClientModal()" style="flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:background 0.15s;">Cancel</button>
+      <button id="confirm-remove-btn" onclick="executeRemoveClient()" style="flex:1;padding:12px;border-radius:10px;background:rgba(220,50,50,0.15);color:#ff6b6b;border:1px solid rgba(220,50,50,0.3);font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;">Remove Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- Restore Client Confirmation Modal -->
+<div id="restore-client-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a1e;border:1px solid rgba(74,222,128,0.2);border-radius:18px;padding:32px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+    <div style="font-size:40px;margin-bottom:14px;">✅</div>
+    <div style="font-size:17px;font-weight:700;color:#F0EDE8;font-family:'Syne',sans-serif;margin-bottom:8px;">Restore Access?</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to restore</div>
+    <div id="restore-client-name" style="font-size:15px;font-weight:700;color:#4ADE80;margin-bottom:14px;"></div>
+    <div style="font-size:12px;color:rgba(74,222,128,0.8);background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.18);border-radius:8px;padding:10px 14px;margin-bottom:22px;line-height:1.6;">
+      The client will immediately regain full access to the app and all their previous data, plans, and history.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeRestoreClientModal()" style="flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:background 0.15s;">Cancel</button>
+      <button id="confirm-restore-btn" onclick="executeRestoreClient()" style="flex:1;padding:12px;border-radius:10px;background:rgba(74,222,128,0.15);color:#4ADE80;border:1px solid rgba(74,222,128,0.3);font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;">Restore Access</button>
+    </div>
+  </div>
+</div>
+
+<!-- Approve Pending Signup Confirmation Modal -->
+<div id="approve-client-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a1e;border:1px solid rgba(212,168,67,0.25);border-radius:18px;padding:32px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+    <div style="font-size:40px;margin-bottom:14px;">✅</div>
+    <div style="font-size:17px;font-weight:700;color:#F0EDE8;font-family:'Syne',sans-serif;margin-bottom:8px;">Approve as Client?</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to confirm</div>
+    <div id="approve-client-name" style="font-size:15px;font-weight:700;color:#D4A843;margin-bottom:14px;"></div>
+    <div style="font-size:12px;color:rgba(212,168,67,0.85);background:rgba(212,168,67,0.07);border:1px solid rgba(212,168,67,0.2);border-radius:8px;padding:10px 14px;margin-bottom:22px;line-height:1.6;">
+      They'll be confirmed as a real client and get full access to the app immediately — no need for them to refresh or sign in again.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeApproveClientModal()" style="flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:background 0.15s;">Cancel</button>
+      <button id="confirm-approve-btn" onclick="executeApproveClient()" style="flex:1;padding:12px;border-radius:10px;background:rgba(74,222,128,0.15);color:#4ADE80;border:1px solid rgba(74,222,128,0.3);font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;">Approve as Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- Decline Pending Signup Confirmation Modal -->
+<div id="decline-client-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#1a1a1e;border:1px solid rgba(220,50,50,0.2);border-radius:18px;padding:32px 28px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
+    <div style="font-size:40px;margin-bottom:14px;">🚫</div>
+    <div style="font-size:17px;font-weight:700;color:#F0EDE8;font-family:'Syne',sans-serif;margin-bottom:8px;">Decline This Signup?</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to decline</div>
+    <div id="decline-client-name" style="font-size:15px;font-weight:700;color:#ff6b6b;margin-bottom:14px;"></div>
+    <div style="font-size:12px;color:rgba(255,200,100,0.8);background:rgba(255,160,60,0.08);border:1px solid rgba(255,160,60,0.18);border-radius:8px;padding:10px 14px;margin-bottom:22px;line-height:1.6;">
+      Use this for signups that aren't actually your clients. They'll be blocked from the app immediately and will disappear from your client list completely — they won't show up anywhere in this dashboard, not even in Archived.
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="closeDeclineClientModal()" style="flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:background 0.15s;">Cancel</button>
+      <button id="confirm-decline-btn" onclick="executeDeclineClient()" style="flex:1;padding:12px;border-radius:10px;background:rgba(220,50,50,0.15);color:#ff6b6b;border:1px solid rgba(220,50,50,0.3);font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;">Decline & Remove</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
