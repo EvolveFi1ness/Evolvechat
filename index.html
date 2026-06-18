@@ -735,17 +735,17 @@
  /* ── Exercise card (Hevy style) ── */
  .log-ex-card {
   margin: 10px 12px 0;
-  background: #131313;
+  background: #181818;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
  }
  .log-ex-accent { display: none; }
 
  .log-ex-header {
   padding: 0;
   background: transparent;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex; align-items: center; justify-content: space-between;
   gap: 10px;
   border-radius: 14px 14px 0 0;
@@ -772,12 +772,25 @@
 
  .log-ex-info { flex: 1; min-width: 0; }
  .log-ex-name { font-size: 14px; font-weight: 700; color: var(--text); font-family:'Outfit',sans-serif; line-height: 1.2; }
- .log-ex-muscles { font-size: 11px; color: var(--text3); margin-top: 2px; font-family:'Outfit',sans-serif; }
+ .log-ex-muscles { font-size: 11px; color: var(--text2); margin-top: 2px; font-family:'Outfit',sans-serif; }
  .log-ex-target-badge {
   display: inline-flex; align-items: center;
   margin-top: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
   font-family:'Outfit',sans-serif; padding: 2px 7px; border-radius: 5px;
-  background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.18);
+  background: rgba(201,168,76,0.14); color: var(--gold-2); border: 1px solid rgba(201,168,76,0.3);
+ }
+ .log-ex-pr-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 5px; margin-left: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.3px;
+  font-family:'Outfit',sans-serif; padding: 2px 8px; border-radius: 5px;
+  background: linear-gradient(135deg, rgba(212,168,67,0.3), rgba(240,200,102,0.16));
+  color: #F8E0A0; border: 1px solid rgba(212,168,67,0.5);
+  animation: prBadgePop 0.45s ease;
+ }
+ @keyframes prBadgePop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
  }
  .log-ex-color-bar {
   width: 4px; align-self: stretch; flex-shrink: 0; border-radius: 0 3px 3px 0;
@@ -788,12 +801,12 @@
  .set-table-head {
   display: grid; grid-template-columns: 28px 1fr 68px 68px 36px;
   gap: 4px; padding: 4px 2px 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
   margin-bottom: 3px;
  }
  .set-th {
-  font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-  color: rgba(99,95,90,0.6); font-weight: 700; text-align: center;
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: rgba(193,188,180,0.8); font-weight: 700; text-align: center;
   font-family:'Outfit',sans-serif;
  }
  .set-th:first-child { text-align: left; }
@@ -803,19 +816,19 @@
   gap: 4px; align-items: center; padding: 3px 2px;
   border-radius: 8px; transition: background 0.15s;
  }
- .log-set-row[data-done="1"] { background: rgba(61,203,114,0.05); }
+ .log-set-row[data-done="1"] { background: rgba(61,203,114,0.08); }
 
  .set-num {
-  font-size: 12px; color: var(--text3); text-align: center;
+  font-size: 12px; color: var(--text); text-align: center;
   font-weight: 700; font-family:'Outfit',sans-serif;
   width: 22px; height: 22px; border-radius: 6px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.1);
   display: flex; align-items: center; justify-content: center;
  }
  .log-set-row[data-done="1"] .set-num { background: var(--green); color: #060408; }
 
  .set-input {
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.09); border: 1.5px solid rgba(255,255,255,0.18);
   border-radius: 8px; padding: 8px 4px; color: var(--text);
   font-size: 15px; font-weight: 700; font-family:'Outfit',sans-serif;
   outline: none; width: 100%; text-align: center;
@@ -824,17 +837,18 @@
  }
  .set-input::-webkit-outer-spin-button,
  .set-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
- .set-input:focus { border-color: rgba(201,168,76,0.6); background: rgba(201,168,76,0.06); }
- .set-input::placeholder { color: rgba(99,95,90,0.4); }
+ .set-input:focus { border-color: rgba(201,168,76,0.75); background: rgba(201,168,76,0.1); }
+ .set-input::placeholder { color: rgba(193,188,180,0.45); }
+ .reps-input::placeholder { color: rgba(212,168,67,0.65); font-weight: 700; }
  .set-input.done {
-  border-color: rgba(61,203,114,0.35); background: rgba(61,203,114,0.07);
+  border-color: rgba(61,203,114,0.45); background: rgba(61,203,114,0.1);
   color: var(--green);
  }
 
  .set-done-btn {
   width: 32px; height: 32px; border-radius: 8px;
-  background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1);
-  color: var(--text3); font-size: 13px; cursor: pointer;
+  background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.18);
+  color: var(--text2); font-size: 13px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; flex-shrink: 0; font-weight: 800;
  }
@@ -844,8 +858,8 @@
  .add-set-btn {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   width: 100%; margin: 8px 0 2px;
-  background: transparent; border: 1.5px dashed rgba(255,255,255,0.08);
-  border-radius: 10px; padding: 9px; color: rgba(99,95,90,0.55);
+  background: transparent; border: 1.5px dashed rgba(255,255,255,0.16);
+  border-radius: 10px; padding: 9px; color: rgba(193,188,180,0.75);
   font-family:'Outfit',sans-serif; font-size: 12px; font-weight: 600;
   letter-spacing: 0.3px; cursor: pointer; transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
  }
@@ -880,13 +894,13 @@
 
  .log-note-wrap { padding: 2px 14px 12px; }
  .log-note {
-  width: 100%; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 10px; padding: 9px 12px; color: var(--text2);
+  width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; padding: 9px 12px; color: var(--text);
   font-size: 12px; font-family:'Outfit',sans-serif; outline: none;
   resize: none; height: 44px; transition: border-color 0.2s; line-height: 1.5;
  }
- .log-note:focus { border-color: rgba(201,168,76,0.25); }
- .log-note::placeholder { color: rgba(99,95,90,0.35); }
+ .log-note:focus { border-color: rgba(201,168,76,0.4); }
+ .log-note::placeholder { color: rgba(193,188,180,0.45); }
 
  /* ── Finish workout footer — sticky bottom bar ── */
  .log-complete-area {
@@ -2884,6 +2898,18 @@ h1, h2, h3 {
 }
 .toast.success { border-color: rgba(61,203,114,0.3) !important; color: #3DCB72 !important; background: rgba(61,203,114,0.07) !important; }
 .toast.error  { border-color: rgba(232,96,90,0.3) !important; color: #E8605A !important; }
+.toast.pr {
+ border-color: rgba(212,168,67,0.5) !important;
+ color: #F8E0A0 !important;
+ background: rgba(212,168,67,0.14) !important;
+ font-weight: 800 !important;
+ animation: prToastPop 0.5s ease !important;
+}
+@keyframes prToastPop {
+ 0%   { transform: translateX(-50%) translateY(0) scale(0.85); }
+ 50%  { transform: translateX(-50%) translateY(0) scale(1.06); }
+ 100% { transform: translateX(-50%) translateY(0) scale(1); }
+}
 
 /* Progress photos header */
 .progress-photos-title {
@@ -6493,6 +6519,9 @@ let heightUnit = 'cm';
 let weightUnit = 'kg';
 let step1Data  = {};
 let todayWorkout = null;
+// Personal records cache: { "Exercise Name": { weight (kg), reps, achievedAt } }
+// Loaded from the member doc and updated live as sets are marked done.
+let personalRecords = {};
 let selectedPhotoFile = null;
 let explicitAuthInProgress = false;
 
@@ -6583,7 +6612,7 @@ function showToast(msg, type='') {
  const t = document.getElementById('toast');
  t.textContent = msg; t.className = 'toast' + (type?' '+type:'');
  t.classList.add('show');
- const duration = type === 'error' ? 6000 : 3000;
+ const duration = type === 'error' ? 6000 : type === 'pr' ? 4500 : 3000;
  setTimeout(() => t.classList.remove('show'), duration);
 }
 
@@ -6658,8 +6687,8 @@ async function handleLogin() {
   const doc = await db.collection('members').doc(currentUid).get();
   if (doc.exists) {
    const data = doc.data();
-   // Block archived clients immediately
-   if (data.status === 'archived') {
+   // Block archived (or soft-deleted) clients immediately
+   if (data.status === 'archived' || data.status === 'deleted') {
     showScreen('screen-blocked');
     return;
    }
@@ -6782,11 +6811,11 @@ async function handleFinish() {
 // LOAD HOME SCREEN
 // ─────────────────────────────────────────
 async function loadHomeScreen(data) {
- // Real-time listener: if coach archives this client mid-session, redirect immediately
+ // Real-time listener: if coach archives or deletes this client mid-session, redirect immediately
  const _uid = currentUid || auth.currentUser?.uid;
  if (_uid && !window._accessWatcher) {
   window._accessWatcher = db.collection('members').doc(_uid).onSnapshot(snap => {
-   if (snap.exists && snap.data().status === 'archived') {
+   if (snap.exists && (snap.data().status === 'archived' || snap.data().status === 'deleted')) {
     showScreen('screen-blocked');
    }
   });
@@ -6820,6 +6849,9 @@ async function loadHomeScreen(data) {
 
  // Stats
  document.getElementById('stat-sessions').textContent = data.attendanceCount || 0;
+
+ // Load this client's personal-record cache, used to detect new PRs live as sets are logged
+ personalRecords = data.personalRecords || {};
 
  // Today's workout — ONLY from coach-assigned plan. No fallback.
  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -7221,7 +7253,7 @@ async function buildWorkoutLogger(workout) {
      <div class="set-th"></div>
     </div>
     <div class="sets-container" id="sets-${exIdx}"></div>
-    <button class="add-set-btn" onclick="addSet(${exIdx}, 0, ${defaultReps})">+ Add Set</button>
+    <button class="add-set-btn" onclick="addSet(${exIdx}, 0, '', false, ${defaultReps})">+ Add Set</button>
    </div>
    <div class="log-note-wrap">
     <textarea class="log-note" id="note-${exIdx}" placeholder="Note…"></textarea>
@@ -7250,7 +7282,7 @@ async function buildWorkoutLogger(workout) {
   // Add default sets — suppress auto-save during this loop
   window._loggerRestoring = true;
   for (let s = 0; s < defaultSets; s++) {
-   addSet(exIdx, 0, defaultReps);
+   addSet(exIdx, 0, '', false, defaultReps);
   }
   window._loggerRestoring = false;
  });
@@ -7316,18 +7348,19 @@ function _applyWorkoutWeightUnit() {
 document.addEventListener('DOMContentLoaded', _applyWorkoutWeightUnit);
 setTimeout(_applyWorkoutWeightUnit, 200);
 
-function addSet(exIdx, weight, reps, done) {
+function addSet(exIdx, weight, reps, done, placeholderReps) {
  const container = document.getElementById('sets-' + exIdx);
  if (!container) return;
  const setNum = container.children.length + 1;
  const row  = document.createElement('div');
  row.className  = 'log-set-row';
  row.dataset.done = done ? '1' : '0';
+ const repsHint = (placeholderReps !== undefined && placeholderReps !== null && placeholderReps !== '') ? placeholderReps : '—';
  row.innerHTML = `
   <div class="set-num">${setNum}</div>
-  <div style="font-size:11px;color:rgba(99,95,90,0.35);font-family:'Outfit',sans-serif;text-align:left;padding-left:4px;align-self:center;">—</div>
-  <input class="set-input weight-input" type="number" min="0" step="0.5" placeholder="—" value="${weight||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()">
-  <input class="set-input reps-input"  type="number" min="0" placeholder="—" value="${reps||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()">
+  <div style="font-size:11px;color:rgba(193,188,180,0.4);font-family:'Outfit',sans-serif;text-align:left;padding-left:4px;align-self:center;">—</div>
+  <input class="set-input weight-input" type="number" min="0" step="0.5" placeholder="—" value="${weight||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()" onfocus="this.select()">
+  <input class="set-input reps-input"  type="number" min="0" placeholder="${repsHint}" value="${reps||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()" onfocus="this.select()">
   <button class="set-done-btn" onclick="toggleSetDone(this)" title="Mark done"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>`;
  container.appendChild(row);
  // Restore done styling if reloading from saved state
@@ -7347,6 +7380,88 @@ function toggleSetDone(btn) {
  row.querySelectorAll('.set-input').forEach(inp => inp.classList.toggle('done', !isDone));
  updateSummary();
  if (!window._loggerRestoring) saveLoggerState();
+ // Just marked done (was not done before) — check whether this set beats their PR
+ if (!isDone && !window._loggerRestoring) {
+  const card = row.closest('.log-ex-card');
+  const exIdx = card ? parseInt(card.dataset.exIdx, 10) : NaN;
+  if (!isNaN(exIdx)) checkAndCelebratePR(row, exIdx);
+ }
+}
+
+// ─────────────────────────────────────────
+// PERSONAL RECORDS — PR sound + medal celebration
+// ─────────────────────────────────────────
+function playPRSound() {
+ try {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  const ctx = new AudioCtx();
+  // Short triumphant ascending arpeggio — C5, E5, G5, C6
+  const notes = [523.25, 659.25, 783.99, 1046.50];
+  notes.forEach((freq, i) => {
+   const osc  = ctx.createOscillator();
+   const gain = ctx.createGain();
+   osc.type = 'triangle';
+   osc.frequency.value = freq;
+   const start = ctx.currentTime + i * 0.09;
+   gain.gain.setValueAtTime(0, start);
+   gain.gain.linearRampToValueAtTime(0.22, start + 0.015);
+   gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.32);
+   osc.connect(gain); gain.connect(ctx.destination);
+   osc.start(start); osc.stop(start + 0.34);
+  });
+  setTimeout(() => { try { ctx.close(); } catch(e) {} }, 800);
+ } catch(e) { /* Web Audio unavailable — fail silently */ }
+}
+
+function showPRBadgeOnCard(exIdx) {
+ const card = document.querySelector('.log-ex-card[data-ex-idx="' + exIdx + '"]');
+ if (!card) return;
+ const infoEl = card.querySelector('.log-ex-info');
+ if (!infoEl || infoEl.querySelector('.log-ex-pr-badge')) return; // already shown this session
+ const badge = document.createElement('span');
+ badge.className = 'log-ex-pr-badge';
+ badge.textContent = '🏅 New PR!';
+ const targetBadge = infoEl.querySelector('.log-ex-target-badge');
+ if (targetBadge) targetBadge.insertAdjacentElement('afterend', badge);
+ else infoEl.appendChild(badge);
+}
+
+function celebratePR(exName, weightKg, reps, exIdx) {
+ playPRSound();
+ showPRBadgeOnCard(exIdx);
+ const wDisplay = Math.round(weightKg * 10) / 10;
+ showToast(`🏅 New PR! ${exName} — ${wDisplay}kg × ${reps}`, 'pr');
+}
+
+// Compares the just-completed set against the client's stored best for this
+// exercise. Only celebrates when an existing record is actually beaten —
+// the very first time an exercise is logged just quietly sets the baseline.
+function checkAndCelebratePR(row, exIdx) {
+ const card = row.closest('.log-ex-card');
+ if (!card) return;
+ const exName = card.querySelector('.log-ex-name')?.textContent || '';
+ if (!exName) return;
+ const cardUnit = card.dataset.weightUnit || 'kg';
+ const rawW = parseFloat(row.querySelector('.weight-input').value) || 0;
+ const reps = parseInt(row.querySelector('.reps-input').value, 10) || 0;
+ if (rawW <= 0 || reps <= 0) return; // nothing meaningful to compare against
+
+ const weightKg = cardUnit === 'lbs' ? rawW / 2.20462 : rawW;
+ const prev = personalRecords[exName];
+
+ if (!prev) {
+  // First time logging this exercise — establish the baseline, no fanfare yet
+  personalRecords[exName] = { weight: Math.round(weightKg * 100) / 100, reps, achievedAt: Date.now() };
+  return;
+ }
+
+ const isHeavier = weightKg > prev.weight + 0.001;
+ const isSameWeightMoreReps = Math.abs(weightKg - prev.weight) < 0.001 && reps > (prev.reps || 0);
+ if (isHeavier || isSameWeightMoreReps) {
+  personalRecords[exName] = { weight: Math.round(weightKg * 100) / 100, reps, achievedAt: Date.now() };
+  celebratePR(exName, weightKg, reps, exIdx);
+ }
 }
 
 function updateSummary() {
@@ -7427,8 +7542,10 @@ function restoreLoggerState() {
    }
    // Wipe the default sets, then restore exactly what was saved
    container.innerHTML = '';
+   const tgtMatch = (todayWorkout?.exercises?.[exIdx]?.target || '').match(/(\d+)[×x](\d+)/);
+   const tgtReps = tgtMatch ? tgtMatch[2] : '';
    exData.sets.forEach(s => {
-    addSet(exIdx, s.weight, s.reps, s.done);
+    addSet(exIdx, s.weight, s.reps, s.done, tgtReps);
    });
    // Restore note
    const noteEl = document.getElementById('note-' + exIdx);
@@ -7579,9 +7696,10 @@ async function completeWorkout() {
    completedAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  // Increment attendance
+  // Increment attendance, and persist any new/updated personal records from this session
   await db.collection('members').doc(uid).update({
-   attendanceCount: firebase.firestore.FieldValue.increment(1)
+   attendanceCount: firebase.firestore.FieldValue.increment(1),
+   personalRecords: personalRecords
   });
 
   // Update UI
@@ -8896,7 +9014,7 @@ function listenPendingApproval(uid) {
  _pendingApprovalUnsub = db.collection('members').doc(uid).onSnapshot(snap => {
   if (!snap.exists) return;
   const d = snap.data();
-  if (d.status === 'archived') {
+  if (d.status === 'archived' || d.status === 'deleted') {
    _pendingApprovalUnsub(); _pendingApprovalUnsub = null;
    showScreen('screen-blocked');
    return;
@@ -8933,12 +9051,12 @@ auth.onAuthStateChanged(async user => {
   const doc = await db.collection('members').doc(user.uid).get();
   if (doc.exists) {
    const data = doc.data();
-   // Block archived clients — show access suspended screen
-   if (data.status === 'archived') {
+   // Block archived or soft-deleted clients — show access suspended screen
+   if (data.status === 'archived' || data.status === 'deleted') {
     showScreen('screen-blocked');
     // Listen for real-time restore so they regain access without re-logging in
     db.collection('members').doc(user.uid).onSnapshot(snap => {
-     if (snap.exists && snap.data().status !== 'archived') {
+     if (snap.exists && snap.data().status !== 'archived' && snap.data().status !== 'deleted') {
       loadHomeScreen(snap.data());
      }
     });
