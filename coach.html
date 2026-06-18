@@ -6212,8 +6212,10 @@ function loadAllClients() {
   console.log('[COACH] Starting members onSnapshot listener...');
   clientsUnsub = db.collection('members').onSnapshot(snap => {
     const all = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-    // Rejected signups are hidden everywhere — coach already declined them.
-    const visible = all.filter(c => c.approvalStatus !== 'rejected');
+    // Rejected signups and permanently-deleted clients are hidden everywhere —
+    // the coach already declined/deleted them. They live on in Firestore so they
+    // can still be recovered later from recovery.html, just not in this dashboard.
+    const visible = all.filter(c => c.approvalStatus !== 'rejected' && c.status !== 'deleted');
     // Active = not archived, not awaiting approval
     allClients = visible.filter(c => c.status !== 'archived' && c.approvalStatus !== 'pending');
     archivedClients = visible.filter(c => c.status === 'archived');
@@ -18162,9 +18164,17 @@ async function executeDeleteClient() {
     const coachUser = firebase.auth().currentUser;
     if (!coachUser) throw new Error('Not authenticated');
 
-    // Permanently delete the member document from Firestore.
-    // This removes them from all queries so they never appear in the dashboard again.
-    await withTimeout(db.collection('members').doc(uid).delete(), 15000);
+    // Soft-delete: mark the member as deleted instead of erasing the document.
+    // This hides them from every tab in this dashboard (same as a real delete
+    // would feel from the coach's side), but preserves their data so they can
+    // still be brought back from recovery.html if this was a mistake. Bringing
+    // them back lands them in Archived, never straight into Active.
+    await withTimeout(db.collection('members').doc(uid).update({
+      status: 'deleted',
+      deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      coachId: firebase.firestore.FieldValue.delete(),
+      coachCode: firebase.firestore.FieldValue.delete()
+    }), 15000);
 
     // Also remove from coach's clients sub-collection if it exists
     try {
@@ -18179,7 +18189,7 @@ async function executeDeleteClient() {
     _deleteClientUid = null;
 
     closeDeleteClientModal();
-    _showRemoveToast('Client permanently deleted — they will no longer appear anywhere in the dashboard.');
+    _showRemoveToast('Client deleted — they will no longer appear anywhere in the dashboard.');
   } catch(err) {
     console.error('Delete client error:', err);
     btn.disabled = false;
@@ -18347,10 +18357,10 @@ document.addEventListener('click', function(e) {
   <div style="background:#1a1a1e;border:1px solid rgba(220,50,50,0.35);border-radius:18px;padding:32px 28px;max-width:400px;width:100%;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.7);">
     <div style="font-size:40px;margin-bottom:14px;">🗑️</div>
     <div style="font-size:17px;font-weight:700;color:#F0EDE8;font-family:'Syne',sans-serif;margin-bottom:8px;">Permanently Delete Client?</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to permanently delete</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to delete</div>
     <div id="delete-client-name" style="font-size:15px;font-weight:700;color:#ff6b6b;margin-bottom:14px;"></div>
     <div style="font-size:12px;color:rgba(255,100,100,0.9);background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.3);border-radius:8px;padding:10px 14px;margin-bottom:22px;line-height:1.6;">
-      ⚠️ This action <strong>cannot be undone</strong>. The client's record will be permanently removed from the database and will no longer appear anywhere in this dashboard. Their Firebase Auth account (login credentials) will remain unless deleted separately.
+      ⚠️ They'll disappear from every tab in this dashboard — Active, Pending, and Archived — and lose access immediately. If this was a mistake, you can still find and bring them back from the Recovery page (recovery.html) — they'll return to Archived, not straight back to Active. Their Firebase Auth account (login credentials) will remain unless deleted separately.
     </div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeDeleteClientModal()" style="flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:background 0.15s;">Cancel</button>
@@ -18418,7 +18428,7 @@ document.addEventListener('click', function(e) {
     <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:6px;">You are about to decline</div>
     <div id="decline-client-name" style="font-size:15px;font-weight:700;color:#ff6b6b;margin-bottom:14px;"></div>
     <div style="font-size:12px;color:rgba(255,200,100,0.8);background:rgba(255,160,60,0.08);border:1px solid rgba(255,160,60,0.18);border-radius:8px;padding:10px 14px;margin-bottom:22px;line-height:1.6;">
-      Use this for signups that aren't actually your clients. They'll be blocked from the app immediately and will disappear from your client list completely — they won't show up anywhere in this dashboard, not even in Archived.
+      Use this for signups that aren't actually your clients. They'll be blocked from the app immediately and will disappear from your client list completely — they won't show up anywhere in this dashboard, not even in Archived. If this was a mistake, you can still find and bring them back from the Recovery page (recovery.html) — they'll return to Pending Requests, not get auto-approved.
     </div>
     <div style="display:flex;gap:10px;">
       <button onclick="closeDeclineClientModal()" style="flex:1;padding:12px;border-radius:10px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.1);font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:background 0.15s;">Cancel</button>
