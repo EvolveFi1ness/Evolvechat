@@ -10121,6 +10121,7 @@ const NUTR_CATS = [...new Set(NUTR_FOODS.map(f=>f.category))].sort();
 let nutrCurrentDate  = new Date();
 let nutrFoodLogs   = {}; // { 'YYYY-MM-DD': { meal: [{...food, servingG, logId}] } }
 let nutrPlan     = null;
+let nutrPlanId    = null; // doc id of the loaded nutritionPlans doc (for auto-clear below)
 let nutrSearchMeal  = 'any';
 let nutrDetailFood  = null;
 let nutrDetailMeal  = 'Meal 1';
@@ -10188,11 +10189,40 @@ async function initClientNutrition() {
  // Load macro targets
  try {
   const snap = await db.collection('members').doc(uid).collection('nutritionPlans').orderBy('assignedAt','desc').limit(1).get();
-  if (!snap.empty) nutrPlan = snap.docs[0].data();
+  if (!snap.empty) { nutrPlan = snap.docs[0].data(); nutrPlanId = snap.docs[0].id; }
+  else { nutrPlan = null; nutrPlanId = null; }
  } catch(e) {}
  // Load today's logs
  await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
+ // Self-healing: if a food has been assigned, a leftover macro-only target
+ // (no specific foods) is stale — clear it so only the food assignment shows.
+ await nutrAutoClearMacroOnlyTarget(uid);
  renderNutritionTab();
+}
+
+// ── SELF-HEALING: clear a stale macro-only target once food is assigned ──
+// Mirrors the coach-side auto-clear in coach.html. A macro-only
+// nutritionPlans doc (created via "Assign Macros →", identifiable by an
+// empty/missing `meals` array) only makes sense when the client has NO
+// assigned foods. If foods have since been assigned — including data
+// created before the coach-side fix existed — this cleans it up here too,
+// so the client only ever sees one or the other, never both.
+async function nutrAutoClearMacroOnlyTarget(uid) {
+ if (!nutrPlan || !nutrPlanId) return;
+ const isMacroOnly = !nutrPlan.meals || nutrPlan.meals.length === 0;
+ if (!isMacroOnly) return;
+
+ const dateKey = nutrDateKey(nutrCurrentDate);
+ const assigned = (nutrFoodLogs[dateKey]?.__assigned__) || [];
+ if (!assigned.length) return;
+
+ try {
+  await db.collection('members').doc(uid).collection('nutritionPlans').doc(nutrPlanId).delete();
+  nutrPlan = null;
+  nutrPlanId = null;
+ } catch(e) {
+  console.error('nutrAutoClearMacroOnlyTarget failed:', e);
+ }
 }
 
 async function nutrLoadDayLogs(uid, dateKey) {
@@ -10361,9 +10391,33 @@ function renderNutrAssignedPlan() {
 
  // Macro target summary header
  const planHeader = nutrPlan ? `
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);">
-   <div style="font-size:13px;font-weight:700;color:#c9a84c;">${nutrPlan.planName||'My Plan'}</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:6px;">
+   <div style="display:flex;align-items:center;gap:8px;">
+    <span style="font-size:13px;font-weight:700;color:#c9a84c;">${nutrPlan.planName||'My Plan'}</span>
+    ${!assigned.length ? '<span style="font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#c9a84c;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:100px;padding:2px 8px;">Macros Only</span>' : ''}
+   </div>
    <div style="font-size:11px;color:#555;">P:${nutrPlan.protein||0}g · C:${nutrPlan.carbs||0}g · F:${nutrPlan.fats||0}g · ${nutrPlan.calories||0} kcal</div>
+  </div>` : '';
+
+ // Big macro chip grid — shown when the plan is targets-only (no specific foods assigned)
+ const macroChipsGrid = nutrPlan ? `
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+    <div style="font-size:16px;font-weight:800;color:#c9a84c;">${nutrPlan.calories||0}</div>
+    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">kcal</div>
+   </div>
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+    <div style="font-size:15px;font-weight:700;color:#60a5fa;">${nutrPlan.protein||0}g</div>
+    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Protein</div>
+   </div>
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+    <div style="font-size:15px;font-weight:700;color:#c9a84c;">${nutrPlan.carbs||0}g</div>
+    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Carbs</div>
+   </div>
+   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+    <div style="font-size:15px;font-weight:700;color:#f87171;">${nutrPlan.fats||0}g</div>
+    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Fats</div>
+   </div>
   </div>` : '';
 
  if (!assigned.length && !nutrPlan) {
@@ -10450,7 +10504,10 @@ function renderNutrAssignedPlan() {
    ${assigned.length ? `
     <div style="font-size:11px;color:#555;margin-bottom:10px;">Grams needed per food item</div>
     ${mealSections}
-   ` : '<div style="color:#555;font-size:12px;text-align:center;padding:10px 0;">No foods assigned for today.</div>'}
+   ` : `
+    ${macroChipsGrid}
+    <div style="color:#666;font-size:12px;text-align:center;line-height:1.6;">Log your own meals above to track against these targets.</div>
+   `}
   </div>`;
 }
 
