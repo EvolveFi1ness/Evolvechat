@@ -231,15 +231,6 @@
     will-change: transform;
     transform: translateZ(0);
   }
-  /* Before/after handle — only transform, compositor only */
-  #coach-ba-handle {
-    will-change: transform, box-shadow;
-    backface-visibility: hidden;
-  }
-  #coach-ba-divider {
-    will-change: left;
-    transform: translateZ(0);
-  }
   /* Scroll containers */
   .modal-body,
   .sidebar-nav,
@@ -481,68 +472,30 @@
   .coach-ba-chip.active { background: rgba(201,168,76,0.12); color: #c9a84c; border-color: rgba(201,168,76,0.35); }
   .coach-ba-chip.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
 
-  /* slider */
+  /* side-by-side before/after photos */
   #coach-ba-slider-wrap {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  @media(max-width:560px){ #coach-ba-slider-wrap { grid-template-columns: 1fr; } }
+  .coach-ba-photo-col {
     position: relative; border-radius: 18px; overflow: hidden;
     border: 1px solid rgba(255,255,255,0.07);
-    user-select: none; touch-action: none;
     background: var(--bg2);
     box-shadow: 0 16px 48px rgba(0,0,0,0.55);
-    cursor: ew-resize;
   }
-  #coach-ba-img-after {
+  #coach-ba-img-before, #coach-ba-img-after {
     display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover;
-    max-height: 500px; pointer-events: none;
-  }
-  #coach-ba-before-wrap {
-    position: absolute; inset: 0; overflow: hidden;
-    clip-path: inset(0 50% 0 0);
-    will-change: clip-path;
-    transform: translateZ(0);
-  }
-  #coach-ba-img-before {
-    display: block; object-fit: cover; max-height: 500px;
-    position: absolute; top: 0; left: 0; height: 100%; width: 100%; pointer-events: none;
-    transform: translateZ(0);
+    max-height: 500px;
   }
   .coach-ba-img-label {
-    position: absolute; bottom: 14px; z-index: 4;
+    position: absolute; bottom: 14px; left: 12px; z-index: 4;
     font-size: 9px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase;
     padding: 5px 12px; border-radius: 100px; font-family: 'Inter',sans-serif;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     pointer-events: none;
   }
-  .coach-ba-img-label.before-side { left: 12px; background: rgba(90,159,239,0.2); color: #93c5fd; border: 1px solid rgba(90,159,239,0.3); }
-  .coach-ba-img-label.after-side  { right: 12px; background: rgba(61,203,114,0.18); color: #6ee7b7; border: 1px solid rgba(61,203,114,0.28); }
-  #coach-ba-divider {
-    position: absolute; top: 0; bottom: 0; width: 2px;
-    background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.9) 12%, rgba(255,255,255,0.9) 88%, transparent 100%);
-    left: 50%; transform: translateX(-50%); z-index: 5; pointer-events: none;
-  }
-  #coach-ba-handle {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 44px; height: 44px; border-radius: 50%;
-    background: rgba(255,255,255,0.95);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 3px rgba(255,255,255,0.15);
-    display: flex; align-items: center; justify-content: center;
-    cursor: ew-resize; z-index: 6; pointer-events: none;
-    transition: transform 0.1s, box-shadow 0.1s;
-  }
-  #coach-ba-slider-wrap.dragging #coach-ba-handle {
-    transform: translate(-50%, -50%) scale(1.1);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.2);
-  }
-  .coach-ba-drag-hint {
-    text-align: center; font-size: 10px; color: #333; letter-spacing: 0.5px;
-    margin-top: 8px; font-family: 'Outfit',sans-serif; font-weight: 600;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .coach-ba-drag-hint::before, .coach-ba-drag-hint::after {
-    content: ''; display: inline-block; width: 24px; height: 1px;
-    background: linear-gradient(90deg, transparent, #333);
-  }
-  .coach-ba-drag-hint::after { background: linear-gradient(270deg, transparent, #333); }
+  .coach-ba-img-label.before-side { background: rgba(90,159,239,0.2); color: #93c5fd; border: 1px solid rgba(90,159,239,0.3); }
+  .coach-ba-img-label.after-side  { background: rgba(61,203,114,0.18); color: #6ee7b7; border: 1px solid rgba(61,203,114,0.28); }
 
   /* stats strip */
   .coach-ba-stats {
@@ -4148,6 +4101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="nav-badge" id="chat-badge" style="display:none">0</span>
       </div>
 
+
     </nav>
     <div class="sidebar-footer">
       <div class="coach-info">
@@ -4472,22 +4426,67 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="nutr-macro-chip"><span class="nmc-val" id="nmc-c">—</span><span class="nmc-lbl">Carbs</span></div>
             <div class="nutr-macro-sep">·</div>
             <div class="nutr-macro-chip"><span class="nmc-val" id="nmc-f">—</span><span class="nmc-lbl">Fats</span></div>
+            <button onclick="removeClientMacroTarget()" title="Remove macro target"
+              style="margin-left:10px;background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;"
+              onmouseover="this.style.borderColor='rgba(248,113,113,0.4)';this.style.color='#F87171'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+            </button>
           </div>
         </div>
 
         <div class="nutr-builder-layout">
           <!-- Assigned Foods Panel -->
           <div class="nutr-builder-col">
+            <!-- Macro Targets Only (no food needed) -->
+            <div class="nutr-builder macro-only-card" id="macro-target-card">
+              <div class="nutr-builder-header">
+                <div class="nutr-builder-title">Macro Targets</div>
+                <span class="macro-only-badge">No food required</span>
+              </div>
+              <div class="macro-only-blurb">For clients who already know what foods to eat — just set their daily targets and they'll see progress rings &amp; bars on their end, no food list needed.</div>
+              <div class="nutr-row">
+                <div class="nutr-field"><label>Plan Name</label><input type="text" id="mt-plan-name" placeholder="e.g. Cut Phase Macros" /></div>
+                <div class="nutr-field"><label>Day Type</label>
+                  <select id="mt-day-type">
+                    <option value="">All Days</option>
+                    <option value="Training Day">Training Day</option>
+                    <option value="Rest Day">Rest Day</option>
+                  </select>
+                </div>
+              </div>
+              <div class="nutr-row-4">
+                <div class="nutr-field"><label>Protein (g)</label><input type="number" id="mt-protein" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
+                <div class="nutr-field"><label>Carbs (g)</label><input type="number" id="mt-carbs" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
+                <div class="nutr-field"><label>Fats (g)</label><input type="number" id="mt-fats" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
+                <div class="nutr-field"><label>Calories</label><input type="number" id="mt-calories" placeholder="auto" min="0" inputmode="numeric" oninput="mtCaloriesManuallySet=true" /></div>
+              </div>
+              <div class="nutr-field" style="margin-bottom:14px;"><label>Notes (optional)</label><textarea id="mt-notes" rows="2" placeholder="e.g. Hit protein first, carbs/fats flexible around training"></textarea></div>
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                <button class="assign-btn" type="button" onclick="assignMacroTargetOnly()" id="mt-assign-btn" style="flex:1;min-width:160px;">Assign Macros →</button>
+                <button class="macro-reset-btn" type="button" onclick="clearMacroTargetForm()">Reset</button>
+              </div>
+              <div class="macro-target-note" id="mt-current-note"></div>
+            </div>
+
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:12px;">
               <div style="padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
                 <div>
                   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);">Assigned Foods</div>
                   <div style="font-size:11px;color:var(--muted);margin-top:2px;">Foods assigned to client today <span id="assign-day-label" style="color:var(--gold);"></span></div>
                 </div>
-                <button onclick="loadAssignedFoodsPanel()" title="Refresh"
-                  style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:14px;cursor:pointer;transition:all 0.15s;line-height:1;"
-                  onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
-                  onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">&#8635;</button>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button onclick="coachClearAllAssignedFoods()" title="Remove all assigned foods" id="af-clear-all-btn"
+                    style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:'Inter',sans-serif;"
+                    onmouseover="this.style.borderColor='rgba(248,113,113,0.4)';this.style.color='#F87171'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Clear All</button>
+                  <button onclick="loadAssignedFoodsPanel()" title="Refresh"
+                    style="background:transparent;border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);font-size:14px;cursor:pointer;transition:all 0.15s;line-height:1;"
+                    onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+                    onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">&#8635;</button>
+                </div>
               </div>
               <div id="assigned-foods-list" style="padding:14px 16px;">
                 <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">Select a client to see their assigned foods.</div>
@@ -4547,6 +4546,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     </div>
+
+    <!-- ═══ SETTINGS ═══ -->
+
 
     <!-- ═══ PROGRESS TRACKER ═══ -->
 
@@ -4613,22 +4615,17 @@ document.addEventListener('DOMContentLoaded', () => {
           <div id="coach-ba-content" style="display:none">
             <!-- Angle chips -->
             <div class="coach-ba-chips" id="coach-ba-angle-tabs"></div>
-            <!-- Slider -->
+            <!-- Side-by-side photos -->
             <div id="coach-ba-slider-wrap">
-              <img id="coach-ba-img-after" src="" alt="After">
-              <div id="coach-ba-before-wrap">
+              <div class="coach-ba-photo-col">
                 <img id="coach-ba-img-before" src="" alt="Before">
+                <div class="coach-ba-img-label before-side">Before</div>
               </div>
-              <div id="coach-ba-divider">
-                <div id="coach-ba-handle">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </div>
+              <div class="coach-ba-photo-col">
+                <img id="coach-ba-img-after" src="" alt="After">
+                <div class="coach-ba-img-label after-side">After</div>
               </div>
-              <div class="coach-ba-img-label before-side">Before</div>
-              <div class="coach-ba-img-label after-side">After</div>
             </div>
-            <div class="coach-ba-drag-hint">Drag to compare</div>
             <!-- Stats strip -->
             <div class="coach-ba-stats" id="coach-ba-weight-row" style="display:none">
               <div class="coach-ba-stat">
@@ -4850,6 +4847,14 @@ document.addEventListener('DOMContentLoaded', () => {
 .nutr-builder-title { font-family: 'Syne',sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
 .nutr-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 @media(max-width:500px){ .nutr-row { grid-template-columns: 1fr; } }
+.nutr-row-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 12px; }
+@media(max-width:600px){ .nutr-row-4 { grid-template-columns: repeat(2,1fr); } }
+.macro-only-card { position: relative; border: 1px solid rgba(212,168,67,0.25); background: linear-gradient(180deg, rgba(212,168,67,0.05), var(--bg2) 60%); }
+.macro-only-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gold); background: rgba(212,168,67,0.12); border: 1px solid rgba(212,168,67,0.3); border-radius: 100px; padding: 3px 10px; }
+.macro-only-blurb { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+.macro-reset-btn { background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 10px; padding: 0 18px; height: 42px; cursor: pointer; font-size: 12px; font-family: 'Inter',sans-serif; font-weight: 600; transition: all 0.15s; }
+.macro-reset-btn:hover { border-color: var(--border2); color: var(--text); }
+.macro-target-note { margin-top: 12px; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .nutr-field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
 .nutr-field input, .nutr-field select, .nutr-field textarea { width: 100%; background: var(--bg4); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; color: var(--text); font-size: 13px; font-family: 'Inter',sans-serif; outline: none; transition: border-color 0.2s; resize: vertical; }
 .nutr-field input:focus, .nutr-field select:focus, .nutr-field textarea:focus { border-color: var(--gold); }
@@ -6053,6 +6058,8 @@ function bootApp() {
   startCoachNotifListener();
 }
 
+
+
 let _coachNotifUnsub = null;
 let _lastNotifTimestamp = new Date();  // only show notifs that arrive after login
 
@@ -6618,8 +6625,6 @@ async function openClientModal(uid) {
   document.getElementById('client-modal').classList.add('open');
   switchModalTab('photos');
   setCoachPhotoView('grid');
-  const _wrapReset = document.getElementById('coach-ba-slider-wrap');
-  if (_wrapReset) _wrapReset._coachSliderInit = false;
   loadClientLogs(uid);
   loadClientPhotos(uid);
   loadClientScheduleInfo(uid);
@@ -9888,12 +9893,7 @@ function coachRenderBeforeAfter(sorted) {
       id="coach-ba-tab-${a}" onclick="coachSwitchBaAngle('${a}')">${ANGLE_NAMES[a]||a}</button>`;
   }).join('');
 
-  // Reset slider so it re-calibrates to new modal width
-  const wrap = document.getElementById('coach-ba-slider-wrap');
-  if (wrap) wrap._coachSliderInit = false;
-
   coachShowBaAngle(preferred, oldest, newest);
-  coachInitBaSlider();
 }
 
 function coachSwitchBaAngle(angle) {
@@ -9924,8 +9924,6 @@ function coachShowBaAngle(angle, oldest, newest) {
   imgA.onload = () => { imgA.style.opacity = '1'; };
   imgB.onload = () => { imgB.style.opacity = '1'; };
 
-  coachSetBaDivider(50);
-
   // Stats
   const bw = before.d.weight, aw = after.d.weight;
   const bu = before.d.weightUnit || 'kg', au = after.d.weightUnit || 'kg';
@@ -9947,45 +9945,6 @@ function coachShowBaAngle(angle, oldest, newest) {
   } else {
     wRow.style.display = 'none';
   }
-}
-
-let _baDividerRaf = null;
-function coachSetBaDivider(pct) {
-  pct = Math.max(4, Math.min(96, pct));
-  // Cancel any pending frame to avoid stacking
-  if (_baDividerRaf) cancelAnimationFrame(_baDividerRaf);
-  _baDividerRaf = requestAnimationFrame(function() {
-    _baDividerRaf = null;
-    const div  = document.getElementById('coach-ba-divider');
-    const wrap = document.getElementById('coach-ba-before-wrap');
-    const handle = document.getElementById('coach-ba-handle');
-    // Use clip-path instead of width — compositor-only, no layout thrash
-    if (wrap) wrap.style.clipPath = 'inset(0 ' + (100 - pct).toFixed(2) + '% 0 0)';
-    if (div)  div.style.left = pct.toFixed(2) + '%';
-    if (handle) handle.style.left = pct.toFixed(2) + '%';
-    // imgB width no longer needed — clip-path handles reveal
-  });
-}
-
-function coachInitBaSlider() {
-  const wrap = document.getElementById('coach-ba-slider-wrap');
-  if (!wrap || wrap._coachSliderInit) return;
-  wrap._coachSliderInit = true;
-  coachSetBaDivider(50);
-
-  const getPct = (cx) => { const r = wrap.getBoundingClientRect(); return ((cx - r.left) / r.width) * 100; };
-  let drag = false;
-
-  const onStart = (cx) => { drag = true; wrap.classList.add('dragging'); coachSetBaDivider(getPct(cx)); };
-  const onMove  = (e)  => { if (!drag) return; e.preventDefault(); coachSetBaDivider(getPct(e.touches ? e.touches[0].clientX : e.clientX)); };
-  const onUp    = ()   => { drag = false; wrap.classList.remove('dragging'); };
-
-  wrap.addEventListener('mousedown',  (e) => onStart(e.clientX));
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('mouseup',   onUp);
-  wrap.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), { passive: true });
-  wrap.addEventListener('touchmove',  onMove, { passive: false });
-  wrap.addEventListener('touchend',   onUp);
 }
 
 const _COACH_DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -16245,8 +16204,139 @@ function closeFoodDetail() {
 function onAssignClientChange() {
   updateFdContextLabel();
   loadAssignedFoodsPanel();
+  loadClientMacroTargetCard();
   // Reset plan totals cache for new client
   window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
+}
+
+// ── MACRO-ONLY TARGET ASSIGNMENT (no food required) ──────────
+// Lets a coach set a client's daily macro/calorie targets directly,
+// for clients who already know what foods they need to hit those numbers.
+// Writes to the same `nutritionPlans` collection the food-based plans use,
+// just with an empty `meals` array — the client app already renders target
+// rings/bars purely off protein/carbs/fats/calories, regardless of meals.length.
+
+let mtCaloriesManuallySet = false;
+
+function recalcMacroTotal() {
+  if (mtCaloriesManuallySet) return;
+  const p = parseFloat(document.getElementById('mt-protein')?.value) || 0;
+  const c = parseFloat(document.getElementById('mt-carbs')?.value) || 0;
+  const f = parseFloat(document.getElementById('mt-fats')?.value) || 0;
+  const calEl = document.getElementById('mt-calories');
+  if (calEl && (p || c || f)) calEl.value = Math.round(p * 4 + c * 4 + f * 9);
+}
+
+function clearMacroTargetForm() {
+  ['mt-plan-name','mt-protein','mt-carbs','mt-fats','mt-calories','mt-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const dayType = document.getElementById('mt-day-type');
+  if (dayType) dayType.value = '';
+  mtCaloriesManuallySet = false;
+}
+
+let _currentMacroPlanId = null;
+
+async function loadClientMacroTargetCard() {
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  const strip = document.getElementById('nutr-current-macros');
+  const note  = document.getElementById('mt-current-note');
+  clearMacroTargetForm();
+  _currentMacroPlanId = null;
+
+  if (!clientUid) {
+    if (strip) strip.style.display = 'none';
+    if (note) note.innerHTML = '';
+    return;
+  }
+
+  if (note) note.innerHTML = 'Loading current target…';
+  try {
+    const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans')
+      .orderBy('assignedAt','desc').limit(1).get();
+
+    if (snap.empty) {
+      if (strip) strip.style.display = 'none';
+      if (note) note.innerHTML = 'No macro target set yet for this client.';
+      return;
+    }
+
+    const d = snap.docs[0].data();
+    _currentMacroPlanId = snap.docs[0].id;
+
+    // Populate the macro chip strip up near the client picker
+    if (strip) {
+      strip.style.display = 'flex';
+      document.getElementById('nmc-cal').textContent = d.calories || '—';
+      document.getElementById('nmc-p').textContent    = (d.protein || 0) + 'g';
+      document.getElementById('nmc-c').textContent    = (d.carbs   || 0) + 'g';
+      document.getElementById('nmc-f').textContent    = (d.fats    || 0) + 'g';
+    }
+
+    if (note) {
+      const foodCount = (d.meals || []).reduce((n,m) => n + (m.foods?.length||0), 0);
+      const kind = foodCount > 0 ? 'with foods' : 'macros only';
+      note.innerHTML = `Current target: <strong style="color:var(--gold);">${d.planName||'Plan'}</strong> · ${d.calories||0} kcal (${kind})`;
+    }
+  } catch(e) {
+    if (note) note.innerHTML = '';
+  }
+}
+
+async function removeClientMacroTarget() {
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  if (!clientUid || !_currentMacroPlanId) { showToast('Nothing to remove'); return; }
+  if (!confirm('Remove this client\'s assigned macro target? They will no longer see target rings/bars until a new one is set.')) return;
+
+  try {
+    await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(_currentMacroPlanId).delete();
+    showToast('Macro target removed');
+    loadClientMacroTargetCard();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
+async function assignMacroTargetOnly() {
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  if (!clientUid) { showToast(' Select a client first'); return; }
+
+  const protein = parseFloat(document.getElementById('mt-protein')?.value) || 0;
+  const carbs   = parseFloat(document.getElementById('mt-carbs')?.value) || 0;
+  const fats    = parseFloat(document.getElementById('mt-fats')?.value) || 0;
+  const calInput = parseFloat(document.getElementById('mt-calories')?.value) || 0;
+  const calories = calInput || Math.round(protein*4 + carbs*4 + fats*9);
+
+  if (!protein && !carbs && !fats && !calories) {
+    showToast(' Enter at least one macro target'); return;
+  }
+
+  const planName = document.getElementById('mt-plan-name')?.value.trim() || 'Macro Target';
+  const dayType  = document.getElementById('mt-day-type')?.value || '';
+  const notes    = document.getElementById('mt-notes')?.value.trim() || '';
+  const coachUid = auth.currentUser?.uid;
+
+  const btn = document.getElementById('mt-assign-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Assigning…'; }
+
+  try {
+    await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
+      planName, protein, carbs, fats, calories, dayType, notes,
+      meals: [],
+      coachUid,
+      assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      active: true
+    });
+    const clientName = document.querySelector('#nutr-assign-client option:checked')?.textContent?.trim() || 'Client';
+    showToast(' Macro target assigned → ' + clientName);
+    loadClientMacroTargetCard();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Assign Macros →'; }
+  }
 }
 
 function updateFdContextLabel() {
@@ -16294,15 +16384,48 @@ async function assignFoodToClient() {
   try {
     await db.collection('members').doc(clientUid).collection('mealLogs').add(entry);
     const clientName = document.querySelector('#nutr-assign-client option:checked')?.textContent?.trim() || 'Client';
-    showToast(' ' + foodDbSelected.food_name + ' → ' + mealSlot + ' · ' + clientName);
+    // A macro-only target (no specific foods) becomes redundant the moment a
+    // real food is assigned — auto-clear it so only the food assignment stands.
+    const clearedMacroTarget = await autoClearMacroOnlyTarget(clientUid);
+    showToast(' ' + foodDbSelected.food_name + ' → ' + mealSlot + ' · ' + clientName + (clearedMacroTarget ? ' (macro target cleared)' : ''));
     // Invalidate plan totals so next food shows fresh running total
     window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
     closeFoodDetail();
     loadAssignedFoodsPanel();
+    if (clearedMacroTarget) loadClientMacroTargetCard();
   } catch(e) {
     showToast('Error: ' + e.message);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '＋ Assign to Client'; }
+  }
+}
+
+// ── AUTO-CLEAR MACRO-ONLY TARGET WHEN A FOOD IS ASSIGNED ──────
+// A "macro-only" nutritionPlans doc (created via assignMacroTargetOnly) is
+// identifiable by having an empty/missing `meals` array. Once the coach
+// assigns an actual food, that macro-only target no longer makes sense
+// (it exists specifically for clients with NO assigned foods), so we
+// delete it automatically — leaving only the food assignment in place.
+// Plans that already contain meals/foods (from the full plan builder) are
+// left untouched.
+async function autoClearMacroOnlyTarget(clientUid) {
+  if (!clientUid) return false;
+  try {
+    const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans')
+      .orderBy('assignedAt','desc').limit(1).get();
+    if (snap.empty) return false;
+
+    const doc = snap.docs[0];
+    const d = doc.data();
+    const isMacroOnly = !d.meals || d.meals.length === 0;
+    if (!isMacroOnly) return false;
+
+    await doc.ref.delete();
+    if (_currentMacroPlanId === doc.id) _currentMacroPlanId = null;
+    return true;
+  } catch(e) {
+    console.error('autoClearMacroOnlyTarget failed:', e);
+    return false;
   }
 }
 
@@ -16462,6 +16585,39 @@ async function coachDeleteAssignedFood(clientUid, logId) {
     loadAssignedFoodsPanel();
   } catch(e) {
     showToast('Error: ' + e.message);
+  }
+}
+
+async function coachClearAllAssignedFoods() {
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  if (!clientUid) { showToast(' Select a client first'); return; }
+
+  const btn = document.getElementById('af-clear-all-btn');
+  try {
+    const snap = await db.collection('members').doc(clientUid).collection('mealLogs')
+      .where('assignedByCoach','==',true).get();
+    if (snap.empty) { showToast('Nothing to clear'); return; }
+
+    const pendingDocs = snap.docs.filter(doc => {
+      const d = doc.data();
+      return !(d.completed || !!d.loggedAt); // don't touch foods the client already logged
+    });
+    if (!pendingDocs.length) { showToast('Nothing to clear — all remaining items are already logged'); return; }
+
+    if (!confirm(`Remove all ${pendingDocs.length} pending assigned food${pendingDocs.length!==1?'s':''} for this client?`)) return;
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Clearing…'; }
+    const batch = db.batch();
+    pendingDocs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    showToast(`✓ Cleared ${pendingDocs.length} food${pendingDocs.length!==1?'s':''}`);
+    window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
+    loadAssignedFoodsPanel();
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Clear All'; }
   }
 }
 
