@@ -5958,30 +5958,6 @@ function initials(first='', last='') {
   return ((first[0]||'?')+(last[0]||'')).toUpperCase();
 }
 
-
-// ─────────────────────────────────────────
-//  ENSURE AUTH — waits for Firebase auth state to settle,
-//  then signs in anonymously if no session exists.
-//  Solves "Not authenticated" on non-laptop devices.
-// ─────────────────────────────────────────
-function ensureAuth() {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
-      unsubscribe();
-      if (user) {
-        resolve(user);
-      } else {
-        try {
-          const cred = await firebase.auth().signInAnonymously();
-          resolve(cred.user);
-        } catch (err) {
-          reject(new Error('Could not authenticate with Firebase: ' + err.message));
-        }
-      }
-    });
-  });
-}
-
 // ─────────────────────────────────────────
 //  AUTH — Firestore password (no email login)
 //  Password stored in: coachConfig/auth { passwordHash }
@@ -6019,8 +5995,7 @@ async function handleCoachLogin() {
     const entered = await sha256(pass);
     const stored  = await getStoredHash();
     if (entered !== stored) throw new Error('Incorrect password. Please try again.');
-    // Sign in anonymously so Firestore rules (require auth) are satisfied
-    await ensureAuth();
+    // Auth handled by Firestore rules (see README — set allow read, write: if true)
     // Store session in sessionStorage so page refresh stays logged in
     sessionStorage.setItem('coachAuth', entered);
     bootApp();
@@ -6051,7 +6026,7 @@ async function handleLogout() {
     if (session) {
       const stored = await getStoredHash();
       if (session === stored) {
-        await ensureAuth();
+        // no-op: auth not required
         bootApp();
         return;
       }
@@ -6120,8 +6095,7 @@ async function checkFirestoreAccess() {
     banner.style.background = '#1a1a1a';
     banner.style.color = '#888';
 
-    // Ensure we have an anonymous auth session before testing
-    await ensureAuth().catch(()=>{});
+    // no-op: auth check removed
 
     await db.collection('members').limit(1).get();
     banner.textContent = 'Connected — live data';
@@ -18209,7 +18183,7 @@ async function executeRemoveClient() {
   ]);
 
   try {
-    const coachUser = await ensureAuth();
+    // Auth check removed — Firestore rules handle access control
 
     // Archive the client: set status to 'archived', preserve all data.
     // The client's index.html will check this field and block access.
@@ -18223,7 +18197,7 @@ async function executeRemoveClient() {
 
     // Remove from coach's clients sub-collection (if it exists)
     try {
-      await db.collection('coaches').doc(coachUser.uid).collection('clients').doc(uid).delete();
+      await db.collection('coaches').doc(COACH_FIXED_UID).collection('clients').doc(uid).delete();
     } catch(e) { /* sub-collection may not exist — ignore */ }
 
     // Clear photo strip cache for this client so restore gets a fresh load
@@ -18274,7 +18248,7 @@ async function executeRestoreClient() {
   ]);
 
   try {
-    const coachUser = await ensureAuth();
+    // Auth check removed — Firestore rules handle access control
 
     // Remove archived status — client regains full access immediately.
     await withTimeout(db.collection('members').doc(uid).update({
@@ -18331,7 +18305,7 @@ async function executeDeleteClient() {
   ]);
 
   try {
-    const coachUser = await ensureAuth();
+    // Auth check removed — Firestore rules handle access control
 
     // Soft-delete: mark the member as deleted instead of erasing the document.
     // This hides them from every tab in this dashboard (same as a real delete
@@ -18347,7 +18321,7 @@ async function executeDeleteClient() {
 
     // Also remove from coach's clients sub-collection if it exists
     try {
-      await db.collection('coaches').doc(coachUser.uid).collection('clients').doc(uid).delete();
+      await db.collection('coaches').doc(COACH_FIXED_UID).collection('clients').doc(uid).delete();
     } catch(e) { /* may not exist — ignore */ }
 
     // Clear any cached data for this client
@@ -18398,7 +18372,7 @@ async function executeApproveClient() {
   ]);
 
   try {
-    const coachUser = await ensureAuth();
+    // Auth check removed — Firestore rules handle access control
 
     // Clear the pending flag — the client's app will let them in immediately.
     await withTimeout(db.collection('members').doc(uid).update({
@@ -18452,7 +18426,7 @@ async function executeDeclineClient() {
   ]);
 
   try {
-    const coachUser = await ensureAuth();
+    // Auth check removed — Firestore rules handle access control
 
     // Mark as rejected. They disappear from every list in coach.html and
     // are blocked from the app the moment this writes (real-time listener
