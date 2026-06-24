@@ -4101,7 +4101,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="nav-badge" id="chat-badge" style="display:none">0</span>
       </div>
 
-
     </nav>
     <div class="sidebar-footer">
       <div class="coach-info">
@@ -4546,9 +4545,6 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     </div>
-
-    <!-- ═══ SETTINGS ═══ -->
-
 
     <!-- ═══ PROGRESS TRACKER ═══ -->
 
@@ -6057,8 +6053,6 @@ function bootApp() {
   // Listen for real-time check-in notifications from clients
   startCoachNotifListener();
 }
-
-
 
 let _coachNotifUnsub = null;
 let _lastNotifTimestamp = new Date();  // only show notifs that arrive after login
@@ -18193,6 +18187,9 @@ async function executeRemoveClient() {
   ]);
 
   try {
+    if (!firebase.auth().currentUser) {
+      await firebase.auth().signInAnonymously();
+    }
     const coachUser = firebase.auth().currentUser;
     if (!coachUser) throw new Error('Not authenticated');
 
@@ -18259,6 +18256,9 @@ async function executeRestoreClient() {
   ]);
 
   try {
+    if (!firebase.auth().currentUser) {
+      await firebase.auth().signInAnonymously();
+    }
     const coachUser = firebase.auth().currentUser;
     if (!coachUser) throw new Error('Not authenticated');
 
@@ -18317,6 +18317,9 @@ async function executeDeleteClient() {
   ]);
 
   try {
+    if (!firebase.auth().currentUser) {
+      await firebase.auth().signInAnonymously();
+    }
     const coachUser = firebase.auth().currentUser;
     if (!coachUser) throw new Error('Not authenticated');
 
@@ -18385,6 +18388,9 @@ async function executeApproveClient() {
   ]);
 
   try {
+    if (!firebase.auth().currentUser) {
+      await firebase.auth().signInAnonymously();
+    }
     const coachUser = firebase.auth().currentUser;
     if (!coachUser) throw new Error('Not authenticated');
 
@@ -18440,6 +18446,9 @@ async function executeDeclineClient() {
   ]);
 
   try {
+    if (!firebase.auth().currentUser) {
+      await firebase.auth().signInAnonymously();
+    }
     const coachUser = firebase.auth().currentUser;
     if (!coachUser) throw new Error('Not authenticated');
 
