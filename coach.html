@@ -659,10 +659,28 @@
   .ex-builder-item {
     background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px 14px; margin-bottom: 8px;
-    display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
-    transition: border-color 0.2s;
+    display: grid; grid-template-columns: auto auto auto 1fr auto auto; gap: 10px; align-items: center;
+    transition: border-color 0.2s, opacity 0.2s, transform 0.15s, box-shadow 0.2s;
   }
   .ex-builder-item:hover { border-color: var(--border2); }
+  .ex-builder-item.dragging { opacity: 0.4; }
+  .ex-builder-item.drag-over-top { box-shadow: inset 0 2px 0 0 var(--gold); }
+  .ex-builder-item.drag-over-bottom { box-shadow: inset 0 -2px 0 0 var(--gold); }
+  .ebi-handle {
+    width: 20px; height: 28px; cursor: grab; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); flex-shrink: 0; touch-action: none; user-select: none;
+  }
+  .ebi-handle:active { cursor: grabbing; }
+  .ebi-handle svg { width: 14px; height: 18px; pointer-events: none; }
+  .ebi-reorder { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .ebi-move-btn {
+    width: 22px; height: 18px; border-radius: 5px; background: transparent;
+    border: 1px solid var(--border); color: var(--muted); font-size: 10px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+  }
+  .ebi-move-btn:hover:not(:disabled) { border-color: rgba(212,168,67,0.4); color: var(--gold); background: rgba(212,168,67,0.06); }
+  .ebi-move-btn:disabled { opacity: 0.3; cursor: default; }
   .ebi-name { font-size: 14px; font-weight: 600; }
   .ebi-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .ebi-target {
@@ -10236,7 +10254,14 @@ function renderExerciseList() {
       const _vidEl = _m && _m.thumbnail
         ? `<img class="ebi-vid-thumb" src="${_m.thumbnail}" data-exname="${safeName}" data-exdetail="${safeDetail}" alt="">`
         : `<div class="ebi-vid-btn" data-exname="${safeName}" data-exdetail="${safeDetail}">&#x25B6;</div>`;
-      return `<div class="ex-builder-item" style="display:flex;align-items:center;gap:10px;" data-idx="${i}">
+      return `<div class="ex-builder-item" draggable="true" data-idx="${i}">
+        <div class="ebi-handle" data-idx="${i}" title="Drag to reorder">
+          <svg viewBox="0 0 14 18" fill="currentColor"><circle cx="3" cy="3" r="1.6"/><circle cx="11" cy="3" r="1.6"/><circle cx="3" cy="9" r="1.6"/><circle cx="11" cy="9" r="1.6"/><circle cx="3" cy="15" r="1.6"/><circle cx="11" cy="15" r="1.6"/></svg>
+        </div>
+        <div class="ebi-reorder">
+          <button class="ebi-move-btn" data-idx="${i}" data-dir="up" type="button" title="Move up" ${i===0?'disabled':''}>&#x25B2;</button>
+          <button class="ebi-move-btn" data-idx="${i}" data-dir="down" type="button" title="Move down" ${i===exs.length-1?'disabled':''}>&#x25BC;</button>
+        </div>
         ${_vidEl}
         <div style="flex:1;min-width:0;">
           <div class="ebi-name">${safeName}</div>
@@ -10255,6 +10280,15 @@ function renderExerciseList() {
         removeExercise(idx);
       });
     });
+    list.querySelectorAll('.ebi-move-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const idx = parseInt(this.dataset.idx, 10);
+        const dir = this.dataset.dir;
+        moveExercise(idx, dir === 'up' ? idx - 1 : idx + 1);
+      });
+    });
+    attachDragAndDrop(list);
     list.querySelectorAll('.ebi-target').forEach(pill => {
       pill.addEventListener('click', function() {
         const idx = parseInt(this.dataset.idx, 10);
@@ -10323,7 +10357,65 @@ function removeExercise(i) {
   autoSavePlanToFirebase();  // then push updated plan to Firestore
 }
 
-async function autoSavePlanToFirebase() {
+function moveExercise(from, to) {
+  const exs = workoutPlan[currentDay].exercises;
+  if (to < 0 || to >= exs.length || from === to) return;
+  const [moved] = exs.splice(from, 1);
+  exs.splice(to, 0, moved);
+  renderExerciseList();
+  autoSavePlanToFirebase('Order updated — client plan updated.');
+}
+
+function attachDragAndDrop(list) {
+  let dragIdx = null;
+
+  list.querySelectorAll('.ex-builder-item').forEach(item => {
+    item.addEventListener('dragstart', function(e) {
+      dragIdx = parseInt(this.dataset.idx, 10);
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', String(dragIdx)); } catch(err) {}
+    });
+
+    item.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      list.querySelectorAll('.ex-builder-item').forEach(el => {
+        el.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+      dragIdx = null;
+    });
+
+    item.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      if (dragIdx === null) return;
+      const overIdx = parseInt(this.dataset.idx, 10);
+      this.classList.remove('drag-over-top', 'drag-over-bottom');
+      if (overIdx === dragIdx) return;
+      const rect = this.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height / 2;
+      this.classList.add(before ? 'drag-over-top' : 'drag-over-bottom');
+    });
+
+    item.addEventListener('dragleave', function() {
+      this.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
+
+    item.addEventListener('drop', function(e) {
+      e.preventDefault();
+      this.classList.remove('drag-over-top', 'drag-over-bottom');
+      if (dragIdx === null) return;
+      const overIdx = parseInt(this.dataset.idx, 10);
+      if (overIdx === dragIdx) return;
+      const rect = this.getBoundingClientRect();
+      const before = (e.clientY - rect.top) < rect.height / 2;
+      let target = before ? overIdx : overIdx + 1;
+      if (dragIdx < target) target -= 1; // account for removal shift
+      moveExercise(dragIdx, target);
+    });
+  });
+}
+
+async function autoSavePlanToFirebase(successMsg) {
   const clientUid = document.getElementById('assign-client-select').value;
   if (!clientUid) return;
 
@@ -10371,7 +10463,7 @@ async function autoSavePlanToFirebase() {
         banner.style.color       = '';
       }
     }
-    showToast(totalEx ? 'Exercise removed — client plan updated.' : 'All exercises removed — plan cleared.', 'success');
+    showToast(successMsg || (totalEx ? 'Exercise removed — client plan updated.' : 'All exercises removed — plan cleared.'), 'success');
   } catch (e) {
     showToast('Error updating plan: ' + e.message);
     console.error('[autoSavePlanToFirebase]', e);
