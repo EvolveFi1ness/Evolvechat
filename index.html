@@ -1218,79 +1218,37 @@
  }
  .ba-angle-chip.disabled { opacity: 0.3; cursor: default; pointer-events: none; }
 
- /* Slider */
+ /* Side-by-side layout */
  .ba-slider-outer { padding: 0.875rem 1.25rem 0; }
  .ba-slider-wrap {
-  position: relative; border-radius: 20px; overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.07);
-  user-select: none; touch-action: none;
-  background: var(--bg2);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
  }
+ .ba-side {
+  position: relative; border-radius: 16px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--bg2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+ }
+ .ba-img-before,
  .ba-img-after {
   display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover;
-  max-height: 500px; pointer-events: none;
- }
- .ba-before-wrap {
-  position: absolute; inset: 0; overflow: hidden; width: 50%;
- }
- .ba-img-before {
-  display: block; object-fit: cover; max-height: 500px;
-  position: absolute; top: 0; left: 0; height: 100%;
-  pointer-events: none;
+  max-height: 480px; pointer-events: none;
  }
  /* Labels overlaid on images */
  .ba-img-label {
-  position: absolute; bottom: 14px; z-index: 4;
+  position: absolute; bottom: 12px; z-index: 4;
   font-size: 9px; font-weight: 800; letter-spacing: 1.8px; text-transform: uppercase;
   padding: 5px 12px; border-radius: 100px; font-family: 'Inter', sans-serif;
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
  }
  .ba-img-label.before-side {
-  left: 12px; background: rgba(90,159,239,0.22); color: #93c5fd;
+  left: 10px; background: rgba(90,159,239,0.22); color: #93c5fd;
   border: 1px solid rgba(90,159,239,0.3);
  }
  .ba-img-label.after-side {
-  right: 12px; background: rgba(61,203,114,0.2); color: #6ee7b7;
+  right: 10px; background: rgba(61,203,114,0.2); color: #6ee7b7;
   border: 1px solid rgba(61,203,114,0.28);
  }
- /* Divider line + handle */
- .ba-divider {
-  position: absolute; top: 0; bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.9) 15%, rgba(255,255,255,0.9) 85%, transparent 100%);
-  left: 50%; transform: translateX(-50%);
-  cursor: ew-resize; z-index: 5; pointer-events: none;
- }
- .ba-handle {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 44px; height: 44px; border-radius: 50%;
-  background: rgba(255,255,255,0.95);
-  box-shadow: 0 2px 16px rgba(0,0,0,0.5), 0 0 0 3px rgba(255,255,255,0.15);
-  display: flex; align-items: center; justify-content: center;
-  cursor: ew-resize; z-index: 6; pointer-events: none;
-  transition: transform 0.1s, box-shadow 0.1s;
- }
- .ba-slider-wrap.dragging .ba-handle {
-  transform: translate(-50%, -50%) scale(1.1);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 0 4px rgba(255,255,255,0.2);
- }
- .ba-handle-arrows {
-  display: flex; align-items: center; gap: 2px; color: #111; font-size: 14px; pointer-events: none;
- }
-
- /* Hint text */
- .ba-drag-hint {
-  text-align: center; font-size: 10px; color: #333; letter-spacing: 0.5px;
-  margin-top: 8px; font-family: 'Outfit', sans-serif; font-weight: 600;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
- }
- .ba-drag-hint::before, .ba-drag-hint::after {
-  content: ''; display: inline-block; width: 24px; height: 1px;
-  background: linear-gradient(90deg, transparent, #333);
- }
- .ba-drag-hint::after { background: linear-gradient(270deg, transparent, #333); }
 
  /* No-compare state */
  .ba-no-compare {
@@ -6048,22 +6006,15 @@ img, video, iframe { max-width: 100%; }
       <div class="ba-angle-chips" id="ba-angle-tabs"></div>
       <div class="ba-slider-outer">
        <div class="ba-slider-wrap" id="ba-slider-wrap">
-        <img class="ba-img-after" id="ba-img-after" src="" alt="After">
-        <div class="ba-before-wrap" id="ba-before-wrap">
+        <div class="ba-side">
          <img class="ba-img-before" id="ba-img-before" src="" alt="Before">
+         <div class="ba-img-label before-side">Before</div>
         </div>
-        <div class="ba-divider" id="ba-divider">
-         <div class="ba-handle" id="ba-handle">
-          <div class="ba-handle-arrows">
-           <svg width="8" height="14" viewBox="0 0 8 14" fill="#111"><path d="M5 1L1 7L5 13" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-           <svg width="8" height="14" viewBox="0 0 8 14" fill="#111"><path d="M3 1L7 7L3 13" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-          </div>
-         </div>
+        <div class="ba-side">
+         <img class="ba-img-after" id="ba-img-after" src="" alt="After">
+         <div class="ba-img-label after-side">After</div>
         </div>
-        <div class="ba-img-label before-side">Before</div>
-        <div class="ba-img-label after-side">After</div>
        </div>
-       <div class="ba-drag-hint">Drag to compare</div>
       </div>
 
       <!-- Stats strip -->
@@ -8638,66 +8589,10 @@ function showBaAngle(angle, oldest, newest) {
 }
 
 // ─────────────────────────────────────────
-// SLIDER DRAG
+// SLIDER DRAG (removed — now side-by-side)
 // ─────────────────────────────────────────
-function setBaDivider(pct) {
- pct = Math.max(4, Math.min(96, pct));
- const divider   = document.getElementById('ba-divider');
- const beforeWrap = document.getElementById('ba-before-wrap');
- if (divider)   divider.style.left    = pct + '%';
- if (beforeWrap) beforeWrap.style.width = pct + '%';
- // Keep before image full-width so the clip reveals it correctly
- const imgB = document.getElementById('ba-img-before');
- if (imgB) {
-  const containerW = document.getElementById('ba-slider-wrap')?.offsetWidth || 360;
-  imgB.style.width = containerW + 'px';
- }
-}
-
-function initBaSlider() {
- const wrap = document.getElementById('ba-slider-wrap');
- if (!wrap || wrap._sliderInit) return;
- wrap._sliderInit = true;
- setBaDivider(50);
-
- const getPct = (clientX) => {
-  const rect = wrap.getBoundingClientRect();
-  return ((clientX - rect.left) / rect.width) * 100;
- };
-
- let dragging = false;
-
- const onStart = (clientX) => {
-  dragging = true;
-  wrap.classList.add('dragging');
-  setBaDivider(getPct(clientX));
- };
- const onMove = (e) => {
-  if (!dragging) return;
-  e.preventDefault();
-  setBaDivider(getPct(e.touches ? e.touches[0].clientX : e.clientX));
- };
- const onUp = () => {
-  dragging = false;
-  wrap.classList.remove('dragging');
- };
-
- wrap.addEventListener('mousedown',  (e) => onStart(e.clientX));
- window.addEventListener('mousemove', onMove);
- window.addEventListener('mouseup',   onUp);
- wrap.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), { passive: true });
- wrap.addEventListener('touchmove',  onMove, { passive: false });
- wrap.addEventListener('touchend',   onUp);
-
- // Recalibrate image width on resize
- window.addEventListener('resize', () => {
-  const wrap = document.getElementById('ba-slider-wrap');
-  if (wrap && wrap._sliderInit) {
-   const pct = parseFloat(document.getElementById('ba-divider')?.style.left) || 50;
-   setBaDivider(pct);
-  }
- }, { passive: true });
-}
+function setBaDivider(pct) { /* no-op */ }
+function initBaSlider()    { /* no-op */ }
 
 // Keep compat
 function setProgPhotoView(v) {}
