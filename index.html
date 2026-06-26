@@ -6191,38 +6191,39 @@ img, video, iframe { max-width: 100%; }
     </div>
    </div>
 
-   <!-- Macro donut rings (animated by initClientNutrition via dd-prot-ring / dd-carb-ring / dd-fat-ring) -->
-   <div id="nutr-ring-wrap" style="display:flex;justify-content:center;gap:16px;margin:0 1.25rem 1rem;overflow:visible;padding:8px 0;">
-    <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
-     <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
-     <circle id="dd-prot-ring" cx="36" cy="36" r="30" fill="none" stroke="#c9a84c" stroke-width="7"
-      stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
-      style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
-     <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Protein</text>
-    </svg>
-    <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
-     <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
-     <circle id="dd-carb-ring" cx="36" cy="36" r="30" fill="none" stroke="#7b9e5a" stroke-width="7"
-      stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
-      style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
-     <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Carbs</text>
-    </svg>
-    <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
-     <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
-     <circle id="dd-fat-ring" cx="36" cy="36" r="30" fill="none" stroke="#5a7eb5" stroke-width="7"
-      stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
-      style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
-     <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Fat</text>
-    </svg>
-   </div>
-
    <!-- Meal sections -->
    <div style="padding:0 1.25rem;">
     <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Meals</div>
+    <!-- Macro donut rings (animated by initClientNutrition via dd-prot-ring / dd-carb-ring / dd-fat-ring) -->
+    <div id="nutr-ring-wrap" style="display:flex;justify-content:center;gap:16px;margin:0 0 1rem;overflow:visible;padding:8px 0;">
+     <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
+      <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+      <circle id="dd-prot-ring" cx="36" cy="36" r="30" fill="none" stroke="#c9a84c" stroke-width="7"
+       stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
+       style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
+      <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Protein</text>
+     </svg>
+     <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
+      <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+      <circle id="dd-carb-ring" cx="36" cy="36" r="30" fill="none" stroke="#7b9e5a" stroke-width="7"
+       stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
+       style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
+      <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Carbs</text>
+     </svg>
+     <svg width="72" height="72" viewBox="0 0 72 72" style="overflow:visible;">
+      <circle cx="36" cy="36" r="30" fill="none" stroke="#1a1a1a" stroke-width="7"/>
+      <circle id="dd-fat-ring" cx="36" cy="36" r="30" fill="none" stroke="#5a7eb5" stroke-width="7"
+       stroke-linecap="round" stroke-dasharray="0 188" stroke-dashoffset="0"
+       style="transition:stroke-dasharray 0.5s ease;transform:rotate(-90deg);transform-origin:36px 36px;"/>
+      <text x="36" y="40" text-anchor="middle" style="font-size:9px;fill:#888;">Fat</text>
+     </svg>
+    </div>
+    <!-- Coach's Plan macro chips — shown above Meal 1 -->
+    <div id="nutr-macro-chips" style="margin-bottom:14px;"></div>
     <div id="nutr-meal-sections"></div>
    </div>
 
-   <!-- Assigned plan -->
+   <!-- Assigned food plan (Coach's Plan food rows) -->
    <div style="padding:0 1.25rem;margin-top:16px;">
     <div style="font-size:11px;font-weight:700;color:#555;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Coach's Plan</div>
     <div id="nutr-assigned-plan"></div>
@@ -6344,6 +6345,14 @@ img, video, iframe { max-width: 100%; }
   <div style="padding:0 20px 16px;">
    <input id="dd-serving-slider" type="range" min="0.1" step="0.1" max="10" oninput="nutrSliderChange(this.value)"
     style="width:100%;accent-color:#c9a84c;"/>
+  </div>
+  <!-- Day Type selector (required — only shows types the coach has assigned) -->
+  <div style="padding:0 20px 16px;" id="nutr-day-type-row">
+   <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+    <div style="font-size:11px;color:#444;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Day Type</div>
+    <span id="nutr-day-type-required-badge" style="font-size:9px;font-weight:700;color:#f87171;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:100px;padding:1px 7px;letter-spacing:0.4px;text-transform:uppercase;">Required</span>
+   </div>
+   <div id="nutr-day-type-btns" style="display:flex;gap:6px;"></div>
   </div>
   <!-- Meal selector -->
   <div style="padding:0 20px 16px;">
@@ -10017,10 +10026,12 @@ let nutrCurrentDate  = new Date();
 let nutrFoodLogs   = {}; // { 'YYYY-MM-DD': { meal: [{...food, servingG, logId}] } }
 let nutrPlan     = null;
 let nutrPlanId    = null; // doc id of the loaded nutritionPlans doc (for auto-clear below)
+let nutrAllMacroPlans = []; // all macro-only plans assigned by coach
 let nutrSearchMeal  = 'any';
 let nutrDetailFood  = null;
 let nutrDetailMeal  = 'Meal 1';
 let nutrDetailServing = 100;
+let nutrDetailDayType = ''; // '', 'Training Day', or 'Rest Day' — required before logging
 let nutrCatFilter   = 'All';
 let nutrSearchTimer  = null;
 let nutrRenderOffset = 0;
@@ -10081,12 +10092,40 @@ async function initClientNutrition() {
  // Render immediately with whatever data we have (even empty), don't bail on no auth
  renderNutritionTab();
  if (!uid) return;
- // Load macro targets
+ // Load macro targets — pick the best match for today's day type
  try {
-  const snap = await db.collection('members').doc(uid).collection('nutritionPlans').orderBy('assignedAt','desc').limit(1).get();
-  if (!snap.empty) { nutrPlan = snap.docs[0].data(); nutrPlanId = snap.docs[0].id; }
-  else { nutrPlan = null; nutrPlanId = null; }
- } catch(e) {}
+  const snap = await db.collection('members').doc(uid).collection('nutritionPlans')
+    .orderBy('assignedAt','desc').limit(10).get();
+
+  // Filter to macro-only plans (empty/missing meals array)
+  const macroDocs = snap.docs.filter(d => {
+    const meals = d.data().meals;
+    return !meals || meals.length === 0;
+  });
+
+  // Store all macro plans for display
+  nutrAllMacroPlans = macroDocs.map(d => ({ id: d.id, ...d.data() }));
+
+  if (macroDocs.length > 0) {
+    // Determine if today is a training day based on whether a workout is assigned
+    const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
+    const currentDayType = isTrainingDay ? 'Training Day' : 'Rest Day';
+
+    // Priority: exact day type match > "All Days" (empty dayType) > most recent
+    let best = macroDocs.find(d => d.data().dayType === currentDayType)
+            || macroDocs.find(d => !d.data().dayType)
+            || macroDocs[0];
+
+    nutrPlan   = best.data();
+    nutrPlanId = best.id;
+  } else {
+    nutrAllMacroPlans = [];
+    // Fall back to food-based plan (non-macro-only)
+    const foodPlan = snap.docs.find(d => (d.data().meals || []).length > 0);
+    if (foodPlan) { nutrPlan = foodPlan.data(); nutrPlanId = foodPlan.id; }
+    else { nutrPlan = null; nutrPlanId = null; }
+  }
+ } catch(e) { console.error('initClientNutrition plan load:', e); }
  // Load today's logs
  await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
  // Self-healing: if a food has been assigned, a leftover macro-only target
@@ -10096,16 +10135,17 @@ async function initClientNutrition() {
 }
 
 // ── SELF-HEALING: clear a stale macro-only target once food is assigned ──
-// Mirrors the coach-side auto-clear in coach.html. A macro-only
-// nutritionPlans doc (created via "Assign Macros →", identifiable by an
-// empty/missing `meals` array) only makes sense when the client has NO
-// assigned foods. If foods have since been assigned — including data
-// created before the coach-side fix existed — this cleans it up here too,
-// so the client only ever sees one or the other, never both.
+// Only deletes a macro-only plan if it was set BEFORE the coach started
+// assigning specific foods AND there is no explicit dayType set (legacy plan).
+// Plans with a dayType (Training Day / Rest Day / All Days) are intentional
+// and should never be auto-deleted.
 async function nutrAutoClearMacroOnlyTarget(uid) {
  if (!nutrPlan || !nutrPlanId) return;
  const isMacroOnly = !nutrPlan.meals || nutrPlan.meals.length === 0;
  if (!isMacroOnly) return;
+
+ // Never auto-delete plans that have an explicit dayType — these are intentional
+ if (nutrPlan.dayType) return;
 
  const dateKey = nutrDateKey(nutrCurrentDate);
  const assigned = (nutrFoodLogs[dateKey]?.__assigned__) || [];
@@ -10115,6 +10155,7 @@ async function nutrAutoClearMacroOnlyTarget(uid) {
   await db.collection('members').doc(uid).collection('nutritionPlans').doc(nutrPlanId).delete();
   nutrPlan = null;
   nutrPlanId = null;
+  nutrAllMacroPlans = [];
  } catch(e) {
   console.error('nutrAutoClearMacroOnlyTarget failed:', e);
  }
@@ -10181,10 +10222,25 @@ function renderNutritionTab() {
  if (el) el.textContent = nutrFormatDate(nutrCurrentDate);
 
  const totals = nutrGetDayTotals(dateKey);
- const tCal = nutrPlan?.calories || 0;
- const tP  = nutrPlan?.protein || 0;
- const tC  = nutrPlan?.carbs  || 0;
- const tF  = nutrPlan?.fats   || 0;
+
+ // Resolve which plan's targets to show — respect the active day-type tab
+ let activePlan = nutrPlan;
+ if (nutrAllMacroPlans.length > 0) {
+  const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
+  const autoType = isTrainingDay ? 'Training Day' : 'Rest Day';
+  const dayTypes = [...new Set(nutrAllMacroPlans.map(p => p.dayType || ''))];
+  const savedFilter = window._nutrDayTypeFilter;
+  const activeFilter = (savedFilter !== undefined && dayTypes.includes(savedFilter))
+    ? savedFilter
+    : (dayTypes.includes(autoType) ? autoType : (dayTypes.includes('') ? '' : dayTypes[0]));
+  const filtered = nutrAllMacroPlans.filter(p => (p.dayType || '') === activeFilter);
+  activePlan = (filtered.length > 0 ? filtered : nutrAllMacroPlans)[0] || nutrPlan;
+ }
+
+ const tCal = activePlan?.calories || 0;
+ const tP  = activePlan?.protein || 0;
+ const tC  = activePlan?.carbs  || 0;
+ const tF  = activePlan?.fats   || 0;
 
  // Ring
  const circ = 289;
@@ -10269,7 +10325,7 @@ function renderNutrMealSections(dateKey) {
 
 function renderNutrAssignedPlan() {
  const el = document.getElementById('nutr-assigned-plan');
- if (!el) return;
+ const chipsEl = document.getElementById('nutr-macro-chips');
 
  const dateKey = nutrDateKey(nutrCurrentDate);
  const assigned = (nutrFoodLogs[dateKey]?.__assigned__) || [];
@@ -10284,41 +10340,75 @@ function renderNutrAssignedPlan() {
   });
  });
 
- // Macro target summary header
+ // ── MACRO CHIPS: always render above Meal 1 if a plan exists ──
+ if (chipsEl) {
+  if (nutrAllMacroPlans.length > 0) {
+   // Multiple day-type plans — show tabs to switch between them
+   const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
+   const autoType = isTrainingDay ? 'Training Day' : 'Rest Day';
+   const dayTypes = [...new Set(nutrAllMacroPlans.map(p => p.dayType || ''))];
+   const savedFilter = window._nutrDayTypeFilter;
+   const activeFilter = (savedFilter !== undefined && dayTypes.includes(savedFilter))
+     ? savedFilter
+     : (dayTypes.includes(autoType) ? autoType : (dayTypes.includes('') ? '' : dayTypes[0]));
+   window._nutrDayTypeFilter = activeFilter;
+
+   const tabLabel = dt => dt === 'Training Day' ? '🏋️ Training' : dt === 'Rest Day' ? '😴 Rest' : '📅 All Days';
+   const tabColor = dt => dt === 'Training Day' ? '#4ADE80' : dt === 'Rest Day' ? '#60A5FA' : '#c9a84c';
+   const tabBg    = dt => dt === 'Training Day' ? 'rgba(74,222,128,0.15)' : dt === 'Rest Day' ? 'rgba(96,165,250,0.15)' : 'rgba(201,168,76,0.15)';
+   const tabBorder= dt => dt === 'Training Day' ? 'rgba(74,222,128,0.5)' : dt === 'Rest Day' ? 'rgba(96,165,250,0.5)' : 'rgba(201,168,76,0.5)';
+   const tabBorderOff = 'rgba(255,255,255,0.1)';
+
+   const tabsHtml = dayTypes.length > 1 ? `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+     ${dayTypes.map(dt => {
+      const isActive = dt === activeFilter;
+      return `<button onclick="window._nutrDayTypeFilter='${dt}';renderNutritionTab();" style="font-size:11px;font-weight:700;letter-spacing:0.3px;border:1px solid ${isActive ? tabBorder(dt) : tabBorderOff};background:${isActive ? tabBg(dt) : 'transparent'};color:${isActive ? tabColor(dt) : '#555'};border-radius:100px;padding:5px 14px;cursor:pointer;transition:all 0.2s;font-family:inherit;">${tabLabel(dt)}</button>`;
+     }).join('')}
+    </div>` : '';
+
+   const filtered = nutrAllMacroPlans.filter(p => (p.dayType || '') === activeFilter);
+   const plan = (filtered.length > 0 ? filtered : nutrAllMacroPlans)[0];
+
+   chipsEl.innerHTML = tabsHtml + (plan ? `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+     <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+      <div style="font-size:16px;font-weight:800;color:#c9a84c;">${plan.calories||0}</div>
+      <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">kcal</div>
+     </div>
+     <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+      <div style="font-size:15px;font-weight:700;color:#60a5fa;">${plan.protein||0}g</div>
+      <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Protein</div>
+     </div>
+     <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+      <div style="font-size:15px;font-weight:700;color:#c9a84c;">${plan.carbs||0}g</div>
+      <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Carbs</div>
+     </div>
+     <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
+      <div style="font-size:15px;font-weight:700;color:#f87171;">${plan.fats||0}g</div>
+      <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Fats</div>
+     </div>
+    </div>` : '');
+  } else {
+   chipsEl.innerHTML = '';
+  }
+ }
+
+ // ── ASSIGNED FOOD ROWS: render in bottom Coach's Plan section ──
+ if (!el) return;
+
+ if (!assigned.length) {
+  el.innerHTML = '';
+  return;
+ }
+
  const planHeader = nutrPlan ? `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;gap:6px;">
    <div style="display:flex;align-items:center;gap:8px;">
     <span style="font-size:13px;font-weight:700;color:#c9a84c;">${nutrPlan.planName||'My Plan'}</span>
-    ${!assigned.length ? '<span style="font-size:9px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#c9a84c;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:100px;padding:2px 8px;">Macros Only</span>' : ''}
    </div>
    <div style="font-size:11px;color:#555;">P:${nutrPlan.protein||0}g · C:${nutrPlan.carbs||0}g · F:${nutrPlan.fats||0}g · ${nutrPlan.calories||0} kcal</div>
   </div>` : '';
-
- // Big macro chip grid — shown when the plan is targets-only (no specific foods assigned)
- const macroChipsGrid = nutrPlan ? `
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;">
-   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
-    <div style="font-size:16px;font-weight:800;color:#c9a84c;">${nutrPlan.calories||0}</div>
-    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">kcal</div>
-   </div>
-   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
-    <div style="font-size:15px;font-weight:700;color:#60a5fa;">${nutrPlan.protein||0}g</div>
-    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Protein</div>
-   </div>
-   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
-    <div style="font-size:15px;font-weight:700;color:#c9a84c;">${nutrPlan.carbs||0}g</div>
-    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Carbs</div>
-   </div>
-   <div style="background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 6px;text-align:center;">
-    <div style="font-size:15px;font-weight:700;color:#f87171;">${nutrPlan.fats||0}g</div>
-    <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Fats</div>
-   </div>
-  </div>` : '';
-
- if (!assigned.length && !nutrPlan) {
-  el.innerHTML = '<div style="color:#444;font-size:13px;padding:16px 0;text-align:center;">No meal plan assigned yet.</div>';
-  return;
- }
 
  const foodRows = assigned.map((item, idx) => {
   const assignedG = item.servingG || item.serving_size_g || 100;
@@ -10326,19 +10416,13 @@ function renderNutrAssignedPlan() {
   const loggedG  = loggedGramsMap[foodKey] || 0;
   const remainG  = Math.max(0, assignedG - loggedG);
   const isDone  = remainG === 0;
-
-  // Scale macros to remaining grams
   const ratio   = assignedG > 0 ? remainG / assignedG : 0;
   const cal    = Math.round((item.calories||0) * ratio);
   const p     = Math.round((item.protein_g||item.protein||0) * ratio);
   const c     = Math.round((item.carbs_g||item.carbs||0) * ratio);
   const fa    = Math.round((item.fat_g||item.fats||0) * ratio);
-
   const servingLabel = item.serving_label ? `${assignedG}g (${item.serving_label})` : `${assignedG}g`;
-
-  // Progress bar width
   const progressPct = assignedG > 0 ? Math.min(100, Math.round(loggedG / assignedG * 100)) : 0;
-
   return {html: `
    <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-top:1px solid #161616;${isDone?'opacity:0.5;':''}">
     <div style="flex:1;min-width:0;">
@@ -10373,7 +10457,6 @@ function renderNutrAssignedPlan() {
    </div>`, meal: NUTR_MEALS.includes(item.mealSlot||item.mealName||'') ? (item.mealSlot||item.mealName) : 'Meal 1'};
  });
 
- // Group by meal slot
  const byMeal = {};
  NUTR_MEALS.forEach(m => byMeal[m] = []);
  foodRows.forEach(row => { (byMeal[row.meal] = byMeal[row.meal]||[]).push(row); });
@@ -10396,13 +10479,8 @@ function renderNutrAssignedPlan() {
  el.innerHTML = `
   <div style="background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15);border-radius:14px;padding:14px 16px;">
    ${planHeader}
-   ${assigned.length ? `
-    <div style="font-size:11px;color:#555;margin-bottom:10px;">Grams needed per food item</div>
-    ${mealSections}
-   ` : `
-    ${macroChipsGrid}
-    <div style="color:#666;font-size:12px;text-align:center;line-height:1.6;">Log your own meals above to track against these targets.</div>
-   `}
+   <div style="font-size:11px;color:#555;margin-bottom:10px;">Grams needed per food item</div>
+   ${mealSections}
   </div>`;
 }
 
@@ -10563,9 +10641,45 @@ function nutrCatEmoji(cat) {
 let nutrDetailUnits = []; // [{label, grams}]
 let nutrDetailUnitIdx = 0;
 
+function nutrGetLockedDayType() {
+ // Returns the day type locked by the first logged food today, or null if no foods logged
+ const dateKey = nutrDateKey(nutrCurrentDate);
+ const logs = nutrFoodLogs[dateKey] || {};
+ for (const slot of Object.keys(logs)) {
+  if (slot === '__assigned__') continue;
+  const items = logs[slot] || [];
+  for (const item of items) {
+   // dayType is stored as '' for All Days, or 'Training Day' / 'Rest Day'
+   const dt = item.dayType;
+   if (dt !== undefined && dt !== null) {
+    return dt === '' ? 'All Days' : dt;
+   }
+  }
+ }
+ return null;
+}
+
 function openNutrDetail(food) {
  nutrDetailFood  = food;
  nutrDetailMeal  = nutrSearchMeal !== 'any' ? nutrSearchMeal : 'Meal 1';
+ // Build day type buttons from coach-assigned plans, then auto-select today's type
+ nutrRenderDayTypeSelector();
+
+ // Check if day type is locked by a previously logged food
+ const lockedDt = nutrGetLockedDayType();
+ if (lockedDt !== null) {
+  // Lock: force-select the locked day type and disable buttons
+  nutrSelectDayType(lockedDt);
+  nutrApplyDayTypeLock(lockedDt);
+ } else if (!nutrDetailDayType || nutrDetailDayType === '__none__') {
+  // Auto-select the best match for today if more than one option is shown
+  const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
+  const autoDay = isTrainingDay ? 'Training Day' : 'Rest Day';
+  const assignedTypes = [...new Set((nutrAllMacroPlans || []).map(p => p.dayType || 'All Days'))];
+  if (assignedTypes.includes(autoDay)) nutrSelectDayType(autoDay);
+  else if (assignedTypes.includes('All Days')) nutrSelectDayType('All Days');
+  else if (assignedTypes.length === 1) nutrSelectDayType(assignedTypes[0]);
+ }
 
  // Detect if food is a beverage by category
  const isBeverage = food.category && /beverage|drink|juice|water|coffee|tea|soda|milk|smoothie|shake|alcohol|wine|beer|spirit/i.test(food.category);
@@ -10646,6 +10760,140 @@ function openNutrDetail(food) {
  nutrRenderDetailMacros();
 }
 
+// Build and render the day type buttons based on what the coach has actually assigned
+function nutrRenderDayTypeSelector() {
+ const container = document.getElementById('nutr-day-type-btns');
+ const row = document.getElementById('nutr-day-type-row');
+ if (!container) return;
+
+ // Normalize '' (Firestore All Days) to 'All Days' for consistent string comparison
+ const assignedTypes = [...new Set((nutrAllMacroPlans || []).map(p => p.dayType || 'All Days'))];
+
+ // Map internal value → display config (use 'All Days' not '' as key)
+ const typeConfig = {
+  'Training Day': { label: '🏋️ Training Day', color:'#4ADE80', bg:'rgba(74,222,128,0.12)',  border:'rgba(74,222,128,0.35)'  },
+  'Rest Day':     { label: '😴 Rest Day',      color:'#60A5FA', bg:'rgba(96,165,250,0.12)',  border:'rgba(96,165,250,0.35)'  },
+  'All Days':     { label: '📅 All Days',      color:'#c9a84c', bg:'rgba(201,168,76,0.12)',  border:'rgba(201,168,76,0.35)'  },
+ };
+
+ // Preferred order — all string keys, no ''
+ const order = ['Training Day', 'Rest Day', 'All Days'];
+ const toShow = order.filter(t => assignedTypes.includes(t));
+
+ // If no macro plans at all, show all three as fallback
+ const buttons = toShow.length > 0 ? toShow : ['Training Day', 'Rest Day', 'All Days'];
+
+ // Hide the whole row if coach assigned exactly one type — auto-select it silently
+ if (buttons.length === 1) {
+  if (row) row.style.display = 'none';
+  nutrSelectDayType(buttons[0]);
+  return;
+ }
+ if (row) row.style.display = '';
+
+ container.innerHTML = buttons.map(t => {
+  const cfg = typeConfig[t];
+  return `<button onclick="nutrSelectDayType('${t}')"
+   style="flex:1;padding:8px 6px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:0.3px;cursor:pointer;font-family:inherit;transition:all .15s;border:1px solid #1e1e1e;background:#0d0d10;color:#555;">
+   ${cfg.label}
+  </button>`;
+ }).join('');
+}
+
+function nutrSelectDayType(dt) {
+ nutrDetailDayType = dt;
+
+ // Sync the active day-type filter so the summary card + chips update too
+ const _filterKey = (dt === 'All Days' || dt === '') ? '' : dt;
+ const _dayTypes = [...new Set((nutrAllMacroPlans||[]).map(p => p.dayType || ''))];
+ if (_dayTypes.includes(_filterKey)) {
+  window._nutrDayTypeFilter = _filterKey;
+  renderNutritionTab();
+ }
+
+ const typeConfig = {
+  'Training Day': { color:'#4ADE80', bg:'rgba(74,222,128,0.12)',  border:'rgba(74,222,128,0.35)'  },
+  'Rest Day':     { color:'#60A5FA', bg:'rgba(96,165,250,0.12)',  border:'rgba(96,165,250,0.35)'  },
+  '':             { color:'#c9a84c', bg:'rgba(201,168,76,0.12)',  border:'rgba(201,168,76,0.35)'  },
+  'All Days':     { color:'#c9a84c', bg:'rgba(201,168,76,0.12)',  border:'rgba(201,168,76,0.35)'  },
+ };
+
+ // Style whichever buttons are currently rendered
+ const container = document.getElementById('nutr-day-type-btns');
+ if (container) {
+  container.querySelectorAll('button').forEach(btn => {
+   // Determine this button's type from its onclick
+   const match = btn.getAttribute('onclick')?.match(/nutrSelectDayType\('(.*)'\)/);
+   const btnType = match ? match[1] : '';
+   const isActive = btnType === dt;
+   const cfg = typeConfig[btnType] || typeConfig['All Days'];
+   btn.style.background = isActive ? cfg.bg    : '#0d0d10';
+   btn.style.color      = isActive ? cfg.color : '#555';
+   btn.style.border     = `1px solid ${isActive ? cfg.border : '#1e1e1e'}`;
+  });
+ }
+
+ // Hide required badge once selected
+ const badge = document.getElementById('nutr-day-type-required-badge');
+ if (badge) badge.style.display = (dt !== undefined && dt !== null && dt !== '__none__') ? 'none' : 'inline-block';
+}
+
+function nutrResetDayTypeSelector() {
+ nutrDetailDayType = '__none__';
+ const container = document.getElementById('nutr-day-type-btns');
+ if (container) {
+  container.querySelectorAll('button').forEach(btn => {
+   btn.style.background = '#0d0d10';
+   btn.style.color      = '#555';
+   btn.style.border     = '1px solid #1e1e1e';
+  });
+ }
+ const badge = document.getElementById('nutr-day-type-required-badge');
+ if (badge) badge.style.display = 'inline-block';
+}
+
+function nutrApplyDayTypeLock(lockedDt) {
+ const container = document.getElementById('nutr-day-type-btns');
+ const row = document.getElementById('nutr-day-type-row');
+ if (!container) return;
+
+ const typeConfig = {
+  'Training Day': { label: '🏋️ Training Day', color:'#4ADE80', bg:'rgba(74,222,128,0.12)', border:'rgba(74,222,128,0.35)' },
+  'Rest Day':     { label: '😴 Rest Day',      color:'#60A5FA', bg:'rgba(96,165,250,0.12)', border:'rgba(96,165,250,0.35)' },
+  'All Days':     { label: '📅 All Days',      color:'#c9a84c', bg:'rgba(201,168,76,0.12)', border:'rgba(201,168,76,0.35)' },
+ };
+ const cfg = typeConfig[lockedDt] || typeConfig['All Days'];
+
+ // Replace buttons with a single locked display
+ container.innerHTML = `
+  <div style="flex:1;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;
+       background:${cfg.bg};border:1px solid ${cfg.border};color:${cfg.color};
+       font-size:11px;font-weight:700;letter-spacing:0.3px;">
+   <span>${cfg.label}</span>
+   <span style="margin-left:auto;font-size:10px;opacity:0.7;display:flex;align-items:center;gap:3px;">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Locked by first entry
+   </span>
+  </div>`;
+
+ // Show a subtle hint in the row label area
+ const hint = document.getElementById('nutr-day-type-lock-hint');
+ if (!hint && row) {
+  const h = document.createElement('div');
+  h.id = 'nutr-day-type-lock-hint';
+  h.style.cssText = 'font-size:10px;color:#555;margin-top:5px;';
+  h.textContent = 'Day type is set by your first food log. Edit or delete it to change.';
+  row.appendChild(h);
+ }
+}
+
+function nutrRemoveDayTypeLock() {
+ const container = document.getElementById('nutr-day-type-btns');
+ const hint = document.getElementById('nutr-day-type-lock-hint');
+ if (hint) hint.remove();
+ // Re-render will restore interactive buttons
+}
+
 function nutrRenderMealSelector() {
  document.getElementById('nutr-meal-selector-btns').innerHTML = NUTR_MEALS.map(m =>
   `<button onclick="nutrSelectDetailMeal('${m}')" id="nmeal-${m.replace(/ /g,'_')}"
@@ -10661,6 +10909,9 @@ function closeNutrDetail() {
  const sheet = document.getElementById('nutr-detail-sheet');
  sheet.style.transform = 'translateY(100%)';
  setTimeout(() => { document.getElementById('nutr-detail-modal').style.display = 'none'; }, 320);
+ // Remove lock hint so it doesn't persist across opens
+ const hint = document.getElementById('nutr-day-type-lock-hint');
+ if (hint) hint.remove();
 }
 
 function nutrSelectDetailMeal(meal) {
@@ -10817,6 +11068,33 @@ function nutrRenderDetailMacros() {
 async function nutrConfirmAdd() {
  const uid = auth.currentUser?.uid;
  if (!uid || !nutrDetailFood) return;
+
+ // Day type is required
+ if (nutrDetailDayType === null || nutrDetailDayType === undefined || nutrDetailDayType === '__none__') {
+  // Shake the day type row to signal it's required
+  const row = document.getElementById('nutr-day-type-row');
+  if (row) {
+   row.style.transition = 'transform 0.08s';
+   const shake = [0,6,-6,6,-4,4,-2,2,0];
+   let i = 0;
+   const doShake = () => {
+    if (i >= shake.length) { row.style.transform = ''; return; }
+    row.style.transform = `translateX(${shake[i++]}px)`;
+    setTimeout(doShake, 55);
+   };
+   doShake();
+  }
+  // Flash required badge
+  const badge = document.getElementById('nutr-day-type-required-badge');
+  if (badge) {
+   badge.style.display = 'inline-block';
+   badge.style.background = 'rgba(248,113,113,0.25)';
+   setTimeout(() => { badge.style.background = 'rgba(248,113,113,0.1)'; }, 400);
+  }
+  showClientToast('⚠️ Please select a Day Type first');
+  return;
+ }
+
  const f   = nutrDetailFood;
  const dateKey = nutrDateKey(nutrCurrentDate);
  const ratio = nutrDetailServing / (f.serving_size_g || 100);
@@ -10835,6 +11113,7 @@ async function nutrConfirmAdd() {
   sodium_mg:  Math.round((f.sodium_mg||0) * ratio),
   mealSlot:   nutrDetailMeal,
   mealName:   nutrDetailMeal,
+  dayType:    nutrDetailDayType === 'All Days' ? '' : nutrDetailDayType,
   date:     dateKey,
   protein:   Math.round(f.protein_g * ratio * 10)/10,
   carbs:    Math.round(f.carbs_g * ratio * 10)/10,
@@ -10928,6 +11207,7 @@ async function nutrDeleteLog(logId, meal) {
 // ── EDIT LOGGED FOOD ──
 let _editLogId = null, _editMeal = null, _editItem = null, _editServing = 100;
 let _editUnits = [], _editUnitIdx = 0;
+let _editDayType = ''; // day type for the edit modal
 
 function nutrEditLog(logId, meal) {
  const dateKey = nutrDateKey(nutrCurrentDate);
@@ -10935,6 +11215,7 @@ function nutrEditLog(logId, meal) {
  if (!item) return;
  _editLogId = logId; _editMeal = meal; _editItem = item;
  _editServing = item.servingG || item.serving_size_g || 100;
+ _editDayType = item.dayType || 'All Days'; // '' in Firestore means All Days
 
  // Build unit options (same logic as detail view)
  const base = item.serving_size_g || 100;
@@ -11036,6 +11317,40 @@ function _renderEditModal() {
    style="width:100%;accent-color:#C9A84C;margin-bottom:18px;cursor:pointer;"
   />
 
+  <!-- Day Type selector -->
+  ${(() => {
+    // Normalize '' (All Days legacy) to 'All Days' for consistent comparison
+    const assignedTypes = [...new Set((nutrAllMacroPlans || []).map(p => p.dayType || 'All Days'))];
+    const order = ['Training Day', 'Rest Day', 'All Days'];
+    const toShow = assignedTypes.length > 0 ? order.filter(t => assignedTypes.includes(t)) : ['Training Day', 'Rest Day', 'All Days'];
+    const cfgs = {
+      'Training Day': { label:'🏋️ Training Day', ac:'#4ADE80', bg:'rgba(74,222,128,0.12)',  bdr:'rgba(74,222,128,0.35)'  },
+      'Rest Day':     { label:'😴 Rest Day',      ac:'#60A5FA', bg:'rgba(96,165,250,0.12)',  bdr:'rgba(96,165,250,0.35)'  },
+      'All Days':     { label:'📅 All Days',      ac:'#c9a84c', bg:'rgba(201,168,76,0.12)',  bdr:'rgba(201,168,76,0.35)'  },
+    };
+    // Normalize current value for active check
+    const currentDT = (_editDayType === '' || !_editDayType) ? '' : _editDayType;
+    const rowStyle = toShow.length === 1 ? 'display:none;' : '';
+    const btns = toShow.map(t => {
+      const cfg = cfgs[t];
+      const isActive = t === currentDT || (t === 'All Days' && (currentDT === '' || currentDT === 'All Days'));
+      return `<button onclick="nutrEditSelectDayType('${t}')"
+        style="flex:1;padding:8px 6px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;
+               border:1px solid ${isActive ? cfg.bdr : 'rgba(255,255,255,0.07)'};
+               background:${isActive ? cfg.bg : '#0F0D14'};
+               color:${isActive ? cfg.ac : '#635F5A'};">${cfg.label}</button>`;
+    }).join('');
+    const hasSelection = _editDayType !== null && _editDayType !== undefined && _editDayType !== '__none__';
+    return `
+    <div id="em-day-type-row" style="${rowStyle}margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <div style="font-size:11px;color:#444;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;">Day Type</div>
+        <span id="em-dt-required" style="display:${hasSelection ? 'none' : 'inline-block'};font-size:9px;font-weight:700;color:#f87171;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);border-radius:100px;padding:1px 7px;letter-spacing:0.4px;text-transform:uppercase;">Required</span>
+      </div>
+      <div style="display:flex;gap:6px;">${btns}</div>
+    </div>`;
+  })()}
+
   <!-- Save button -->
   <button id="nutr-edit-save-btn" onclick="nutrEditSave()"
    style="width:100%;background:#C9A84C;color:#0A0A0A;border:none;border-radius:12px;padding:14px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.3);transition:all 0.2s;">
@@ -11044,6 +11359,27 @@ function _renderEditModal() {
  `;
  document.body.appendChild(backdrop);
  document.body.appendChild(modal);
+}
+
+function nutrEditSelectDayType(dt) {
+ _editDayType = dt; // 'Training Day', 'Rest Day', or 'All Days' — never ''
+ const cfgs = {
+  'Training Day': { ac:'#4ADE80', bg:'rgba(74,222,128,0.12)',  bdr:'rgba(74,222,128,0.35)'  },
+  'Rest Day':     { ac:'#60A5FA', bg:'rgba(96,165,250,0.12)',  bdr:'rgba(96,165,250,0.35)'  },
+  'All Days':     { ac:'#c9a84c', bg:'rgba(201,168,76,0.12)',  bdr:'rgba(201,168,76,0.35)'  },
+ };
+ const row = document.getElementById('em-day-type-row');
+ if (row) row.querySelectorAll('button').forEach(btn => {
+  const m = btn.getAttribute('onclick')?.match(/nutrEditSelectDayType\('(.*)'\)/);
+  const btnType = m ? m[1] : '';
+  const isActive = btnType === dt;
+  const cfg = cfgs[btnType] || cfgs['All Days'];
+  btn.style.background = isActive ? cfg.bg  : '#0F0D14';
+  btn.style.color      = isActive ? cfg.ac  : '#635F5A';
+  btn.style.border     = `1px solid ${isActive ? cfg.bdr : 'rgba(255,255,255,0.07)'}`;
+ });
+ const badge = document.getElementById('em-dt-required');
+ if (badge) badge.style.display = 'none';
 }
 
 function nutrEditUpdateMacroPreview() {
@@ -11112,6 +11448,26 @@ function nutrEditSlider(val) {
 async function nutrEditSave() {
  const uid = auth.currentUser?.uid;
  if (!uid || !_editLogId) return;
+
+ // Day type required — shake row if missing
+ if (_editDayType === null || _editDayType === undefined || _editDayType === '__none__') {
+  const row = document.getElementById('em-day-type-row');
+  if (row && row.style.display !== 'none') {
+   const shake = [0,6,-6,6,-4,4,-2,2,0];
+   let i = 0;
+   const doShake = () => {
+    if (i >= shake.length) { row.style.transform = ''; return; }
+    row.style.transform = `translateX(${shake[i++]}px)`;
+    setTimeout(doShake, 55);
+   };
+   doShake();
+   const badge = document.getElementById('em-dt-required');
+   if (badge) { badge.style.display = 'inline-block'; badge.style.background = 'rgba(248,113,113,0.25)'; setTimeout(() => { badge.style.background = 'rgba(248,113,113,0.1)'; }, 400); }
+   showClientToast('⚠️ Please select a Day Type first');
+   return;
+  }
+ }
+
  const item = _editItem;
  const orig = NUTR_FOODS.find(f => f.food_name === item.food_name);
  const baseFood = orig || item;
@@ -11130,6 +11486,7 @@ async function nutrEditSave() {
   protein:   Math.round((orig ? orig.protein_g : (item.protein_g||0)) * ratio * 10)/10,
   carbs:     Math.round((orig ? orig.carbs_g : (item.carbs_g||0)) * ratio * 10)/10,
   fats:      Math.round((orig ? orig.fat_g : (item.fat_g||0)) * ratio * 10)/10,
+  dayType:   _editDayType === 'All Days' ? '' : _editDayType,
   editedAt:  firebase.firestore.FieldValue.serverTimestamp()
  };
 
