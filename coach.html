@@ -4435,23 +4435,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <option value="">— Select Client —</option>
             </select>
           </div>
-          <div class="nutr-macro-strip" id="nutr-current-macros" style="display:none">
-            <div class="nutr-macro-chip"><span class="nmc-val nutr-gold" id="nmc-cal">—</span><span class="nmc-lbl">kcal</span></div>
-            <div class="nutr-macro-sep">·</div>
-            <div class="nutr-macro-chip"><span class="nmc-val" id="nmc-p">—</span><span class="nmc-lbl">Protein</span></div>
-            <div class="nutr-macro-sep">·</div>
-            <div class="nutr-macro-chip"><span class="nmc-val" id="nmc-c">—</span><span class="nmc-lbl">Carbs</span></div>
-            <div class="nutr-macro-sep">·</div>
-            <div class="nutr-macro-chip"><span class="nmc-val" id="nmc-f">—</span><span class="nmc-lbl">Fats</span></div>
-            <button onclick="removeClientMacroTarget()" title="Remove macro target"
-              style="margin-left:10px;background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;"
-              onmouseover="this.style.borderColor='rgba(248,113,113,0.4)';this.style.color='#F87171'"
-              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-              </svg>
-            </button>
-          </div>
+          <!-- Multi-plan macro cards -->
+          <div id="nutr-assigned-macro-plans" style="display:none;margin-top:8px;"></div>
         </div>
 
         <div class="nutr-builder-layout">
@@ -16319,66 +16304,113 @@ function clearMacroTargetForm() {
   mtCaloriesManuallySet = false;
 }
 
-let _currentMacroPlanId = null;
+// Store all assigned macro plans for the current client: { docId -> data }
+let _macroPlanMap = {};
 
 async function loadClientMacroTargetCard() {
   const clientUid = document.getElementById('nutr-assign-client')?.value;
-  const strip = document.getElementById('nutr-current-macros');
-  const note  = document.getElementById('mt-current-note');
+  const container = document.getElementById('nutr-assigned-macro-plans');
+  const note = document.getElementById('mt-current-note');
   clearMacroTargetForm();
-  _currentMacroPlanId = null;
+  _macroPlanMap = {};
 
   if (!clientUid) {
-    if (strip) strip.style.display = 'none';
+    if (container) { container.style.display = 'none'; container.innerHTML = ''; }
     if (note) note.innerHTML = '';
     return;
   }
 
-  if (note) note.innerHTML = 'Loading current target…';
+  if (note) note.innerHTML = 'Loading…';
   try {
     const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans')
-      .orderBy('assignedAt','desc').limit(1).get();
+      .orderBy('assignedAt','desc').limit(10).get();
 
-    if (snap.empty) {
-      if (strip) strip.style.display = 'none';
-      if (note) note.innerHTML = 'No macro target set yet for this client.';
+    // Filter to macro-only plans (empty meals array)
+    const macroDocs = snap.docs.filter(d => {
+      const meals = d.data().meals;
+      return !meals || meals.length === 0;
+    });
+
+    if (macroDocs.length === 0) {
+      if (container) { container.style.display = 'none'; container.innerHTML = ''; }
+      if (note) note.innerHTML = 'No macro targets assigned yet.';
       return;
     }
 
-    const d = snap.docs[0].data();
-    _currentMacroPlanId = snap.docs[0].id;
-
-    // Populate the macro chip strip up near the client picker
-    if (strip) {
-      strip.style.display = 'flex';
-      document.getElementById('nmc-cal').textContent = d.calories || '—';
-      document.getElementById('nmc-p').textContent    = (d.protein || 0) + 'g';
-      document.getElementById('nmc-c').textContent    = (d.carbs   || 0) + 'g';
-      document.getElementById('nmc-f').textContent    = (d.fats    || 0) + 'g';
-    }
-
-    if (note) {
-      const foodCount = (d.meals || []).reduce((n,m) => n + (m.foods?.length||0), 0);
-      const kind = foodCount > 0 ? 'with foods' : 'macros only';
-      note.innerHTML = `Current target: <strong style="color:var(--gold);">${d.planName||'Plan'}</strong> · ${d.calories||0} kcal (${kind})`;
-    }
+    macroDocs.forEach(doc => { _macroPlanMap[doc.id] = doc.data(); });
+    renderMacroPlanCards();
+    if (note) note.innerHTML = '';
   } catch(e) {
     if (note) note.innerHTML = '';
+    console.error('loadClientMacroTargetCard:', e);
   }
 }
 
-async function removeClientMacroTarget() {
-  const clientUid = document.getElementById('nutr-assign-client')?.value;
-  if (!clientUid || !_currentMacroPlanId) { showToast('Nothing to remove'); return; }
-  if (!confirm('Remove this client\'s assigned macro target? They will no longer see target rings/bars until a new one is set.')) return;
+function renderMacroPlanCards() {
+  const container = document.getElementById('nutr-assigned-macro-plans');
+  if (!container) return;
+  const plans = Object.entries(_macroPlanMap);
+  if (plans.length === 0) { container.style.display = 'none'; container.innerHTML = ''; return; }
 
+  const dayTypeLabel = dt => dt || 'All Days';
+  const dayTypeBadgeColor = dt => {
+    if (dt === 'Training Day') return 'rgba(74,222,128,0.12);color:#4ADE80;border-color:rgba(74,222,128,0.25)';
+    if (dt === 'Rest Day')     return 'rgba(96,165,250,0.12);color:#60A5FA;border-color:rgba(96,165,250,0.25)';
+    return 'rgba(212,168,67,0.12);color:var(--gold);border-color:rgba(212,168,67,0.25)';
+  };
+
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '8px';
+  container.style.marginBottom = '4px';
+
+  container.innerHTML = plans.map(([docId, d]) => `
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px 14px;flex-wrap:wrap;">
+      <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.planName || 'Macro Target'}</span>
+          <span style="font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;background:${dayTypeBadgeColor(d.dayType)};border:1px solid;border-radius:100px;padding:2px 8px;white-space:nowrap;">${dayTypeLabel(d.dayType)}</span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">
+          <span style="font-size:11px;color:var(--gold);font-weight:700;">${d.calories||0} kcal</span>
+          <span style="font-size:11px;color:var(--muted);">P: <strong style="color:var(--text);">${d.protein||0}g</strong></span>
+          <span style="font-size:11px;color:var(--muted);">C: <strong style="color:var(--text);">${d.carbs||0}g</strong></span>
+          <span style="font-size:11px;color:var(--muted);">F: <strong style="color:var(--text);">${d.fats||0}g</strong></span>
+        </div>
+      </div>
+      <button onclick="removeMacroPlanById('${docId}')" title="Remove this plan"
+        style="background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;"
+        onmouseover="this.style.borderColor='rgba(248,113,113,0.4)';this.style.color='#F87171'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+async function removeMacroPlanById(docId) {
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  if (!clientUid || !docId) { showToast('Nothing to remove'); return; }
+  const planName = _macroPlanMap[docId]?.planName || 'this plan';
+  if (!confirm(`Remove "${planName}"? The client will no longer see this macro target.`)) return;
   try {
-    await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(_currentMacroPlanId).delete();
-    showToast('Macro target removed');
-    loadClientMacroTargetCard();
+    await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(docId).delete();
+    delete _macroPlanMap[docId];
+    showToast('Macro plan removed');
+    renderMacroPlanCards();
+    const note = document.getElementById('mt-current-note');
+    if (Object.keys(_macroPlanMap).length === 0 && note) note.innerHTML = 'No macro targets assigned yet.';
   } catch(e) {
     showToast('Error: ' + e.message);
   }
+}
+
+// Keep old function name referenced in other parts of codebase
+async function removeClientMacroTarget() {
+  const firstId = Object.keys(_macroPlanMap)[0];
+  if (firstId) await removeMacroPlanById(firstId);
 }
 
 async function assignMacroTargetOnly() {
@@ -16404,16 +16436,22 @@ async function assignMacroTargetOnly() {
   if (btn) { btn.disabled = true; btn.textContent = 'Assigning…'; }
 
   try {
-    await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
+    // Always create a new plan — never replace by dayType so multiple plans can coexist
+    const ref = await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
       planName, protein, carbs, fats, calories, dayType, notes,
-      meals: [],
-      coachUid,
+      meals: [], coachUid,
       assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
       active: true
     });
-    const clientName = document.querySelector('#nutr-assign-client option:checked')?.textContent?.trim() || 'Client';
-    showToast(' Macro target assigned → ' + clientName);
-    loadClientMacroTargetCard();
+    _macroPlanMap[ref.id] = { planName, protein, carbs, fats, calories, dayType, notes, meals: [], coachUid, active: true };
+    const dayLabel = dayType === 'Training Day' ? 'Training Day'
+                   : dayType === 'Rest Day'     ? 'Rest Day'
+                   : 'All Days';
+    showToast(` Macro target assigned → ${dayLabel}`);
+    renderMacroPlanCards();
+    clearMacroTargetForm();
+    const note = document.getElementById('mt-current-note');
+    if (note) note.innerHTML = '';
   } catch(e) {
     showToast('Error: ' + e.message);
   } finally {
