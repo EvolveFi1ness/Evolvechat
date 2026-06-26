@@ -4497,7 +4497,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <!-- Food Database column -->
-          <div class="nutr-food-db-col">
+          <div class="nutr-food-db-col" id="nutr-food-db-col">
             <div class="food-db-panel">
               <div class="food-db-header">
                 <div>
@@ -4505,12 +4505,55 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="food-db-sub">Search & assign foods directly to client</div>
                 </div>
               </div>
-              <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-                <input id="food-db-search" class="field input" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none" placeholder="Search foods…" oninput="searchFoodDb(this.value)" />
+
+              <!-- Target meal selector -->
+              <div class="food-db-target">
+                <div class="food-target-label">Add to</div>
+                <select id="food-target-meal" class="food-target-select">
+                  <option value="">— Select Meal —</option>
+                </select>
               </div>
-              <div id="food-db-list" style="flex:1;overflow-y:auto;padding:8px 0"></div>
+
+              <!-- Search bar -->
+              <div class="food-db-search-wrap">
+                <span class="food-db-search-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </span>
+                <input id="food-db-search-input" class="food-db-search" type="text" placeholder="Search foods…" oninput="searchFoodDb(this.value)" autocomplete="off" />
+                <button id="food-search-clear" class="food-db-search-clear" onclick="clearFoodSearch()" style="display:none" title="Clear search">✕</button>
+              </div>
+
+              <!-- Category filter -->
+              <div style="padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+                <select id="food-cat-select" onchange="setFoodCat(this.value,null)"
+                  style="width:100%;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;transition:border-color 0.2s;appearance:none;-webkit-appearance:none;">
+                  <option value="all">All Categories</option>
+                </select>
+              </div>
+
+              <div id="food-db-list" class="food-db-list"></div>
             </div>
           </div>
+
+          <script>
+          // Patch renderFoodDbList to auto-populate the category dropdown on first load
+          (function() {
+            const _orig = window.renderFoodDbList;
+            window.renderFoodDbList = function() {
+              if (_orig) _orig();
+              const sel = document.getElementById('food-cat-select');
+              if (!sel || !window.foodDbAll || !window.foodDbAll.length) return;
+              if (sel.options.length > 1) return; // already populated
+              const cats = [...new Set(window.foodDbAll.map(function(f){ return f.category; }).filter(Boolean))].sort();
+              cats.forEach(function(c) {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                sel.appendChild(opt);
+              });
+            };
+          })();
+          </script>
         </div>
       </div>
 
@@ -16081,7 +16124,42 @@ function getBuiltinFoods() {
     {food_name:'Pumpkin Seeds (Pepitas), Shelled',category:'Nuts & Seeds',serving_label:'30g',serving_size_g:30.0,calories:163.0,protein_g:8.5,carbs_g:4.4,fat_g:13.9,fiber_g:1.8,sugar_g:0.4,sodium_mg:5.0,notes:'Magnesium & zinc-rich seeds'},
     {food_name:'Coconut, Shredded (Unsweetened)',category:'Nuts & Seeds',serving_label:'30g',serving_size_g:30.0,calories:105.0,protein_g:1.0,carbs_g:5.0,fat_g:10.2,fiber_g:2.7,sugar_g:1.5,sodium_mg:7.0,notes:'Dried coconut meat; high in MCTs'},
     {food_name:'Pecan',category:'Nuts & Seeds',serving_label:'30g',serving_size_g:30.0,calories:196.0,protein_g:2.6,carbs_g:4.0,fat_g:20.4,fiber_g:2.7,sugar_g:1.1,sodium_mg:0.0,notes:'Rich buttery American nut'},
-  ];
+  ,
+    {food_name:'Chicken Breast, Grilled (Bodybuilder Prep, Plain)',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:165.0,protein_g:31.0,carbs_g:0.0,fat_g:3.6,fiber_g:0.0,sugar_g:0.0,sodium_mg:74.0,notes:'Classic meal-prep staple; lean bulk/cut protein'},
+    {food_name:'Chicken Breast, Air-Fried (No Oil)',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:150.0,protein_g:32.0,carbs_g:0.0,fat_g:1.7,fiber_g:0.0,sugar_g:0.0,sodium_mg:70.0,notes:'Lower-fat prep method for cutting phase'},
+    {food_name:'Lean Ground Beef 96/4, Cooked',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:167.0,protein_g:26.0,carbs_g:0.0,fat_g:6.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:70.0,notes:'Lean bulking staple; high protein-to-fat ratio'},
+    {food_name:'Bison, Ground, Cooked',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:152.0,protein_g:24.0,carbs_g:0.0,fat_g:6.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:70.0,notes:'Lean red meat alternative popular in cutting diets'},
+    {food_name:'Egg Whites, Liquid (Carton)',category:'Bodybuilding & Fitness',serving_label:'1 cup (243g)',serving_size_g:243.0,calories:117.0,protein_g:25.0,carbs_g:1.7,fat_g:0.5,fiber_g:0.0,sugar_g:0.7,sodium_mg:386.0,notes:'Bodybuilder breakfast staple; near-zero fat protein'},
+    {food_name:'Whole Eggs, Scrambled (Bodybuilder Style, No Oil)',category:'Bodybuilding & Fitness',serving_label:'3 eggs (150g)',serving_size_g:150.0,calories:234.0,protein_g:19.0,carbs_g:1.8,fat_g:16.5,fiber_g:0.0,sugar_g:1.0,sodium_mg:186.0,notes:'High-protein breakfast classic'},
+    {food_name:'Tilapia Fillet, Grilled (Plain)',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:129.0,protein_g:26.0,carbs_g:0.0,fat_g:2.7,fiber_g:0.0,sugar_g:0.0,sodium_mg:56.0,notes:'Lean cutting-phase white fish'},
+    {food_name:'Tuna Steak, Seared (Ahi)',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:144.0,protein_g:30.0,carbs_g:0.0,fat_g:1.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:39.0,notes:'Lean high-protein bodybuilding fish'},
+    {food_name:'Sweet Potato, Bodybuilder Prep (Boiled, No Skin)',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:76.0,protein_g:1.4,carbs_g:18.0,fat_g:0.1,fiber_g:2.5,sugar_g:5.6,sodium_mg:27.0,notes:'Classic clean-bulk complex carb side'},
+    {food_name:'Jasmine White Rice, Bodybuilder Meal-Prep Portion',category:'Bodybuilding & Fitness',serving_label:'1 cup cooked (158g)',serving_size_g:158.0,calories:205.0,protein_g:4.3,carbs_g:44.5,fat_g:0.4,fiber_g:0.6,sugar_g:0.0,sodium_mg:1.0,notes:'Staple carb source for post-workout meals'},
+    {food_name:'Rice Cakes, Plain (Bodybuilding)',category:'Bodybuilding & Fitness',serving_label:'2 cakes (18g)',serving_size_g:18.0,calories:70.0,protein_g:1.4,carbs_g:15.0,fat_g:0.3,fiber_g:0.4,sugar_g:0.0,sodium_mg:30.0,notes:'Low-fat, fast-digesting carb for refeeds'},
+    {food_name:'Cream of Rice, Cooked',category:'Bodybuilding & Fitness',serving_label:'1 cup cooked (244g)',serving_size_g:244.0,calories:127.0,protein_g:2.4,carbs_g:28.0,fat_g:0.2,fiber_g:0.6,sugar_g:0.0,sodium_mg:5.0,notes:'Bodybuilding contest-prep low-fiber carb source'},
+    {food_name:'Egg White Protein Pancakes (Homemade)',category:'Bodybuilding & Fitness',serving_label:'3 pancakes (180g)',serving_size_g:180.0,calories:230.0,protein_g:28.0,carbs_g:18.0,fat_g:4.0,fiber_g:2.0,sugar_g:3.0,sodium_mg:280.0,notes:'High-protein bodybuilder breakfast recipe'},
+    {food_name:'Protein Oats Bowl (Oats + Whey, Homemade)',category:'Bodybuilding & Fitness',serving_label:'1 bowl (300g)',serving_size_g:300.0,calories:360.0,protein_g:30.0,carbs_g:45.0,fat_g:7.0,fiber_g:6.0,sugar_g:6.0,sodium_mg:210.0,notes:'Pre-workout staple meal'},
+    {food_name:'Chicken & Rice Meal-Prep Bowl (Plain)',category:'Bodybuilding & Fitness',serving_label:'1 bowl (400g)',serving_size_g:400.0,calories:520.0,protein_g:48.0,carbs_g:60.0,fat_g:8.0,fiber_g:1.0,sugar_g:2.0,sodium_mg:320.0,notes:'Standard bodybuilding meal-prep container meal'},
+    {food_name:'Turkey & Sweet Potato Meal-Prep Bowl',category:'Bodybuilding & Fitness',serving_label:'1 bowl (400g)',serving_size_g:400.0,calories:480.0,protein_g:42.0,carbs_g:50.0,fat_g:8.0,fiber_g:6.0,sugar_g:10.0,sodium_mg:300.0,notes:'Common cutting-phase meal-prep combo'},
+    {food_name:'Egg White & Spinach Omelet (Bodybuilder Style)',category:'Bodybuilding & Fitness',serving_label:'1 omelet (220g)',serving_size_g:220.0,calories:140.0,protein_g:24.0,carbs_g:3.0,fat_g:2.0,fiber_g:1.0,sugar_g:1.0,sodium_mg:320.0,notes:'High-protein, low-calorie breakfast staple'},
+    {food_name:'Cottage Cheese, Low-Fat, Pre-Bed Snack',category:'Bodybuilding & Fitness',serving_label:'1 cup (226g)',serving_size_g:226.0,calories:163.0,protein_g:28.0,carbs_g:6.0,fat_g:2.3,fiber_g:0.0,sugar_g:6.0,sodium_mg:698.0,notes:'Slow-digesting casein-rich bedtime snack'},
+    {food_name:'Lean Beef Jerky (Original, Bodybuilding)',category:'Bodybuilding & Fitness',serving_label:'1 oz (28g)',serving_size_g:28.0,calories:80.0,protein_g:13.0,carbs_g:6.0,fat_g:1.0,fiber_g:0.5,sugar_g:3.0,sodium_mg:590.0,notes:'Portable high-protein snack for cutting'},
+    {food_name:'Turkey Jerky, Low-Sugar',category:'Bodybuilding & Fitness',serving_label:'1 oz (28g)',serving_size_g:28.0,calories:70.0,protein_g:12.0,carbs_g:4.0,fat_g:0.5,fiber_g:0.0,sugar_g:2.0,sodium_mg:480.0,notes:'Lean travel-friendly protein snack'},
+    {food_name:'Protein Bar (Quest Bar, Chocolate Chip Cookie Dough)',category:'Bodybuilding & Fitness',serving_label:'1 bar (60g)',serving_size_g:60.0,calories:200.0,protein_g:21.0,carbs_g:22.0,fat_g:8.0,fiber_g:1.0,sugar_g:1.0,sodium_mg:200.0,notes:'Popular high-protein, low-net-carb bar'},
+    {food_name:'Protein Bar (RXBAR, Chocolate Sea Salt, Bodybuilding)',category:'Bodybuilding & Fitness',serving_label:'1 bar (52g)',serving_size_g:52.0,calories:210.0,protein_g:12.0,carbs_g:24.0,fat_g:9.0,fiber_g:5.0,sugar_g:13.0,sodium_mg:230.0,notes:'Whole-food ingredient protein bar'},
+    {food_name:'Protein Bar (Built Bar, Birthday Cake)',category:'Bodybuilding & Fitness',serving_label:'1 bar (49g)',serving_size_g:49.0,calories:130.0,protein_g:17.0,carbs_g:17.0,fat_g:4.5,fiber_g:8.0,sugar_g:1.0,sodium_mg:130.0,notes:'Low-calorie high-protein bar'},
+    {food_name:'Protein Pudding (Cup, Chocolate, Ready-to-Drink Style)',category:'Bodybuilding & Fitness',serving_label:'1 cup (113g)',serving_size_g:113.0,calories:100.0,protein_g:15.0,carbs_g:8.0,fat_g:1.5,fiber_g:1.0,sugar_g:3.0,sodium_mg:150.0,notes:'Convenient high-protein snack'},
+    {food_name:'Greek Yogurt Protein Bowl w/ Berries & Granola',category:'Bodybuilding & Fitness',serving_label:'1 bowl (350g)',serving_size_g:350.0,calories:320.0,protein_g:28.0,carbs_g:40.0,fat_g:6.0,fiber_g:4.0,sugar_g:22.0,sodium_mg:110.0,notes:'Post-workout refuel bowl'},
+    {food_name:'Tuna & Crackers Bodybuilder Snack Pack',category:'Bodybuilding & Fitness',serving_label:'1 pack (165g)',serving_size_g:165.0,calories:240.0,protein_g:22.0,carbs_g:18.0,fat_g:9.0,fiber_g:1.0,sugar_g:1.0,sodium_mg:480.0,notes:'Quick high-protein on-the-go snack'},
+    {food_name:'Lean Steak & Asparagus (Bodybuilder Dinner Plate)',category:'Bodybuilding & Fitness',serving_label:'1 plate (300g)',serving_size_g:300.0,calories:380.0,protein_g:46.0,carbs_g:6.0,fat_g:18.0,fiber_g:3.0,sugar_g:2.0,sodium_mg:180.0,notes:'Classic low-carb cutting-phase dinner'},
+    {food_name:'Salmon & Broccoli (Bodybuilder Dinner Plate)',category:'Bodybuilding & Fitness',serving_label:'1 plate (300g)',serving_size_g:300.0,calories:420.0,protein_g:38.0,carbs_g:8.0,fat_g:24.0,fiber_g:4.0,sugar_g:2.0,sodium_mg:150.0,notes:'Omega-3-rich cutting-phase dinner'},
+    {food_name:'Egg White Veggie Frittata Muffins (Meal Prep, 2 muffins)',category:'Bodybuilding & Fitness',serving_label:'2 muffins (140g)',serving_size_g:140.0,calories:130.0,protein_g:18.0,carbs_g:4.0,fat_g:4.0,fiber_g:1.0,sugar_g:2.0,sodium_mg:250.0,notes:'Make-ahead bodybuilder breakfast snack'},
+    {food_name:'Buffalo Chicken Meal-Prep Bowl (Lean)',category:'Bodybuilding & Fitness',serving_label:'1 bowl (400g)',serving_size_g:400.0,calories:460.0,protein_g:45.0,carbs_g:35.0,fat_g:12.0,fiber_g:4.0,sugar_g:4.0,sodium_mg:720.0,notes:'High-protein flavored meal-prep option'},
+    {food_name:'Overnight Protein Oats, Casein-Boosted',category:'Bodybuilding & Fitness',serving_label:'1 jar (320g)',serving_size_g:320.0,calories:350.0,protein_g:32.0,carbs_g:42.0,fat_g:6.0,fiber_g:6.0,sugar_g:8.0,sodium_mg:180.0,notes:'Make-ahead slow-release protein breakfast'},
+    {food_name:'Lean Bulk Mass Shake (Milk, Banana, Oats, Peanut Butter, Whey, Homemade)',category:'Bodybuilding & Fitness',serving_label:'1 shake (550ml)',serving_size_g:550.0,calories:680.0,protein_g:45.0,carbs_g:78.0,fat_g:20.0,fiber_g:6.0,sugar_g:30.0,sodium_mg:280.0,notes:'DIY high-calorie bulking shake'},
+    {food_name:'Anabolic French Toast (Egg White Batter, Bodybuilder Style)',category:'Bodybuilding & Fitness',serving_label:'2 slices (160g)',serving_size_g:160.0,calories:260.0,protein_g:22.0,carbs_g:30.0,fat_g:5.0,fiber_g:3.0,sugar_g:9.0,sodium_mg:280.0,notes:'Protein-forward breakfast favorite'},
+    {food_name:'Turkey Meatballs, Lean (Bodybuilder Recipe)',category:'Bodybuilding & Fitness',serving_label:'5 meatballs (150g)',serving_size_g:150.0,calories:230.0,protein_g:30.0,carbs_g:4.0,fat_g:10.0,fiber_g:0.5,sugar_g:1.0,sodium_mg:380.0,notes:'Lean protein meal-prep component'},
+    {food_name:'Shrimp Stir-Fry w/ Brown Rice (Bodybuilder Bowl)',category:'Bodybuilding & Fitness',serving_label:'1 bowl (400g)',serving_size_g:400.0,calories:440.0,protein_g:32.0,carbs_g:55.0,fat_g:8.0,fiber_g:5.0,sugar_g:6.0,sodium_mg:620.0,notes:'Balanced macro bodybuilding bowl'}];
 }
 
 function searchFoodDb(query) {
