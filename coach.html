@@ -4475,8 +4475,10 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="nutr-field" style="margin-bottom:14px;"><label>Notes (optional)</label><textarea id="mt-notes" rows="2" placeholder="e.g. Hit protein first, carbs/fats flexible around training"></textarea></div>
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
                 <button class="assign-btn" type="button" onclick="assignMacroTargetOnly()" id="mt-assign-btn" style="flex:1;min-width:160px;">Assign Macros →</button>
+                <button class="macro-reset-btn" type="button" onclick="cancelEditMacroPlan()" id="mt-cancel-edit-btn" style="display:none;">Cancel Edit</button>
                 <button class="macro-reset-btn" type="button" onclick="clearMacroTargetForm()">Reset</button>
               </div>
+              <div id="mt-editing-banner" style="display:none;margin-top:10px;font-size:12px;font-weight:600;color:#60A5FA;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.25);border-radius:8px;padding:8px 12px;"></div>
               <div class="macro-target-note" id="mt-current-note"></div>
             </div>
 
@@ -4544,25 +4546,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
 
-          <script>
-          // Patch renderFoodDbList to auto-populate the category dropdown on first load
-          (function() {
-            const _orig = window.renderFoodDbList;
-            window.renderFoodDbList = function() {
-              if (_orig) _orig();
-              const sel = document.getElementById('food-cat-select');
-              if (!sel || !window.foodDbAll || !window.foodDbAll.length) return;
-              if (sel.options.length > 1) return; // already populated
-              const cats = [...new Set(window.foodDbAll.map(function(f){ return f.category; }).filter(Boolean))].sort();
-              cats.forEach(function(c) {
-                const opt = document.createElement('option');
-                opt.value = c;
-                opt.textContent = c;
-                sel.appendChild(opt);
-              });
-            };
-          })();
-          </script>
+
         </div>
       </div>
 
@@ -6259,6 +6243,21 @@ let archivedClients = [];
 let pendingClients = [];
 let _currentClientsTab = 'active';
 
+// ── PRESENCE: treat "online" as a live signal, not a sticky flag ──
+// The client app sends a heartbeat (lastSeenAt) roughly every 25s while
+// open and visible. If a heartbeat hasn't landed within this window, the
+// client is no longer really "online" even if isOnline is still true in
+// Firestore (e.g. they force-quit the app, lost network, or the OS killed
+// the tab — none of which reliably fire a "going offline" write).
+const PRESENCE_STALE_MS = 75000; // ~3 missed heartbeats before flipping to offline
+
+function isClientOnline(c) {
+  if (!c || !c.isOnline) return false;
+  if (!c.lastSeenAt) return true; // no heartbeat data yet — trust the flag rather than hide it
+  const seenMs = c.lastSeenAt.toMillis ? c.lastSeenAt.toMillis() : new Date(c.lastSeenAt).getTime();
+  return (Date.now() - seenMs) < PRESENCE_STALE_MS;
+}
+
 function loadAllClients() {
   if (clientsUnsub) clientsUnsub();
   console.log('[COACH] Starting members onSnapshot listener...');
@@ -6275,7 +6274,7 @@ function loadAllClients() {
     const newPending = visible.filter(c => c.approvalStatus === 'pending' && c.status !== 'archived');
     notifyNewPendingRequests(newPending);
     pendingClients = newPending;
-    const onlineClients = allClients.filter(c => c.isOnline);
+    const onlineClients = allClients.filter(isClientOnline);
     console.log('[COACH] onSnapshot fired — active:', allClients.length, '| pending:', pendingClients.length, '| archived:', archivedClients.length, '| online:', onlineClients.length);
     renderClientGrid();
     renderArchivedGrid();
@@ -6291,6 +6290,24 @@ function loadAllClients() {
     console.error('[COACH] members onSnapshot FAILED:', e.code, e.message);
     document.getElementById('client-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">️</div><div class="empty-text">Could not load clients</div><div class="empty-sub">${e.message}</div></div>`;
   });
+  startPresenceWatchdog();
+}
+
+// ── PRESENCE WATCHDOG ──────────────────────────────────────────
+// Firestore only pushes a new snapshot when a doc actually changes, so a
+// client who silently dropped (no final "offline" write) would stay shown
+// as "Online now" until their next heartbeat happens to land. This timer
+// re-runs the same renders on a fixed cadence so isClientOnline()'s
+// time-based check gets re-evaluated continuously and flips the badge to
+// offline right when the staleness window passes — no Firestore write needed.
+let _presenceWatchdogTimer = null;
+function startPresenceWatchdog() {
+  if (_presenceWatchdogTimer) return; // already running
+  _presenceWatchdogTimer = setInterval(() => {
+    renderClientGrid();
+    updateOnlineStrip();
+    updateDashboardStats();
+  }, 15000);
 }
 
 // Toast the coach when a brand-new signup request shows up, so requests
@@ -6463,7 +6480,7 @@ function renderPendingGrid() {
 }
 
 function updateOnlineStrip() {
-  const online = allClients.filter(c => c.isOnline);
+  const online = allClients.filter(isClientOnline);
   // Dashboard stat
   const statEl = document.getElementById('stat-online-now');
   if (statEl) statEl.textContent = online.length;
@@ -6509,7 +6526,7 @@ function renderClientGrid() {
     return;
   }
   // Sort: online first
-  const sorted = [...allClients].sort((a,b) => (b.isOnline?1:0) - (a.isOnline?1:0));
+  const sorted = [...allClients].sort((a,b) => (isClientOnline(b)?1:0) - (isClientOnline(a)?1:0));
 
   // Preserve existing photo strip HTML before re-render to avoid flicker/stuck loading
   const savedPhotoHTML = {};
@@ -6521,7 +6538,7 @@ function renderClientGrid() {
   });
 
   grid.innerHTML = sorted.map(c => {
-    const online = !!c.isOnline;
+    const online = isClientOnline(c);
     const lastSeen = c.lastSeenAt ? timeAgo(c.lastSeenAt.toDate ? c.lastSeenAt.toDate() : new Date(c.lastSeenAt)) : '';
     const lastLogin = c.lastLoginAt ? timeAgo(c.lastLoginAt.toDate ? c.lastLoginAt.toDate() : new Date(c.lastLoginAt)) : 'Never';
     return `
@@ -12763,6 +12780,7 @@ let nutrMealCount = 0;
 // ── FOOD DATABASE STATE ──
 let foodDbAll = [];
 let foodDbFiltered = [];
+let _foodDbFirestoreLoaded = false;
 let foodDbCat = 'all';
 let foodDbQuery = '';
 let foodDbSelected = null;
@@ -13050,23 +13068,30 @@ function setFoodDbTarget(mealIdx) {
 
 // ── FOOD DATABASE ──
 async function loadFoodDatabase() {
-  const list = document.getElementById('food-db-list');
-  if (!list) return;
-  list.innerHTML = '<div class="food-db-loading"><div style="font-size:24px;margin-bottom:8px"></div><div>Loading food database…</div></div>';
+  // Step 1: Show built-in foods instantly (zero wait)
+  if (!foodDbAll.length) {
+    // .filter(Boolean) guards against stray empty slots from data-entry slips
+    // (e.g. a leftover comma) so one bad row can never blank the whole list.
+    foodDbAll = getBuiltinFoods().filter(Boolean);
+    foodDbFiltered = [...foodDbAll];
+  }
+  renderFoodDbList();
+
+  // Step 2: Silently refresh from Firestore in the background (only once per session)
+  if (_foodDbFirestoreLoaded) return;
+  _foodDbFirestoreLoaded = true;
   try {
     const snap = await db.collection('foodDatabase').orderBy('food_name').limit(300).get();
-    foodDbAll = snap.docs.map(d => ({ id:d.id, ...d.data() }));
-    if (!foodDbAll.length) {
-      // Load fallback built-in foods
-      foodDbAll = getBuiltinFoods();
+    if (snap.docs.length) {
+      const firestoreFoods = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      const firestoreNames = new Set(firestoreFoods.map(f => (f.food_name||'').toLowerCase().trim()));
+      const builtinsNotInFirestore = getBuiltinFoods().filter(f => f && !firestoreNames.has((f.food_name||'').toLowerCase().trim()));
+      foodDbAll = [...firestoreFoods, ...builtinsNotInFirestore];
+      foodDbFiltered = [...foodDbAll];
+      renderFoodDbList();
     }
-    foodDbFiltered = [...foodDbAll];
-    renderFoodDbList();
   } catch(e) {
-    console.warn('[FoodDB] Firestore load failed, using built-in foods:', e.message);
-    foodDbAll = getBuiltinFoods();
-    foodDbFiltered = [...foodDbAll];
-    renderFoodDbList();
+    console.warn('[FoodDB] Firestore refresh failed, using built-in foods:', e.message);
   }
 }
 
@@ -16133,7 +16158,6 @@ function getBuiltinFoods() {
     {food_name:'Pumpkin Seeds (Pepitas), Shelled',category:'Nuts & Seeds',serving_label:'30g',serving_size_g:30.0,calories:163.0,protein_g:8.5,carbs_g:4.4,fat_g:13.9,fiber_g:1.8,sugar_g:0.4,sodium_mg:5.0,notes:'Magnesium & zinc-rich seeds'},
     {food_name:'Coconut, Shredded (Unsweetened)',category:'Nuts & Seeds',serving_label:'30g',serving_size_g:30.0,calories:105.0,protein_g:1.0,carbs_g:5.0,fat_g:10.2,fiber_g:2.7,sugar_g:1.5,sodium_mg:7.0,notes:'Dried coconut meat; high in MCTs'},
     {food_name:'Pecan',category:'Nuts & Seeds',serving_label:'30g',serving_size_g:30.0,calories:196.0,protein_g:2.6,carbs_g:4.0,fat_g:20.4,fiber_g:2.7,sugar_g:1.1,sodium_mg:0.0,notes:'Rich buttery American nut'},
-  ,
     {food_name:'Chicken Breast, Grilled (Bodybuilder Prep, Plain)',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:165.0,protein_g:31.0,carbs_g:0.0,fat_g:3.6,fiber_g:0.0,sugar_g:0.0,sodium_mg:74.0,notes:'Classic meal-prep staple; lean bulk/cut protein'},
     {food_name:'Chicken Breast, Air-Fried (No Oil)',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:150.0,protein_g:32.0,carbs_g:0.0,fat_g:1.7,fiber_g:0.0,sugar_g:0.0,sodium_mg:70.0,notes:'Lower-fat prep method for cutting phase'},
     {food_name:'Lean Ground Beef 96/4, Cooked',category:'Bodybuilding & Fitness',serving_label:'100g',serving_size_g:100.0,calories:167.0,protein_g:26.0,carbs_g:0.0,fat_g:6.0,fiber_g:0.0,sugar_g:0.0,sodium_mg:70.0,notes:'Lean bulking staple; high protein-to-fat ratio'},
@@ -16196,6 +16220,7 @@ function setFoodCat(cat, btn) {
 
 function filterFoodDb() {
   foodDbFiltered = foodDbAll.filter(f => {
+    if (!f) return false;
     const matchCat = foodDbCat === 'all' || f.category === foodDbCat;
     const matchQ = !foodDbQuery || (f.food_name||'').toLowerCase().includes(foodDbQuery) || (f.category||'').toLowerCase().includes(foodDbQuery);
     return matchCat && matchQ;
@@ -16206,6 +16231,16 @@ function filterFoodDb() {
 function renderFoodDbList() {
   const list = document.getElementById('food-db-list');
   if (!list) return;
+  // Auto-populate category dropdown on first load
+  const catSel = document.getElementById('food-cat-select');
+  if (catSel && catSel.options.length <= 1 && foodDbAll.length) {
+    const cats = [...new Set(foodDbAll.map(f => f.category).filter(Boolean))].sort();
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      catSel.appendChild(opt);
+    });
+  }
   if (!foodDbFiltered.length) {
     list.innerHTML = '<div class="food-db-empty">No foods found.<br><small>Try a different search or category.</small></div>';
     return;
@@ -16373,6 +16408,9 @@ function onAssignClientChange() {
 
 let mtCaloriesManuallySet = false;
 
+// docId of the macro plan currently being edited, or null when creating a new one
+let _editingMacroPlanId = null;
+
 function recalcMacroTotal() {
   if (mtCaloriesManuallySet) return;
   const p = parseFloat(document.getElementById('mt-protein')?.value) || 0;
@@ -16390,6 +16428,22 @@ function clearMacroTargetForm() {
   const dayType = document.getElementById('mt-day-type');
   if (dayType) dayType.value = '';
   mtCaloriesManuallySet = false;
+  exitMacroEditMode();
+}
+
+// Reset the form/buttons back to "create new" mode without touching saved plans
+function exitMacroEditMode() {
+  _editingMacroPlanId = null;
+  const assignBtn = document.getElementById('mt-assign-btn');
+  if (assignBtn) assignBtn.textContent = 'Assign Macros →';
+  const cancelBtn = document.getElementById('mt-cancel-edit-btn');
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  const banner = document.getElementById('mt-editing-banner');
+  if (banner) { banner.style.display = 'none'; banner.innerHTML = ''; }
+}
+
+function cancelEditMacroPlan() {
+  clearMacroTargetForm();
 }
 
 // Store all assigned macro plans for the current client: { docId -> data }
@@ -16453,7 +16507,7 @@ function renderMacroPlanCards() {
   container.style.marginBottom = '4px';
 
   container.innerHTML = plans.map(([docId, d]) => `
-    <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px 14px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid ${docId === _editingMacroPlanId ? 'rgba(96,165,250,0.5)' : 'var(--border)'};border-radius:12px;padding:10px 14px;flex-wrap:wrap;">
       <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
           <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.planName || 'Macro Target'}</span>
@@ -16467,6 +16521,14 @@ function renderMacroPlanCards() {
           ${d.stepGoal ? `<span style="font-size:11px;color:#60A5FA;font-weight:600;">👟 ${d.stepGoal.toLocaleString()} steps</span>` : ''}
         </div>
       </div>
+      <button onclick="editMacroPlan('${docId}')" title="Edit this plan"
+        style="background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;"
+        onmouseover="this.style.borderColor='rgba(96,165,250,0.4)';this.style.color='#60A5FA'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+        </svg>
+      </button>
       <button onclick="removeMacroPlanById('${docId}')" title="Remove this plan"
         style="background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;"
         onmouseover="this.style.borderColor='rgba(248,113,113,0.4)';this.style.color='#F87171'"
@@ -16487,6 +16549,7 @@ async function removeMacroPlanById(docId) {
   try {
     await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(docId).delete();
     delete _macroPlanMap[docId];
+    if (_editingMacroPlanId === docId) clearMacroTargetForm();
     showToast('Macro plan removed');
     renderMacroPlanCards();
     const note = document.getElementById('mt-current-note');
@@ -16500,6 +16563,37 @@ async function removeMacroPlanById(docId) {
 async function removeClientMacroTarget() {
   const firstId = Object.keys(_macroPlanMap)[0];
   if (firstId) await removeMacroPlanById(firstId);
+}
+
+// Populate the form with an existing plan's data so the coach can edit it in place
+function editMacroPlan(docId) {
+  const d = _macroPlanMap[docId];
+  if (!d) { showToast('Plan not found'); return; }
+
+  _editingMacroPlanId = docId;
+
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v === undefined || v === null) ? '' : v; };
+  setVal('mt-plan-name', d.planName || '');
+  setVal('mt-day-type', d.dayType || '');
+  setVal('mt-step-goal', d.stepGoal || '');
+  setVal('mt-protein', d.protein || '');
+  setVal('mt-carbs', d.carbs || '');
+  setVal('mt-fats', d.fats || '');
+  setVal('mt-calories', d.calories || '');
+  setVal('mt-notes', d.notes || '');
+  mtCaloriesManuallySet = true; // user-entered calories shouldn't be overwritten by recalc while editing
+
+  const assignBtn = document.getElementById('mt-assign-btn');
+  if (assignBtn) assignBtn.textContent = 'Update Macros →';
+  const cancelBtn = document.getElementById('mt-cancel-edit-btn');
+  if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+  const banner = document.getElementById('mt-editing-banner');
+  if (banner) {
+    banner.style.display = 'block';
+    banner.innerHTML = `✏️ Editing "${d.planName || 'Macro Target'}" — changes will update this plan, not create a new one.`;
+  }
+
+  document.getElementById('macro-target-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function assignMacroTargetOnly() {
@@ -16522,32 +16616,57 @@ async function assignMacroTargetOnly() {
   const stepGoal = parseInt(document.getElementById('mt-step-goal')?.value) || 0;
   const coachUid = auth.currentUser?.uid || COACH_FIXED_UID;
 
+  const editingId = _editingMacroPlanId;
   const btn = document.getElementById('mt-assign-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Assigning…'; }
+  if (btn) { btn.disabled = true; btn.textContent = editingId ? 'Updating…' : 'Assigning…'; }
 
   try {
-    // Always create a new plan — never replace by dayType so multiple plans can coexist
-    const ref = await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
-      planName, protein, carbs, fats, calories, dayType, notes,
-      ...(stepGoal > 0 ? { stepGoal } : {}),
-      meals: [], coachUid,
-      assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      active: true
-    });
-    _macroPlanMap[ref.id] = { planName, protein, carbs, fats, calories, dayType, notes, ...(stepGoal > 0 ? { stepGoal } : {}), meals: [], coachUid, active: true };
-    const dayLabel = dayType === 'Training Day' ? 'Training Day'
-                   : dayType === 'Rest Day'     ? 'Rest Day'
-                   : 'All Days';
-    const stepMsg = stepGoal > 0 ? ` + ${stepGoal.toLocaleString()} steps` : '';
-    showToast(` Macro target assigned → ${dayLabel}${stepMsg}`);
-    renderMacroPlanCards();
-    clearMacroTargetForm();
-    const note = document.getElementById('mt-current-note');
-    if (note) note.innerHTML = '';
+    if (editingId) {
+      // Update the existing plan in place — preserve its original assignedAt/meals/coachUid history
+      const existing = _macroPlanMap[editingId] || {};
+      const updates = {
+        planName, protein, carbs, fats, calories, dayType, notes,
+        stepGoal: stepGoal > 0 ? stepGoal : firebase.firestore.FieldValue.delete()
+      };
+      await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(editingId).update(updates);
+      _macroPlanMap[editingId] = {
+        ...existing, planName, protein, carbs, fats, calories, dayType, notes,
+        ...(stepGoal > 0 ? { stepGoal } : {})
+      };
+      if (!(stepGoal > 0)) delete _macroPlanMap[editingId].stepGoal;
+
+      const dayLabel = dayType === 'Training Day' ? 'Training Day'
+                     : dayType === 'Rest Day'     ? 'Rest Day'
+                     : 'All Days';
+      showToast(` Macro target updated → ${dayLabel}`);
+      renderMacroPlanCards();
+      clearMacroTargetForm();
+      const note = document.getElementById('mt-current-note');
+      if (note) note.innerHTML = '';
+    } else {
+      // Always create a new plan — never replace by dayType so multiple plans can coexist
+      const ref = await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
+        planName, protein, carbs, fats, calories, dayType, notes,
+        ...(stepGoal > 0 ? { stepGoal } : {}),
+        meals: [], coachUid,
+        assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        active: true
+      });
+      _macroPlanMap[ref.id] = { planName, protein, carbs, fats, calories, dayType, notes, ...(stepGoal > 0 ? { stepGoal } : {}), meals: [], coachUid, active: true };
+      const dayLabel = dayType === 'Training Day' ? 'Training Day'
+                     : dayType === 'Rest Day'     ? 'Rest Day'
+                     : 'All Days';
+      const stepMsg = stepGoal > 0 ? ` + ${stepGoal.toLocaleString()} steps` : '';
+      showToast(` Macro target assigned → ${dayLabel}${stepMsg}`);
+      renderMacroPlanCards();
+      clearMacroTargetForm();
+      const note = document.getElementById('mt-current-note');
+      if (note) note.innerHTML = '';
+    }
   } catch(e) {
     showToast('Error: ' + e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = 'Assign Macros →'; }
+    if (btn) { btn.disabled = false; btn.textContent = editingId ? 'Update Macros →' : 'Assign Macros →'; }
   }
 }
 
@@ -16596,48 +16715,21 @@ async function assignFoodToClient() {
   try {
     await db.collection('members').doc(clientUid).collection('mealLogs').add(entry);
     const clientName = document.querySelector('#nutr-assign-client option:checked')?.textContent?.trim() || 'Client';
-    // A macro-only target (no specific foods) becomes redundant the moment a
-    // real food is assigned — auto-clear it so only the food assignment stands.
-    const clearedMacroTarget = await autoClearMacroOnlyTarget(clientUid);
-    showToast(' ' + foodDbSelected.food_name + ' → ' + mealSlot + ' · ' + clientName + (clearedMacroTarget ? ' (macro target cleared)' : ''));
+    // NOTE: we intentionally do NOT delete any macro-only target here.
+    // The client app hides macro targets while assigned foods exist (see
+    // hasCoachAssignedFoods in index_3.html) and automatically shows them
+    // again once all assigned foods are removed. Deleting the target doc
+    // would make that "automatic reappear" impossible, since the target
+    // would no longer exist in the database at all.
+    showToast(' ' + foodDbSelected.food_name + ' → ' + mealSlot + ' · ' + clientName);
     // Invalidate plan totals so next food shows fresh running total
     window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
     closeFoodDetail();
     loadAssignedFoodsPanel();
-    if (clearedMacroTarget) loadClientMacroTargetCard();
   } catch(e) {
     showToast('Error: ' + e.message);
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '＋ Assign to Client'; }
-  }
-}
-
-// ── AUTO-CLEAR MACRO-ONLY TARGET WHEN A FOOD IS ASSIGNED ──────
-// A "macro-only" nutritionPlans doc (created via assignMacroTargetOnly) is
-// identifiable by having an empty/missing `meals` array. Once the coach
-// assigns an actual food, that macro-only target no longer makes sense
-// (it exists specifically for clients with NO assigned foods), so we
-// delete it automatically — leaving only the food assignment in place.
-// Plans that already contain meals/foods (from the full plan builder) are
-// left untouched.
-async function autoClearMacroOnlyTarget(clientUid) {
-  if (!clientUid) return false;
-  try {
-    const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans')
-      .orderBy('assignedAt','desc').limit(1).get();
-    if (snap.empty) return false;
-
-    const doc = snap.docs[0];
-    const d = doc.data();
-    const isMacroOnly = !d.meals || d.meals.length === 0;
-    if (!isMacroOnly) return false;
-
-    await doc.ref.delete();
-    if (_currentMacroPlanId === doc.id) _currentMacroPlanId = null;
-    return true;
-  } catch(e) {
-    console.error('autoClearMacroOnlyTarget failed:', e);
-    return false;
   }
 }
 
