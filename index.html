@@ -6502,6 +6502,7 @@ let heightUnit = 'cm';
 let weightUnit = 'kg';
 let step1Data  = {};
 let todayWorkout = null;
+let _peCurrentData = {}; // profile edit cache — declared early so loadHomeScreen can populate it
 // Personal records cache: { "Exercise Name": { weight (kg), reps, achievedAt } }
 // Loaded from the member doc and updated live as sets are marked done.
 let personalRecords = {};
@@ -6805,8 +6806,10 @@ async function loadHomeScreen(data) {
   });
  }
 
- const first  = data.firstName || (auth.currentUser?.displayName?.split(' ')[0]) || 'Athlete';
- const last   = data.lastName || '';
+ const _dn = (typeof auth !== 'undefined' && auth.currentUser?.displayName) || '';
+ const _dnParts = _dn.trim().split(' ');
+ const first  = data.firstName || _dnParts[0] || 'Athlete';
+ const last   = data.lastName  || (data.firstName ? '' : _dnParts.slice(1).join(' ')) || '';
  const initials = ((first[0]||'E') + (last[0]||'')).toUpperCase();
 
  // Greeting
@@ -6832,7 +6835,7 @@ async function loadHomeScreen(data) {
  if (sidebarNm) sidebarNm.textContent = first + ' ' + last;
 
  // Stats
- document.getElementById('stat-sessions').textContent = data.attendanceCount || 0;
+ const _statSess = document.getElementById('stat-sessions'); if(_statSess) _statSess.textContent = data.attendanceCount || 0;
 
  // Load this client's personal-record cache, used to detect new PRs live as sets are logged
  personalRecords = data.personalRecords || {};
@@ -6947,7 +6950,7 @@ async function loadHomeScreen(data) {
  }
 
  // BMI
- if (data.heightCm && data.weightKg) {
+ if (data.heightCm > 0 && data.weightKg > 0) {
   const bmi = Math.round((data.weightKg / Math.pow(data.heightCm/100, 2)) * 10) / 10;
   let cat='', cls='';
   if   (bmi<18.5) { cat='Underweight'; cls='bmi-under'; }
@@ -6961,25 +6964,54 @@ async function loadHomeScreen(data) {
   document.getElementById('pp-bmi').textContent    = bmi + ' — ' + cat;
  }
 
- // Store data for edit modal pre-fill
- if (typeof _peCurrentData !== 'undefined') Object.assign(_peCurrentData, data);
+ // Store data for edit modal pre-fill + cache in localStorage for instant reload
+ Object.assign(_peCurrentData, data);
+ try {
+  const _cacheData = {};
+  const _cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','approvalStatus','assignedWorkoutPlan','personalRecords'];
+  _cacheFields.forEach(k => {
+   if (data[k] === undefined) return;
+   const _v = data[k];
+   // Firestore Timestamps can't be JSON-serialised — convert to ISO string
+   if (_v && typeof _v === 'object' && typeof _v.toDate === 'function') {
+    try { _cacheData[k] = _v.toDate().toISOString(); } catch(e) {}
+   } else {
+    _cacheData[k] = _v;
+   }
+  });
+  // Always persist email from Auth so the cache guard passes on reload
+  if (!_cacheData.email) {
+   const _aEmail = (typeof auth !== 'undefined' && auth.currentUser?.email)
+    || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.email);
+   if (_aEmail) _cacheData.email = _aEmail;
+  }
+  localStorage.setItem('evolve_profile_cache', JSON.stringify(_cacheData));
+ } catch(e) {}
 
- // Profile panel
- document.getElementById('pp-name').textContent    = first + ' ' + last;
- document.getElementById('pp-email').textContent   = data.email || auth.currentUser?.email || '';
- document.getElementById('pp-age').textContent    = data.age ? data.age + ' years old' : '—';
- document.getElementById('pp-height').textContent   = data.heightCm ? data.heightCm + ' cm' : '—';
- document.getElementById('pp-weight').textContent   = data.weightDisplay || (data.weightKg ? data.weightKg+' kg' : '—');
- document.getElementById('pp-allergies').textContent = (data.allergies&&data.allergies.length) ? data.allergies.join(', ') : 'None';
- document.getElementById('pp-meds').textContent    = data.medications || 'None';
- document.getElementById('pp-conditions').textContent = (data.medicalConditions&&data.medicalConditions.length) ? data.medicalConditions.join(', ') : 'None';
- document.getElementById('pp-goal').textContent    = data.goal ? data.goal.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—';
- if (data.memberSince?.toDate) {
-  document.getElementById('pp-since').textContent = data.memberSince.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila',year:'numeric',month:'long',day:'numeric'});
+ // Profile panel — fully null-safe, won't throw if any element is missing
+ try {
+  const _set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  _set('pp-name',       (first + ' ' + last).trim() || 'Athlete');
+  _set('pp-email',      data.email || (typeof auth !== 'undefined' && auth.currentUser?.email) || '');
+  _set('pp-age',        (data.age > 0)       ? data.age + ' years old' : '—');
+  _set('pp-height',     (data.heightCm > 0)  ? data.heightCm + ' cm'  : '—');
+  _set('pp-weight',     (data.weightKg > 0)  ? (data.weightDisplay || data.weightKg + ' kg') : '—');
+  _set('pp-allergies',  (data.allergies && data.allergies.length) ? data.allergies.join(', ') : 'None');
+  _set('pp-meds',       data.medications || 'None');
+  _set('pp-conditions', (data.medicalConditions && data.medicalConditions.length) ? data.medicalConditions.join(', ') : 'None');
+  _set('pp-goal',       data.goal ? data.goal.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—');
+  if (data.memberSince && data.memberSince.toDate) {
+   _set('pp-since', data.memberSince.toDate().toLocaleDateString('en-PH', {timeZone:'Asia/Manila',year:'numeric',month:'long',day:'numeric'}));
+  }
+  console.log('[Profile] Profile panel updated:', {name: first+' '+last, age: data.age, weight: data.weightKg, height: data.heightCm});
+ } catch(ppErr) {
+  console.error('[Profile] Error updating profile panel:', ppErr);
  }
 
  showScreen('screen-home');
  setTab('home');
+ // Paint profile panel AFTER setTab so hidden display:none doesn't interfere
+ try { if (typeof refreshProfileDisplay === 'function') refreshProfileDisplay(data); } catch(e) {}
  await loadPastLogs();
  loadProgressPhotos();
  // Start realtime listener for workout plan changes from coach
@@ -9047,7 +9079,59 @@ function setTab(tab) {
  if (tab==='home')     { setTimeout(checkHomePhotoRequestAlert, 300); loadHomePhotoStrip(); }
  if (tab==='progress') { loadProgressPhotos(); }
  if (tab==='nutrition') initClientNutrition();
+ if (tab==='profile')  { _refreshProfileTab(); }
  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ─────────────────────────────────────────
+// PROFILE TAB REFRESH
+// Always re-populate profile panel from _peCurrentData + Firestore on tab open
+// so data is never stale after a page reload.
+// ─────────────────────────────────────────
+async function _refreshProfileTab() {
+ // 1. Paint immediately from in-memory cache so the tab isn't blank during fetch
+ if (_peCurrentData && Object.keys(_peCurrentData).length) {
+  if (typeof refreshProfileDisplay === 'function') refreshProfileDisplay(_peCurrentData);
+ }
+ // 2. Always fetch fresh from Firestore — ensures nulled/cleared fields are shown correctly
+ const uid = currentUid
+  || (typeof auth !== 'undefined' && auth.currentUser?.uid)
+  || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
+ if (!uid) return;
+ try {
+  const doc = await db.collection('members').doc(uid).get();
+  if (doc.exists) {
+   const fresh = doc.data();
+   const _au = (typeof auth !== 'undefined' && auth.currentUser)
+    || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
+   if (_au) {
+    if (!fresh.email && _au.email) fresh.email = _au.email;
+    if (!fresh.firstName && _au.displayName) {
+     const _p = _au.displayName.trim().split(' ');
+     fresh.firstName = fresh.firstName || _p[0] || '';;
+     fresh.lastName  = fresh.lastName  || _p.slice(1).join(' ') || '';
+    }
+   }
+   // Replace _peCurrentData entirely with fresh Firestore data so stale cache is cleared
+   Object.keys(_peCurrentData).forEach(k => { delete _peCurrentData[k]; });
+   Object.assign(_peCurrentData, fresh);
+   if (typeof refreshProfileDisplay === 'function') refreshProfileDisplay(_peCurrentData);
+   // Update localStorage cache with the fresh data
+   try {
+    const _cf = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','assignedWorkoutPlan','personalRecords'];
+    const _co = {};
+    _cf.forEach(k => {
+     if (_peCurrentData[k] === undefined) return;
+     const v = _peCurrentData[k];
+     if (v && typeof v === 'object' && typeof v.toDate === 'function') { try { _co[k] = v.toDate().toISOString(); } catch(e){} return; }
+     _co[k] = v;
+    });
+    localStorage.setItem('evolve_profile_cache', JSON.stringify(_co));
+   } catch(e) {}
+  }
+ } catch(e) {
+  console.warn('[Profile] Could not refresh from Firestore:', e.message);
+ }
 }
 
 // ─────────────────────────────────────────
@@ -9137,7 +9221,8 @@ async function handleLogout() {
   }, { merge: true }).catch(()=>{});
  }
  await auth.signOut();
- currentUid = null; step1Data = {}; todayWorkout = null;
+ currentUid = null; step1Data = {}; todayWorkout = null; _peCurrentData = {};
+ try { localStorage.removeItem('evolve_profile_cache'); } catch(e) {}
  showScreen('screen-auth');
  switchTab('login');
 }
@@ -9197,6 +9282,29 @@ auth.onAuthStateChanged(async user => {
  if (explicitAuthInProgress) return;
  if (user) {
   currentUid = user.uid;
+
+  // ── INSTANT LOAD: show cached profile immediately, no waiting for Firestore ──
+  let _usedCache = false;
+  try {
+   const _cached = localStorage.getItem('evolve_profile_cache');
+   if (_cached) {
+    const _cData = JSON.parse(_cached);
+    // Use cache if it has any meaningful data — email is optional since it may not always be stored
+    const _hasRealName = _cData && _cData.firstName && _cData.firstName !== 'Athlete';
+    const _hasBodyStats = _cData && (_cData.age || _cData.heightCm || _cData.weightKg);
+    const _hasAnyData = _cData && (_cData.email || _hasRealName || _hasBodyStats || _cData.goal);
+    if (_hasAnyData) {
+     Object.assign(_peCurrentData, _cData);
+     await loadHomeScreen(_cData);
+     // Paint profile panel after loadHomeScreen finishes
+     if (typeof refreshProfileDisplay === 'function') refreshProfileDisplay(_cData);
+     _usedCache = true;
+     console.log('[EVOLVE] Instant load from cache — Firestore sync in background');
+    }
+   }
+  } catch(e) {}
+
+  // ── BACKGROUND: mark online + fetch fresh data from Firestore ──
   db.collection('members').doc(user.uid).set({
    isOnline: true,
    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -9209,7 +9317,6 @@ auth.onAuthStateChanged(async user => {
    // Block archived or soft-deleted clients — show access suspended screen
    if (data.status === 'archived' || data.status === 'deleted') {
     showScreen('screen-blocked');
-    // Listen for real-time restore so they regain access without re-logging in
     db.collection('members').doc(user.uid).onSnapshot(snap => {
      if (snap.exists && snap.data().status !== 'archived' && snap.data().status !== 'deleted') {
       loadHomeScreen(snap.data());
@@ -9233,11 +9340,23 @@ auth.onAuthStateChanged(async user => {
    if (!data.profileComplete) {
     db.collection('members').doc(user.uid).update({ profileComplete: true }).catch(() => {});
    }
-   loadHomeScreen(data);
+   // Supplement Firestore data with Auth user info so profile is never blank
+   if (!data.email && user.email) data.email = user.email;
+   if (!data.firstName && user.displayName) {
+    const _dp = user.displayName.trim().split(' ');
+    data.firstName = data.firstName || _dp[0] || '';
+    data.lastName  = data.lastName  || _dp.slice(1).join(' ') || '';
+   }
+   // Always update with fresh Firestore data (updates cache too via loadHomeScreen)
+   await loadHomeScreen(data);
+   // Paint profile panel after loadHomeScreen finishes (setTab inside it hides profile panel)
+   if (typeof refreshProfileDisplay === 'function') refreshProfileDisplay(data);
   } else {
-   // Doc missing on refresh (not mid-signup) — redirect to auth to avoid blank state
-   await auth.signOut();
-   showScreen('screen-auth');
+   if (!_usedCache) {
+    // Doc missing on refresh (not mid-signup) — redirect to auth to avoid blank state
+    await auth.signOut();
+    showScreen('screen-auth');
+   }
   }
   // If doc doesn't exist during active signup, handleSignup handles the redirect
  }
@@ -10403,8 +10522,9 @@ let nutrLastKnownDate = nutrDateKey(new Date());
 
 function nutrCheckDateRollover() {
  const realToday = nutrDateKey(new Date());
- if (realToday === nutrLastKnownDate) return; // same day, nothing to do
+ if (realToday === nutrLastKnownDate) return;
  nutrLastKnownDate = realToday;
+ _nutrInitialized = false; // force fresh reload on next tab visit after midnight
 
  // Only auto-jump to the new day if the user was already viewing "today"
  // (i.e. what was today before midnight — now yesterday)
@@ -10447,9 +10567,11 @@ function nutrChangeDay(delta) {
  renderNutritionTab();
 }
 
+let _nutrInitialized = false;
 async function initClientNutrition() {
  const uid = auth.currentUser?.uid;
- // Render immediately with whatever data we have (even empty), don't bail on no auth
+ if (_nutrInitialized) { renderNutritionTab(); return; }
+ _nutrInitialized = true;
  renderNutritionTab();
  if (!uid) return;
  // Load macro targets — pick the best match for today's day type
@@ -10504,16 +10626,18 @@ async function initClientNutrition() {
    .collection('mealLogs')
    .where('assignedByCoach', '==', true)
    .onSnapshot(async () => {
+     if (!_nutrAssignedSnapReady) { _nutrAssignedSnapReady = true; return; }
      await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
      renderNutritionTab();
    });
+ let _nutrAssignedSnapReady = false;
 
  // ── REAL-TIME LISTENER: re-render when coach assigns/removes macro plans ──
  if (window._nutrMacroPlanUnsub) window._nutrMacroPlanUnsub();
  window._nutrMacroPlanUnsub = db.collection('members').doc(uid)
    .collection('nutritionPlans')
    .onSnapshot(async (snap) => {
-     // Sort client-side by assignedAt desc to avoid needing a composite Firestore index
+     if (!_nutrMacroPlanSnapReady) { _nutrMacroPlanSnapReady = true; return; }
      const sorted = snap.docs.slice().sort((a, b) => {
        const aT = a.data().assignedAt?.toMillis?.() || 0;
        const bT = b.data().assignedAt?.toMillis?.() || 0;
@@ -10543,6 +10667,7 @@ async function initClientNutrition() {
      await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
      renderNutritionTab();
    }, (err) => { console.error('nutritionPlans listener error:', err); });
+ let _nutrMacroPlanSnapReady = false;
 }
 
 // NOTE: macro targets are no longer auto-deleted when a food is assigned.
@@ -10551,7 +10676,11 @@ async function initClientNutrition() {
 // all assigned foods are removed — because the target document is never
 // deleted from Firestore in the first place.
 
+let _nutrLoadInFlight = false;
+let _nutrLoadQueued   = false;
 async function nutrLoadDayLogs(uid, dateKey) {
+ if (_nutrLoadInFlight) { _nutrLoadQueued = true; return; }
+ _nutrLoadInFlight = true;
  try {
   nutrFoodLogs[dateKey] = {};
   NUTR_MEALS.forEach(m => nutrFoodLogs[dateKey][m] = []);
@@ -10588,6 +10717,13 @@ async function nutrLoadDayLogs(uid, dateKey) {
   });
 
  } catch(e) { console.error('[Nutr]', e); }
+ finally {
+  _nutrLoadInFlight = false;
+  if (_nutrLoadQueued) {
+   _nutrLoadQueued = false;
+   await nutrLoadDayLogs(uid, dateKey);
+  }
+ }
 }
 
 function nutrGetDayTotals(dateKey) {
@@ -11471,7 +11607,9 @@ function nutrRenderDetailMacros() {
  if (btn) btn.textContent = `Add ${cal} kcal to ${nutrDetailMeal}`;
 }
 
+let _nutrConfirmInFlight = false;
 async function nutrConfirmAdd() {
+ if (_nutrConfirmInFlight) return;
  const uid = auth.currentUser?.uid;
  if (!uid || !nutrDetailFood) return;
 
@@ -11529,20 +11667,20 @@ async function nutrConfirmAdd() {
  };
  const btn = document.getElementById('nutr-add-btn');
  if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
+ _nutrConfirmInFlight = true;
  try {
-  const docRef = await db.collection('members').doc(uid).collection('mealLogs').add(entry);
-  // Update local cache
-  if (!nutrFoodLogs[dateKey]) nutrFoodLogs[dateKey] = {};
-  if (!nutrFoodLogs[dateKey][nutrDetailMeal]) nutrFoodLogs[dateKey][nutrDetailMeal] = [];
-  nutrFoodLogs[dateKey][nutrDetailMeal].push({...entry, logId: docRef.id});
+  await db.collection('members').doc(uid).collection('mealLogs').add(entry);
   showClientToast(' Added to ' + nutrDetailMeal);
   closeNutrDetail();
   closeNutrFoodSearch();
+  // Reload from Firestore (authoritative) — prevents local-push duplicates
+  await nutrLoadDayLogs(uid, dateKey);
   renderNutritionTab();
  } catch(e) {
   showClientToast('Error: ' + e.message);
  } finally {
-  if (btn) { btn.disabled=false; }
+  if (btn) { btn.disabled=false; btn.textContent='Add'; }
+  _nutrConfirmInFlight = false;
  }
 }
 
@@ -12666,23 +12804,70 @@ window.pushClientNotif = addClientNotification;
 
 <script>
 // ── PROFILE EDIT ──
-let _peCurrentData = {};
+// _peCurrentData is declared near the top of the main script so loadHomeScreen can populate it before this block loads
 
-function openProfileEdit() {
- // Pre-fill from current known data
- const d = _peCurrentData;
- document.getElementById('pe-age').value    = d.age || '';
- document.getElementById('pe-height').value   = d.heightCm || '';
- document.getElementById('pe-weight').value   = d.weightKg || '';
- document.getElementById('pe-goal').value    = d.goal || '';
- document.getElementById('pe-allergies').value = (d.allergies && d.allergies.length) ? d.allergies.join(', ') : '';
- document.getElementById('pe-meds').value    = d.medications || '';
- document.getElementById('pe-conditions').value = (d.medicalConditions && d.medicalConditions.length) ? d.medicalConditions.join(', ') : '';
- document.getElementById('pe-firstname').value = d.firstName || '';
- document.getElementById('pe-lastname').value  = d.lastName || '';
+function _fillProfileModal(d) {
+ document.getElementById('pe-age').value         = d.age || '';
+ document.getElementById('pe-height').value       = d.heightCm || '';
+ document.getElementById('pe-weight').value       = d.weightKg || '';
+ document.getElementById('pe-goal').value         = d.goal || '';
+ document.getElementById('pe-allergies').value    = (d.allergies && d.allergies.length) ? d.allergies.join(', ') : '';
+ document.getElementById('pe-meds').value         = d.medications || '';
+ document.getElementById('pe-conditions').value   = (d.medicalConditions && d.medicalConditions.length) ? d.medicalConditions.join(', ') : '';
+ document.getElementById('pe-firstname').value    = d.firstName || '';
+ document.getElementById('pe-lastname').value     = d.lastName || '';
+}
+
+async function openProfileEdit() {
+ const uid = currentUid
+  || (typeof auth !== 'undefined' && auth.currentUser?.uid)
+  || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
+
+ // Seed _peCurrentData with Firebase Auth info as fallback (name + email)
+ // so the modal always has something to show even if Firestore hasn't loaded
+ const _authUser = (typeof auth !== 'undefined' && auth.currentUser)
+  || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
+ if (_authUser) {
+  if (!_peCurrentData.email && _authUser.email) _peCurrentData.email = _authUser.email;
+  if (!_peCurrentData.firstName && _authUser.displayName) {
+   const _parts = _authUser.displayName.trim().split(' ');
+   _peCurrentData.firstName = _peCurrentData.firstName || _parts[0] || '';
+   _peCurrentData.lastName  = _peCurrentData.lastName  || _parts.slice(1).join(' ') || '';
+  }
+ }
+
+ // Show modal with whatever we have so far
+ _fillProfileModal(_peCurrentData);
  document.getElementById('pe-backdrop').classList.add('open');
  document.getElementById('pe-modal').classList.add('open');
  document.body.style.overflow = 'hidden';
+
+ // Disable save — always fetch fresh Firestore data before allowing save
+ const saveBtn = document.getElementById('pe-save-btn');
+ if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Loading…'; }
+
+ if (uid) {
+  try {
+   const doc = await db.collection('members').doc(uid).get();
+   if (doc.exists) {
+    const fresh = doc.data();
+    Object.assign(_peCurrentData, fresh);
+    // Keep Auth displayName as fallback if Firestore doc has no name
+    if (!_peCurrentData.firstName && _authUser && _authUser.displayName) {
+     const _p = _authUser.displayName.trim().split(' ');
+     _peCurrentData.firstName = _p[0] || '';
+     _peCurrentData.lastName  = _p.slice(1).join(' ') || '';
+    }
+    if (!_peCurrentData.email && _authUser && _authUser.email) _peCurrentData.email = _authUser.email;
+    _fillProfileModal(_peCurrentData);
+   }
+  } catch(e) {
+   console.warn('[Profile] Could not load from Firestore:', e.message);
+  }
+ }
+
+ // Re-enable save button
+ if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
 }
 
 function closeProfileEdit() {
@@ -12701,95 +12886,154 @@ function showPeToast(msg, isError) {
 }
 
 async function saveProfileEdit() {
- const uid = (typeof currentUid !== 'undefined' && currentUid) || (typeof auth !== 'undefined' && auth.currentUser?.uid);
- if (!uid) { showPeToast('Not signed in', true); return; }
+ const uid = currentUid
+  || (typeof auth !== 'undefined' && auth.currentUser?.uid)
+  || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
+
+ if (!uid) { showPeToast('Not signed in — please refresh', true); return; }
 
  const btn = document.getElementById('pe-save-btn');
  btn.disabled = true; btn.textContent = 'Saving…';
 
- const age    = parseInt(document.getElementById('pe-age').value, 10) || null;
- const heightCm = parseFloat(document.getElementById('pe-height').value) || null;
- const weightKg = parseFloat(document.getElementById('pe-weight').value) || null;
- const goal   = document.getElementById('pe-goal').value || null;
+ // Read fields
+ const ageRaw    = document.getElementById('pe-age').value.trim();
+ const heightRaw = document.getElementById('pe-height').value.trim();
+ const weightRaw = document.getElementById('pe-weight').value.trim();
+ const age       = ageRaw    ? parseInt(ageRaw, 10)    : null;
+ const heightCm  = heightRaw ? parseFloat(heightRaw)   : null;
+ const weightKg  = weightRaw ? parseFloat(weightRaw)   : null;
+ const goal      = document.getElementById('pe-goal').value.trim();
  const firstName = document.getElementById('pe-firstname').value.trim();
- const lastName = document.getElementById('pe-lastname').value.trim();
+ const lastName  = document.getElementById('pe-lastname').value.trim();
+ const allergies         = (document.getElementById('pe-allergies').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+ const medications       = document.getElementById('pe-meds').value.trim();
+ const medicalConditions = (document.getElementById('pe-conditions').value||'').split(',').map(s=>s.trim()).filter(Boolean);
 
- // Parse comma-separated fields
- const parseList = (val) => val.split(',').map(s=>s.trim()).filter(Boolean);
- const allergies    = parseList(document.getElementById('pe-allergies').value);
- const medications   = document.getElementById('pe-meds').value.trim() || null;
- const medicalConditions = parseList(document.getElementById('pe-conditions').value);
+ // Resolve name: use field value, fall back to Auth displayName, fall back to existing cache
+ const _authUser2 = (typeof auth !== 'undefined' && auth.currentUser)
+  || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
+ const _authParts = (_authUser2 && _authUser2.displayName) ? _authUser2.displayName.trim().split(' ') : [];
+ const resolvedFirst = firstName || _peCurrentData.firstName || _authParts[0] || '';
+ const resolvedLast  = lastName  || _peCurrentData.lastName  || _authParts.slice(1).join(' ') || '';
+ const resolvedEmail = (_authUser2 && _authUser2.email) || _peCurrentData.email || '';
 
- // Compute BMI if we have both
- let bmi = _peCurrentData.bmi || null;
- if (heightCm && weightKg) {
+ // Build updates — write every field unconditionally so cleared values are saved
+ const updates = { profileUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+ if (resolvedFirst)   updates.firstName        = resolvedFirst;
+ if (resolvedLast)    updates.lastName         = resolvedLast;
+ if (resolvedEmail)   updates.email            = resolvedEmail;
+ updates.goal             = goal || null;
+ updates.medications      = medications || null;
+ updates.allergies        = allergies.length ? allergies : [];
+ updates.medicalConditions = medicalConditions.length ? medicalConditions : [];
+ updates.age              = (age > 0) ? age : null;
+ updates.heightCm         = (heightCm > 0) ? heightCm : null;
+ updates.weightKg         = (weightKg > 0) ? weightKg : null;
+ updates.weightDisplay    = (weightKg > 0) ? weightKg + ' kg' : null;
+ if (heightCm > 0 && weightKg > 0) {
   const h = heightCm / 100;
-  bmi = Math.round((weightKg / (h * h)) * 10) / 10;
+  updates.bmi = Math.round((weightKg / (h * h)) * 10) / 10;
+ } else {
+  updates.bmi = null;
  }
 
- const updates = {};
- if (age !== null)     updates.age = age;
- if (heightCm !== null)  updates.heightCm = heightCm;
- if (weightKg !== null) { updates.weightKg = weightKg; updates.weightDisplay = weightKg + ' kg'; }
- if (bmi !== null)     updates.bmi = bmi;
- if (goal)         updates.goal = goal;
- if (firstName)      updates.firstName = firstName;
- if (lastName)       updates.lastName = lastName;
- if (allergies.length)   updates.allergies = allergies;
- else           updates.allergies = [];
- if (medications !== null) updates.medications = medications;
- updates.medicalConditions = medicalConditions;
- updates.profileUpdatedAt = firebase.firestore.FieldValue.serverTimestamp();
+ console.log('[Profile] Saving to Firestore:', updates);
 
  try {
-  await db.collection('members').doc(uid).update(updates);
+  await db.collection('members').doc(uid).set(updates, { merge: true });
+
   // Merge into local cache
   Object.assign(_peCurrentData, updates);
-  // Refresh all display fields
-  refreshProfileDisplay(_peCurrentData);
-  showPeToast('Profile updated');
+
+  // Ensure email is always in cache (required by cache guard on reload)
+  if (!_peCurrentData.email && resolvedEmail) _peCurrentData.email = resolvedEmail;
+
+  // Update cache list — skip Firestore Timestamps (not JSON-serialisable)
+  const cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','assignedWorkoutPlan','personalRecords'];
+  const cacheObj = {};
+  cacheFields.forEach(k => {
+   if (_peCurrentData[k] === undefined) return;
+   const v = _peCurrentData[k];
+   if (v && typeof v === 'object' && typeof v.toDate === 'function') return; // skip Timestamps
+   cacheObj[k] = v;
+  });
+  try { localStorage.setItem('evolve_profile_cache', JSON.stringify(cacheObj)); } catch(e) {}
+
   closeProfileEdit();
+  showPeToast('✓ Saved!');
+  refreshProfileDisplay(_peCurrentData);
+  if (typeof setTab === 'function') setTab('profile');
+  console.log('[Profile] ✓ Done. Cache:', {age: _peCurrentData.age, heightCm: _peCurrentData.heightCm, weightKg: _peCurrentData.weightKg});
  } catch(e) {
-  showPeToast('Error: ' + e.message, true);
+  console.error('[Profile] Save FAILED:', e.code, e.message, e);
+  if (e.code === 'permission-denied') {
+   showPeToast('Permission denied — contact your coach', true);
+  } else if (e.code === 'unavailable') {
+   showPeToast('No internet connection', true);
+  } else {
+   showPeToast('Save failed: ' + e.message, true);
+  }
  } finally {
   btn.disabled = false; btn.textContent = 'Save Changes';
  }
 }
 
 function refreshProfileDisplay(data) {
- const first = data.firstName || '';
- const last = data.lastName || '';
+ if (!data) return;
+ const first    = data.firstName || '';
+ const last     = data.lastName  || '';
  const fullName = (first + ' ' + last).trim() || data.email || '';
 
- // Update name everywhere it appears
- ['pp-name'].forEach(id => { const el = document.getElementById(id); if(el) el.textContent = fullName; });
- ['home-avatar','pp-avatar'].forEach(id => {
-  const el = document.getElementById(id);
-  if(el) el.textContent = (first[0]||'')+(last[0]||'') || fullName[0]||'?';
+ const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+
+ // Name + avatars
+ set('pp-name',  fullName || 'Athlete');
+ set('pp-email', data.email || (typeof auth !== 'undefined' && auth.currentUser?.email) || '');
+ ['home-avatar','pp-avatar','sidebar-avatar'].forEach(id => {
+  const e = document.getElementById(id);
+  if (e) e.textContent = ((first[0]||'') + (last[0]||'')).toUpperCase() || fullName[0]?.toUpperCase() || '?';
  });
+ const sn = document.getElementById('sidebar-name');
+ if (sn) sn.textContent = fullName;
 
- const el = (id) => document.getElementById(id);
- if(el('pp-age'))    el('pp-age').textContent    = data.age ? data.age + ' years old' : '—';
- if(el('pp-height'))   el('pp-height').textContent   = data.heightCm ? data.heightCm + ' cm' : '—';
- if(el('pp-weight'))   el('pp-weight').textContent   = data.weightDisplay || (data.weightKg ? data.weightKg + ' kg' : '—');
- if(el('pp-allergies')) el('pp-allergies').textContent = (data.allergies && data.allergies.length) ? data.allergies.join(', ') : 'None';
- if(el('pp-meds'))    el('pp-meds').textContent    = data.medications || 'None';
- if(el('pp-conditions')) el('pp-conditions').textContent = (data.medicalConditions && data.medicalConditions.length) ? data.medicalConditions.join(', ') : 'None';
- if(el('pp-goal'))    el('pp-goal').textContent    = data.goal ? data.goal.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—';
+ // Body stats — always compute from raw values, never rely on derived fields
+ set('pp-age',    (data.age > 0)      ? data.age + ' years old' : '—');
+ set('pp-height', (data.heightCm > 0) ? data.heightCm + ' cm'  : '—');
+ set('pp-weight', (data.weightKg > 0) ? (data.weightDisplay || data.weightKg + ' kg') : '—');
 
- // BMI
- if (data.heightCm && data.weightKg) {
-  const h = data.heightCm / 100;
-  const bmi = Math.round((data.weightKg / (h*h)) * 10) / 10;
-  let cat = 'Normal', cls = 'normal';
-  if (bmi < 18.5) { cat = 'Underweight'; cls = 'under'; }
-  else if (bmi >= 25 && bmi < 30) { cat = 'Overweight'; cls = 'over'; }
-  else if (bmi >= 30) { cat = 'Obese'; cls = 'obese'; }
-  if(el('pp-bmi')) el('pp-bmi').textContent = bmi + ' — ' + cat;
-  if(el('bmi-value')) el('bmi-value').textContent = bmi;
-  if(el('bmi-category')) { el('bmi-category').textContent = cat; el('bmi-category').className = 'bmi-category ' + cls; }
-  if(el('bmi-detail')) el('bmi-detail').textContent = 'Height: ' + data.heightCm + ' cm · Weight: ' + data.weightKg + ' kg';
+ // Health
+ set('pp-allergies',  (data.allergies?.length)         ? data.allergies.join(', ')         : 'None');
+ set('pp-meds',       data.medications                  ? data.medications                  : 'None');
+ set('pp-conditions', (data.medicalConditions?.length)  ? data.medicalConditions.join(', ') : 'None');
+
+ // Goal
+ set('pp-goal', data.goal ? data.goal.replace(/_/g,' ').replace(/\w/g, c => c.toUpperCase()) : '—');
+
+ // Member since
+ try {
+  if (data.memberSince?.toDate) {
+   set('pp-since', data.memberSince.toDate().toLocaleDateString('en-PH', {timeZone:'Asia/Manila',year:'numeric',month:'long',day:'numeric'}));
+  }
+ } catch(e) {}
+
+ // BMI — always recompute from height + weight
+ if (data.heightCm > 0 && data.weightKg > 0) {
+  const h   = data.heightCm / 100;
+  const bmi = Math.round((data.weightKg / (h * h)) * 10) / 10;
+  let cat = 'Normal', cls = 'bmi-normal';
+  if      (bmi < 18.5) { cat = 'Underweight'; cls = 'bmi-under'; }
+  else if (bmi >= 30)  { cat = 'Obese';       cls = 'bmi-obese'; }
+  else if (bmi >= 25)  { cat = 'Overweight';  cls = 'bmi-over';  }
+  set('pp-bmi',      bmi + ' — ' + cat);
+  set('bmi-value',   bmi);
+  set('bmi-detail',  'Height: ' + data.heightCm + ' cm · Weight: ' + data.weightKg + ' kg');
+  const catEl = document.getElementById('bmi-category');
+  if (catEl) { catEl.textContent = cat; catEl.className = 'bmi-category ' + cls; }
+ } else {
+  set('pp-bmi', '—');
  }
+
+ console.log('[Profile] refreshProfileDisplay ✔', {age: data.age, heightCm: data.heightCm, weightKg: data.weightKg, goal: data.goal, firstName: data.firstName});
 }
 </script>
 
