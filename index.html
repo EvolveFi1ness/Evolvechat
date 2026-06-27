@@ -5974,8 +5974,22 @@ img, video, iframe { max-width: 100%; }
       </div>
      </div>
      <div class="angle-actions">
-      <button class="up-cancel" onclick="cancelAngleUpload()">Cancel</button>
+      <button class="up-cancel" id="angle-cancel-btn" onclick="cancelAngleUpload()">Cancel</button>
       <button class="up-submit" id="angle-submit-btn" onclick="submitAnglePhotos()">Upload Photos</button>
+     </div>
+     <!-- Upload progress UI — hidden until upload starts -->
+     <div id="upload-progress-wrap" style="display:none;margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+       <span id="upload-progress-label" style="font-size:12px;font-family:Outfit,sans-serif;color:rgba(201,168,76,0.9);font-weight:600;letter-spacing:0.3px;">Uploading…</span>
+       <span id="upload-progress-pct" style="font-size:12px;font-family:Outfit,sans-serif;color:rgba(255,255,255,0.4);font-weight:500;">0%</span>
+      </div>
+      <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;">
+       <div id="upload-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#c9a84c,#f0c866);border-radius:99px;transition:width 0.35s ease;"></div>
+      </div>
+      <div id="upload-stay-warning" style="display:flex;align-items:center;gap:7px;margin-top:10px;padding:9px 12px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);border-radius:9px;">
+       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+       <span style="font-size:11.5px;font-family:Outfit,sans-serif;color:#f87171;font-weight:500;line-height:1.4;">Don't close this tab or navigate away — your upload will be lost.</span>
+      </div>
      </div>
     </div>
 
@@ -8514,24 +8528,59 @@ async function submitAnglePhotos() {
  }
  const note = document.getElementById('angle-note').value.trim();
  const btn = document.getElementById('angle-submit-btn');
+ const cancelBtn = document.getElementById('angle-cancel-btn');
+ const _uploadWt  = parseFloat(document.getElementById('upload-weight-input')?.value);
+ const _uploadWtUnit = (document.getElementById('upload-wt-lbs')?.style.background?.includes('201') ? 'lbs' : 'kg');
+
+ // Progress UI helpers
+ const _totalSteps = angles.length * 2; // compress + upload per angle
+ let _completedSteps = 0;
+ const _progressWrap = document.getElementById('upload-progress-wrap');
+ const _progressBar  = document.getElementById('upload-progress-bar');
+ const _progressPct  = document.getElementById('upload-progress-pct');
+ const _progressLbl  = document.getElementById('upload-progress-label');
+ const _setProgress  = (pct, label) => {
+  if (_progressBar) _progressBar.style.width = pct + '%';
+  if (_progressPct) _progressPct.textContent = Math.round(pct) + '%';
+  if (_progressLbl && label) _progressLbl.textContent = label;
+ };
+ const _stepDone = (label) => {
+  _completedSteps++;
+  _setProgress((_completedSteps / _totalSteps) * 95, label); // cap at 95% until fully done
+ };
+
+ // Show progress UI, hide normal actions
+ if (_progressWrap) _progressWrap.style.display = 'block';
  btn.disabled = true; btn.textContent = 'Uploading…';
+ if (cancelBtn) cancelBtn.style.display = 'none';
+
+ // Warn user not to close the tab while uploading
+ const _beforeUnloadHandler = e => { e.preventDefault(); e.returnValue = 'Your photo upload is in progress. Are you sure you want to leave?'; return e.returnValue; };
+ window.addEventListener('beforeunload', _beforeUnloadHandler);
+
  const reqId = activeReqId;
  activeReqId = null;
  try {
-  for (const angle of angles) {
+  // Step 1: Compress all photos first (CPU-only, fast)
+  _setProgress(0, 'Compressing photos…');
+  const compressedMap = {};
+  await Promise.all(angles.map(async angle => {
    const file = _angleFiles[angle];
-   // Use already-stored base64 preview (fixes iOS HEIC re-read issue)
    const base64raw = _anglePreviews[angle] || await new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = e => resolve(e.target.result);
     r.onerror = () => reject(new Error('Failed to read file'));
     r.readAsDataURL(file);
    });
-   // Compress before uploading (1200px / 0.82 keeps file well under Storage limits)
-   const compressed = await compressImageBase64(base64raw, 1200, 0.82);
-   const _uploadWt  = parseFloat(document.getElementById('upload-weight-input')?.value);
-   const _uploadWtUnit = (document.getElementById('upload-wt-lbs')?.style.background?.includes('201') ? 'lbs' : 'kg');
-   // Try Firebase Storage first; fall back to base64 in Firestore if Storage rules block the upload
+   compressedMap[angle] = await compressImageBase64(base64raw, 900, 0.72);
+   _stepDone('Compressing…');
+  }));
+
+  // Step 2: Upload all angles in parallel
+  _setProgress(50, `Uploading ${angles.length} photo${angles.length > 1 ? 's' : ''}…`);
+  await Promise.all(angles.map(async angle => {
+   const file = _angleFiles[angle];
+   const compressed = compressedMap[angle];
    let photoUrl = null;
    let photoBase64 = null;
    try {
@@ -8549,7 +8598,8 @@ async function submitAnglePhotos() {
     weightUnit: isNaN(_uploadWt) ? null : _uploadWtUnit,
     uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
    });
-  }
+   _stepDone(`Saving…`);
+  }));
   try {
    const memberDoc = await db.collection('members').doc(uid).get();
    const mData = memberDoc.data() || {};
@@ -8566,7 +8616,7 @@ async function submitAnglePhotos() {
   if (reqId) {
    // Upload the front photo (or first available) to Storage for the request doc
    const reqBase64raw = _anglePreviews['front'] || Object.values(_anglePreviews)[0];
-   const reqCompressed = await compressImageBase64(reqBase64raw, 1200, 0.82);
+   const reqCompressed = await compressImageBase64(reqBase64raw, 900, 0.72);
    const reqUrl = await uploadPhotoToStorage(uid, reqCompressed, 'req_front');
    await db.collection('photoRequests').doc(reqId).update({
     fulfilled: true,
@@ -8592,19 +8642,33 @@ async function submitAnglePhotos() {
     });
     } catch(e) { console.warn('Weight log failed:', e); }
   }
-  cancelAngleUpload();
-  loadProgressPhotos();
-  loadHomePhotoStrip();
+  // All done — fill to 100%, remove tab-close guard, then clean up
+  _setProgress(100, '✓ Upload complete!');
+  window.removeEventListener('beforeunload', _beforeUnloadHandler);
+  setTimeout(() => {
+   if (_progressWrap) _progressWrap.style.display = 'none';
+   if (cancelBtn) cancelBtn.style.display = '';
+   cancelAngleUpload();
+   loadProgressPhotos();
+   loadHomePhotoStrip();
+  }, 700);
  } catch(e) {
   console.error('Photo upload error:', e);
+  window.removeEventListener('beforeunload', _beforeUnloadHandler);
+  if (_progressWrap) _progressWrap.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.display = '';
   btn.disabled = false;
   btn.textContent = 'Failed — tap to retry';
   btn.style.cssText = 'background:#2a0d0d;color:#f09595;border:1px solid #5a1a1a';
   showToast('Upload failed: ' + (e.message || 'Unknown error'), 'error');
   setTimeout(() => { btn.style.cssText = ''; btn.textContent = 'Upload Photos'; }, 3000);
  } finally {
-  // Reset button if it's still in a loading state (catch block may have already reset it)
-  if (btn.disabled && btn.textContent === 'Uploading\u2026') { btn.disabled = false; btn.textContent = 'Upload Photos'; }
+  if (btn.disabled && btn.textContent === 'Uploading\u2026') {
+   window.removeEventListener('beforeunload', _beforeUnloadHandler);
+   if (_progressWrap) _progressWrap.style.display = 'none';
+   if (cancelBtn) cancelBtn.style.display = '';
+   btn.disabled = false; btn.textContent = 'Upload Photos';
+  }
  }
 }
 
