@@ -6664,6 +6664,7 @@ async function handleLogin() {
     lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
    }, { merge: true });
    console.log('[EVOLVE] handleLogin: isOnline=true written OK');
+   startPresenceHeartbeat();
   } catch(presenceErr) {
    console.error('[EVOLVE] handleLogin: presence write FAILED:', presenceErr.code, presenceErr.message);
   }
@@ -9129,6 +9130,7 @@ async function clientSendMessage() {
 // ─────────────────────────────────────────
 const logout = () => handleLogout();
 async function handleLogout() {
+ stopPresenceHeartbeat();
  if (currentUid) {
   await db.collection('members').doc(currentUid).set({
    isOnline: false, lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -9141,6 +9143,7 @@ async function handleLogout() {
 }
 
 async function handleBlockedSignOut() {
+ stopPresenceHeartbeat();
  if (currentUid) {
   await db.collection('members').doc(currentUid).set({
    isOnline: false, lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -9198,6 +9201,7 @@ auth.onAuthStateChanged(async user => {
    isOnline: true,
    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(() => {});
+  startPresenceHeartbeat();
 
   const doc = await db.collection('members').doc(user.uid).get();
   if (doc.exists) {
@@ -9239,8 +9243,9 @@ auth.onAuthStateChanged(async user => {
  }
 });
 
-// Mark offline when tab closes
+// Mark offline when tab closes (best-effort — not reliable on its own, see heartbeat below)
 window.addEventListener('beforeunload', () => {
+ stopPresenceHeartbeat();
  const uid = currentUid || auth.currentUser?.uid;
  if (uid) {
   db.collection('members').doc(uid).set({
@@ -9248,6 +9253,47 @@ window.addEventListener('beforeunload', () => {
    lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(()=>{});
  }
+});
+
+// ─────────────────────────────────────────
+// PRESENCE HEARTBEAT
+// ─────────────────────────────────────────
+// `beforeunload` / `visibilitychange` do not reliably fire on mobile (app
+// backgrounded, force-quit, OS kills the tab, network/battery loss, etc),
+// so a client can get stuck showing "Online now" on the coach dashboard
+// forever even though they left ages ago.
+//
+// Fix: while the app is open and the tab is actually visible, refresh
+// lastSeenAt every HEARTBEAT_MS. The coach dashboard then treats a client
+// as online only while isOnline is true AND lastSeenAt is recent — so a
+// stale flag self-corrects within one missed heartbeat, with no extra
+// action required from the client.
+const HEARTBEAT_MS = 25000; // keep well under the coach's staleness window
+let _heartbeatTimer = null;
+
+function _sendHeartbeat() {
+ const uid = currentUid || auth.currentUser?.uid;
+ if (!uid || document.visibilityState !== 'visible') return;
+ db.collection('members').doc(uid).set({
+  isOnline: true,
+  lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
+ }, { merge: true }).catch(()=>{});
+}
+
+function startPresenceHeartbeat() {
+ if (_heartbeatTimer) return; // already running
+ _sendHeartbeat(); // immediate beat so status is fresh right away
+ _heartbeatTimer = setInterval(_sendHeartbeat, HEARTBEAT_MS);
+}
+
+function stopPresenceHeartbeat() {
+ if (_heartbeatTimer) { clearInterval(_heartbeatTimer); _heartbeatTimer = null; }
+}
+
+// Fire an immediate heartbeat the moment the tab regains focus/visibility —
+// covers the common case of switching back to the app after a while away.
+document.addEventListener('visibilitychange', () => {
+ if (document.visibilityState === 'visible') _sendHeartbeat();
 });
 
 // ─────────────────────────────────────────
@@ -10409,10 +10455,17 @@ async function initClientNutrition() {
  // Load macro targets — pick the best match for today's day type
  try {
   const snap = await db.collection('members').doc(uid).collection('nutritionPlans')
-    .orderBy('assignedAt','desc').limit(10).get();
+    .get();
+
+  // Sort client-side by assignedAt desc (avoids needing a composite Firestore index)
+  const sortedDocs = snap.docs.slice().sort((a, b) => {
+    const aT = a.data().assignedAt?.toMillis?.() || 0;
+    const bT = b.data().assignedAt?.toMillis?.() || 0;
+    return bT - aT;
+  });
 
   // Filter to macro-only plans (empty/missing meals array)
-  const macroDocs = snap.docs.filter(d => {
+  const macroDocs = sortedDocs.filter(d => {
     const meals = d.data().meals;
     return !meals || meals.length === 0;
   });
@@ -10425,8 +10478,9 @@ async function initClientNutrition() {
     const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
     const currentDayType = isTrainingDay ? 'Training Day' : 'Rest Day';
 
-    // Priority: exact day type match > "All Days" (empty dayType) > most recent
+    // Priority: exact dayType match > '' (All Days) > missing dayType > most recent
     let best = macroDocs.find(d => d.data().dayType === currentDayType)
+            || macroDocs.find(d => d.data().dayType === '')
             || macroDocs.find(d => !d.data().dayType)
             || macroDocs[0];
 
@@ -10435,45 +10489,67 @@ async function initClientNutrition() {
   } else {
     nutrAllMacroPlans = [];
     // Fall back to food-based plan (non-macro-only)
-    const foodPlan = snap.docs.find(d => (d.data().meals || []).length > 0);
+    const foodPlan = sortedDocs.find(d => (d.data().meals || []).length > 0);
     if (foodPlan) { nutrPlan = foodPlan.data(); nutrPlanId = foodPlan.id; }
     else { nutrPlan = null; nutrPlanId = null; }
   }
  } catch(e) { console.error('initClientNutrition plan load:', e); }
  // Load today's logs
  await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
- // Self-healing: if a food has been assigned, a leftover macro-only target
- // (no specific foods) is stale — clear it so only the food assignment shows.
- await nutrAutoClearMacroOnlyTarget(uid);
  renderNutritionTab();
+
+ // ── REAL-TIME LISTENER: re-render when coach adds/removes assigned foods ──
+ if (window._nutrAssignedFoodsUnsub) window._nutrAssignedFoodsUnsub();
+ window._nutrAssignedFoodsUnsub = db.collection('members').doc(uid)
+   .collection('mealLogs')
+   .where('assignedByCoach', '==', true)
+   .onSnapshot(async () => {
+     await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
+     renderNutritionTab();
+   });
+
+ // ── REAL-TIME LISTENER: re-render when coach assigns/removes macro plans ──
+ if (window._nutrMacroPlanUnsub) window._nutrMacroPlanUnsub();
+ window._nutrMacroPlanUnsub = db.collection('members').doc(uid)
+   .collection('nutritionPlans')
+   .onSnapshot(async (snap) => {
+     // Sort client-side by assignedAt desc to avoid needing a composite Firestore index
+     const sorted = snap.docs.slice().sort((a, b) => {
+       const aT = a.data().assignedAt?.toMillis?.() || 0;
+       const bT = b.data().assignedAt?.toMillis?.() || 0;
+       return bT - aT;
+     });
+     const macroDocs = sorted.filter(d => {
+       const meals = d.data().meals;
+       return !meals || meals.length === 0;
+     });
+     nutrAllMacroPlans = macroDocs.map(d => ({ id: d.id, ...d.data() }));
+     if (macroDocs.length > 0) {
+       const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
+       const currentDayType = isTrainingDay ? 'Training Day' : 'Rest Day';
+       // Match: exact dayType > '' (All Days) > undefined/null > first
+       let best = macroDocs.find(d => d.data().dayType === currentDayType)
+               || macroDocs.find(d => d.data().dayType === '')
+               || macroDocs.find(d => !d.data().dayType)
+               || macroDocs[0];
+       nutrPlan   = best.data();
+       nutrPlanId = best.id;
+     } else {
+       nutrAllMacroPlans = [];
+       const foodPlan = sorted.find(d => (d.data().meals || []).length > 0);
+       if (foodPlan) { nutrPlan = foodPlan.data(); nutrPlanId = foodPlan.id; }
+       else { nutrPlan = null; nutrPlanId = null; }
+     }
+     await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
+     renderNutritionTab();
+   }, (err) => { console.error('nutritionPlans listener error:', err); });
 }
 
-// ── SELF-HEALING: clear a stale macro-only target once food is assigned ──
-// Only deletes a macro-only plan if it was set BEFORE the coach started
-// assigning specific foods AND there is no explicit dayType set (legacy plan).
-// Plans with a dayType (Training Day / Rest Day / All Days) are intentional
-// and should never be auto-deleted.
-async function nutrAutoClearMacroOnlyTarget(uid) {
- if (!nutrPlan || !nutrPlanId) return;
- const isMacroOnly = !nutrPlan.meals || nutrPlan.meals.length === 0;
- if (!isMacroOnly) return;
-
- // Never auto-delete plans that have an explicit dayType — these are intentional
- if (nutrPlan.dayType) return;
-
- const dateKey = nutrDateKey(nutrCurrentDate);
- const assigned = (nutrFoodLogs[dateKey]?.__assigned__) || [];
- if (!assigned.length) return;
-
- try {
-  await db.collection('members').doc(uid).collection('nutritionPlans').doc(nutrPlanId).delete();
-  nutrPlan = null;
-  nutrPlanId = null;
-  nutrAllMacroPlans = [];
- } catch(e) {
-  console.error('nutrAutoClearMacroOnlyTarget failed:', e);
- }
-}
+// NOTE: macro targets are no longer auto-deleted when a food is assigned.
+// renderNutritionTab() already hides macro chips/numbers while
+// hasCoachAssignedFoods is true, and shows them again automatically once
+// all assigned foods are removed — because the target document is never
+// deleted from Firestore in the first place.
 
 async function nutrLoadDayLogs(uid, dateKey) {
  try {
@@ -10551,10 +10627,15 @@ function renderNutritionTab() {
   activePlan = (filtered.length > 0 ? filtered : nutrAllMacroPlans)[0] || nutrPlan;
  }
 
- const tCal = activePlan?.calories || 0;
- const tP  = activePlan?.protein || 0;
- const tC  = activePlan?.carbs  || 0;
- const tF  = activePlan?.fats   || 0;
+ // If coach has assigned specific foods, hide macro targets (show 0)
+ // so the client tracks against the assigned food list, not abstract numbers.
+ // When coach removes all assigned foods, macro targets reappear automatically.
+ const hasCoachAssignedFoods = ((nutrFoodLogs[dateKey]?.__assigned__) || []).length > 0;
+
+ const tCal = hasCoachAssignedFoods ? 0 : (activePlan?.calories || 0);
+ const tP  = hasCoachAssignedFoods ? 0 : (activePlan?.protein || 0);
+ const tC  = hasCoachAssignedFoods ? 0 : (activePlan?.carbs  || 0);
+ const tF  = hasCoachAssignedFoods ? 0 : (activePlan?.fats   || 0);
 
  // Ring
  const circ = 289;
@@ -10654,9 +10735,11 @@ function renderNutrAssignedPlan() {
   });
  });
 
- // ── MACRO CHIPS: always render above Meal 1 if a plan exists ──
+ // ── MACRO CHIPS: only show when coach has NOT assigned specific foods ──
+ // When foods are assigned, the client tracks against those foods instead of abstract macro numbers.
+ const _hasAssignedFoods = ((nutrFoodLogs[dateKey]?.__assigned__) || []).length > 0;
  if (chipsEl) {
-  if (nutrAllMacroPlans.length > 0) {
+  if (nutrAllMacroPlans.length > 0 && !_hasAssignedFoods) {
    // Multiple day-type plans — show tabs to switch between them
    const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
    const autoType = isTrainingDay ? 'Training Day' : 'Rest Day';
@@ -10712,6 +10795,7 @@ function renderNutrAssignedPlan() {
      </div>
     </div>` : ''}` : '');
   } else {
+   // Also clear chips if foods are assigned (hasAssignedFoods case falls here too)
    chipsEl.innerHTML = '';
   }
  }
