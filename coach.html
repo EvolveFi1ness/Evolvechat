@@ -4459,6 +4459,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   </select>
                 </div>
               </div>
+              <div class="nutr-field" style="margin-bottom:14px;">
+                <label style="display:flex;align-items:center;gap:6px;">
+                  Daily Step Goal
+                  <span style="font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;background:rgba(96,165,250,0.1);color:#60A5FA;border:1px solid rgba(96,165,250,0.25);border-radius:100px;padding:2px 8px;">Optional</span>
+                </label>
+                <input type="number" id="mt-step-goal" placeholder="e.g. 8000 — leave blank to skip" min="0" step="500" inputmode="numeric" />
+              </div>
               <div class="nutr-row-4">
                 <div class="nutr-field"><label>Protein (g)</label><input type="number" id="mt-protein" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
                 <div class="nutr-field"><label>Carbs (g)</label><input type="number" id="mt-carbs" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
@@ -4472,6 +4479,8 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div class="macro-target-note" id="mt-current-note"></div>
             </div>
+
+
 
             <div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:12px;">
               <div style="padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
@@ -16350,6 +16359,7 @@ function onAssignClientChange() {
   updateFdContextLabel();
   loadAssignedFoodsPanel();
   loadClientMacroTargetCard();
+  loadClientStepGoal();
   // Reset plan totals cache for new client
   window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
 }
@@ -16373,7 +16383,7 @@ function recalcMacroTotal() {
 }
 
 function clearMacroTargetForm() {
-  ['mt-plan-name','mt-protein','mt-carbs','mt-fats','mt-calories','mt-notes'].forEach(id => {
+  ['mt-plan-name','mt-protein','mt-carbs','mt-fats','mt-calories','mt-notes','mt-step-goal'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -16454,6 +16464,7 @@ function renderMacroPlanCards() {
           <span style="font-size:11px;color:var(--muted);">P: <strong style="color:var(--text);">${d.protein||0}g</strong></span>
           <span style="font-size:11px;color:var(--muted);">C: <strong style="color:var(--text);">${d.carbs||0}g</strong></span>
           <span style="font-size:11px;color:var(--muted);">F: <strong style="color:var(--text);">${d.fats||0}g</strong></span>
+          ${d.stepGoal ? `<span style="font-size:11px;color:#60A5FA;font-weight:600;">👟 ${d.stepGoal.toLocaleString()} steps</span>` : ''}
         </div>
       </div>
       <button onclick="removeMacroPlanById('${docId}')" title="Remove this plan"
@@ -16508,6 +16519,7 @@ async function assignMacroTargetOnly() {
   const planName = document.getElementById('mt-plan-name')?.value.trim() || 'Macro Target';
   const dayType  = document.getElementById('mt-day-type')?.value || '';
   const notes    = document.getElementById('mt-notes')?.value.trim() || '';
+  const stepGoal = parseInt(document.getElementById('mt-step-goal')?.value) || 0;
   const coachUid = auth.currentUser?.uid || COACH_FIXED_UID;
 
   const btn = document.getElementById('mt-assign-btn');
@@ -16517,15 +16529,17 @@ async function assignMacroTargetOnly() {
     // Always create a new plan — never replace by dayType so multiple plans can coexist
     const ref = await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
       planName, protein, carbs, fats, calories, dayType, notes,
+      ...(stepGoal > 0 ? { stepGoal } : {}),
       meals: [], coachUid,
       assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
       active: true
     });
-    _macroPlanMap[ref.id] = { planName, protein, carbs, fats, calories, dayType, notes, meals: [], coachUid, active: true };
+    _macroPlanMap[ref.id] = { planName, protein, carbs, fats, calories, dayType, notes, ...(stepGoal > 0 ? { stepGoal } : {}), meals: [], coachUid, active: true };
     const dayLabel = dayType === 'Training Day' ? 'Training Day'
                    : dayType === 'Rest Day'     ? 'Rest Day'
                    : 'All Days';
-    showToast(` Macro target assigned → ${dayLabel}`);
+    const stepMsg = stepGoal > 0 ? ` + ${stepGoal.toLocaleString()} steps` : '';
+    showToast(` Macro target assigned → ${dayLabel}${stepMsg}`);
     renderMacroPlanCards();
     clearMacroTargetForm();
     const note = document.getElementById('mt-current-note');
@@ -17357,6 +17371,88 @@ function closeMonitorDetail() {
   document.getElementById('monitor-detail-panel').style.display = 'none';
   document.getElementById('monitor-detail-backdrop').style.display = 'none';
 }
+
+// ── STEP GOAL ─────────────────────────────────────────────────────────────────
+
+// Step goal is now part of Macro Targets (mt-step-goal field, saved into nutritionPlans doc)
+
+async function loadClientStepGoal() {
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  const display = document.getElementById('sg-assigned-display');
+  const note = document.getElementById('sg-current-note');
+  if (!display) return;
+
+  if (!clientUid) {
+    display.style.display = 'none';
+    display.innerHTML = '';
+    if (note) note.innerHTML = '';
+    return;
+  }
+
+  if (note) note.innerHTML = 'Loading…';
+  try {
+    const doc = await db.collection('members').doc(clientUid).collection('goals').doc('steps').get();
+    if (!doc.exists || !doc.data()?.steps) {
+      display.style.display = 'none';
+      display.innerHTML = '';
+      if (note) note.innerHTML = 'No step goal assigned yet.';
+      return;
+    }
+    const d = doc.data();
+    if (note) note.innerHTML = '';
+    renderStepGoalCard(d);
+  } catch(e) {
+    if (note) note.innerHTML = '';
+    console.error('loadClientStepGoal:', e);
+  }
+}
+
+function renderStepGoalCard(d) {
+  const display = document.getElementById('sg-assigned-display');
+  if (!display) return;
+  display.style.display = 'block';
+  const assignedDate = d.assignedAt?.toDate ? d.assignedAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+  display.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:10px 14px;flex-wrap:wrap;">
+      <div style="width:32px;height:32px;background:rgba(59,130,246,0.12);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <span style="font-size:13px;font-weight:700;color:#60A5FA;">${(d.steps||0).toLocaleString()} steps/day</span>
+          ${d.label ? `<span style="font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;background:rgba(96,165,250,0.1);color:#60A5FA;border:1px solid rgba(96,165,250,0.25);border-radius:100px;padding:2px 8px;">${d.label}</span>` : ''}
+        </div>
+        ${d.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">${d.notes}</div>` : ''}
+        ${assignedDate ? `<div style="font-size:10px;color:var(--muted);margin-top:2px;">Set ${assignedDate}</div>` : ''}
+      </div>
+      <button onclick="removeStepGoal()" title="Remove step goal"
+        style="background:transparent;border:1px solid var(--border);border-radius:8px;width:28px;height:28px;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;"
+        onmouseover="this.style.borderColor='rgba(248,113,113,0.4)';this.style.color='#F87171'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+        </svg>
+      </button>
+    </div>
+  `;
+}
+
+async function removeStepGoal() {
+  const clientUid = document.getElementById('nutr-assign-client')?.value;
+  if (!clientUid) return;
+  if (!confirm("Remove this client's step goal? They will no longer see a daily step target.")) return;
+  try {
+    await db.collection('members').doc(clientUid).collection('goals').doc('steps').delete();
+    showToast('Step goal removed');
+    const display = document.getElementById('sg-assigned-display');
+    if (display) { display.style.display = 'none'; display.innerHTML = ''; }
+    const note = document.getElementById('sg-current-note');
+    if (note) note.innerHTML = 'No step goal assigned yet.';
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
+
 </script>
 
 
