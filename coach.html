@@ -8,8 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
@@ -3476,7 +3474,7 @@
 </style>
 
 <!-- LiveKit Client SDK -->
-<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
 
 <style>
 /* ═══════════════════════════════════════════════════════
@@ -3944,8 +3942,8 @@ img, video, iframe { max-width: 100%; }
 </style>
 
 <!-- docx.js for client-side Word export -->
-<script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script defer src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -4631,6 +4629,9 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="cpvt-btn" id="coach-pvt-compare" onclick="setCoachPhotoView('compare')">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="3" width="8" height="18" rx="1"/><rect x="13" y="3" width="8" height="18" rx="1"/></svg>
             Before &amp; After
+          </button>
+          <button class="cpvt-btn" title="Refresh photos" onclick="loadClientPhotos(currentModalUid, true)" style="flex:0;padding:0 12px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           </button>
         </div>
         <!-- Photo grid -->
@@ -5917,10 +5918,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Firebase -->
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
 // ─────────────────────────────────────────
@@ -5935,14 +5936,16 @@ const firebaseConfig = {
   appId: "1:229550101540:web:2d671f6b3a2809570674b1"
 };
 let auth, db, storage;
-try {
-  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  auth    = firebase.auth();
-  db      = firebase.firestore();
-  storage = firebase.storage();
-} catch(e) {
-  console.error('[Firebase] Init failed:', e.message);
-}
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    auth    = firebase.auth();
+    db      = firebase.firestore();
+    storage = firebase.storage();
+  } catch(e) {
+    console.error('[Firebase] Init failed:', e.message);
+  }
+});
 
 // ─────────────────────────────────────────
 //  CLOUDINARY
@@ -6059,7 +6062,7 @@ async function handleLogout() {
 }
 
 // Auto-login if session exists
-(async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   try {
     const session = sessionStorage.getItem('coachAuth');
     if (session) {
@@ -6072,7 +6075,7 @@ async function handleLogout() {
       sessionStorage.removeItem('coachAuth');
     }
   } catch(e) { console.warn('[AutoLogin] failed:', e.message); }
-})();
+});
 
 function bootApp() {
   document.getElementById('auth-screen').style.display='none';
@@ -9842,19 +9845,62 @@ async function exportClientDocx() {
   }
 }
 
-async function loadClientPhotos(uid) {
+window._clientPhotosCache = window._clientPhotosCache || {};
+
+async function loadClientPhotos(uid, forceRefresh) {
   const grid = document.getElementById('m-photo-grid');
+
+  // Serve from cache on a normal reopen — only refetch when explicitly told to
+  // (after a delete, or via the manual refresh button) or when we've never loaded this client.
+  const cached = window._clientPhotosCache[uid];
+  if (!forceRefresh && cached) {
+    grid.innerHTML = cached.html;
+    window._photoCache = window._photoCache || {};
+    Object.assign(window._photoCache, cached.photoCacheEntries);
+    coachRenderBeforeAfter(cached.sorted);
+    return;
+  }
+
   grid.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
   try {
-    const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(60).get();
-    if (snap.empty) {
+    // First batch: a handful of photos so something renders fast. We can't yet group these into
+    // labeled sessions ("Before"/"After — Current"/etc.) since those labels depend on knowing the
+    // full, correctly-ordered set — so this batch shows as plain thumbnails as a quick preview only.
+    const firstBatch = await db.collection('members').doc(uid).collection('progressPhotos')
+      .orderBy('uploadedAt','desc').limit(12).get();
+
+    if (firstBatch.empty) {
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">️</div><div class="empty-text">No photos yet</div></div>`;
       coachRenderBeforeAfter([]);
       return;
     }
-    // Cache photo data keyed by doc id for lightbox access (base64 too large for onclick attr)
+
     window._photoCache = window._photoCache || {};
-    snap.docs.forEach(d => { window._photoCache[d.id] = d.data(); });
+    firstBatch.docs.forEach(d => { window._photoCache[d.id] = d.data(); });
+
+    grid.innerHTML = '<div style="grid-column:1/-1;font-size:11px;color:var(--muted);padding-bottom:8px;">Loading photos…</div>';
+    firstBatch.docs.forEach(doc => {
+      const d = doc.data();
+      const src = d.base64 || d.url || '';
+      const angleMap = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+      const cell = document.createElement('div');
+      cell.className = 'photo-thumb';
+      const angBadge = d.angle ? `<div class="photo-angle-badge">${angleMap[d.angle]||d.angle}</div>` : '';
+      cell.innerHTML = `<img src="${src}" alt="Progress photo" loading="lazy">${angBadge}`;
+      cell.onclick = () => openLightboxById(doc.id, fmtDate(d.uploadedAt), d.note||'');
+      grid.appendChild(cell);
+    });
+
+    // Now fetch the full set (up to 60) in the background and replace the preview with the
+    // properly session-grouped, correctly-labeled grid once it's ready.
+    const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(60).get();
+    // The modal may have been closed/switched to a different client while this was in flight.
+    const currentGrid = document.getElementById('m-photo-grid');
+    if (!currentGrid || currentGrid !== grid) return;
+
+    // Cache photo data keyed by doc id for lightbox access (base64 too large for onclick attr)
+    const photoCacheEntries = {};
+    snap.docs.forEach(d => { photoCacheEntries[d.id] = d.data(); window._photoCache[d.id] = d.data(); });
 
     // Group by session date
     const sessions = {};
@@ -9901,6 +9947,9 @@ async function loadClientPhotos(uid) {
     });
 
     coachRenderBeforeAfter(sorted);
+
+    // Cache the finished render so reopening this client's Photos tab is instant next time.
+    window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, photoCacheEntries };
   } catch(e) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text" style="color:var(--red)">${e.message}</div></div>`;
   }
@@ -10185,8 +10234,9 @@ async function deleteProgressPhoto() {
   try {
     await db.collection('members').doc(uid).collection('progressPhotos').doc(docId).delete();
     if (window._photoCache) delete window._photoCache[docId];
+    if (window._clientPhotosCache) delete window._clientPhotosCache[uid];
     closeLightbox();
-    loadClientPhotos(uid);
+    loadClientPhotos(uid, true);
     loadCardPhotoStrip(uid, '');
     loadDashboardPhotos();
     showToast('Photo deleted', 'success');
@@ -16748,7 +16798,7 @@ async function loadAssignedFoodsPanel() {
   if (list) list.innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading…</div>';
 
   try {
-    const snap = await db.collection('members').doc(clientUid).collection('mealLogs').where('assignedByCoach','==',true).get();
+    const snap = await db.collection('members').doc(clientUid).collection('mealLogs').where('assignedByCoach','==',true).limit(300).get();
     if (snap.empty) {
       if (list) list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">No foods assigned yet. Assigned foods will stay until you remove them.</div>';
       return;
@@ -16899,7 +16949,7 @@ async function coachClearAllAssignedFoods() {
   const btn = document.getElementById('af-clear-all-btn');
   try {
     const snap = await db.collection('members').doc(clientUid).collection('mealLogs')
-      .where('assignedByCoach','==',true).get();
+      .where('assignedByCoach','==',true).limit(300).get();
     if (snap.empty) { showToast('Nothing to clear'); return; }
 
     const pendingDocs = snap.docs.filter(doc => {
@@ -17117,9 +17167,32 @@ async function deleteNutrPlan(clientUid, planId) {
 async function loadNutritionMonitor() {
   const grid = document.getElementById('nutr-monitor-grid');
   if (!grid) return;
-  grid.innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading...</div>';
+  const clients = allClients || [];
+  if (!clients.length) {
+    grid.innerHTML = '<div style="color:var(--muted);font-size:13px;">No clients found.</div>';
+    return;
+  }
   const today = new Date().toISOString().slice(0,10);
-  const cards = await Promise.all((allClients||[]).map(async c => {
+
+  // Render a skeleton card per client immediately so the grid never sits on one global
+  // "Loading..." placeholder — each card fills in independently as its own query resolves,
+  // so one slow client can't hold up everyone else.
+  grid.innerHTML = clients.map(c => {
+    const clientName = ((c.firstName||'')+' '+(c.lastName||'')).trim() || c.email || c.name || 'Client';
+    return `
+      <div id="nutr-card-${c.uid}" data-uid="${c.uid}" data-name="${clientName}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(212,168,67,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${clientName}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Loading…</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  clients.forEach(async c => {
+    const cardEl = document.getElementById(`nutr-card-${c.uid}`);
+    if (!cardEl) return;
     try {
       const logSnap = await db.collection('members').doc(c.uid).collection('mealLogs').where('date','==',today).get();
       const logs = logSnap.docs.map(d=>d.data());
@@ -17131,7 +17204,7 @@ async function loadNutritionMonitor() {
       }), {protein:0, carbs:0, fats:0, calories:0});
       const hasData = logs.length > 0;
       const clientName = ((c.firstName||'')+' '+(c.lastName||'')).trim() || c.email || c.name || 'Client';
-      return `
+      cardEl.outerHTML = `
         <div onclick="openMonitorClient(this)" data-uid="${c.uid}" data-name="${clientName}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(212,168,67,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
             <div>
@@ -17165,10 +17238,9 @@ async function loadNutritionMonitor() {
           '<div style="font-size:12px;color:var(--muted);padding:4px 0;">No foods logged for today yet.</div>'}
         </div>`;
     } catch(e) {
-      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;color:var(--muted);">${c.email||'Client'}<br><small style="color:var(--red)">${e.message}</small></div>`;
+      cardEl.outerHTML = `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;color:var(--muted);">${c.email||'Client'}<br><small style="color:var(--red)">${e.message}</small></div>`;
     }
-  }));
-  grid.innerHTML = cards.join('') || '<div style="color:var(--muted);font-size:13px;">No clients found.</div>';
+  });
 }
 
 function macroPBar(label, consumed, target, color) {
@@ -17338,12 +17410,11 @@ async function openMonitorClient(el) {
 
   try {
     const [snap, coachSnap] = await Promise.all([
-      db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).orderBy('loggedAt','desc').get().catch(() =>
-        db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).get()
-      ),
-      db.collection('members').doc(uid).collection('mealLogs').where('assignedByCoach','==',true).where('persistent','==',true).get()
+      db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).get(),
+      db.collection('members').doc(uid).collection('mealLogs').where('assignedByCoach','==',true).where('persistent','==',true).limit(300).get()
     ]);
-    const todayLogs   = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    const todayLogs   = snap.docs.map(d => ({id: d.id, ...d.data()}))
+      .sort((a,b) => (b.loggedAt?.toMillis?.() || 0) - (a.loggedAt?.toMillis?.() || 0));
     const coachFoods  = coachSnap.docs.map(d => ({id: d.id, ...d.data()}));
     // Merge: coach-assigned persistent foods show alongside today's logs,
     // but suppress a coach food if the client already logged something with the same name today
