@@ -5869,8 +5869,8 @@ img, video, iframe { max-width: 100%; }
       <span class="wkt-chip wkt-chip-exercises" id="wkt-chip-ex">— exercises</span>
       <span class="wkt-chip wkt-chip-sets" id="wkt-chip-sets">0 sets done</span>
      </div>
-     <button id="log-custom-wkt-btn" onclick="openCustomWorkoutBuilder()" style="display:none;padding:5px 12px;background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.25);border-radius:20px;color:rgba(212,168,67,0.8);font-size:11px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.3px;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(212,168,67,0.18)'" onmouseout="this.style.background='rgba(212,168,67,0.1)'">
-      + Custom
+     <button id="log-custom-wkt-btn" onclick="openCustomWorkoutBuilder()" style="display:none;padding:9px 20px;background:rgba(212,168,67,0.12);border:1.5px solid rgba(212,168,67,0.4);border-radius:24px;color:var(--gold);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.4px;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(212,168,67,0.22)';this.style.borderColor='rgba(212,168,67,0.65)'" onmouseout="this.style.background='rgba(212,168,67,0.12)';this.style.borderColor='rgba(212,168,67,0.4)'">
+      + Add Exercise
      </button>
     </div>
    </div>
@@ -7227,11 +7227,9 @@ async function buildWorkoutLogger(workout) {
  if (logBtn) { logBtn.style.display = ''; logBtn.disabled = false; }
  if (finishBar) finishBar.style.display = 'block';
  if (chipEx) chipEx.textContent = workout.exercises.length + ' exercise' + (workout.exercises.length !== 1 ? 's' : '');
- // Show "Custom" button when there's an assigned workout (for extra sessions)
- if (!workout.isCustom) {
-  const customBtn = document.getElementById('log-custom-wkt-btn');
-  if (customBtn) customBtn.style.display = '';
- }
+ // Show + Custom button whenever there's an active workout (coach-assigned or custom)
+ const customBtn = document.getElementById('log-custom-wkt-btn');
+ if (customBtn) customBtn.style.display = '';
  window._workoutLoggingActive = true;
  startWktTimer();
 
@@ -7481,7 +7479,76 @@ function removeExercise(exIdx) {
    if (lbsBtn) { lbsBtn.id = 'exu-lbs-' + i; lbsBtn.setAttribute('onclick', `setExerciseUnit(${i},'lbs')`); }
   });
   updateSummary();
-  if (!window._loggerRestoring) saveLoggerState();
+  // Always update the exercise count chip
+  const chipExCount = document.getElementById('wkt-chip-ex');
+  if (chipExCount) {
+   const rem = document.querySelectorAll('.log-ex-card').length;
+   chipExCount.textContent = rem + ' exercise' + (rem !== 1 ? 's' : '');
+  }
+  if (!window._loggerRestoring) {
+   const remaining = document.querySelectorAll('.log-ex-card').length;
+   if (remaining === 0) {
+    // All exercises removed — wipe both persistence keys so the workout
+    // doesn't ghost back on page reload
+    try {
+     const _today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+     localStorage.removeItem('evolve_custom_wkt_' + _today);
+     localStorage.removeItem(_loggerStorageKey());
+    } catch(e) {}
+    todayWorkout = null;
+    const finishBar = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
+    if (finishBar) finishBar.style.display = 'none';
+    const completeBtn = document.getElementById('complete-btn');
+    if (completeBtn) { completeBtn.style.display = 'none'; completeBtn.disabled = true; }
+    // Hide the + Custom button
+    const customBtnEmpty = document.getElementById('log-custom-wkt-btn');
+    if (customBtnEmpty) customBtnEmpty.style.display = 'none';
+    // Update header chips
+    const chipEx = document.getElementById('wkt-chip-ex');
+    if (chipEx) chipEx.textContent = '0 exercises';
+    const chipSets = document.getElementById('wkt-chip-sets');
+    if (chipSets) chipSets.textContent = '0 sets done';
+    const logDayBadge = document.getElementById('log-day-badge');
+    if (logDayBadge) logDayBadge.textContent = 'No workout';
+    const logSub = document.getElementById('log-sub');
+    if (logSub) logSub.textContent = 'No Plan Yet';
+    // Re-render the empty state in the container
+    const emptyContainer = document.getElementById('log-exercises-container');
+    if (emptyContainer) {
+     emptyContainer.innerHTML = `
+      <div style="text-align:center;padding:2.5rem 1.5rem 1.5rem;color:#444;">
+       <div style="font-size:42px;margin-bottom:12px;">⏳</div>
+       <div style="font-size:16px;font-weight:700;color:#e8e8e8;margin-bottom:6px;font-family:'Outfit',sans-serif;">No workout assigned</div>
+       <div style="font-size:13px;color:#555;line-height:1.6;font-family:'Outfit',sans-serif;margin-bottom:1.5rem;">Your coach hasn't assigned a workout plan yet.<br>Check back soon!</div>
+       <div style="width:100%;height:1px;background:rgba(255,255,255,0.06);margin-bottom:1.5rem;"></div>
+       <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1rem;font-family:'Outfit',sans-serif;">OR</div>
+       <button onclick="openCustomWorkoutBuilder()" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.3);border-radius:14px;color:var(--gold);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Log Your Own Workout
+       </button>
+       <div style="font-size:12px;color:#444;margin-top:10px;font-family:'Outfit',sans-serif;">Track any exercise you want, your way.</div>
+      </div>`;
+    }
+    stopWktTimer();
+   } else {
+    saveLoggerState();
+    // Also update the custom workout definition key to reflect removed exercise
+    if (todayWorkout && todayWorkout.isCustom) {
+     try {
+      const _today2 = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+      const remainingNames = Array.from(document.querySelectorAll('.log-ex-card')).map(c => {
+       const nameEl = c.querySelector('.log-ex-name');
+       return nameEl ? nameEl.textContent.trim() : '';
+      }).filter(Boolean);
+      const updatedWkt = Object.assign({}, todayWorkout, {
+       exercises: todayWorkout.exercises.filter(ex => remainingNames.includes(ex.name))
+      });
+      todayWorkout = updatedWkt;
+      localStorage.setItem('evolve_custom_wkt_' + _today2, JSON.stringify(updatedWkt));
+     } catch(e) {}
+    }
+   }
+  }
  }, 200);
 }
 
@@ -7586,6 +7653,12 @@ function updateSummary() {
  // Summary always shows kg (normalized)
  const lsUnit = document.getElementById('ls-weight-unit');
  if (lsUnit) lsUnit.textContent = 'kg';
+ // Hide Complete button when all exercises have been removed
+ const completeBtn = document.getElementById('complete-btn');
+ if (completeBtn) {
+  const hasExercises = document.querySelectorAll('.log-ex-card').length > 0;
+  completeBtn.style.display = hasExercises ? '' : 'none';
+ }
 }
 
 // ─────────────────────────────────────────
@@ -7776,6 +7849,13 @@ async function completeWorkout() {
   // Scroll to first incomplete set
   const firstEmpty = document.querySelector('.log-set-row .weight-input:placeholder-shown, .log-set-row .reps-input:placeholder-shown');
   if (firstEmpty) firstEmpty.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return;
+ }
+
+ // Block finish if no exercises have been logged at all
+ const exerciseCards = document.querySelectorAll('.log-ex-card');
+ if (exerciseCards.length === 0) {
+  showToast('Add at least one exercise before completing your workout', '⚠️');
   return;
  }
 
@@ -10622,7 +10702,15 @@ function renderNutrAssignedPlan() {
       <div style="font-size:15px;font-weight:700;color:#f87171;">${plan.fats||0}g</div>
       <div style="font-size:9px;color:#555;margin-top:3px;letter-spacing:0.5px;text-transform:uppercase;">Fats</div>
      </div>
-    </div>` : '');
+    </div>
+    ${plan.stepGoal ? `
+    <div style="margin-top:8px;background:#141414;border:1px solid #1e1e1e;border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;">
+     <span style="font-size:18px;">👟</span>
+     <div>
+      <div style="font-size:15px;font-weight:700;color:#a78bfa;">${plan.stepGoal.toLocaleString()} steps</div>
+      <div style="font-size:9px;color:#555;margin-top:2px;letter-spacing:0.5px;text-transform:uppercase;">Daily Step Goal</div>
+     </div>
+    </div>` : ''}` : '');
   } else {
    chipsEl.innerHTML = '';
   }
@@ -12785,7 +12873,7 @@ setTimeout(applySideNavState, 150);
  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
  display:flex;align-items:center;justify-content:center;
 }
-.cwkt-chip-thumb img { width:100%;height:100%;object-fit:cover;display:none; }
+.cwkt-chip-thumb img { width:100%;height:100%;object-fit:cover;border-radius:10px; }
 .cwkt-chip-thumb svg { width:20px;height:20px; }
 .cwkt-chip-thumb-icon { font-size:16px; }
 .cwkt-chip-name { font-size:13px;font-weight:700;color:#e2e2e2;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
@@ -12844,11 +12932,33 @@ let _cwktExercises = []; // [{name, sets}]
 let _cwktLibFilter = 'All';
 
 function openCustomWorkoutBuilder() {
- _cwktExercises = [];
  _cwktLibFilter = 'All';
- document.getElementById('custom-wkt-name').value = '';
  document.getElementById('custom-wkt-ex-input').value = '';
  if (document.getElementById('cwkt-lib-search')) document.getElementById('cwkt-lib-search').value = '';
+
+ // If a workout is already active, pre-load existing exercises so user can add more
+ const hasActiveWorkout = todayWorkout && todayWorkout.exercises && todayWorkout.exercises.length > 0;
+ if (hasActiveWorkout) {
+  // Pre-populate with current exercises from the DOM (preserves actual set/rep counts)
+  _cwktExercises = Array.from(document.querySelectorAll('.log-ex-card')).map(card => {
+   const nameEl = card.querySelector('.log-ex-name');
+   const name = nameEl ? nameEl.textContent.trim() : '';
+   const setRows = card.querySelectorAll('.log-set-row');
+   return { name, sets: setRows.length || 3, reps: 10, _existing: true };
+  }).filter(ex => ex.name);
+  // Set workout name
+  const logSub = document.getElementById('log-sub');
+  document.getElementById('custom-wkt-name').value = (logSub ? logSub.textContent : '') || 'Custom Workout';
+  // Change the start button label
+  const startBtn = document.getElementById('custom-wkt-start-btn');
+  if (startBtn) startBtn.textContent = 'Add to Workout';
+ } else {
+  _cwktExercises = [];
+  document.getElementById('custom-wkt-name').value = '';
+  const startBtn = document.getElementById('custom-wkt-start-btn');
+  if (startBtn) startBtn.textContent = 'Start Workout';
+ }
+
  _renderCwktList();
  _updateCwktStartBtn();
  _initCwktInlineLib();
@@ -13067,8 +13177,58 @@ function _updateCwktStartBtn() {
 function startCustomWorkout() {
  if (!_cwktExercises.length) return;
  const wktName = document.getElementById('custom-wkt-name').value.trim() || 'Custom Workout';
+ const hasActiveWorkout = todayWorkout && todayWorkout.exercises && todayWorkout.exercises.length > 0;
 
- // Build a workout object in the same shape buildWorkoutLogger expects
+ // Only the exercises that are NEW (not pre-existing)
+ const newExercises = _cwktExercises.filter(ex => !ex._existing);
+
+ if (hasActiveWorkout) {
+  // BUILD final exercise list from the builder state (handles both adds and removals)
+  const finalExercises = _cwktExercises.map(ex => ({
+   name: ex.name,
+   detail: '',
+   target: `${ex.sets}×${ex.reps || 10}`,
+  }));
+
+  // If nothing changed, just close
+  const currentNames = (todayWorkout.exercises || []).map(e => e.name).join(',');
+  const newNames = finalExercises.map(e => e.name).join(',');
+  if (currentNames === newNames && newExercises.length === 0) {
+   closeCustomWorkoutBuilder();
+   return;
+  }
+
+  closeCustomWorkoutBuilder();
+
+  // Update todayWorkout with the full new list
+  todayWorkout = Object.assign({}, todayWorkout, {
+   name: wktName,
+   exercises: finalExercises
+  });
+
+  // Persist updated definition
+  try {
+   const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+   localStorage.setItem('evolve_custom_wkt_' + today, JSON.stringify(todayWorkout));
+  } catch(e) {}
+
+  // Update header
+  const logSubEl = document.getElementById('log-sub');
+  if (logSubEl) logSubEl.textContent = wktName;
+
+  // Rebuild the full logger (preserves set/rep data for unchanged exercises via restoreLoggerState)
+  setTimeout(() => buildWorkoutLogger(todayWorkout), 100);
+
+  // Update chip count
+  const chipEx = document.getElementById('wkt-chip-ex');
+  if (chipEx) {
+   const total = finalExercises.length;
+   chipEx.textContent = total + ' exercise' + (total !== 1 ? 's' : '');
+  }
+  return;
+ }
+
+ // FRESH START mode — no existing workout
  const customWorkout = {
   name: wktName,
   dayName: 'Custom',
@@ -13086,22 +13246,18 @@ function startCustomWorkout() {
  try {
   const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   localStorage.setItem('evolve_custom_wkt_' + today, JSON.stringify(customWorkout));
-  // Remove stale keys from previous days
   Object.keys(localStorage).forEach(k => {
    if (k.startsWith('evolve_custom_wkt_') && k !== 'evolve_custom_wkt_' + today) localStorage.removeItem(k);
   });
  } catch(e) {}
 
- // Patch todayWorkout so completeWorkout() uses the right name
  todayWorkout = customWorkout;
 
- // Update the header labels
  const dayBadge = document.getElementById('log-day-badge');
  if (dayBadge) dayBadge.textContent = 'Custom Workout';
  const logSub = document.getElementById('log-sub');
  if (logSub) logSub.textContent = wktName;
 
- // Build the logger using existing infrastructure
  setTimeout(() => buildWorkoutLogger(customWorkout), 350);
 }
 
