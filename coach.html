@@ -5931,7 +5931,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAaLdOjRndgq3fw9QfluTW5gmF7VZ26Vag",
   authDomain: "evolvechat-21d6f.firebaseapp.com",
   projectId: "evolvechat-21d6f",
-  storageBucket: "evolvechat-21d6f.appspot.com",
+  storageBucket: "evolvechat-21d6f.firebasestorage.app",
   messagingSenderId: "229550101540",
   appId: "1:229550101540:web:2d671f6b3a2809570674b1"
 };
@@ -5966,6 +5966,7 @@ let coachUid   = COACH_FIXED_UID;
 let allClients = [];
 let activeChatUid = null;
 let chatUnsub  = null;
+let unreadMsgsUnsub = null;
 let currentDay = 'Monday';
 let workoutPlan = {
   Monday: { name:'', exercises:[] },
@@ -6047,8 +6048,14 @@ async function handleCoachLogin() {
 }
 
 async function handleLogout() {
-  if (chatUnsub) chatUnsub();
+  if (chatUnsub) { chatUnsub(); chatUnsub = null; }
   if (clientsUnsub) { clientsUnsub(); clientsUnsub = null; }
+  if (unreadMsgsUnsub) { unreadMsgsUnsub(); unreadMsgsUnsub = null; }
+  if (_coachNotifUnsub) { _coachNotifUnsub(); _coachNotifUnsub = null; }
+  if (_presenceWatchdogTimer) { clearInterval(_presenceWatchdogTimer); _presenceWatchdogTimer = null; }
+  // stopCoachCallListener lives in a later, separately-scoped <script> block,
+  // so it's reached via the global hook rather than a direct reference.
+  if (typeof window.stopCoachCallListener === 'function') window.stopCoachCallListener();
   _prevOnlineUids = new Set();
   _onlineNotifyReady = false;
   sessionStorage.removeItem('coachAuth');
@@ -11234,8 +11241,9 @@ async function sendMessage() {
 }
 
 function listenForUnreadMessages() {
+  if (unreadMsgsUnsub) { unreadMsgsUnsub(); unreadMsgsUnsub = null; }
   const badge = document.getElementById('chat-badge');
-  db.collection('chats').where('participants','array-contains',coachUid)
+  unreadMsgsUnsub = db.collection('chats').where('participants','array-contains',coachUid)
     .onSnapshot(snap=>{
       let count = 0;
       snap.docs.forEach(d => {
@@ -12753,7 +12761,7 @@ function getWorkoutMedia(exerciseName) {
     'barbell row':'barbell bent over row','single arm db row':'dumbbell bent over row',
     'single arm dumbbell row':'dumbbell bent over row','db row':'dumbbell bent over row',
     'seated cable row':'cable low seated row','rows':'barbell bent over row',
-    'chest supported row':'dumbbell incline row','low cable crossover':'cable crossover',
+    'chest supported row':'dumbbell incline row',
     // Pressing
     'barbell overhead press':'barbell standing military press',
     'dumbbell ohp':'dumbbell standing overhead press','ohp':'overhead press',
@@ -12766,7 +12774,6 @@ function getWorkoutMedia(exerciseName) {
     // Flies & Raises
     'db fly':'dumbbell fly','db lateral raise':'dumbbell lateral raise',
     'low cable fly':'cable fly','cable crossover':'cable crossover',
-    'low cable crossover':'cable crossover',
     // Shoulders
     'face pulls':'face pull','upright rows':'barbell upright row',
     // Triceps
@@ -12788,9 +12795,7 @@ function getWorkoutMedia(exerciseName) {
     'jump rope':'jumping jack','battle ropes':'battle rope','battling ropes':'battle rope',
     'stair climber':'elliptical machine walk','cycling':'air bike','treadmill run':'run on treadmill',
     'rowing machine':'rowing machine',
-    // General abbreviations
-    'db fly':'dumbbell fly','db row':'dumbbell bent over row',
-  };;
+  };
   const aliasKey = _ALIAS[key];
   if (aliasKey && _WORKOUTS_RAW[aliasKey]) { const e=_WORKOUTS_RAW[aliasKey]; return {video:e.v,thumbnail:e.t}; }
 
@@ -16894,7 +16899,7 @@ async function loadAssignedFoodsPanel() {
                     id="afg-${item.logId}"
                     type="number" min="1" step="1"
                     value="${item.servingG||item.serving_size_g||100}"
-                    oninput="previewAssignedGrams('${clientUid}','${item.logId}',${item.serving_size_g||100},${item.calories||0},${item.protein_g||0},${item.carbs_g||0},${item.fat_g||0},${item.servingG||item.serving_size_g||100})"
+                    oninput="previewAssignedGrams('${clientUid}','${item.logId}',${item.servingG||item.serving_size_g||100},${item.calories||0},${item.protein_g||0},${item.carbs_g||0},${item.fat_g||0},${item.servingG||item.serving_size_g||100})"
                     style="width:56px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:4px 7px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;text-align:center;transition:border-color 0.15s;"
                     onfocus="this.style.borderColor='var(--gold)'" onfocusout="this.style.borderColor='var(--border)'"
                   />
@@ -16902,7 +16907,7 @@ async function loadAssignedFoodsPanel() {
                   <span id="afg-macro-${item.logId}" style="font-size:11px;color:var(--muted);">· P:${Math.round(item.protein_g||0)}g C:${Math.round(item.carbs_g||0)}g F:${Math.round(item.fat_g||0)}g</span>
                   <button
                     id="afg-save-${item.logId}"
-                    onclick="coachUpdateAssignedFoodGrams('${clientUid}','${item.logId}',${item.serving_size_g||100})"
+                    onclick="coachUpdateAssignedFoodGrams('${clientUid}','${item.logId}',${item.servingG||item.serving_size_g||100})"
                     title="Save grams"
                     style="display:none;background:var(--gold);border:none;border-radius:6px;color:#0a0a0a;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">
                     Save
@@ -17006,8 +17011,12 @@ async function coachUpdateAssignedFoodGrams(clientUid, logId, baseSizeG) {
     const snap = await docRef.get();
     if (!snap.exists) { showToast('Food not found'); return; }
     const d = snap.data();
-    const base = d.serving_size_g || baseSizeG || 100;
-    const ratio = newG / base;
+    // d.calories/protein_g/carbs_g/fat_g are already scaled to d.servingG (the
+    // grams last saved), not to the base serving_size_g. Scaling against
+    // serving_size_g here would compound on every edit, so derive per-gram
+    // values from the current stored grams instead.
+    const currentG = d.servingG || baseSizeG || 100;
+    const ratio = newG / currentG;
     await docRef.update({
       servingG:  newG,
       calories:  Math.round((d.calories  || 0) * ratio),
@@ -18107,6 +18116,16 @@ function startCoachCallListener() {
       });
     });
 }
+
+// Exposed globally so handleLogout (defined in an earlier, separately-scoped
+// <script> block) can tear down both the incoming-call listener and any
+// in-progress call's Firestore listener when the coach logs out.
+window.stopCoachCallListener = function() {
+  if (coachIncomingCallUnsub) { coachIncomingCallUnsub(); coachIncomingCallUnsub = null; }
+  if (callUnsub) { callUnsub(); callUnsub = null; }
+  coachPendingCallDoc = null;
+  coachPendingCallerUid = null;
+};
 
 function showCoachIncomingBanner(callerName) {
   document.getElementById('coach-inc-call-from').textContent = callerName;
