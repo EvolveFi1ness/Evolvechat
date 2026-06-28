@@ -7999,7 +7999,16 @@ async function completeWorkout() {
 
   await loadPastLogs();
  } catch(e) {
-  showStatus('log-status', e.message, 'error');
+  console.error('[completeWorkout] Save failed:', e.code, e.message, e);
+  if (e.code === 'permission-denied') {
+   showToast('Could not save workout — permission denied. Try signing out and back in.', 'error');
+  } else if (e.code === 'unavailable' || e.code === 'deadline-exceeded') {
+   showToast('No internet — please check your connection and try again.', 'error');
+  } else if (e.code === 'not-found') {
+   showToast('Could not save workout — account not found. Try signing out and back in.', 'error');
+  } else {
+   showToast('Could not save workout — please try again. If this persists, refresh the page.', 'error');
+  }
  } finally {
   btn.disabled = false; btn.textContent = 'Complete Workout';
  }
@@ -9285,6 +9294,17 @@ async function handleLogout() {
   }, { merge: true }).catch(()=>{});
  }
  await auth.signOut();
+ // Tear down all per-session Firestore listeners. Several of these
+ // (cliCalUnsub, cliMyEvUnsub, clientPhotoReqUnsub) guard against duplicate
+ // subscriptions by checking "if already set, skip" — leaving them set after
+ // logout would make the next login's listener silently fail to (re)attach,
+ // showing stale or missing data for whoever logs in next.
+ if (clientChatUnsub) { clientChatUnsub(); clientChatUnsub = null; }
+ if (cliCalUnsub) { cliCalUnsub(); cliCalUnsub = null; }
+ if (cliMyEvUnsub) { cliMyEvUnsub(); cliMyEvUnsub = null; }
+ if (clientPhotoReqUnsub) { clientPhotoReqUnsub(); clientPhotoReqUnsub = null; }
+ if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
+ if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
  currentUid = null; step1Data = {}; todayWorkout = null; _peCurrentData = {};
  try { localStorage.removeItem('evolve_profile_cache'); } catch(e) {}
  showScreen('screen-auth');
@@ -9299,6 +9319,12 @@ async function handleBlockedSignOut() {
   }, { merge: true }).catch(()=>{});
  }
  await auth.signOut();
+ if (clientChatUnsub) { clientChatUnsub(); clientChatUnsub = null; }
+ if (cliCalUnsub) { cliCalUnsub(); cliCalUnsub = null; }
+ if (cliMyEvUnsub) { cliMyEvUnsub(); cliMyEvUnsub = null; }
+ if (clientPhotoReqUnsub) { clientPhotoReqUnsub(); clientPhotoReqUnsub = null; }
+ if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
+ if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
  currentUid = null;
  showScreen('screen-auth');
  switchTab('login');
@@ -9931,7 +9957,7 @@ function getWorkoutMedia(exerciseName) {
   'barbell row':'barbell bent over row','single arm db row':'dumbbell bent over row',
   'single arm dumbbell row':'dumbbell bent over row','db row':'dumbbell bent over row',
   'seated cable row':'cable low seated row','rows':'barbell bent over row',
-  'chest supported row':'dumbbell incline row','low cable crossover':'cable crossover',
+  'chest supported row':'dumbbell incline row',
   // Pressing
   'barbell overhead press':'barbell standing military press',
   'dumbbell ohp':'dumbbell standing overhead press','ohp':'overhead press',
@@ -9944,7 +9970,6 @@ function getWorkoutMedia(exerciseName) {
   // Flies & Raises
   'db fly':'dumbbell fly','db lateral raise':'dumbbell lateral raise',
   'low cable fly':'cable fly','cable crossover':'cable crossover',
-  'low cable crossover':'cable crossover',
   // Shoulders
   'face pulls':'face pull','upright rows':'barbell upright row',
   // Triceps
@@ -9966,8 +9991,6 @@ function getWorkoutMedia(exerciseName) {
   'jump rope':'jumping jack','battle ropes':'battle rope','battling ropes':'battle rope',
   'stair climber':'elliptical machine walk','cycling':'air bike','treadmill run':'run on treadmill',
   'rowing machine':'rowing machine',
-  // General abbreviations
-  'db row':'dumbbell bent over row',
  };
  const aliasKey = _ALIAS[key];
  if (aliasKey && _WORKOUTS_RAW[aliasKey]) { const e=_WORKOUTS_RAW[aliasKey]; return {video:e.v,thumbnail:e.t}; }
@@ -13608,15 +13631,12 @@ function startCustomWorkout() {
   const logSubEl = document.getElementById('log-sub');
   if (logSubEl) logSubEl.textContent = wktName;
 
-  // Rebuild the full logger (preserves set/rep data for unchanged exercises via restoreLoggerState)
-  setTimeout(() => buildWorkoutLogger(todayWorkout), 100);
-
-  // Update chip count
-  const chipEx = document.getElementById('wkt-chip-ex');
-  if (chipEx) {
-   const total = finalExercises.length;
-   chipEx.textContent = total + ' exercise' + (total !== 1 ? 's' : '');
-  }
+  // Rebuild the full logger immediately (preserves set/rep data for unchanged
+  // exercises via restoreLoggerState). Previously delayed via setTimeout,
+  // which left the header showing stale exercise/set counts for the gap and
+  // risked losing a race against another concurrent render (e.g. a Firestore
+  // listener firing in between), leaving the page stuck on stale data.
+  buildWorkoutLogger(todayWorkout);
   return;
  }
 
@@ -13649,24 +13669,21 @@ function startCustomWorkout() {
  if (dayBadge) dayBadge.textContent = 'Custom Workout';
  const logSub = document.getElementById('log-sub');
  if (logSub) logSub.textContent = wktName;
-
- // Update exercise chip count
- const chipEx = document.getElementById('wkt-chip-ex');
- if (chipEx) {
+ // Update chips immediately so the header never shows stale '0 exercises' /
+ // '0 sets done' text in the gap before the logger finishes building.
+ const chipExFresh = document.getElementById('wkt-chip-ex');
+ if (chipExFresh) {
   const total = customWorkout.exercises.length;
-  chipEx.textContent = total + ' exercise' + (total !== 1 ? 's' : '');
+  chipExFresh.textContent = total + ' exercise' + (total !== 1 ? 's' : '');
  }
+ const chipSetsFresh = document.getElementById('wkt-chip-sets');
+ if (chipSetsFresh) chipSetsFresh.textContent = '0 sets done';
 
- // Ensure the start button and card footer are visible
- const startBtn = document.querySelector('.start-btn');
- if (startBtn) startBtn.style.display = '';
- const cardFooter = document.querySelector('.workout-card-footer');
- if (cardFooter) cardFooter.style.display = '';
-
- // Navigate to the Log Workout tab
- setTab('log');
-
- setTimeout(() => buildWorkoutLogger(customWorkout), 350);
+ // Build the logger immediately rather than after a setTimeout — the delay
+ // served no purpose here and risked losing a race against another
+ // concurrent render, which would leave the page stuck showing the title
+ // and chips above with no exercise cards ever rendered underneath.
+ buildWorkoutLogger(customWorkout);
 }
 
 // Close modal on backdrop click
