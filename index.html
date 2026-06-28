@@ -13650,6 +13650,22 @@ function startCustomWorkout() {
  const logSub = document.getElementById('log-sub');
  if (logSub) logSub.textContent = wktName;
 
+ // Update exercise chip count
+ const chipEx = document.getElementById('wkt-chip-ex');
+ if (chipEx) {
+  const total = customWorkout.exercises.length;
+  chipEx.textContent = total + ' exercise' + (total !== 1 ? 's' : '');
+ }
+
+ // Ensure the start button and card footer are visible
+ const startBtn = document.querySelector('.start-btn');
+ if (startBtn) startBtn.style.display = '';
+ const cardFooter = document.querySelector('.workout-card-footer');
+ if (cardFooter) cardFooter.style.display = '';
+
+ // Navigate to the Log Workout tab
+ setTab('log');
+
  setTimeout(() => buildWorkoutLogger(customWorkout), 350);
 }
 
