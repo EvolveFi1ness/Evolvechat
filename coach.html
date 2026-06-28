@@ -5918,10 +5918,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Firebase -->
 
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
 // ─────────────────────────────────────────
@@ -5950,10 +5950,16 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─────────────────────────────────────────
 //  CLOUDINARY
 // ─────────────────────────────────────────
+// ⚠️  SECURITY: apiSecret must NOT be committed to source control or deployed in
+//     a public HTML file — anyone who views source can steal it and get full API
+//     access to your Cloudinary account. Move signing to a backend endpoint
+//     (e.g. a Vercel serverless function at /api/cloudinary-sign) and call that
+//     instead of signing client-side. Replace the placeholder below with your
+//     actual secret ONLY in a local dev build that is never deployed.
 const CLOUDINARY = {
   cloudName : 'dpr4fmeub',
   apiKey    : '295481935575512',
-  apiSecret : 'eeQgc62d6zQuPOcyol1OUMTRsjY',
+  apiSecret : 'REPLACE_WITH_SECRET_NEVER_DEPLOY',   // ← move to backend signing
   folder    : 'workout-videos'
 };
 
@@ -6091,15 +6097,18 @@ function bootApp() {
   document.getElementById('coach-email').textContent = 'evolvefi1ness';
   document.getElementById('coach-av').textContent = 'C';
   document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  // Quick Firestore connectivity test — shows a banner if rules are blocking reads
-  checkFirestoreAccess();
-  loadAllClients();
-  listenForUnreadMessages();
-  loadCloudinaryMedia();
-  // Start listening for incoming calls from clients
-  startCoachCallListener();
-  // Listen for real-time check-in notifications from clients
-  startCoachNotifListener();
+  // Sign in anonymously so Firestore calls are authenticated (required if rules use request.auth != null)
+  (auth.currentUser ? Promise.resolve() : auth.signInAnonymously()).catch(e => console.warn('[Auth] Anonymous sign-in failed:', e.message)).finally(() => {
+    // Quick Firestore connectivity test — shows a banner if rules are blocking reads
+    checkFirestoreAccess();
+    loadAllClients();
+    listenForUnreadMessages();
+    loadCloudinaryMedia();
+    // Start listening for incoming calls from clients
+    startCoachCallListener();
+    // Listen for real-time check-in notifications from clients
+    startCoachNotifListener();
+  });
 }
 
 let _coachNotifUnsub = null;
@@ -6268,9 +6277,34 @@ function isClientOnline(c) {
   return (Date.now() - seenMs) < PRESENCE_STALE_MS;
 }
 
+// ── FIX 3: Debounce timer — prevents rapid-fire snapshots from triggering
+// multiple simultaneous re-renders. All renders are batched into one call
+// 300ms after the last snapshot fires, cutting redundant work significantly.
+let _clientsRenderDebounce = null;
+function _scheduleClientRender() {
+  if (_clientsRenderDebounce) clearTimeout(_clientsRenderDebounce);
+  _clientsRenderDebounce = setTimeout(() => {
+    _clientsRenderDebounce = null;
+    renderClientGrid();
+    renderArchivedGrid();
+    renderPendingGrid();
+    updateArchivedBadge();
+    updatePendingBadge();
+    updateOnlineStrip();
+    updateDashboardStats();
+    loadDashboardPhotos();
+    loadMissedUpdates();
+    populateEvAssignDropdown();
+  }, 300);
+}
+
 function loadAllClients() {
   if (clientsUnsub) clientsUnsub();
   console.log('[COACH] Starting members onSnapshot listener...');
+
+  // Fetch all members — no status filter here because existing clients may not
+  // have a 'status' field set, and Firestore excludes docs where the filtered
+  // field is missing. Filtering is done in JS below instead.
   clientsUnsub = db.collection('members').onSnapshot(snap => {
     const all = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
     // Rejected signups and permanently-deleted clients are hidden everywhere —
@@ -6284,22 +6318,13 @@ function loadAllClients() {
     const newPending = visible.filter(c => c.approvalStatus === 'pending' && c.status !== 'archived');
     notifyNewPendingRequests(newPending);
     pendingClients = newPending;
-    const onlineClients = allClients.filter(isClientOnline);
-    console.log('[COACH] onSnapshot fired — active:', allClients.length, '| pending:', pendingClients.length, '| archived:', archivedClients.length, '| online:', onlineClients.length);
-    renderClientGrid();
-    renderArchivedGrid();
-    renderPendingGrid();
-    updateArchivedBadge();
-    updatePendingBadge();
-    updateOnlineStrip();
-    updateDashboardStats();
-    loadDashboardPhotos();
-    loadMissedUpdates();
-    populateEvAssignDropdown();
-  }, e => {
-    console.error('[COACH] members onSnapshot FAILED:', e.code, e.message);
-    document.getElementById('client-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">️</div><div class="empty-text">Could not load clients</div><div class="empty-sub">${e.message}</div></div>`;
-  });
+    console.log('[COACH] onSnapshot fired — active:', allClients.length, '| pending:', pendingClients.length, '| archived:', archivedClients.length);
+    // ── FIX 3: Batch all re-renders into one debounced call
+    _scheduleClientRender();
+    }, e => {
+      console.error('[COACH] members onSnapshot FAILED:', e.code, e.message);
+      document.getElementById('client-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">️</div><div class="empty-text">Could not load clients</div><div class="empty-sub">${e.message}</div></div>`;
+    });
   startPresenceWatchdog();
 }
 
