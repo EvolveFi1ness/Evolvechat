@@ -7280,11 +7280,129 @@ async function buildWorkoutLogger(workout) {
  window._workoutLoggingActive = true;
  startWktTimer();
 
+ // ── Fetch previous workout log to populate the PREVIOUS column ──
+ // Always fetches fresh from Firestore (no cache) so PREVIOUS always shows
+ // the true latest lift — whether from a coach workout or a custom one.
+ let _prevSetMap = {};
+ try {
+  const _uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+  if (_uid) {
+   // Fetch ALL workout logs without .orderBy() — no Firestore index required.
+   // Sort client-side newest-first so we find each exercise's latest record.
+   const _prevSnap = await db.collection('members')
+    .doc(_uid).collection('workoutLogs').get();
+
+   // Resolve a Firestore timestamp to ms. For pending serverTimestamp (toDate returns null),
+   // fall back to the document's Firestore metadata read time so it still sorts correctly.
+   const _toMs = (t, doc) => {
+    if (!t) return 0;
+    if (t.toDate) {
+     try {
+      const ms = t.toDate().getTime();
+      if (ms) return ms;
+     } catch(e) {}
+     // Pending serverTimestamp — use metadata.fromCache + a high timestamp so it
+     // sorts as newest (it was just written this session).
+     if (doc && doc.metadata && doc.metadata.hasPendingWrites) return Date.now() + 1;
+    }
+    if (t.seconds) return t.seconds * 1000;
+    if (t._seconds) return t._seconds * 1000;
+    return 0;
+   };
+
+   const _sorted = _prevSnap.docs.slice().sort((a, b) =>
+    _toMs(b.data().completedAt, b) - _toMs(a.data().completedAt, a)
+   );
+
+   // Token helper — splits name into words, allows 1-char typo per word
+   const _tkn = s => s.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(Boolean);
+   const _fuzzyMatch = (a, b) => {
+    const aT = _tkn(a), bT = _tkn(b);
+    const shared = aT.filter(t => bT.some(kt =>
+     kt === t || (Math.abs(kt.length - t.length) <= 1 &&
+      [...t].filter((c,i) => kt[i] !== c).length <= 1)
+    )).length;
+    return shared / Math.max(aT.length, bT.length);
+   };
+
+   // canonical key map: normalised-name → canonical key already stored in _prevSetMap
+   // so that typo variants ("bycicle" / "bicycle") all resolve to one entry.
+   const _canonMap = {}; // normalisedVariant → canonicalKey
+
+   // Walk newest→oldest. For each exercise, find or create a canonical slot.
+   // Show the most recent completed lift ever — no date filtering.
+   // The user always wants to see their last recorded weight/reps regardless of when.
+   for (const _doc of _sorted) {
+    const _d = _doc.data();
+    const _ms = _toMs(_d.completedAt, _doc);
+    if (!_ms) continue;
+
+    (_d.exercises || []).forEach(exLog => {
+     const key = (exLog.name || '').toLowerCase().trim();
+     if (!key) return;
+
+     // Check if this key (or a fuzzy variant) already has a canonical slot
+     let canonKey = _canonMap[key];
+     if (!canonKey) {
+      // Try to find an existing canonical key that fuzzy-matches this one
+      const existing = Object.keys(_prevSetMap).find(k => _fuzzyMatch(k, key) >= 0.7);
+      if (existing) {
+       canonKey = existing;
+      } else {
+       canonKey = key; // new canonical slot
+      }
+      _canonMap[key] = canonKey;
+     }
+
+     // Only store if this canonical slot hasn't been filled yet (newest wins)
+     if (_prevSetMap[canonKey]) return;
+
+     _prevSetMap[canonKey] = (exLog.sets || []).map(s => {
+      const unit = s.weightUnit || _d.weightUnit || 'kg';
+      const displayW = s.weightDisplay !== undefined ? s.weightDisplay : s.weight;
+      if (displayW === null || displayW === undefined || displayW === '') {
+       return '— × ' + (s.reps || '—');
+      }
+      return displayW + ' ' + unit + ' × ' + (s.reps || '—');
+     });
+    });
+   }
+  }
+ } catch (_e) {
+  console.warn('[EVOLVE] PREVIOUS column fetch failed:', _e && (_e.message || _e));
+ }
+ window._prevSetMap = _prevSetMap; // make available to restoreLoggerState
+
+ // ── Fuzzy exercise name lookup ──────────────────────────────────────────────
+ // Exact match first, then fuzzy word-overlap (≥0.7 score, 1-char typo tolerance).
+ // Works with the canonical-key map built above so "Bycicle" finds "Bicycle" data.
+ window._prevSetMapLookup = function(name) {
+  const key = (name || '').toLowerCase().trim();
+  // 1. Exact match
+  if (_prevSetMap[key] && _prevSetMap[key].length) return _prevSetMap[key];
+  // 2. Fuzzy scan all canonical keys
+  const tkn = s => s.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(Boolean);
+  const qT = tkn(key);
+  if (!qT.length) return [];
+  let bestKey = null, bestScore = 0;
+  Object.keys(_prevSetMap).forEach(k => {
+   const kT = tkn(k);
+   const shared = qT.filter(t => kT.some(kt =>
+    kt === t || (Math.abs(kt.length - t.length) <= 1 &&
+     [...t].filter((c,i) => kt[i] !== c).length <= 1)
+   )).length;
+   const score = shared / Math.max(qT.length, kT.length);
+   if (score > bestScore && score >= 0.7) { bestScore = score; bestKey = k; }
+  });
+  return bestKey ? _prevSetMap[bestKey] : [];
+ };
+
  workout.exercises.forEach((ex, exIdx) => {
   const accentColor = WKT_ACCENT_COLORS[exIdx % WKT_ACCENT_COLORS.length];
   const card = document.createElement('div');
   card.className = 'log-ex-card';
   card.dataset.exIdx = exIdx;
+  const _exPrevSets = (window._prevSetMapLookup ? window._prevSetMapLookup(ex.name) : _prevSetMap[(ex.name||'').toLowerCase().trim()]) || [];
 
   const match = (ex.target || '').match(/(\d+)[×x](\d+)/);
   const defaultSets = match ? parseInt(match[1], 10) : 3;
@@ -7352,7 +7470,8 @@ async function buildWorkoutLogger(workout) {
   // Add default sets — suppress auto-save during this loop
   window._loggerRestoring = true;
   for (let s = 0; s < defaultSets; s++) {
-   addSet(exIdx, 0, '', false, defaultReps);
+   const _prevTxt = _exPrevSets[s] || (_exPrevSets.length > 0 ? _exPrevSets[_exPrevSets.length - 1] : '');
+   addSet(exIdx, 0, '', false, defaultReps, _prevTxt);
   }
   window._loggerRestoring = false;
  });
@@ -7418,7 +7537,7 @@ function _applyWorkoutWeightUnit() {
 document.addEventListener('DOMContentLoaded', _applyWorkoutWeightUnit);
 setTimeout(_applyWorkoutWeightUnit, 200);
 
-function addSet(exIdx, weight, reps, done, placeholderReps) {
+function addSet(exIdx, weight, reps, done, placeholderReps, prevText) {
  const container = document.getElementById('sets-' + exIdx);
  if (!container) return;
  const setNum = container.children.length + 1;
@@ -7426,9 +7545,10 @@ function addSet(exIdx, weight, reps, done, placeholderReps) {
  row.className  = 'log-set-row';
  row.dataset.done = done ? '1' : '0';
  const repsHint = (placeholderReps !== undefined && placeholderReps !== null && placeholderReps !== '') ? placeholderReps : '—';
+ const prevDisplay = prevText || '—';
  row.innerHTML = `
   <div class="set-num">${setNum}</div>
-  <div style="font-size:11px;color:rgba(193,188,180,0.4);font-family:'Outfit',sans-serif;text-align:left;padding-left:4px;align-self:center;">—</div>
+  <div style="font-size:11px;color:rgba(193,188,180,0.4);font-family:'Outfit',sans-serif;text-align:left;padding-left:4px;align-self:center;">${prevDisplay}</div>
   <input class="set-input weight-input" type="number" min="0" step="0.5" placeholder="—" value="${weight||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()" onfocus="this.select()">
   <input class="set-input reps-input"  type="number" min="0" placeholder="${repsHint}" value="${reps||''}" oninput="updateSummary();if(!window._loggerRestoring)saveLoggerState()" onfocus="this.select()">
   <button class="set-done-btn" onclick="toggleSetDone(this)" title="Mark done"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
@@ -7761,8 +7881,11 @@ function restoreLoggerState() {
    container.innerHTML = '';
    const tgtMatch = (todayWorkout?.exercises?.[exIdx]?.target || '').match(/(\d+)[×x](\d+)/);
    const tgtReps = tgtMatch ? tgtMatch[2] : '';
-   exData.sets.forEach(s => {
-    addSet(exIdx, s.weight, s.reps, s.done, tgtReps);
+   const _exName = (todayWorkout?.exercises?.[exIdx]?.name || '').toLowerCase();
+   const _exPrev = (window._prevSetMapLookup ? window._prevSetMapLookup(_exName) : (window._prevSetMap && window._prevSetMap[_exName.trim()])) || [];
+   exData.sets.forEach((s, sIdx) => {
+    const _prevTxt = _exPrev[sIdx] || (_exPrev.length > 0 ? _exPrev[_exPrev.length - 1] : '');
+    addSet(exIdx, s.weight, s.reps, s.done, tgtReps, _prevTxt);
    });
    // Restore note
    const noteEl = document.getElementById('note-' + exIdx);
