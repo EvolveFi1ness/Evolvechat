@@ -10880,11 +10880,10 @@ async function initClientNutrition() {
  let _nutrMacroPlanSnapReady = false;
 }
 
-// NOTE: macro targets are no longer auto-deleted when a food is assigned.
-// renderNutritionTab() already hides macro chips/numbers while
-// hasCoachAssignedFoods is true, and shows them again automatically once
-// all assigned foods are removed — because the target document is never
-// deleted from Firestore in the first place.
+// NOTE: macro targets are never auto-deleted when a food is assigned.
+// renderNutritionTab() now always shows macro chips/numbers alongside any
+// coach-assigned foods, since both are valid coaching inputs the client
+// should see at the same time.
 
 let _nutrLoadInFlight = false;
 let _nutrLoadQueued   = false;
@@ -10973,15 +10972,12 @@ function renderNutritionTab() {
   activePlan = (filtered.length > 0 ? filtered : nutrAllMacroPlans)[0] || nutrPlan;
  }
 
- // If coach has assigned specific foods, hide macro targets (show 0)
- // so the client tracks against the assigned food list, not abstract numbers.
- // When coach removes all assigned foods, macro targets reappear automatically.
- const hasCoachAssignedFoods = ((nutrFoodLogs[dateKey]?.__assigned__) || []).length > 0;
-
- const tCal = hasCoachAssignedFoods ? 0 : (activePlan?.calories || 0);
- const tP  = hasCoachAssignedFoods ? 0 : (activePlan?.protein || 0);
- const tC  = hasCoachAssignedFoods ? 0 : (activePlan?.carbs  || 0);
- const tF  = hasCoachAssignedFoods ? 0 : (activePlan?.fats   || 0);
+ // Show macro targets AND assigned foods together — both coach inputs
+ // should always be visible to the client, regardless of which one was set.
+ const tCal = activePlan?.calories || 0;
+ const tP  = activePlan?.protein || 0;
+ const tC  = activePlan?.carbs  || 0;
+ const tF  = activePlan?.fats   || 0;
 
  // Ring
  const circ = 289;
@@ -11081,11 +11077,10 @@ function renderNutrAssignedPlan() {
   });
  });
 
- // ── MACRO CHIPS: only show when coach has NOT assigned specific foods ──
- // When foods are assigned, the client tracks against those foods instead of abstract macro numbers.
- const _hasAssignedFoods = ((nutrFoodLogs[dateKey]?.__assigned__) || []).length > 0;
+ // ── MACRO CHIPS: show whenever the coach has assigned macro targets ──
+ // Assigned foods are rendered separately below, so both can be visible together.
  if (chipsEl) {
-  if (nutrAllMacroPlans.length > 0 && !_hasAssignedFoods) {
+  if (nutrAllMacroPlans.length > 0) {
    // Multiple day-type plans — show tabs to switch between them
    const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
    const autoType = isTrainingDay ? 'Training Day' : 'Rest Day';
@@ -11141,7 +11136,7 @@ function renderNutrAssignedPlan() {
      </div>
     </div>` : ''}` : '');
   } else {
-   // Also clear chips if foods are assigned (hasAssignedFoods case falls here too)
+   // No macro plan assigned at all — nothing to show in the chips area
    chipsEl.innerHTML = '';
   }
  }
