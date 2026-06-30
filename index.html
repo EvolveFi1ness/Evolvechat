@@ -11068,12 +11068,15 @@ function renderNutrAssignedPlan() {
  const assigned = (nutrFoodLogs[dateKey]?.__assigned__) || [];
  const day = nutrFoodLogs[dateKey] || {};
 
- // Build a map of food_name (lowercase) → total grams already logged in meal slots today
+ // Build a map of "meal|food_name (lowercase)" → total grams already logged in that specific meal slot today
  const loggedGramsMap = {};
  NUTR_MEALS.forEach(meal => {
   (day[meal] || []).forEach(item => {
    const key = (item.food_name || '').toLowerCase().trim();
-   if (key) loggedGramsMap[key] = (loggedGramsMap[key] || 0) + (item.servingG || item.serving_size_g || 100);
+   if (key) {
+    const mapKey = meal + '|' + key;
+    loggedGramsMap[mapKey] = (loggedGramsMap[mapKey] || 0) + (item.servingG || item.serving_size_g || 100);
+   }
   });
  });
 
@@ -11159,8 +11162,9 @@ function renderNutrAssignedPlan() {
 
  const foodRows = assigned.map((item, idx) => {
   const assignedG = item.servingG || item.serving_size_g || 100;
+  const itemMeal = NUTR_MEALS.includes(item.mealSlot||item.mealName||'') ? (item.mealSlot||item.mealName) : 'Meal 1';
   const foodKey  = (item.food_name || '').toLowerCase().trim();
-  const loggedG  = loggedGramsMap[foodKey] || 0;
+  const loggedG  = loggedGramsMap[itemMeal + '|' + foodKey] || 0;
   const remainG  = Math.max(0, assignedG - loggedG);
   const isDone  = remainG === 0;
   const ratio   = assignedG > 0 ? remainG / assignedG : 0;
@@ -11201,7 +11205,7 @@ function renderNutrAssignedPlan() {
      <div style="font-size:14px;font-weight:700;color:${isDone?'#3DCB72':'#c9a84c'};line-height:1;">${isDone ? '0g' : remainG + 'g'}</div>
      <div style="font-size:9px;color:${isDone?'#2a8a50':'#7a6a3a'};letter-spacing:0.5px;text-transform:uppercase;margin-top:2px;">${isDone ? 'done' : 'needed'}</div>
     </div>
-   </div>`, meal: NUTR_MEALS.includes(item.mealSlot||item.mealName||'') ? (item.mealSlot||item.mealName) : 'Meal 1'};
+   </div>`, meal: itemMeal};
  });
 
  const byMeal = {};
