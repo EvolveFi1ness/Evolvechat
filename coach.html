@@ -5918,6 +5918,183 @@ document.addEventListener('DOMContentLoaded', () => {
 
 <!-- Firebase -->
 
+<!-- ═══════════════════════════════════════
+     LOGGING & MONITORING
+═══════════════════════════════════════ -->
+<script src="https://browser.sentry-cdn.com/7.120.3/bundle.min.js" crossorigin="anonymous"></script>
+<script>
+(function(){
+  const APP_NAME = 'coach';
+  const IS_LOCAL = ['localhost','127.0.0.1'].includes(location.hostname);
+
+  // ---- Sentry (error tracking) ----
+  // Paste your Sentry DSN below to start sending errors to sentry.io.
+  // Get one free at https://sentry.io -> Create Project -> JavaScript
+  const SENTRY_DSN = "";
+  if (window.Sentry && SENTRY_DSN) {
+    Sentry.init({
+      dsn: SENTRY_DSN,
+      environment: IS_LOCAL ? 'development' : 'production',
+      release: APP_NAME + '@1.0.0',
+      tracesSampleRate: 0.1,
+      beforeSend(event) { return IS_LOCAL ? null : event; }
+    });
+  }
+
+  // ---- Core in-app logger ----
+  const buffer = [];
+  const MAX_BUFFER = 300;
+  const STORAGE_KEY = APP_NAME + '_logs_v1';
+
+  function persist() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(buffer.slice(-MAX_BUFFER))); } catch(e) {}
+  }
+
+  function record(level, args) {
+    const entry = {
+      t: new Date().toISOString(),
+      level,
+      msg: args.map(a => {
+        try { return typeof a === 'string' ? a : JSON.stringify(a); }
+        catch(e) { return String(a); }
+      }).join(' '),
+      url: location.pathname
+    };
+    buffer.push(entry);
+    if (buffer.length > MAX_BUFFER) buffer.shift();
+    persist();
+
+    if (window.Sentry && SENTRY_DSN) {
+      Sentry.addBreadcrumb({ category: 'console', level, message: entry.msg });
+      if (level === 'error') Sentry.captureMessage(entry.msg, 'error');
+    }
+    queueRemoteWrite(entry);
+  }
+
+  // ---- Remote persistence to Firestore (throttled, batched) ----
+  let remoteQueue = [];
+  let flushTimer = null;
+  let droppedSinceFlush = 0;
+  const MAX_QUEUE = 60; // safety cap: avoid flooding Firestore if something logs in a tight loop
+  function queueRemoteWrite(entry) {
+    if (remoteQueue.length >= MAX_QUEUE) { droppedSinceFlush++; return; }
+    remoteQueue.push(entry);
+    if (flushTimer) return;
+    flushTimer = setTimeout(flushRemote, 4000);
+  }
+  async function flushRemote() {
+    flushTimer = null;
+    const batch = remoteQueue.splice(0, remoteQueue.length);
+    if (droppedSinceFlush > 0) {
+      batch.push({ t: new Date().toISOString(), level: 'warn', msg: `[AppLogger] ${droppedSinceFlush} log(s) dropped (rate cap)`, url: location.pathname });
+      droppedSinceFlush = 0;
+    }
+    if (!batch.length) return;
+    try {
+      if (typeof db === 'undefined' || !db) return;
+      const uid = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser.uid : null;
+      await Promise.all(batch.map(entry => db.collection('app_logs').add({
+        app: APP_NAME,
+        uid,
+        level: entry.level,
+        message: entry.msg.slice(0, 1000),
+        url: entry.url,
+        userAgent: navigator.userAgent,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(()=>{})));
+    } catch(e) { /* never let logging break the app */ }
+  }
+
+  // ---- Public API: window.AppLogger ----
+  const AppLogger = {
+    debug: (...a) => { console.debug('[DEBUG]', ...a); record('debug', a); },
+    info:  (...a) => { console.info('[INFO]', ...a); record('info', a); },
+    warn:  (...a) => { console.warn('[WARN]', ...a); record('warn', a); },
+    error: (...a) => { console.error('[ERROR]', ...a); record('error', a); },
+    track: (event, props) => {
+      record('info', ['[EVENT]', event, JSON.stringify(props||{})]);
+      if (window.Sentry && SENTRY_DSN) Sentry.addBreadcrumb({ category: 'track', message: event, data: props });
+      if (typeof db !== 'undefined' && db) {
+        db.collection('app_events').add({
+          app: APP_NAME,
+          event,
+          props: props || {},
+          uid: (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser.uid : null,
+          url: location.pathname,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(()=>{});
+      }
+    },
+    getLogs: () => buffer.slice(),
+    exportLogs: () => {
+      const blob = new Blob([JSON.stringify(buffer, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = APP_NAME + '-logs-' + Date.now() + '.json';
+      a.click();
+    },
+    clearLogs: () => { buffer.length = 0; persist(); }
+  };
+  window.AppLogger = AppLogger;
+
+  // ---- Auto-capture all existing console.* calls (no other code needs to change) ----
+  ['log','info','warn','error'].forEach(fn => {
+    const orig = console[fn];
+    console[fn] = function(...args) {
+      orig.apply(console, args);
+      record(fn === 'log' ? 'info' : fn, args);
+    };
+  });
+
+  // ---- Global crash capture ----
+  window.addEventListener('error', e => {
+    record('error', [`Uncaught: ${e.message} @ ${e.filename}:${e.lineno}:${e.colno}`]);
+    if (window.Sentry && SENTRY_DSN) Sentry.captureException(e.error || new Error(e.message));
+  });
+  window.addEventListener('unhandledrejection', e => {
+    const reason = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+    record('error', [`Unhandled rejection: ${reason}`]);
+    if (window.Sentry && SENTRY_DSN) Sentry.captureException(e.reason instanceof Error ? e.reason : new Error(reason));
+  });
+
+  // ---- Basic usage tracking ----
+  window.addEventListener('DOMContentLoaded', () => AppLogger.track('page_view', { path: location.pathname }));
+
+  // ---- Debug overlay: Ctrl+Shift+L ----
+  function togglePanel() {
+    let panel = document.getElementById('__logPanel');
+    if (panel) { panel.remove(); return; }
+    panel = document.createElement('div');
+    panel.id = '__logPanel';
+    panel.style.cssText = 'position:fixed;bottom:0;right:0;width:420px;max-height:50vh;background:#0a0a0a;border:1px solid rgba(255,255,255,0.15);color:#eee;font:11px/1.4 monospace;z-index:999999;overflow:auto;padding:10px;box-shadow:0 0 20px rgba(0,0,0,0.6)';
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;margin-bottom:6px;font-weight:bold;';
+    header.innerHTML = '<span>App Logs (' + APP_NAME + ')</span>';
+    const btns = document.createElement('div');
+    const exportBtn = document.createElement('button'); exportBtn.textContent = 'Export'; exportBtn.onclick = AppLogger.exportLogs;
+    const clearBtn = document.createElement('button'); clearBtn.textContent = 'Clear'; clearBtn.onclick = () => { AppLogger.clearLogs(); render(); };
+    [exportBtn, clearBtn].forEach(b => { b.style.cssText='margin-left:6px;background:#222;color:#eee;border:1px solid #444;padding:2px 6px;cursor:pointer;font-size:10px;'; btns.appendChild(b); });
+    header.appendChild(btns);
+    const body = document.createElement('div');
+    body.id = '__logPanelBody';
+    panel.appendChild(header);
+    panel.appendChild(body);
+    document.body.appendChild(panel);
+    function render() {
+      body.innerHTML = buffer.slice(-100).reverse().map(l =>
+        `<div style="color:${l.level==='error'?'#f87171':l.level==='warn'?'#fbbf24':'#9ca3af'}">[${l.t.split('T')[1].slice(0,8)}] ${l.level.toUpperCase()}: ${l.msg.slice(0,200).replace(/</g,'&lt;')}</div>`
+      ).join('');
+    }
+    render();
+  }
+  window.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'l')) togglePanel();
+  });
+
+  AppLogger.info('AppLogger initialized:', APP_NAME);
+})();
+</script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -6584,8 +6761,8 @@ function renderClientGrid() {
           <div class="online-dot"></div>
         </div>
         <div style="flex:1;min-width:0">
-          <div class="client-name">${c.firstName||''} ${c.lastName||''}</div>
-          <div class="client-email">${c.email||''}</div>
+          <div class="client-name">${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')}</div>
+          <div class="client-email">${escapeHtml(c.email||'')}</div>
           ${online
             ? `<div class="online-badge">Online now</div>`
             : (lastSeen ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">Last seen ${lastSeen}</div>` :
@@ -6602,7 +6779,7 @@ function renderClientGrid() {
       <div class="client-actions">
         <button class="action-btn" onclick="event.stopPropagation();openChatWith('${c.uid}')">Chat</button>
         <button class="action-btn primary" onclick="event.stopPropagation();openAssignFor('${c.uid}')">Assign Plan</button>
-        <button class="action-btn remove-client-btn" onclick="event.stopPropagation();confirmRemoveClient('${c.uid}','${(c.firstName||'').replace(/'/g,'&#39;')} ${(c.lastName||'').replace(/'/g,'&#39;')}')" title="Remove client">Remove</button>
+        <button class="action-btn remove-client-btn" onclick="event.stopPropagation();confirmRemoveClient('${c.uid}','${jsAttrSafe(((c.firstName||'')+' '+(c.lastName||'')).trim())}')" title="Remove client">Remove</button>
       </div>
       <div class="cc-photo-strip" id="cc-photos-${c.uid}">
         <div class="cc-photo-none" data-loading="1">Loading photos…</div>
@@ -6698,25 +6875,25 @@ async function openClientModal(uid) {
   // Profile
   const bmi = (client.heightCm&&client.weightKg) ? Math.round(client.weightKg/Math.pow(client.heightCm/100,2)*10)/10 : '—';
   document.getElementById('m-info-grid').innerHTML = [
-    ['Name', `${client.firstName||''} ${client.lastName||''}`],
-    ['Email', client.email||'—'],
+    ['Name', `${escapeHtml(client.firstName||'')} ${escapeHtml(client.lastName||'')}`],
+    ['Email', escapeHtml(client.email||'—')],
     ['Age', client.age ? client.age+' years' : '—'],
-    ['Plan', (client.plan||'free').toUpperCase()],
+    ['Plan', escapeHtml((client.plan||'free').toUpperCase())],
     ['Height', client.heightCm ? client.heightCm+' cm' : '—'],
-    ['Weight', client.weightDisplay||'—'],
+    ['Weight', escapeHtml(client.weightDisplay||'—')],
     ['BMI', bmi],
     ['Sessions', client.attendanceCount||0],
-    ['Goal', client.goal ? client.goal.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) : '—'],
+    ['Goal', client.goal ? escapeHtml(client.goal.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())) : '—'],
     ['Member Since', fmtDate(client.memberSince)]
   ].map(([l,v])=>`<div class="info-box"><div class="info-lbl">${l}</div><div class="info-val">${v}</div></div>`).join('');
 
   document.getElementById('m-health-grid').innerHTML = [
-    ['Allergies', (client.allergies?.join(', '))||'None'],
-    ['Medications', client.medications||'None'],
-    ['Conditions', (client.medicalConditions?.join(', '))||'None'],
-    ['Emergency Contact', client.emergencyContact?.name||'—'],
-    ['Emergency Phone', client.emergencyContact?.phone||'—'],
-    ['Sex', client.sex||'—']
+    ['Allergies', escapeHtml((client.allergies?.join(', '))||'None')],
+    ['Medications', escapeHtml(client.medications||'None')],
+    ['Conditions', escapeHtml((client.medicalConditions?.join(', '))||'None')],
+    ['Emergency Contact', escapeHtml(client.emergencyContact?.name||'—')],
+    ['Emergency Phone', escapeHtml(client.emergencyContact?.phone||'—')],
+    ['Sex', escapeHtml(client.sex||'—')]
   ].map(([l,v])=>`<div class="info-box"><div class="info-lbl">${l}</div><div class="info-val">${v}</div></div>`).join('');
 
   document.getElementById('client-modal').classList.add('open');
@@ -10474,9 +10651,9 @@ function editExerciseTarget(pill, i) {
 }
 
 function addExerciseToPlan() {
-  const name   = document.getElementById('aef-name').value.trim();
-  const detail = document.getElementById('aef-detail').value.trim();
-  const target = document.getElementById('aef-target').value.trim();
+  const name   = getSanitizedValue('aef-name', 80);
+  const detail = getSanitizedValue('aef-detail', 100);
+  const target = getSanitizedValue('aef-target', 30);
   if (!name) { showToast('Enter an exercise name'); return; }
   workoutPlan[currentDay].exercises.push({ name, detail:detail||'Exercise', target:target||'3×10' });
   document.getElementById('aef-name').value='';
@@ -10621,7 +10798,7 @@ function updateBuilderSummary() {
 
 // Save workout name on input blur/change
 document.getElementById('workout-name-input').addEventListener('input', function() {
-  workoutPlan[currentDay].name = this.value;
+  workoutPlan[currentDay].name = this.value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, '').slice(0, 80);
 });
 
 async function loadClientAssignedWorkout(clientUid) {
@@ -10830,7 +11007,13 @@ function getTemplates() {
 }
 
 function saveTemplates(arr) {
-  localStorage.setItem(TPL_STORAGE_KEY, JSON.stringify(arr));
+  try {
+    localStorage.setItem(TPL_STORAGE_KEY, JSON.stringify(arr));
+    return true;
+  } catch(e) {
+    console.error('saveTemplates failed:', e);
+    return false;
+  }
 }
 
 function renderTemplateList() {
@@ -10850,7 +11033,7 @@ function renderTemplateList() {
     return `<div class="template-item">
       <div class="template-item-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
       <div class="template-item-info">
-        <div class="template-item-name" title="${tpl.name}">${tpl.name}</div>
+        <div class="template-item-name" title="${escapeAttr(tpl.name)}">${escapeHtml(tpl.name)}</div>
         <div class="template-item-meta">${totalEx} ex · ${activeDays||'No days set'}</div>
       </div>
       <button class="template-load-btn" onclick="loadTemplate('${tpl.id}')">Load</button>
@@ -10882,25 +11065,35 @@ function closeSaveTemplateModal() {
 }
 
 function confirmSaveTemplate() {
-  const name = document.getElementById('tpl-name-input').value.trim();
+  const name = getSanitizedValue('tpl-name-input', 80);
   if (!name) { showToast('Please enter a template name'); document.getElementById('tpl-name-input').focus(); return; }
+  if (rateLimited('save-template', 3000, 'Please wait before saving again.')) return;
 
   const btn = document.getElementById('tpl-confirm-btn');
   btn.disabled = true; btn.textContent = 'Saving…';
 
-  // Deep-clone current workoutPlan
-  const planSnapshot = {};
-  Object.entries(workoutPlan).forEach(([day,d]) => {
-    planSnapshot[day] = { name: d.name||'', exercises: d.exercises.map(ex=>({...ex})) };
-  });
+  try {
+    // Deep-clone current workoutPlan
+    const planSnapshot = {};
+    Object.entries(workoutPlan).forEach(([day,d]) => {
+      planSnapshot[day] = { name: d.name||'', exercises: d.exercises.map(ex=>({...ex})) };
+    });
 
-  const templates = getTemplates();
-  templates.unshift({ id: 'tpl_' + Date.now(), name, plan: planSnapshot, savedAt: Date.now() });
-  saveTemplates(templates);
-  renderTemplateList();
-  closeSaveTemplateModal();
-  showToast(`Template "${name}" saved`, 'success');
-  btn.disabled = false; btn.textContent = ' Save Template';
+    const templates = getTemplates();
+    templates.unshift({ id: 'tpl_' + Date.now(), name, plan: planSnapshot, savedAt: Date.now() });
+    if (!saveTemplates(templates)) {
+      showToast('Could not save template — storage may be full', 'error');
+      return;
+    }
+    renderTemplateList();
+    closeSaveTemplateModal();
+    showToast(`Template "${name}" saved`, 'success');
+  } catch(e) {
+    console.error('confirmSaveTemplate failed:', e);
+    showToast('Could not save template: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = ' Save Template';
+  }
 }
 
 function loadTemplate(id) {
@@ -10979,7 +11172,7 @@ function renderChatList(filter) {
         <div class="cci-online-dot"></div>
       </div>
       <div class="cci-info">
-        <div class="cci-name">${c.firstName||''} ${c.lastName||''}</div>
+        <div class="cci-name">${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')}</div>
         <div class="cci-preview" id="cci-preview-${c.uid}">Tap to open chat</div>
       </div>
       <div class="cci-meta">
@@ -11190,8 +11383,87 @@ function autoResizeChatInput(el) {
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
+// Escape for use inside onclick="...('...')" — i.e. text that sits inside a
+// single-quoted JS string which itself sits inside a double-quoted HTML attribute.
+// Order matters: JS-escape backslash/quote first, then HTML-escape the attribute delimiters.
+// ─────────────────────────────────────────
+// RATE LIMITING
+// ─────────────────────────────────────────
+// Simple client-side cooldown: returns true if the action is allowed to proceed,
+// false (and shows a toast) if it's being called too soon after the last call.
+// Not a security boundary (a determined attacker can bypass client JS and hit
+// Firestore directly — that needs Firestore Security Rules) but it stops
+// accidental double-submits and casual spam through the normal UI.
+const _rateLimitState = {};
+function rateLimited(key, minIntervalMs, message) {
+  const now = Date.now();
+  const last = _rateLimitState[key] || 0;
+  if (now - last < minIntervalMs) {
+    if (message && typeof showToast === 'function') showToast(message, 'error');
+    return true; // is rate limited -> caller should stop
+  }
+  _rateLimitState[key] = now;
+  return false; // not rate limited -> caller should proceed
+}
+
+// Wraps localStorage.setItem — private browsing, Safari's ITP, and quota limits
+// can all make this throw. Returns true/false instead of letting it crash the caller.
+function safeLocalStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch(e) {
+    console.warn('localStorage.setItem failed for "' + key + '":', e.message);
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────
+// GLOBAL ERROR SAFETY NET
+// ─────────────────────────────────────────
+// Catches anything that slips past local try/catch blocks so it's logged and
+// (rate-limited) surfaced to the coach instead of failing silently with no
+// visible signal that something broke.
+let _lastGlobalErrorToast = 0;
+function _notifyUnexpectedError(err) {
+  console.error('Unhandled error:', err);
+  const now = Date.now();
+  if (now - _lastGlobalErrorToast > 8000) {
+    _lastGlobalErrorToast = now;
+    if (typeof showToast === 'function') showToast('Something went wrong. If this keeps happening, try refreshing.', 'error');
+  }
+}
+window.addEventListener('error', e => _notifyUnexpectedError(e.error || e.message));
+window.addEventListener('unhandledrejection', e => _notifyUnexpectedError(e.reason));
+
+function jsAttrSafe(s) {
+  const jsEscaped = String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return jsEscaped.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function escapeHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// Escapes for use inside an HTML attribute (value="...") — no <br> conversion.
+function escapeAttr(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Cleans a raw input/textarea value before it gets saved to Firestore:
+// trims, strips control/zero-width chars, collapses runs of whitespace, caps length.
+function sanitizeInput(raw, maxLen) {
+  let s = String(raw ?? '');
+  s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, '');
+  s = s.trim();
+  if (maxLen) s = s.slice(0, maxLen);
+  return s;
+}
+
+// Convenience: read + sanitize a field's value in one call.
+function getSanitizedValue(id, maxLen) {
+  const el = document.getElementById(id);
+  return el ? sanitizeInput(el.value, maxLen) : '';
 }
 
 function isSameDay(a, b) {
@@ -11242,8 +11514,9 @@ function chatKeydown(e) {
 async function sendMessage() {
   const input = document.getElementById('chat-input');
   if (!input) return;
-  const text = input.value.trim();
+  const text = sanitizeInput(input.value, 2000);
   if (!text||!activeChatUid) return;
+  if (rateLimited('coach-chat-send', 800, 'Sending too fast — please slow down.')) return;
   input.value='';
   const chatId = [coachUid, activeChatUid].sort().join('_');
   try {
@@ -11262,7 +11535,11 @@ async function sendMessage() {
     }, {merge:true});
     chatLastTimestamps[activeChatUid] = Date.now();
     sortChatList();
-  } catch(e) { showToast('Failed to send: '+e.message); }
+  } catch(e) {
+    console.error('Chat send failed:', e);
+    input.value = text; // restore so the message isn't lost
+    showToast(navigator.onLine === false ? 'You\'re offline — message not sent' : 'Failed to send: ' + e.message, 'error');
+  }
 }
 
 function listenForUnreadMessages() {
@@ -12308,7 +12585,7 @@ function renderCheckinTable() {
       <td class="rating-star">${stars(c.nutrition)}</td>
       <td class="rating-star">${stars(c.workout)}</td>
       <td><span class="checkin-source ${srcCls}">${srcLbl}</span></td>
-      <td class="checkin-notes" title="${noteText}">${noteText}</td>
+      <td class="checkin-notes" title="${escapeAttr(noteText)}">${escapeHtml(noteText)}</td>
     </tr>`;
   }).join('');
 }
@@ -12617,8 +12894,8 @@ async function savePtCheckin() {
     energy:      ptEnergyRating||null,
     nutrition:   ptNutritionRating||null,
     workout:     ptSleepRating||null,   // ptSleepRating holds workout rating (legacy naming)
-    coachNotes:  document.getElementById('pt-notes')?.value?.trim()||null,
-    notes:       document.getElementById('pt-notes')?.value?.trim()||null,
+    coachNotes:  getSanitizedValue('pt-notes', 500)||null,
+    notes:       getSanitizedValue('pt-notes', 500)||null,
     source:      'coach',
     loggedBy:    coachUid,
     createdAt:   firebase.firestore.FieldValue.serverTimestamp()
@@ -16590,7 +16867,7 @@ function renderMacroPlanCards() {
     <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid ${docId === _editingMacroPlanId ? 'rgba(96,165,250,0.5)' : 'var(--border)'};border-radius:12px;padding:10px 14px;flex-wrap:wrap;">
       <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-          <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.planName || 'Macro Target'}</span>
+          <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(d.planName || 'Macro Target')}</span>
           <span style="font-size:10px;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;background:${dayTypeBadgeColor(d.dayType)};border:1px solid;border-radius:100px;padding:2px 8px;white-space:nowrap;">${dayTypeLabel(d.dayType)}</span>
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">
@@ -16670,7 +16947,7 @@ function editMacroPlan(docId) {
   const banner = document.getElementById('mt-editing-banner');
   if (banner) {
     banner.style.display = 'block';
-    banner.innerHTML = `✏️ Editing "${d.planName || 'Macro Target'}" — changes will update this plan, not create a new one.`;
+    banner.innerHTML = `✏️ Editing "${escapeHtml(d.planName || 'Macro Target')}" — changes will update this plan, not create a new one.`;
   }
 
   document.getElementById('macro-target-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -17078,8 +17355,9 @@ function clearNutrBuilder() {
 async function saveNutritionPlan() {
   const clientUid = document.getElementById('nutr-assign-client').value;
   if (!clientUid) { showToast('Select a client first'); return; }
-  const planName = document.getElementById('nb-plan-name').value.trim();
+  const planName = getSanitizedValue('nb-plan-name', 80);
   if (!planName) { showToast('Enter a plan name'); return; }
+  if (rateLimited('save-nutrition-plan', 3000, 'Please wait before saving again.')) return;
 
   // Gather meals
   const mealDivs = document.querySelectorAll('[id^="nutr-meal-"]');
@@ -17098,18 +17376,19 @@ async function saveNutritionPlan() {
     const foods = [];
     foodRows.forEach(r => {
       const inputs = r.querySelectorAll('input');
-      if (inputs[0]?.value.trim()) {
-        foods.push({ name: inputs[0].value.trim(), qty: inputs[1]?.value || '', protein: parseFloat(inputs[2]?.value)||0, carbs: parseFloat(inputs[3]?.value)||0, fats: parseFloat(inputs[4]?.value)||0 });
+      const foodName = sanitizeInput(inputs[0]?.value, 100);
+      if (foodName) {
+        foods.push({ name: foodName, qty: sanitizeInput(inputs[1]?.value, 30), protein: parseFloat(inputs[2]?.value)||0, carbs: parseFloat(inputs[3]?.value)||0, fats: parseFloat(inputs[4]?.value)||0 });
       }
     });
     meals.push({
-      name: nameEl?.value || 'Meal',
+      name: sanitizeInput(nameEl?.value, 60) || 'Meal',
       time: timeEl?.value || '',
       protein: parseFloat(pEl?.value)||0,
       carbs: parseFloat(cEl?.value)||0,
       fats: parseFloat(fEl?.value)||0,
       calories: parseFloat(kEl?.value)||0,
-      notes: notesEl?.value || '',
+      notes: sanitizeInput(notesEl?.value, 500),
       foods
     });
   });
@@ -17119,7 +17398,7 @@ async function saveNutritionPlan() {
   const fats      = parseFloat(document.getElementById('nb-fats').value) || 0;
   const calories  = parseFloat(document.getElementById('nb-calories').value) || Math.round(protein*4+carbs*4+fats*9);
   const dayType   = document.getElementById('nb-day-type').value;
-  const notes     = document.getElementById('nb-notes').value;
+  const notes     = sanitizeInput(document.getElementById('nb-notes').value, 1000);
   const coachUid  = auth.currentUser?.uid || COACH_FIXED_UID;
 
   try {
@@ -17167,7 +17446,7 @@ async function loadClientAssignedPlans(clientUid) {
         <div class="meal-plan-card">
           <div class="meal-plan-header">
             <div>
-              <div class="meal-plan-name">${d.planName}</div>
+              <div class="meal-plan-name">${escapeHtml(d.planName)}</div>
               <div class="meal-plan-meta">${d.dayType || 'All days'} · Assigned ${date} · ${d.meals?.length||0} meals</div>
             </div>
             <div style="display:flex;gap:6px;align-items:center;">
@@ -17181,8 +17460,8 @@ async function loadClientAssignedPlans(clientUid) {
             <span class="meal-macro-pill pill-f">F: ${d.fats}g</span>
             <span class="meal-macro-pill pill-k">${d.calories} kcal</span>
           </div>
-          ${d.meals?.length ? `<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">${d.meals.map(m=>`<span style="font-size:11px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:3px 9px;color:var(--muted);"> ${m.name}${m.time?' · '+m.time:''}</span>`).join('')}</div>` : ''}
-          ${d.notes ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;">"${d.notes}"</div>` : ''}
+          ${d.meals?.length ? `<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;">${d.meals.map(m=>`<span style="font-size:11px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:3px 9px;color:var(--muted);"> ${escapeHtml(m.name)}${m.time?' · '+escapeHtml(m.time):''}</span>`).join('')}</div>` : ''}
+          ${d.notes ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;">"${escapeHtml(d.notes)}"</div>` : ''}
         </div>`;
     }).join('');
   } catch(e) {
@@ -17214,10 +17493,10 @@ async function loadNutritionMonitor() {
   grid.innerHTML = clients.map(c => {
     const clientName = ((c.firstName||'')+' '+(c.lastName||'')).trim() || c.email || c.name || 'Client';
     return `
-      <div id="nutr-card-${c.uid}" data-uid="${c.uid}" data-name="${clientName}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(212,168,67,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div id="nutr-card-${c.uid}" data-uid="${c.uid}" data-name="${escapeAttr(clientName)}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(212,168,67,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div>
-            <div style="font-size:14px;font-weight:700;color:var(--text);">${clientName}</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${escapeHtml(clientName)}</div>
             <div style="font-size:11px;color:var(--muted);margin-top:2px;">Loading…</div>
           </div>
         </div>
@@ -17242,7 +17521,7 @@ async function loadNutritionMonitor() {
         <div onclick="openMonitorClient(this)" data-uid="${c.uid}" data-name="${clientName}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(212,168,67,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
             <div>
-              <div style="font-size:14px;font-weight:700;color:var(--text);">${clientName}</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);">${escapeHtml(clientName)}</div>
               <div style="font-size:11px;color:var(--muted);margin-top:2px;">${hasData ? logs.length+' item'+(logs.length!==1?'s':'')+' logged today' : 'No food logged today'}</div>
             </div>
             <div style="text-align:right;">
@@ -17266,7 +17545,7 @@ async function loadNutritionMonitor() {
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;">
-            ${logs.slice(0,4).map(l=>`<span style="font-size:11px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:3px 9px;color:var(--muted);">${l.food_name||l.mealName||'Food'}</span>`).join('')}
+            ${logs.slice(0,4).map(l=>`<span style="font-size:11px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:3px 9px;color:var(--muted);">${escapeHtml(l.food_name||l.mealName||'Food')}</span>`).join('')}
             ${logs.length>4?`<span style="font-size:11px;color:var(--muted);padding:3px 6px;">+${logs.length-4} more</span>`:''}
           </div>` :
           '<div style="font-size:12px;color:var(--muted);padding:4px 0;">No foods logged for today yet.</div>'}
@@ -17380,7 +17659,7 @@ async function loadClientMealLogs() {
         <div class="meal-log-entry">
           <div class="meal-log-header">
             <div style="flex:1;min-width:0;">
-              <div class="meal-log-name">${foodName} ${statusBadge}</div>
+              <div class="meal-log-name">${escapeHtml(foodName)} ${statusBadge}</div>
               <div class="meal-log-time">
                 ${timeDisplay ? timeDisplay : ''}${serving ? ' · ' + serving : ''}
               </div>
@@ -17521,7 +17800,7 @@ async function openMonitorClient(el) {
         <div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;">
             <div style="flex:1;min-width:0;">
-              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">${name}</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;">${escapeHtml(name)}</div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 ${badge}
                 ${serving ? `<span style="font-size:11px;color:var(--muted);">${serving}</span>` : ''}
@@ -18229,7 +18508,7 @@ function applySidebarState() {
 }
 function toggleSidebar() {
   sidebarCollapsed = !sidebarCollapsed;
-  localStorage.setItem('sidebarCollapsed', sidebarCollapsed);
+  safeLocalStorageSet('sidebarCollapsed', sidebarCollapsed);
   applySidebarState();
 }
 document.addEventListener('DOMContentLoaded', applySidebarState);
