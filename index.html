@@ -729,8 +729,8 @@
  .wkt-name { font-family:'Outfit',sans-serif; font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; line-height: 1.15; }
  .wkt-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); }
  .wkt-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; font-family:'Outfit',sans-serif; padding: 4px 10px; border-radius: 100px; letter-spacing: 0.3px; }
- .wkt-chip-exercises { background: rgba(90,159,239,0.1); color: #5A9FEF; border: 1px solid rgba(90,159,239,0.2); }
- .wkt-chip-sets   { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
+ .wkt-chip-exercises { background: rgba(90,159,239,0.18); color: #8FBFFF; border: 1px solid rgba(90,159,239,0.4); }
+ .wkt-chip-sets   { background: rgba(201,168,76,0.18); color: var(--gold-2); border: 1px solid rgba(201,168,76,0.4); }
 
  /* ── Exercise card (Hevy style) ── */
  .log-ex-card {
@@ -5869,7 +5869,7 @@ img, video, iframe { max-width: 100%; }
       <span class="wkt-chip wkt-chip-exercises" id="wkt-chip-ex">— exercises</span>
       <span class="wkt-chip wkt-chip-sets" id="wkt-chip-sets">0 sets done</span>
      </div>
-     <button id="log-custom-wkt-btn" onclick="openCustomWorkoutBuilder()" style="display:none;padding:9px 20px;background:rgba(212,168,67,0.12);border:1.5px solid rgba(212,168,67,0.4);border-radius:24px;color:var(--gold);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.4px;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(212,168,67,0.22)';this.style.borderColor='rgba(212,168,67,0.65)'" onmouseout="this.style.background='rgba(212,168,67,0.12)';this.style.borderColor='rgba(212,168,67,0.4)'">
+     <button id="log-custom-wkt-btn" onclick="openCustomWorkoutBuilder()" style="display:none;padding:9px 20px;background:rgba(212,168,67,0.22);border:1.5px solid rgba(212,168,67,0.6);border-radius:24px;color:var(--gold-2);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.4px;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(212,168,67,0.32)';this.style.borderColor='rgba(212,168,67,0.85)'" onmouseout="this.style.background='rgba(212,168,67,0.22)';this.style.borderColor='rgba(212,168,67,0.6)'">
       + Add Exercise
      </button>
     </div>
@@ -6370,13 +6370,13 @@ img, video, iframe { max-width: 100%; }
   <div id="nutr-serving-presets" style="display:flex;gap:6px;padding:0 20px 12px;overflow-x:auto;flex-wrap:wrap;"></div>
   <!-- Serving input row -->
   <div style="display:flex;align-items:center;gap:8px;padding:0 20px 16px;">
-   <button onclick="nutrAdjServing(-1)" style="background:#141414;border:1px solid #222;color:#aaa;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">−</button>
+   <button onclick="nutrAdjServing(-1)" style="background:#1f1f1f;border:1px solid #3a3a3a;color:#e8e8e8;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">−</button>
    <div style="flex:1;display:flex;align-items:center;gap:8px;">
     <input id="nutr-serving-input" type="number" min="0.1" step="any" oninput="nutrUpdateServing()"
      style="flex:1;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:16px;font-family:'Inter',sans-serif;outline:none;text-align:center;min-width:0;"/>
     <span id="dd-unit-label" style="font-size:13px;color:#555;flex-shrink:0;min-width:28px;"></span>
    </div>
-   <button onclick="nutrAdjServing(1)" style="background:#141414;border:1px solid #222;color:#aaa;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
+   <button onclick="nutrAdjServing(1)" style="background:#1f1f1f;border:1px solid #3a3a3a;color:#e8e8e8;width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
   </div>
   <!-- Slider -->
   <div style="padding:0 20px 16px;">
@@ -6459,12 +6459,269 @@ img, video, iframe { max-width: 100%; }
 
 
 <!-- Firebase SDKs -->
+<!-- ═══════════════════════════════════════
+     LOGGING & MONITORING
+═══════════════════════════════════════ -->
+<script src="https://browser.sentry-cdn.com/7.120.3/bundle.min.js" crossorigin="anonymous"></script>
+<script>
+(function(){
+  const APP_NAME = 'client';
+  const IS_LOCAL = ['localhost','127.0.0.1'].includes(location.hostname);
+
+  // ---- Sentry (error tracking) ----
+  // Paste your Sentry DSN below to start sending errors to sentry.io.
+  // Get one free at https://sentry.io -> Create Project -> JavaScript
+  const SENTRY_DSN = "";
+  if (window.Sentry && SENTRY_DSN) {
+    Sentry.init({
+      dsn: SENTRY_DSN,
+      environment: IS_LOCAL ? 'development' : 'production',
+      release: APP_NAME + '@1.0.0',
+      tracesSampleRate: 0.1,
+      beforeSend(event) { return IS_LOCAL ? null : event; }
+    });
+  }
+
+  // ---- Core in-app logger ----
+  const buffer = [];
+  const MAX_BUFFER = 300;
+  const STORAGE_KEY = APP_NAME + '_logs_v1';
+
+  function persist() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(buffer.slice(-MAX_BUFFER))); } catch(e) {}
+  }
+
+  function record(level, args) {
+    const entry = {
+      t: new Date().toISOString(),
+      level,
+      msg: args.map(a => {
+        try { return typeof a === 'string' ? a : JSON.stringify(a); }
+        catch(e) { return String(a); }
+      }).join(' '),
+      url: location.pathname
+    };
+    buffer.push(entry);
+    if (buffer.length > MAX_BUFFER) buffer.shift();
+    persist();
+
+    if (window.Sentry && SENTRY_DSN) {
+      Sentry.addBreadcrumb({ category: 'console', level, message: entry.msg });
+      if (level === 'error') Sentry.captureMessage(entry.msg, 'error');
+    }
+    queueRemoteWrite(entry);
+  }
+
+  // ---- Remote persistence to Firestore (throttled, batched) ----
+  let remoteQueue = [];
+  let flushTimer = null;
+  let droppedSinceFlush = 0;
+  const MAX_QUEUE = 60; // safety cap: avoid flooding Firestore if something logs in a tight loop
+  function queueRemoteWrite(entry) {
+    if (remoteQueue.length >= MAX_QUEUE) { droppedSinceFlush++; return; }
+    remoteQueue.push(entry);
+    if (flushTimer) return;
+    flushTimer = setTimeout(flushRemote, 4000);
+  }
+  async function flushRemote() {
+    flushTimer = null;
+    const batch = remoteQueue.splice(0, remoteQueue.length);
+    if (droppedSinceFlush > 0) {
+      batch.push({ t: new Date().toISOString(), level: 'warn', msg: `[AppLogger] ${droppedSinceFlush} log(s) dropped (rate cap)`, url: location.pathname });
+      droppedSinceFlush = 0;
+    }
+    if (!batch.length) return;
+    try {
+      if (typeof db === 'undefined' || !db) return;
+      const uid = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser.uid : null;
+      await Promise.all(batch.map(entry => db.collection('app_logs').add({
+        app: APP_NAME,
+        uid,
+        level: entry.level,
+        message: entry.msg.slice(0, 1000),
+        url: entry.url,
+        userAgent: navigator.userAgent,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(()=>{})));
+    } catch(e) { /* never let logging break the app */ }
+  }
+
+  // ---- Public API: window.AppLogger ----
+  const AppLogger = {
+    debug: (...a) => { console.debug('[DEBUG]', ...a); record('debug', a); },
+    info:  (...a) => { console.info('[INFO]', ...a); record('info', a); },
+    warn:  (...a) => { console.warn('[WARN]', ...a); record('warn', a); },
+    error: (...a) => { console.error('[ERROR]', ...a); record('error', a); },
+    track: (event, props) => {
+      record('info', ['[EVENT]', event, JSON.stringify(props||{})]);
+      if (window.Sentry && SENTRY_DSN) Sentry.addBreadcrumb({ category: 'track', message: event, data: props });
+      if (typeof db !== 'undefined' && db) {
+        db.collection('app_events').add({
+          app: APP_NAME,
+          event,
+          props: props || {},
+          uid: (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser.uid : null,
+          url: location.pathname,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(()=>{});
+      }
+    },
+    getLogs: () => buffer.slice(),
+    exportLogs: () => {
+      const blob = new Blob([JSON.stringify(buffer, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = APP_NAME + '-logs-' + Date.now() + '.json';
+      a.click();
+    },
+    clearLogs: () => { buffer.length = 0; persist(); }
+  };
+  window.AppLogger = AppLogger;
+
+  // ---- Auto-capture all existing console.* calls (no other code needs to change) ----
+  ['log','info','warn','error'].forEach(fn => {
+    const orig = console[fn];
+    console[fn] = function(...args) {
+      orig.apply(console, args);
+      record(fn === 'log' ? 'info' : fn, args);
+    };
+  });
+
+  // ---- Global crash capture ----
+  window.addEventListener('error', e => {
+    record('error', [`Uncaught: ${e.message} @ ${e.filename}:${e.lineno}:${e.colno}`]);
+    if (window.Sentry && SENTRY_DSN) Sentry.captureException(e.error || new Error(e.message));
+  });
+  window.addEventListener('unhandledrejection', e => {
+    const reason = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+    record('error', [`Unhandled rejection: ${reason}`]);
+    if (window.Sentry && SENTRY_DSN) Sentry.captureException(e.reason instanceof Error ? e.reason : new Error(reason));
+  });
+
+  // ---- Basic usage tracking ----
+  window.addEventListener('DOMContentLoaded', () => AppLogger.track('page_view', { path: location.pathname }));
+
+  // ---- Debug overlay: Ctrl+Shift+L ----
+  function togglePanel() {
+    let panel = document.getElementById('__logPanel');
+    if (panel) { panel.remove(); return; }
+    panel = document.createElement('div');
+    panel.id = '__logPanel';
+    panel.style.cssText = 'position:fixed;bottom:0;right:0;width:420px;max-height:50vh;background:#0a0a0a;border:1px solid rgba(255,255,255,0.15);color:#eee;font:11px/1.4 monospace;z-index:999999;overflow:auto;padding:10px;box-shadow:0 0 20px rgba(0,0,0,0.6)';
+    const header = document.createElement('div');
+    header.style.cssText = 'display:flex;justify-content:space-between;margin-bottom:6px;font-weight:bold;';
+    header.innerHTML = '<span>App Logs (' + APP_NAME + ')</span>';
+    const btns = document.createElement('div');
+    const exportBtn = document.createElement('button'); exportBtn.textContent = 'Export'; exportBtn.onclick = AppLogger.exportLogs;
+    const clearBtn = document.createElement('button'); clearBtn.textContent = 'Clear'; clearBtn.onclick = () => { AppLogger.clearLogs(); render(); };
+    [exportBtn, clearBtn].forEach(b => { b.style.cssText='margin-left:6px;background:#222;color:#eee;border:1px solid #444;padding:2px 6px;cursor:pointer;font-size:10px;'; btns.appendChild(b); });
+    header.appendChild(btns);
+    const body = document.createElement('div');
+    body.id = '__logPanelBody';
+    panel.appendChild(header);
+    panel.appendChild(body);
+    document.body.appendChild(panel);
+    function render() {
+      body.innerHTML = buffer.slice(-100).reverse().map(l =>
+        `<div style="color:${l.level==='error'?'#f87171':l.level==='warn'?'#fbbf24':'#9ca3af'}">[${l.t.split('T')[1].slice(0,8)}] ${l.level.toUpperCase()}: ${l.msg.slice(0,200).replace(/</g,'&lt;')}</div>`
+      ).join('');
+    }
+    render();
+  }
+  window.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'l')) togglePanel();
+  });
+
+  AppLogger.info('AppLogger initialized:', APP_NAME);
+})();
+</script>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
 <script>
+// ─────────────────────────────────────────
+// SANITIZATION UTILITIES
+// ─────────────────────────────────────────
+// Escape for safe injection into innerHTML (text nodes / content).
+// Escape for use inside onclick="...('...')" — i.e. text that sits inside a
+// single-quoted JS string which itself sits inside a double-quoted HTML attribute.
+// ─────────────────────────────────────────
+// RATE LIMITING
+// ─────────────────────────────────────────
+// Simple client-side cooldown: returns true if the caller should STOP (too soon
+// since last call), false if it's fine to proceed. Not a security boundary —
+// Firestore Security Rules are needed to actually enforce this server-side —
+// but it stops accidental double-submits and casual spam through the normal UI.
+const _rateLimitState = {};
+function rateLimited(key, minIntervalMs, message) {
+  const now = Date.now();
+  const last = _rateLimitState[key] || 0;
+  if (now - last < minIntervalMs) {
+    if (message && typeof showToast === 'function') showToast(message, 'error');
+    return true;
+  }
+  _rateLimitState[key] = now;
+  return false;
+}
+
+// Wraps localStorage.setItem — private browsing, Safari's ITP, and quota limits
+// can all make this throw. Returns true/false instead of letting it crash the caller.
+function safeLocalStorageSet(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch(e) {
+    console.warn('localStorage.setItem failed for "' + key + '":', e.message);
+    return false;
+  }
+}
+
+// ─────────────────────────────────────────
+// GLOBAL ERROR SAFETY NET
+// ─────────────────────────────────────────
+// Catches anything that slips past local try/catch blocks so it's logged and
+// (rate-limited) surfaced to the client instead of failing silently.
+let _lastGlobalErrorToast = 0;
+function _notifyUnexpectedError(err) {
+  console.error('Unhandled error:', err);
+  const now = Date.now();
+  if (now - _lastGlobalErrorToast > 8000) {
+    _lastGlobalErrorToast = now;
+    if (typeof showToast === 'function') showToast('Something went wrong. If this keeps happening, try refreshing.', 'error');
+  }
+}
+window.addEventListener('error', e => _notifyUnexpectedError(e.error || e.message));
+window.addEventListener('unhandledrejection', e => _notifyUnexpectedError(e.reason));
+
+function jsAttrSafe(s) {
+  const jsEscaped = String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return jsEscaped.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeHtml(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+// Escape for use inside an HTML attribute, e.g. value="${escapeAttr(x)}"
+function escapeAttr(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// Clean a raw input/textarea value before saving to Firestore:
+// strips control/zero-width chars, trims, optionally caps length.
+function sanitizeInput(raw, maxLen) {
+  let s = String(raw ?? '');
+  s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, '');
+  s = s.trim();
+  if (maxLen) s = s.slice(0, maxLen);
+  return s;
+}
+// Read + sanitize a field's value in one call.
+function getSanitizedValue(id, maxLen) {
+  const el = document.getElementById(id);
+  return el ? sanitizeInput(el.value, maxLen) : '';
+}
+
 // ─────────────────────────────────────────
 // FIREBASE INIT
 // ─────────────────────────────────────────
@@ -6719,8 +6976,8 @@ async function handleLogin() {
 // SIGN UP
 // ─────────────────────────────────────────
 async function handleSignup() {
- const first = document.getElementById('su-first').value.trim();
- const last = document.getElementById('su-last').value.trim();
+ const first = getSanitizedValue('su-first', 60);
+ const last = getSanitizedValue('su-last', 60);
  const email = document.getElementById('su-email').value.trim();
  const pass = document.getElementById('su-pass').value;
  const goal = document.getElementById('su-goal').value;
@@ -6776,10 +7033,10 @@ function goToStep2() {
 async function handleFinish() {
  const allergies  = getSelectedPills('allergy-pills');
  const conditions = getSelectedPills('condition-pills');
- const allergyOther= document.getElementById('ob-allergy-other').value.trim();
- const meds    = document.getElementById('ob-meds').value.trim();
- const ecName   = document.getElementById('ob-ec-name').value.trim();
- const ecPhone   = document.getElementById('ob-ec-phone').value.trim();
+ const allergyOther= getSanitizedValue('ob-allergy-other', 200);
+ const meds    = getSanitizedValue('ob-meds', 500);
+ const ecName   = getSanitizedValue('ob-ec-name', 100);
+ const ecPhone   = getSanitizedValue('ob-ec-phone', 30);
  const btn = document.getElementById('finish-btn');
  btn.disabled=true; btn.textContent='Saving profile…'; clearStatus('step2-status');
  try {
@@ -6999,7 +7256,7 @@ async function loadHomeScreen(data) {
     || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.email);
    if (_aEmail) _cacheData.email = _aEmail;
   }
-  localStorage.setItem('evolve_profile_cache', JSON.stringify(_cacheData));
+  safeLocalStorageSet('evolve_profile_cache', JSON.stringify(_cacheData));
  } catch(e) {}
 
  // Profile panel — fully null-safe, won't throw if any element is missing
@@ -7243,7 +7500,7 @@ async function buildWorkoutLogger(workout) {
     <div style="font-size:13px;color:#555;line-height:1.6;font-family:'Outfit',sans-serif;margin-bottom:1.5rem;">Your coach hasn't assigned a workout plan yet.<br>Check back soon!</div>
     <div style="width:100%;height:1px;background:rgba(255,255,255,0.06);margin-bottom:1.5rem;"></div>
     <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1rem;font-family:'Outfit',sans-serif;">OR</div>
-    <button onclick="openCustomWorkoutBuilder()" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.3);border-radius:14px;color:var(--gold);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">
+    <button onclick="openCustomWorkoutBuilder()" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;background:rgba(212,168,67,0.22);border:1.5px solid rgba(212,168,67,0.6);border-radius:14px;color:var(--gold-2);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;" onmouseover="this.style.background='rgba(212,168,67,0.32)';this.style.borderColor='rgba(212,168,67,0.85)'" onmouseout="this.style.background='rgba(212,168,67,0.22)';this.style.borderColor='rgba(212,168,67,0.6)'">
      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
      Log Your Own Workout
     </button>
@@ -7493,7 +7750,7 @@ function setExerciseUnit(exIdx, u) {
  card.dataset.weightUnit = u;
  // Save global preference so new cards default to the last-used unit
  workoutWeightUnit = u;
- localStorage.setItem('evolve_wkt_weight_unit', u);
+ safeLocalStorageSet('evolve_wkt_weight_unit', u);
 
  // Convert existing weight inputs in THIS card only
  card.querySelectorAll('.weight-input').forEach(inp => {
@@ -7689,7 +7946,7 @@ function removeExercise(exIdx) {
        <div style="font-size:13px;color:#555;line-height:1.6;font-family:'Outfit',sans-serif;margin-bottom:1.5rem;">Your coach hasn't assigned a workout plan yet.<br>Check back soon!</div>
        <div style="width:100%;height:1px;background:rgba(255,255,255,0.06);margin-bottom:1.5rem;"></div>
        <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.25);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1rem;font-family:'Outfit',sans-serif;">OR</div>
-       <button onclick="openCustomWorkoutBuilder()" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.3);border-radius:14px;color:var(--gold);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">
+       <button onclick="openCustomWorkoutBuilder()" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;background:rgba(212,168,67,0.22);border:1.5px solid rgba(212,168,67,0.6);border-radius:14px;color:var(--gold-2);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;" onmouseover="this.style.background='rgba(212,168,67,0.32)';this.style.borderColor='rgba(212,168,67,0.85)'" onmouseout="this.style.background='rgba(212,168,67,0.22)';this.style.borderColor='rgba(212,168,67,0.6)'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Log Your Own Workout
        </button>
@@ -7711,7 +7968,7 @@ function removeExercise(exIdx) {
        exercises: todayWorkout.exercises.filter(ex => remainingNames.includes(ex.name))
       });
       todayWorkout = updatedWkt;
-      localStorage.setItem('evolve_custom_wkt_' + _today2, JSON.stringify(updatedWkt));
+      safeLocalStorageSet('evolve_custom_wkt_' + _today2, JSON.stringify(updatedWkt));
      } catch(e) {}
     }
    }
@@ -7853,7 +8110,7 @@ function saveLoggerState() {
    exercises.push({ sets, note, weightUnit: card.dataset.weightUnit || 'kg' });
   });
   const timerElapsed = _wktStartTime ? Math.floor((Date.now() - _wktStartTime) / 1000) : 0;
-  localStorage.setItem(_loggerStorageKey(), JSON.stringify({ exercises, timerElapsed, weightUnit: workoutWeightUnit }));
+  safeLocalStorageSet(_loggerStorageKey(), JSON.stringify({ exercises, timerElapsed, weightUnit: workoutWeightUnit }));
  } catch(e) { /* localStorage unavailable — silent fail */ }
 }
 
@@ -8089,7 +8346,7 @@ async function completeWorkout() {
    const feedRow = document.createElement('div');
    feedRow.className = 'activity-row';
    const timeStr = new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila',hour:'numeric',minute:'2-digit'});
-   feedRow.innerHTML = `<div class="activity-dot" style="background:#5dcaa5"></div><div class="activity-text"><strong>${todayWorkout?.name||'Workout'}</strong> completed — ${doneSets} sets, ${doneReps} reps</div><div class="activity-time">${timeStr}</div>`;
+   feedRow.innerHTML = `<div class="activity-dot" style="background:#5dcaa5"></div><div class="activity-text"><strong>${escapeHtml(todayWorkout?.name||'Workout')}</strong> completed — ${doneSets} sets, ${doneReps} reps</div><div class="activity-time">${timeStr}</div>`;
    // Insert after the "Account created" row
    const firstRow = feedEl.querySelector('.activity-row');
    if (firstRow) feedEl.insertBefore(feedRow, firstRow.nextSibling);
@@ -8181,8 +8438,8 @@ async function loadPastLogs() {
    card.innerHTML = `
     <div class="plc-header">
      <div style="flex:1;min-width:0;">
-      <div class="plc-name">${d.workoutName || 'Workout'}</div>
-      <div class="plc-day">${d.dayName || ''}</div>
+      <div class="plc-name">${escapeHtml(d.workoutName || 'Workout')}</div>
+      <div class="plc-day">${escapeHtml(d.dayName || '')}</div>
      </div>
      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
       <div class="plc-date">${date}</div>
@@ -8482,11 +8739,11 @@ function openWktDrawer(idx) {
       <div class="wdr-ex-accent" style="background:${accent};"></div>
       <div style="flex:1;min-width:0;">
        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <div class="wdr-ex-name">${ex.name}</div>
+        <div class="wdr-ex-name">${escapeHtml(ex.name)}</div>
         ${bestTag}
        </div>
        <div class="wdr-ex-note">${doneSets.length}/${sets.length} sets · ${Math.round(totalExVol)} kg volume</div>
-       ${ex.note ? `<div style="font-size:11px;color:var(--gold);margin-top:3px;font-family:'Outfit',sans-serif;font-style:italic;">"${ex.note}"</div>` : ''}
+       ${ex.note ? `<div style="font-size:11px;color:var(--gold);margin-top:3px;font-family:'Outfit',sans-serif;font-style:italic;">"${escapeHtml(ex.note)}"</div>` : ''}
       </div>
      </div>
      ${sets.length ? `
@@ -8658,7 +8915,8 @@ async function submitAnglePhotos() {
   if (inp) { inp.style.color='#e8605a'; inp.placeholder='Enter your weight to continue'; setTimeout(()=>{inp.style.color='';inp.placeholder='e.g. 75.5';},2500); }
   showToast('Please enter your current weight.', 'error'); return;
  }
- const note = document.getElementById('angle-note').value.trim();
+ const note = getSanitizedValue('angle-note', 500);
+ if (rateLimited('submit-angle-photos', 5000, 'Please wait before submitting again.')) return;
  const btn = document.getElementById('angle-submit-btn');
  const cancelBtn = document.getElementById('angle-cancel-btn');
  const _uploadWt  = parseFloat(document.getElementById('upload-weight-input')?.value);
@@ -9105,11 +9363,11 @@ async function loadHomePhotoStrip() {
    const date = d.uploadedAt?.toDate
     ? d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })
     : '';
-   const noteEsc = (d.note || '').replace(/'/g, "\\'");
-   const dateEsc = date.replace(/'/g, "\\'");
+   const noteEsc = escapeAttr(d.note || '');
+   const dateEsc = escapeAttr(date);
    thumbsHtml += `<div class="home-photo-thumb" onclick="openLightbox('${src.substring(0,20)===src?src:''}','${dateEsc}','${noteEsc}')" data-src="${''}" data-date="${dateEsc}" data-note="${noteEsc}">
     <img src="${src}" alt="Progress photo" loading="lazy">
-    <div class="home-photo-thumb-date">${date}</div>
+    <div class="home-photo-thumb-date">${escapeHtml(date)}</div>
    </div>`;
   });
   scroll.innerHTML = addSlot + thumbsHtml;
@@ -9322,7 +9580,7 @@ async function _refreshProfileTab() {
      if (v && typeof v === 'object' && typeof v.toDate === 'function') { try { _co[k] = v.toDate().toISOString(); } catch(e){} return; }
      _co[k] = v;
     });
-    localStorage.setItem('evolve_profile_cache', JSON.stringify(_co));
+    safeLocalStorageSet('evolve_profile_cache', JSON.stringify(_co));
    } catch(e) {}
   }
  } catch(e) {
@@ -9367,7 +9625,7 @@ function subscribeClientChat(uid, coachUid) {
     bubble.style.cssText = `display:flex;flex-direction:column;gap:3px;max-width:75%;align-self:${isMe?'flex-end':'flex-start'};align-items:${isMe?'flex-end':'flex-start'}`;
     const ts = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila',hour:'numeric',minute:'2-digit'}) : '';
     bubble.innerHTML = `
-     <div style="padding:10px 14px;border-radius:${isMe?'14px 14px 4px 14px':'14px 14px 14px 4px'};font-size:13px;line-height:1.5;background:${isMe?'#c9a84c':'#1a1a1a'};color:${isMe?'#0a0a0a':'#e8e8e8'};border:${isMe?'none':'1px solid #2a2a2a'}">${m.text.replace(/\n/g,'<br>')}</div>
+     <div style="padding:10px 14px;border-radius:${isMe?'14px 14px 4px 14px':'14px 14px 14px 4px'};font-size:13px;line-height:1.5;background:${isMe?'#c9a84c':'#1a1a1a'};color:${isMe?'#0a0a0a':'#e8e8e8'};border:${isMe?'none':'1px solid #2a2a2a'}">${escapeHtml(m.text)}</div>
      <div style="font-size:10px;color:#444">${ts}</div>`;
     area.appendChild(bubble);
    });
@@ -9383,8 +9641,9 @@ async function clientSendMessage() {
  const uid = currentUid || auth.currentUser?.uid;
  const input = document.getElementById('client-chat-input');
  if (!input||!uid) return;
- const text = input.value.trim();
+ const text = sanitizeInput(input.value, 2000);
  if (!text) return;
+ if (rateLimited('client-chat-send', 800, 'Sending too fast — please slow down.')) return;
 
  if (!coachUidForChat) coachUidForChat = COACH_FIXED_UID;
  input.value='';
@@ -9402,7 +9661,11 @@ async function clientSendMessage() {
    lastAt: firebase.firestore.FieldValue.serverTimestamp(),
    lastSenderRole: 'client'
   }, {merge:true});
- } catch(e) { showToast('Failed to send'); }
+ } catch(e) {
+  console.error('Chat send failed:', e);
+  input.value = text; // restore so the message isn't lost
+  showToast(navigator.onLine === false ? 'You\'re offline — message not sent' : 'Failed to send. Please try again.', 'error');
+ }
 }
 
 // ─────────────────────────────────────────
@@ -9690,8 +9953,10 @@ function cliCalGoToday() {
 }
 
 function renderCliCalGrid() {
- document.getElementById('cli-cal-month-label').textContent = CLI_MONTH_NAMES[cliCalMonth] + ' ' + cliCalYear;
+ const monthLabelEl = document.getElementById('cli-cal-month-label');
  const grid = document.getElementById('cli-cal-days');
+ if (!monthLabelEl || !grid) return; // calendar view not in DOM yet
+ monthLabelEl.textContent = CLI_MONTH_NAMES[cliCalMonth] + ' ' + cliCalYear;
  grid.innerHTML = '';
  const firstDay  = new Date(cliCalYear, cliCalMonth, 1).getDay();
  const daysInMonth = new Date(cliCalYear, cliCalMonth + 1, 0).getDate();
@@ -9733,7 +9998,7 @@ function renderCliCalGrid() {
    evMap[dateStr].slice(0, 2).forEach(ev => {
     const cls = ev._mine ? 'ev-mine' : (EV_CLASS[ev.type]||'');
     const delBtn = ev._mine ? `<button class="fcal-chip-del" onclick="event.stopPropagation();deleteClientEvent('${ev.id}')" title="Remove"></button>` : '';
-    evHtml += `<span class="fcal-ev ${cls}">${ev.title}${delBtn}</span>`;
+    evHtml += `<span class="fcal-ev ${cls}">${escapeHtml(ev.title)}${delBtn}</span>`;
    });
    if (evMap[dateStr].length > 2) evHtml += `<span class="fcal-ev" style="color:#555">+${evMap[dateStr].length-2} more</span>`;
   }
@@ -9744,6 +10009,7 @@ function renderCliCalGrid() {
 
 function renderCliEvList() {
  const list = document.getElementById('cli-ev-list');
+ if (!list) return; // events view not in DOM yet
  const todayStr = phIsoDate();
  const allEvs  = [...cliCalEvents, ...cliMyEvents];
  allEvs.sort((a,b) => (a.date||'').localeCompare(b.date||''));
@@ -9764,9 +10030,9 @@ function renderCliEvList() {
    <div class="cli-ev-colorbar type-${typeForBar}"></div>
    <div class="cli-ev-date"><div class="cli-ev-mon">${mon}</div><div class="cli-ev-day">${d.getDate()}</div></div>
    <div class="cli-ev-body">
-    <div class="cli-ev-title">${ev.title}</div>
+    <div class="cli-ev-title">${escapeHtml(ev.title)}</div>
     ${timeLabel ? `<div class="cli-ev-meta">${timeLabel}</div>` : ''}
-    ${ev.notes ? `<div class="cli-ev-notes">${ev.notes}</div>` : ''}
+    ${ev.notes ? `<div class="cli-ev-notes">${escapeHtml(ev.notes)}</div>` : ''}
     <span class="cli-ev-badge ${badgeCls}">${badgeLbl}</span>
    </div>
    ${delBtn}
@@ -9813,17 +10079,18 @@ async function saveClientEvent() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid) { showToast('Not logged in'); return; }
 
- const title = document.getElementById('nev-title').value.trim();
+ const title = getSanitizedValue('nev-title', 100);
  const date = document.getElementById('nev-date').value;
  if (!title) { showToast('Please enter a title'); return; }
  if (!date) { showToast('Please pick a date');  return; }
+ if (rateLimited('client-save-event', 2000, 'Please wait a moment before adding another event.')) return;
 
  const btn = document.getElementById('ev-save-btn');
  btn.disabled = true; btn.textContent = 'Saving…';
 
  const timeStart = document.getElementById('nev-time-start').value || null;
  const timeEnd  = document.getElementById('nev-time-end').value  || null;
- const notes   = document.getElementById('nev-notes').value.trim() || null;
+ const notes   = getSanitizedValue('nev-notes', 1000) || null;
 
  try {
   await db.collection('members').doc(uid).collection('myEvents').add({
@@ -11491,16 +11758,16 @@ function openNutrDetail(food) {
   // Beverage quick presets in ml
   const mlPresets = [100, 150, 200, 250, 330, 355, 500];
   presetsEl.innerHTML = mlPresets.map(ml =>
-   `<button onclick="nutrSetServingGrams(${ml})" style="padding:5px 11px;border-radius:8px;background:#0a0a0d;border:1px solid #222;color:#666;font-size:11px;cursor:pointer;font-family:inherit;">${ml}ml</button>`
+   `<button onclick="nutrSetServingGrams(${ml})" style="padding:5px 11px;border-radius:8px;background:#1c1c1c;border:1px solid #3a3a3a;color:#cfcfcf;font-size:11px;cursor:pointer;font-family:inherit;">${ml}ml</button>`
   ).join('');
  } else if (food.serving_label && food.serving_label !== '100g') {
   presetsEl.innerHTML = [0.5,1,1.5,2,3].map(x =>
-   `<button onclick="nutrSetServingUnits(${x})" style="padding:5px 11px;border-radius:8px;background:#0a0a0d;border:1px solid #222;color:#666;font-size:11px;cursor:pointer;font-family:inherit;">${x}×</button>`
+   `<button onclick="nutrSetServingUnits(${x})" style="padding:5px 11px;border-radius:8px;background:#1c1c1c;border:1px solid #3a3a3a;color:#cfcfcf;font-size:11px;cursor:pointer;font-family:inherit;">${x}×</button>`
   ).join('');
  } else {
   const presets = [30, 50, 100, 150, 200];
   presetsEl.innerHTML = presets.map(g =>
-   `<button onclick="nutrSetServingGrams(${g})" style="padding:5px 11px;border-radius:8px;background:#0a0a0d;border:1px solid #222;color:#666;font-size:11px;cursor:pointer;font-family:inherit;">${g}g</button>`
+   `<button onclick="nutrSetServingGrams(${g})" style="padding:5px 11px;border-radius:8px;background:#1c1c1c;border:1px solid #3a3a3a;color:#cfcfcf;font-size:11px;cursor:pointer;font-family:inherit;">${g}g</button>`
   ).join('');
  }
 
@@ -12762,7 +13029,7 @@ function renderClientNotifications() {
   return `<div class="client-notif-item ${n.read ? '' : 'unread'}" onclick="clientReadNotif('${n.id}')">
    <div class="client-notif-icon">${n.icon}</div>
    <div class="client-notif-body">
-    <div class="client-notif-text">${n.text}</div>
+    <div class="client-notif-text">${escapeHtml(n.text)}</div>
     <div class="client-notif-time-label">${timeAgo}</div>
    </div>
    <div class="client-notif-dot"></div>
@@ -13112,11 +13379,11 @@ async function saveProfileEdit() {
  const heightCm  = heightRaw ? parseFloat(heightRaw)   : null;
  const weightKg  = weightRaw ? parseFloat(weightRaw)   : null;
  const goal      = document.getElementById('pe-goal').value.trim();
- const firstName = document.getElementById('pe-firstname').value.trim();
- const lastName  = document.getElementById('pe-lastname').value.trim();
- const allergies         = (document.getElementById('pe-allergies').value||'').split(',').map(s=>s.trim()).filter(Boolean);
- const medications       = document.getElementById('pe-meds').value.trim();
- const medicalConditions = (document.getElementById('pe-conditions').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+ const firstName = getSanitizedValue('pe-firstname', 60);
+ const lastName  = getSanitizedValue('pe-lastname', 60);
+ const allergies         = getSanitizedValue('pe-allergies', 300).split(',').map(s=>sanitizeInput(s)).filter(Boolean);
+ const medications       = getSanitizedValue('pe-meds', 500);
+ const medicalConditions = getSanitizedValue('pe-conditions', 300).split(',').map(s=>sanitizeInput(s)).filter(Boolean);
 
  // Resolve name: use field value, fall back to Auth displayName, fall back to existing cache
  const _authUser2 = (typeof auth !== 'undefined' && auth.currentUser)
@@ -13166,7 +13433,7 @@ async function saveProfileEdit() {
    if (v && typeof v === 'object' && typeof v.toDate === 'function') return; // skip Timestamps
    cacheObj[k] = v;
   });
-  try { localStorage.setItem('evolve_profile_cache', JSON.stringify(cacheObj)); } catch(e) {}
+  try { safeLocalStorageSet('evolve_profile_cache', JSON.stringify(cacheObj)); } catch(e) {}
 
   closeProfileEdit();
   showPeToast('✓ Saved!');
@@ -13277,7 +13544,7 @@ function applyClientSidebarState() {
 
 function toggleClientSidebar() {
   clientSidebarCollapsed = !clientSidebarCollapsed;
-  localStorage.setItem('clientSidebarCollapsed', clientSidebarCollapsed);
+  safeLocalStorageSet('clientSidebarCollapsed', clientSidebarCollapsed);
   applyClientSidebarState();
 }
 
@@ -13289,7 +13556,7 @@ let _sideNavHidden = (localStorage.getItem('sideNavHidden') === 'true');
 
 function toggleSideNav() {
  _sideNavHidden = !_sideNavHidden;
- localStorage.setItem('sideNavHidden', _sideNavHidden);
+ safeLocalStorageSet('sideNavHidden', _sideNavHidden);
  applySideNavState();
 }
 
@@ -13713,7 +13980,7 @@ function _updateCwktStartBtn() {
 
 function startCustomWorkout() {
  if (!_cwktExercises.length) return;
- const wktName = document.getElementById('custom-wkt-name').value.trim() || 'Custom Workout';
+ const wktName = getSanitizedValue('custom-wkt-name', 80) || 'Custom Workout';
  const hasActiveWorkout = todayWorkout && todayWorkout.exercises && todayWorkout.exercises.length > 0;
 
  // Only the exercises that are NEW (not pre-existing)
@@ -13746,7 +14013,7 @@ function startCustomWorkout() {
   // Persist updated definition
   try {
    const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-   localStorage.setItem('evolve_custom_wkt_' + today, JSON.stringify(todayWorkout));
+   safeLocalStorageSet('evolve_custom_wkt_' + today, JSON.stringify(todayWorkout));
   } catch(e) {}
 
   // Update header
@@ -13779,7 +14046,7 @@ function startCustomWorkout() {
  // Persist custom workout definition so it survives a page refresh
  try {
   const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  localStorage.setItem('evolve_custom_wkt_' + today, JSON.stringify(customWorkout));
+  safeLocalStorageSet('evolve_custom_wkt_' + today, JSON.stringify(customWorkout));
   Object.keys(localStorage).forEach(k => {
    if (k.startsWith('evolve_custom_wkt_') && k !== 'evolve_custom_wkt_' + today) localStorage.removeItem(k);
   });
