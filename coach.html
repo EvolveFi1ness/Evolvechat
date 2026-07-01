@@ -6224,11 +6224,62 @@ async function handleCoachLogin() {
     // Auth handled by Firestore rules (see README — set allow read, write: if true)
     // Store session in sessionStorage so page refresh stays logged in
     sessionStorage.setItem('coachAuth', entered);
+    if (db) {
+      db.collection('logins').add({
+        app: 'coach',
+        uid: COACH_FIXED_UID,
+        name: 'Coach',
+        email: '',
+        type: 'login',
+        userAgent: navigator.userAgent,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(()=>{});
+    }
     bootApp();
   } catch(e) {
     status.textContent = e.message; status.className='auth-status error';
   } finally { btn.disabled=false; btn.textContent='Enter Dashboard'; }
 }
+
+// ─────────────────────────────────────────
+// PRESENCE HEARTBEAT (coach) — writes to the same "presence" collection
+// admin.html's "Online Now" tab listens to. Mirrors index_3.html's
+// client-side heartbeat so both apps show up there.
+// ─────────────────────────────────────────
+const COACH_HEARTBEAT_MS = 25000;
+let _coachHeartbeatTimer = null;
+
+function _sendCoachHeartbeat() {
+  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  if (document.visibilityState !== 'visible') return;
+  db.collection('presence').doc(uid).set({
+    app: 'coach',
+    page: window._currentCoachPage || 'dashboard',
+    name: 'Coach',
+    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).catch(()=>{});
+}
+
+function startCoachPresenceHeartbeat() {
+  if (_coachHeartbeatTimer) return; // already running
+  _sendCoachHeartbeat(); // immediate beat
+  _coachHeartbeatTimer = setInterval(_sendCoachHeartbeat, COACH_HEARTBEAT_MS);
+}
+
+function stopCoachPresenceHeartbeat() {
+  if (_coachHeartbeatTimer) { clearInterval(_coachHeartbeatTimer); _coachHeartbeatTimer = null; }
+  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  db.collection('presence').doc(uid).delete().catch(()=>{});
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') _sendCoachHeartbeat();
+});
+
+window.addEventListener('beforeunload', () => {
+  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  db.collection('presence').doc(uid).delete().catch(()=>{});
+});
 
 async function handleLogout() {
   if (chatUnsub) { chatUnsub(); chatUnsub = null; }
@@ -6236,6 +6287,7 @@ async function handleLogout() {
   if (unreadMsgsUnsub) { unreadMsgsUnsub(); unreadMsgsUnsub = null; }
   if (_coachNotifUnsub) { _coachNotifUnsub(); _coachNotifUnsub = null; }
   if (_presenceWatchdogTimer) { clearInterval(_presenceWatchdogTimer); _presenceWatchdogTimer = null; }
+  stopCoachPresenceHeartbeat();
   // stopCoachCallListener lives in a later, separately-scoped <script> block,
   // so it's reached via the global hook rather than a direct reference.
   if (typeof window.stopCoachCallListener === 'function') window.stopCoachCallListener();
@@ -6285,6 +6337,8 @@ function bootApp() {
     startCoachCallListener();
     // Listen for real-time check-in notifications from clients
     startCoachNotifListener();
+    // Start sending presence heartbeats so admin.html sees the coach as online
+    startCoachPresenceHeartbeat();
   });
 }
 
@@ -6399,6 +6453,7 @@ async function handleChangePassword() {
 //  NAV
 // ─────────────────────────────────────────
 function showPage(page) {
+  window._currentCoachPage = page;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
@@ -10565,7 +10620,10 @@ function renderExerciseList() {
       const safeName   = (ex.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       const safeDetail = (ex.detail||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       const _vidEl = _m && _m.thumbnail
-        ? `<img class="ebi-vid-thumb" src="${_m.thumbnail}" data-exname="${safeName}" data-exdetail="${safeDetail}" alt="">`
+        ? `<span class="ebi-vid-wrap" style="position:relative;flex-shrink:0;">
+             <img class="ebi-vid-thumb" src="${_m.thumbnail}" data-exname="${safeName}" data-exdetail="${safeDetail}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+             <div class="ebi-vid-btn" data-exname="${safeName}" data-exdetail="${safeDetail}" style="display:none;">&#x25B6;</div>
+           </span>`
         : `<div class="ebi-vid-btn" data-exname="${safeName}" data-exdetail="${safeDetail}">&#x25B6;</div>`;
       return `<div class="ex-builder-item" draggable="true" data-idx="${i}">
         <div class="ebi-handle" data-idx="${i}" title="Drag to reorder">
