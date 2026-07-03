@@ -6167,6 +6167,22 @@ let workoutPlan = {
 // lost, since everything else auto-saves as you go.
 let _builderSyncedClientUid = '';
 
+// Every write to a client's assignedWorkoutPlan (autosave on add/remove/
+// reorder/rename, manual "Assign Plan →", and "Remove client plan") must
+// run one-at-a-time and in the order they were triggered. Without this,
+// two overlapping saves (e.g. quickly removing two exercises, or clicking
+// Assign while an autosave from a moment ago is still in flight) can race:
+// whichever Firestore round-trip happens to finish last wins, even if it
+// was reading a now-stale snapshot of workoutPlan — silently reverting or
+// dropping the newer change. Routing every write through this chain
+// guarantees they execute strictly in sequence.
+let _saveChain = Promise.resolve();
+function queueWorkoutSave(fn) {
+  const run = _saveChain.then(fn, fn);
+  _saveChain = run.catch(() => {});
+  return run;
+}
+
 // ─────────────────────────────────────────
 //  UTILS
 // ─────────────────────────────────────────
@@ -10923,7 +10939,11 @@ window.addEventListener('beforeunload', () => {
   if (_notifyPending) flushClientNotification();
 });
 
-async function autoSavePlanToFirebase(successMsg, silent) {
+function autoSavePlanToFirebase(successMsg, silent) {
+  return queueWorkoutSave(() => _autoSavePlanToFirebaseImpl(successMsg, silent));
+}
+
+async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
   const clientUid = document.getElementById('assign-client-select').value;
   if (!clientUid) return;
 
@@ -11124,51 +11144,57 @@ async function assignWorkoutToClient(evt) {
   const btn = document.getElementById('assign-btn');
   btn.disabled=true; btn.textContent='Saving…';
   try {
-    // Build plan keyed by day (only days with exercises)
-    const plan = {};
-    Object.entries(workoutPlan).forEach(([day,d])=>{
-      if(d.exercises.length) {
-        plan[day] = { name: d.name||day+' Workout', exercises: d.exercises };
-      }
+    // Run through the same queue as autosave so this can't race an
+    // in-flight autosave triggered by an edit made moments ago.
+    const plan = await queueWorkoutSave(async () => {
+      // Build plan keyed by day (only days with exercises)
+      const p = {};
+      Object.entries(workoutPlan).forEach(([day,d])=>{
+        if(d.exercises.length) {
+          p[day] = { name: d.name||day+' Workout', exercises: d.exercises };
+        }
+      });
+
+      // First delete ALL existing day fields so stale days from old plans don't persist
+      const ref  = db.collection('members').doc(clientUid);
+      const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+      const clearStale = {
+        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        workoutAssignedBy: coachUid,
+      };
+      DAYS.forEach(day => {
+        clearStale[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete();
+      });
+      await ref.update(clearStale);
+
+      // Now write only the days that actually have exercises
+      const updateData = {
+        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        workoutAssignedBy: coachUid,
+      };
+      Object.entries(p).forEach(([day, d]) => {
+        updateData[`assignedWorkoutPlan.${day}`] = d;
+      });
+      await ref.update(updateData);
+
+      // Chat notification
+      const chatId = [coachUid, clientUid].sort().join('_');
+      await db.collection('chats').doc(chatId).collection('messages').add({
+        text: `Workout plan updated. Open your app to see this week's schedule (${Object.keys(p).join(', ')}).`,
+        senderId: coachUid,
+        senderRole: 'coach',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await db.collection('chats').doc(chatId).set({
+        participants: [coachUid, clientUid],
+        lastMessage: 'Workout plan updated!',
+        lastAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, {merge:true});
+
+      return p;
     });
 
-    // First delete ALL existing day fields so stale days from old plans don't persist
-    const ref  = db.collection('members').doc(clientUid);
-    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-    const clearStale = {
-      workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      workoutAssignedBy: coachUid,
-    };
-    DAYS.forEach(day => {
-      clearStale[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete();
-    });
-    await ref.update(clearStale);
-
-    // Now write only the days that actually have exercises
-    const updateData = {
-      workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      workoutAssignedBy: coachUid,
-    };
-    Object.entries(plan).forEach(([day, d]) => {
-      updateData[`assignedWorkoutPlan.${day}`] = d;
-    });
-    await ref.update(updateData);
-
-    // Chat notification
-    const client = allClients.find(c=>c.uid===clientUid);
-    const chatId = [coachUid, clientUid].sort().join('_');
-    await db.collection('chats').doc(chatId).collection('messages').add({
-      text: `Workout plan updated. Open your app to see this week's schedule (${Object.keys(plan).join(', ')}).`,
-      senderId: coachUid,
-      senderRole: 'coach',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    await db.collection('chats').doc(chatId).set({
-      participants: [coachUid, clientUid],
-      lastMessage: 'Workout plan updated!',
-      lastAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, {merge:true});
-
+    const client  = allClients.find(c=>c.uid===clientUid);
     const totalEx = Object.values(plan).reduce((s,d)=>s+d.exercises.length,0);
     const days    = Object.keys(plan).length;
     const name    = client?.firstName || 'client';
@@ -11205,22 +11231,26 @@ async function clearClientWorkoutPlan() {
   const btn = document.getElementById('clear-plan-btn');
   btn.disabled = true; btn.textContent = 'Clearing...';
   try {
-    const ref  = db.collection('members').doc(clientUid);
-    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    // Run through the same queue as autosave/assign so a clear can't land
+    // in the middle of (or get overwritten by) another pending save.
+    await queueWorkoutSave(async () => {
+      const ref  = db.collection('members').doc(clientUid);
+      const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
-    // Step 1 — delete every individual day field explicitly
-    // (merge:true on an empty object does NOT remove existing sub-fields)
-    const deleteFields = {
-      workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      workoutAssignedBy: coachUid,
-    };
-    DAYS.forEach(day => {
-      deleteFields[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete();
+      // Step 1 — delete every individual day field explicitly
+      // (merge:true on an empty object does NOT remove existing sub-fields)
+      const deleteFields = {
+        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        workoutAssignedBy: coachUid,
+      };
+      DAYS.forEach(day => {
+        deleteFields[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete();
+      });
+      await ref.update(deleteFields);
+
+      // Step 2 — overwrite the parent key with a clean empty object (no merge)
+      await ref.set({ assignedWorkoutPlan: {} }, { merge: true });
     });
-    await ref.update(deleteFields);
-
-    // Step 2 — overwrite the parent key with a clean empty object (no merge)
-    await ref.set({ assignedWorkoutPlan: {} }, { merge: true });
 
     const client = allClients.find(c => c.uid === clientUid);
     const name   = client ? (client.firstName || 'client') : 'client';
