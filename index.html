@@ -5804,7 +5804,7 @@ img, video, iframe { max-width: 100%; }
     </div>
    </div>
 
-   <div class="section-label">Today's Workout</div>
+   <div class="section-label">Today's Workout<span class="home-photo-view-all" style="white-space:nowrap;" onclick="openAssignedPlanModal()">Weekly Plan →</span></div>
    <div class="workout-card">
     <div class="workout-card-header">
      <div>
@@ -5876,9 +5876,10 @@ img, video, iframe { max-width: 100%; }
     <div class="wkt-day-label" id="log-day-badge">Monday — Push Day</div>
     <div class="wkt-name" id="log-sub">Track your sets, reps, and weight.</div>
     <div class="wkt-meta" id="wkt-meta" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-     <div style="display:flex;gap:6px;flex-wrap:wrap;">
+     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
       <span class="wkt-chip wkt-chip-exercises" id="wkt-chip-ex">— exercises</span>
       <span class="wkt-chip wkt-chip-sets" id="wkt-chip-sets">0 sets done</span>
+      <span class="home-photo-view-all" style="white-space:nowrap;margin-left:4px;" onclick="openAssignedPlanModal()">📅 Weekly Plan →</span>
      </div>
      <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button id="log-my-templates-btn" onclick="openLogTemplatePicker()" style="display:none;padding:9px 20px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.14);border-radius:24px;color:#ccc;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:0.4px;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'">
@@ -6453,6 +6454,7 @@ img, video, iframe { max-width: 100%; }
   <div class="done-stat"><div class="done-stat-val" id="done-vol">0</div><div class="done-stat-lbl"><span id="done-vol-unit">kg</span> Lifted</div></div>
  </div>
  <button class="done-close" onclick="closeDoneOverlay()">Back to Home</button>
+ <div style="margin-top:14px;font-size:13px;color:var(--text3,#888);cursor:pointer;font-weight:600;font-family:'Inter',sans-serif;" onclick="startNewWorkoutSession()">+ Log Another Workout</div>
 </div>
 
 <!-- ══ PHOTO LIGHTBOX ══ -->
@@ -7179,6 +7181,31 @@ async function loadHomeScreen(data) {
   const barNameEl = document.getElementById('wkt-bar-name');
   if (barNameEl) barNameEl.textContent = w.name || 'Workout';
   await buildWorkoutLogger(todayWorkout);
+ } else if (await (async () => {
+  // FIX: before showing "Rest Day / No workout assigned", check whether the
+  // user already completed a workout today under a plan the coach has since
+  // changed. Without this check, a finished session became invisible the
+  // moment the coach reassigned the plan — the Firestore log was never
+  // deleted, but nothing on this screen pointed to it, so it looked "removed".
+  const _todayLog = await checkAnyCompletionToday();
+  if (_todayLog) {
+   document.getElementById('workout-day').textContent  = todayName;
+   document.getElementById('workout-name').textContent = _todayLog.workoutName || 'Workout';
+   document.getElementById('workout-badge').textContent = 'Completed';
+   document.getElementById('log-day-badge').textContent = todayName;
+   document.getElementById('log-sub').textContent    = (_todayLog.workoutName || 'Workout') + ' (completed earlier today)';
+   const barNameDone = document.getElementById('wkt-bar-name');
+   if (barNameDone) barNameDone.textContent = _todayLog.workoutName || 'Workout';
+   showCompletedWorkoutView(null, _todayLog);
+   const startBtnDone = document.querySelector('.start-btn');
+   if (startBtnDone) startBtnDone.style.display = 'none';
+   const cardFooterDone = document.querySelector('.workout-card-footer');
+   if (cardFooterDone) cardFooterDone.style.display = 'none';
+   return true; // handled — skip the "no workout" branch below
+  }
+  return false;
+ })()) {
+  // handled above
  } else {
   // No workout assigned for today
   const hasAnyPlan = Object.keys(WORKOUTS).length > 0;
@@ -7215,6 +7242,16 @@ async function loadHomeScreen(data) {
    if (_raw) _restoredCustomWkt = JSON.parse(_raw);
   } catch(e) {}
 
+  // FIX: if there's no saved custom workout either, check for an orphaned
+  // in-progress session — sets the user was actively typing in under the
+  // OLD plan when the coach reassigned. Previously this data just sat
+  // unused in localStorage and was never shown again ("the workout I put
+  // is gone"). Recover it the same way a custom workout is recovered.
+  let _orphanedSession = null;
+  if (!(_restoredCustomWkt && _restoredCustomWkt.exercises && _restoredCustomWkt.exercises.length)) {
+   _orphanedSession = checkOrphanedLoggerSession();
+  }
+
   if (_restoredCustomWkt && _restoredCustomWkt.exercises && _restoredCustomWkt.exercises.length) {
    // Restore the custom workout from localStorage
    todayWorkout = _restoredCustomWkt;
@@ -7232,6 +7269,23 @@ async function loadHomeScreen(data) {
    const cardFooterC = document.querySelector('.workout-card-footer');
    if (cardFooterC) cardFooterC.style.display = '';
    await buildWorkoutLogger(_restoredCustomWkt);
+  } else if (_orphanedSession && _orphanedSession.exercises.length) {
+   // Recover the unfinished session so it can be resumed and completed.
+   todayWorkout = _orphanedSession;
+   const dayBadge3 = document.getElementById('log-day-badge');
+   if (dayBadge3) dayBadge3.textContent = 'Unfinished Workout';
+   const logSub3 = document.getElementById('log-sub');
+   if (logSub3) logSub3.textContent = (_orphanedSession.name || 'Workout') + ' (resumed)';
+   const barNameOrphan = document.getElementById('wkt-bar-name');
+   if (barNameOrphan) barNameOrphan.textContent = _orphanedSession.name || 'Workout';
+   const chipElOrphan = document.getElementById('wkt-chip-ex');
+   if (chipElOrphan) chipElOrphan.textContent = _orphanedSession.exercises.length + ' exercise' + (_orphanedSession.exercises.length !== 1 ? 's' : '');
+   showToast('Recovered your unfinished workout from before the plan changed', '');
+   const startBtnO = document.querySelector('.start-btn');
+   if (startBtnO) startBtnO.style.display = '';
+   const cardFooterO = document.querySelector('.workout-card-footer');
+   if (cardFooterO) cardFooterO.style.display = '';
+   await buildWorkoutLogger(_orphanedSession);
   } else {
    // Hide the log button AND the footer when there's nothing to log
    const startBtn = document.querySelector('.start-btn');
@@ -7419,6 +7473,34 @@ const WKT_ACCENT_COLORS = [
  '#5A9FEF','#3DCB72','#C9A84C','#E8605A','#A855F7','#F97316','#06B6D4','#EC4899'
 ];
 
+// FIX: Unlike checkTodayCompletion(), this doesn't require a `workout` for
+// today (it's used from the "no workout assigned" branch, where the coach's
+// current plan has nothing scheduled for today). It just asks "did the user
+// complete ANY session today, under any plan?" so a finished workout never
+// silently disappears just because the coach's plan changed afterward.
+async function checkAnyCompletionToday() {
+ const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ if (!uid) return null;
+ const todayFormatted = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
+ try {
+  const snap = await db.collection('members').doc(uid).collection('workoutLogs')
+   .orderBy('completedAt', 'desc').limit(5).get();
+  let todayLog = null;
+  snap.forEach(doc => {
+   if (todayLog) return;
+   const d = doc.data();
+   if (!d.completedAt) return;
+   const ms = d.completedAt.toDate ? d.completedAt.toDate().getTime() : (d.completedAt.seconds ? d.completedAt.seconds * 1000 : 0);
+   const dateStr = new Date(ms).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
+   if (dateStr === todayFormatted) todayLog = d;
+  });
+  return todayLog;
+ } catch(e) {
+  console.warn('checkAnyCompletionToday error:', e);
+  return null;
+ }
+}
+
 async function checkTodayCompletion(workout) {
  // Returns true if the workout was completed today AND the coach hasn't reassigned
  // the plan after the completion (in which case the new workout takes priority).
@@ -7452,9 +7534,24 @@ async function checkTodayCompletion(workout) {
   if (assignedAt) {
    const assignedMs = assignedAt.toDate ? assignedAt.toDate().getTime() : (assignedAt.seconds ? assignedAt.seconds * 1000 : 0);
    if (assignedMs > latestMs) {
-    // Coach updated the plan after the user completed — clear local flag and show new workout
-    try { localStorage.removeItem('evolve_completed_' + todayFormatted); } catch(e) {}
-    return false;
+    // FIX: `workoutAssignedAt` bumps on ANY plan save — including the coach
+    // adding a totally unrelated workout for a different day, or just
+    // re-saving the same plan. That used to be treated as "the coach
+    // reassigned TODAY's workout", which wiped the completed view and reset
+    // every input back to blank/placeholder even though today's exercises
+    // hadn't actually changed. Only treat it as a genuine reassignment if
+    // today's exercise list is actually different from what was completed.
+    const _loggedNames = new Set((todayLog.exercises || []).map(ex => (ex.name || '').trim().toLowerCase()).filter(Boolean));
+    const _newNames  = new Set((workout.exercises  || []).map(ex => (ex.name || '').trim().toLowerCase()).filter(Boolean));
+    let _overlap = 0;
+    _loggedNames.forEach(n => { if (_newNames.has(n)) _overlap++; });
+    const _sameWorkout = _loggedNames.size > 0 && _overlap === _loggedNames.size && _newNames.size === _loggedNames.size;
+    if (!_sameWorkout) {
+     // Genuinely a different/new workout for today — clear local flag and show it fresh
+     try { localStorage.removeItem('evolve_completed_' + todayFormatted); } catch(e) {}
+     return false;
+    }
+    // Same exercises as what was already completed — fall through and show the completed view.
    }
   }
   showCompletedWorkoutView(workout, todayLog);
@@ -7730,9 +7827,10 @@ async function buildWorkoutLogger(workout) {
  // clear the container out from under the newer build, and don't wipe
  // away the spinner needlessly if we're about to be superseded anyway.
  if (myToken !== window._buildLoggerToken) return;
- container.innerHTML = '';
 
  if (alreadyDone) {
+  // checkTodayCompletion() already populated the container via
+  // showCompletedWorkoutView() — don't wipe it back to blank here.
   const logBtn = document.getElementById('complete-btn');
   const finishBar = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
   if (logBtn) { logBtn.style.display = 'none'; logBtn.disabled = true; }
@@ -7740,6 +7838,8 @@ async function buildWorkoutLogger(workout) {
   if (chipEx) chipEx.textContent = workout.exercises.length + ' exercise' + (workout.exercises.length !== 1 ? 's' : '');
   return;
  }
+
+ container.innerHTML = '';
 
  const logBtn = document.getElementById('complete-btn');
  const finishBar = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
@@ -8233,10 +8333,31 @@ function saveLoggerState() {
     });
    });
    const note = document.getElementById('note-' + exIdx)?.value || '';
-   exercises.push({ sets, note, weightUnit: card.dataset.weightUnit || 'kg' });
+   // FIX: store the exercise's own name/detail/target alongside its sets so
+   // this saved session is "self-describing" — it can be recognized and
+   // recovered later even if the coach reassigns a different plan before the
+   // user reloads (previously this data was only ever matched back up by
+   // array index against whatever `todayWorkout` happened to be at restore
+   // time, which silently dropped or corrupted it when the plan changed).
+   const nameEl  = card.querySelector('.log-ex-name');
+   const detailEl = card.querySelector('.log-ex-muscles');
+   const targetEl = card.querySelector('.log-ex-target-badge');
+   exercises.push({
+    sets, note,
+    weightUnit: card.dataset.weightUnit || 'kg',
+    name:  nameEl  ? nameEl.textContent  : '',
+    detail: detailEl ? detailEl.textContent : '',
+    target: targetEl ? targetEl.textContent : ''
+   });
   });
   const timerElapsed = _wktStartTime ? Math.floor((Date.now() - _wktStartTime) / 1000) : 0;
-  safeLocalStorageSet(_loggerStorageKey(), JSON.stringify({ exercises, timerElapsed, weightUnit: workoutWeightUnit }));
+  safeLocalStorageSet(_loggerStorageKey(), JSON.stringify({
+   exercises, timerElapsed, weightUnit: workoutWeightUnit,
+   // Identity tag for the workout this session belongs to, used on restore
+   // to detect a plan change instead of blindly overlaying stale data.
+   workoutName: (todayWorkout && todayWorkout.name)  || '',
+   dayName:   (todayWorkout && todayWorkout.dayName) || ''
+  }));
  } catch(e) { /* localStorage unavailable — silent fail */ }
 }
 
@@ -8247,25 +8368,49 @@ function restoreLoggerState() {
   const saved = JSON.parse(raw);
   if (!saved || !saved.exercises) return false;
 
+  // FIX (v2): matching by workout-level name/dayName was too fragile — that
+  // metadata can legitimately differ across a rebuild (e.g. the workout
+  // object gets re-fetched with slightly different fields) even though the
+  // exercises themselves are identical, which was wrongly blocking restores
+  // and leaving cards blank. Match per-exercise by NAME instead: each saved
+  // exercise only gets applied to the current card with the same name. Any
+  // saved exercise that has no match among today's current cards is left
+  // out here (and can be recovered separately via checkOrphanedLoggerSession).
+  const currentCards = Array.from(document.querySelectorAll('.log-ex-card'));
+  const currentNameByIdx = currentCards.map(c => (c.querySelector('.log-ex-name')?.textContent || '').trim().toLowerCase());
+
+  const savedHasNames = saved.exercises.some(ex => ex.name);
+
   // Suppress auto-save while we're rebuilding from saved data
   window._loggerRestoring = true;
 
-  saved.exercises.forEach((exData, exIdx) => {
+  let appliedAny = false;
+  currentCards.forEach((card, exIdx) => {
    const container = document.getElementById('sets-' + exIdx);
    if (!container) return;
-   // Restore per-card weight unit
-   const card = container.closest('.log-ex-card');
-   const savedUnit = exData.weightUnit || saved.weightUnit || 'kg';
-   if (card) {
-    card.dataset.weightUnit = savedUnit;
-    _applyExerciseUnit(exIdx, savedUnit);
+   const curName = currentNameByIdx[exIdx];
+
+   let exData = null;
+   if (savedHasNames) {
+    // Name-based match — safe regardless of card order or reassignment
+    exData = saved.exercises.find(ex => (ex.name || '').trim().toLowerCase() === curName);
+   } else {
+    // Legacy saved data (from before names were captured) — fall back to
+    // positional match, same as the original behavior.
+    exData = saved.exercises[exIdx];
    }
+   if (!exData || !exData.sets || !exData.sets.length) return;
+
+   appliedAny = true;
+   // Restore per-card weight unit
+   const savedUnit = exData.weightUnit || saved.weightUnit || 'kg';
+   card.dataset.weightUnit = savedUnit;
+   _applyExerciseUnit(exIdx, savedUnit);
    // Wipe the default sets, then restore exactly what was saved
    container.innerHTML = '';
    const tgtMatch = (todayWorkout?.exercises?.[exIdx]?.target || '').match(/(\d+)[×x](\d+)/);
    const tgtReps = tgtMatch ? tgtMatch[2] : '';
-   const _exName = (todayWorkout?.exercises?.[exIdx]?.name || '').toLowerCase();
-   const _exPrev = (window._prevSetMapLookup ? window._prevSetMapLookup(_exName) : (window._prevSetMap && window._prevSetMap[_exName.trim()])) || [];
+   const _exPrev = (window._prevSetMapLookup ? window._prevSetMapLookup(curName) : (window._prevSetMap && window._prevSetMap[curName])) || [];
    exData.sets.forEach((s, sIdx) => {
     const _prevTxt = _exPrev[sIdx] || (_exPrev.length > 0 ? _exPrev[_exPrev.length - 1] : '');
     addSet(exIdx, s.weight, s.reps, s.done, tgtReps, _prevTxt);
@@ -8276,17 +8421,50 @@ function restoreLoggerState() {
   });
 
   // Restore timer offset so elapsed time continues correctly after reload
-  if (saved.timerElapsed && saved.timerElapsed > 0) {
+  if (appliedAny && saved.timerElapsed && saved.timerElapsed > 0) {
    _wktStartTime = Date.now() - saved.timerElapsed * 1000;
   }
 
   window._loggerRestoring = false;
   updateSummary();
-  return true;
+  return appliedAny;
  } catch(e) {
   window._loggerRestoring = false;
   return false;
  }
+}
+
+// FIX: Detects a saved logging session that no longer matches today's
+// current workout (because the coach reassigned the plan after the user
+// started/finished logging). Returns a lightweight recovery object the UI
+// can offer to resume, instead of the data just silently disappearing.
+function checkOrphanedLoggerSession() {
+ try {
+  const raw = localStorage.getItem(_loggerStorageKey());
+  if (!raw) return null;
+  const saved = JSON.parse(raw);
+  if (!saved || !saved.exercises || !saved.exercises.length) return null;
+
+  const currentName = (todayWorkout && todayWorkout.name)  || '';
+  const currentDay  = (todayWorkout && todayWorkout.dayName) || '';
+  const matchesCurrent = (!saved.workoutName && !saved.dayName) ||
+   (saved.workoutName === currentName && saved.dayName === currentDay);
+  if (matchesCurrent) return null; // nothing orphaned — it's today's active session
+
+  // Only useful for recovery if we actually captured exercise names (older
+  // saved sessions before this fix won't have them — nothing we can do there).
+  const namedExercises = saved.exercises.filter(ex => ex.name);
+  if (!namedExercises.length) return null;
+
+  const hasAnyData = namedExercises.some(ex => (ex.sets || []).some(s => s.weight || s.reps));
+  if (!hasAnyData) return null;
+
+  return {
+   name: saved.workoutName || 'Unfinished Workout',
+   dayName: saved.dayName || '',
+   exercises: namedExercises
+  };
+ } catch(e) { return null; }
 }
 
 function clearLoggerState() {
@@ -8362,12 +8540,13 @@ function lockLoggerCards() {
   const banner = document.createElement('div');
   banner.className = 'wkt-done-inline-banner';
   banner.innerHTML = `
-   <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:rgba(61,203,114,0.07);border:1px solid rgba(61,203,114,0.2);border-radius:12px;margin-bottom:14px;">
+   <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;background:rgba(61,203,114,0.07);border:1px solid rgba(61,203,114,0.2);border-radius:12px;margin-bottom:14px;flex-wrap:wrap;">
     <span style="font-size:22px;">✅</span>
-    <div>
+    <div style="flex:1;min-width:150px;">
      <div style="font-size:14px;font-weight:700;color:#3DCB72;font-family:'Outfit',sans-serif;">Workout Complete!</div>
      <div style="font-size:12px;color:var(--muted);font-family:'Outfit',sans-serif;margin-top:2px;">Great work today. Your session has been saved.</div>
     </div>
+    <button onclick="startNewWorkoutSession()" style="padding:8px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:20px;color:#ccc;font-size:12px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;white-space:nowrap;">+ Log Another Workout</button>
    </div>`;
   container.insertBefore(banner, container.firstChild);
  }
@@ -8409,6 +8588,21 @@ async function completeWorkout() {
  const exerciseCards = document.querySelectorAll('.log-ex-card');
  if (exerciseCards.length === 0) {
   showToast('Add at least one exercise before completing your workout', '⚠️');
+  return;
+ }
+
+ // Last chance to add anything extra before this workout gets locked in.
+ // Clicking "Add More Exercises" opens the builder pre-loaded with the
+ // current exercises (same flow as the "+ Add Exercise" button) instead of
+ // finalizing right away.
+ const readyToFinish = await showConfirmDialog({
+  title: 'Finish workout?',
+  message: "Did you do everything for today? You can still add more exercises before wrapping up.",
+  confirmText: 'Finish Workout',
+  cancelText: 'Add More Exercises'
+ });
+ if (!readyToFinish) {
+  openCustomWorkoutBuilder();
   return;
  }
 
@@ -8523,6 +8717,41 @@ async function completeWorkout() {
 function closeDoneOverlay() {
  document.getElementById('done-overlay').classList.remove('open');
  setTab('home');
+}
+
+// Lets a client log a second (or third) session on the same day — e.g.
+// morning strength + evening cardio — instead of being locked out once
+// today's assigned workout is marked complete. Resets the logger back to a
+// clean slate and drops them straight into the "build a workout" flow.
+function startNewWorkoutSession() {
+ document.getElementById('done-overlay').classList.remove('open');
+
+ // Clear today's completed workout definition so the builder treats this as
+ // a fresh start rather than "add more to what I just finished".
+ todayWorkout = null;
+ try {
+  const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  localStorage.removeItem('evolve_custom_wkt_' + today);
+  localStorage.removeItem(_loggerStorageKey());
+ } catch(e) {}
+
+ // Wipe the locked/completed cards + banner so they don't linger behind the
+ // new session once it's built.
+ const container = document.getElementById('log-exercises-container');
+ if (container) container.innerHTML = '';
+ const chipEx = document.getElementById('wkt-chip-ex');
+ if (chipEx) chipEx.textContent = '— exercises';
+ const chipSets = document.getElementById('wkt-chip-sets');
+ if (chipSets) chipSets.textContent = '0 sets done';
+ const logArea = document.getElementById('log-complete-area') || document.querySelector('.log-complete-area');
+ if (logArea) logArea.style.display = 'none';
+ const dayBadge = document.getElementById('log-day-badge');
+ if (dayBadge) dayBadge.textContent = 'New Workout';
+ const logSub = document.getElementById('log-sub');
+ if (logSub) logSub.textContent = 'Track your sets, reps, and weight.';
+
+ setTab('log');
+ openCustomWorkoutBuilder();
 }
 
 // ─────────────────────────────────────────
@@ -13848,6 +14077,193 @@ setTimeout(applySideNavState, 150);
 document.getElementById('log-tpl-picker-modal').addEventListener('click', function(e) {
  if (e.target === this) closeLogTemplatePicker();
 });
+</script>
+
+<!-- ══ ASSIGNED WEEKLY PLAN MODAL ══ -->
+<!-- Lets the client see everything their coach has scheduled for the week —
+     not just today. Reads from the same WORKOUTS map that's already loaded
+     for today's card, so it stays in sync automatically. -->
+<div id="assigned-plan-modal" style="display:none;position:fixed;inset:0;z-index:9210;background:rgba(0,0,0,0.88);align-items:flex-end;justify-content:center;">
+ <div id="assigned-plan-sheet" style="background:#0f0f0f;border:1px solid #1e1e1e;border-radius:22px 22px 0 0;width:100%;max-width:620px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;transform:translateY(100%);transition:transform 0.32s cubic-bezier(.32,0,.18,1);">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
+   <div>
+    <div style="font-size:16px;font-weight:800;color:#e8e8e8;font-family:'Syne',sans-serif;letter-spacing:-0.3px;">My Weekly Plan</div>
+    <div style="font-size:12px;color:#666;margin-top:2px;font-family:'Outfit',sans-serif;">Missed a day? Open it below and log it whenever you're ready</div>
+   </div>
+   <button onclick="closeAssignedPlanModal()" style="background:rgba(255,255,255,0.07);border:none;color:#888;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+  </div>
+  <div id="assigned-plan-list" style="flex:1;overflow-y:auto;padding:14px 20px calc(20px + env(safe-area-inset-bottom));scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent;">
+   <div style="text-align:center;padding:20px;color:#555;font-size:12px;font-family:'Outfit',sans-serif;">Loading…</div>
+  </div>
+ </div>
+</div>
+<script>
+document.getElementById('assigned-plan-modal').addEventListener('click', function(e) {
+ if (e.target === this) closeAssignedPlanModal();
+});
+
+function openAssignedPlanModal() {
+ const modal = document.getElementById('assigned-plan-modal');
+ const sheet = document.getElementById('assigned-plan-sheet');
+ if (!modal || !sheet) return;
+ modal.style.display = 'flex';
+ setTimeout(() => { sheet.style.transform = 'translateY(0)'; }, 10);
+ renderAssignedPlanModal();
+}
+
+function closeAssignedPlanModal() {
+ const sheet = document.getElementById('assigned-plan-sheet');
+ if (!sheet) return;
+ sheet.style.transform = 'translateY(100%)';
+ setTimeout(() => {
+  const modal = document.getElementById('assigned-plan-modal');
+  if (modal) modal.style.display = 'none';
+ }, 320);
+}
+
+// Expands/collapses a single day's exercise list within the sheet.
+function toggleAssignedPlanDay(idx) {
+ const body = document.getElementById('assigned-plan-day-body-' + idx);
+ const chev = document.getElementById('assigned-plan-day-chev-' + idx);
+ if (!body) return;
+ const open = body.style.display !== 'none';
+ body.style.display = open ? 'none' : 'block';
+ if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+// Checks whether the given assigned day was already logged as complete
+// today, using the same cached workout-log data that powers Previous
+// Workouts — no extra Firestore round trip needed just to render a badge.
+function _isAssignedDayDoneToday(dayName) {
+ try {
+  const todayFormatted = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const logs = (typeof _pastLogsData !== 'undefined' && Array.isArray(_pastLogsData)) ? _pastLogsData : [];
+  const loggedMatch = logs.some(d => {
+   if ((d.dayName || '') !== dayName) return false;
+   if (!d.completedAt) return false;
+   const ms = d.completedAt.toDate ? d.completedAt.toDate().getTime() : (d.completedAt.seconds ? d.completedAt.seconds * 1000 : 0);
+   const dateStr = new Date(ms).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
+   return dateStr === todayFormatted;
+  });
+  if (loggedMatch) return true;
+  // Fallback to the instant local flag (covers the gap right after finishing,
+  // before loadPastLogs() has refreshed the cache).
+  const flag = (typeof getTodayCompletionFlag === 'function') ? getTodayCompletionFlag(dayName) : null;
+  return !!flag;
+ } catch(e) { return false; }
+}
+
+function renderAssignedPlanModal() {
+ const list = document.getElementById('assigned-plan-list');
+ if (!list) return;
+
+ const daysOrder = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+ const todayName = daysOrder[phNow().getDay()];
+ const plan = (typeof WORKOUTS !== 'undefined') ? WORKOUTS : {};
+ const hasAnyPlan = Object.keys(plan).length > 0;
+
+ if (!hasAnyPlan) {
+  list.innerHTML = `<div style="text-align:center;padding:30px 10px;color:#555;font-size:13px;font-family:'Outfit',sans-serif;line-height:1.6;">
+   Your coach hasn't assigned any workouts yet.<br>Check back soon!
+  </div>`;
+  return;
+ }
+
+ list.innerHTML = daysOrder.map((day, idx) => {
+  const w = plan[day];
+  const isToday = day === todayName;
+  const exCount = w?.exercises?.length || 0;
+  const doneToday = exCount > 0 && _isAssignedDayDoneToday(day);
+  const todayTag = isToday
+   ? `<span style="font-size:10px;font-weight:800;color:#0f0f0f;background:var(--gold-2,#d4a843);padding:2px 8px;border-radius:20px;letter-spacing:0.5px;margin-left:8px;font-family:'Outfit',sans-serif;">TODAY</span>`
+   : '';
+  const doneTag = doneToday
+   ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;color:#3DCB72;background:rgba(61,203,114,0.14);border:1px solid rgba(61,203,114,0.35);padding:2px 8px;border-radius:20px;letter-spacing:0.3px;margin-left:8px;font-family:'Outfit',sans-serif;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>DONE</span>`
+   : '';
+
+  if (!w || !exCount) {
+   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:8px;${isToday ? 'border-color:rgba(212,168,67,0.35);' : ''}">
+    <div style="display:flex;align-items:center;">
+     <span style="font-size:13px;font-weight:700;color:#999;font-family:'Outfit',sans-serif;">${day}</span>${todayTag}
+    </div>
+    <span style="font-size:12px;color:#555;font-family:'Outfit',sans-serif;">Rest Day</span>
+   </div>`;
+  }
+
+  const safeName = escapeHtml(w.name || 'Workout');
+  const safeDay = escapeHtml(day);
+  const exRows = w.exercises.map((ex, i) => {
+   const safeExName = escapeHtml(ex.name || '');
+   const safeDetail = escapeHtml(ex.detail || '');
+   const safeTarget = escapeHtml(ex.target || '');
+   return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;${i > 0 ? 'border-top:1px solid rgba(255,255,255,0.05);' : ''}">
+    <div style="width:20px;height:20px;flex-shrink:0;border-radius:6px;background:rgba(255,255,255,0.06);color:#888;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;">${i+1}</div>
+    <div style="flex:1;min-width:0;">
+     <div style="font-size:12.5px;font-weight:600;color:#ddd;font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeExName}</div>
+     ${safeDetail ? `<div style="font-size:11px;color:#666;font-family:'Outfit',sans-serif;">${safeDetail}</div>` : ''}
+    </div>
+    <div style="font-size:11.5px;color:#999;font-family:'Outfit',sans-serif;flex-shrink:0;">${safeTarget}</div>
+   </div>`;
+  }).join('');
+
+  return `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:8px;overflow:hidden;${isToday ? 'border-color:rgba(212,168,67,0.35);' : ''}${doneToday ? 'border-color:rgba(61,203,114,0.3);' : ''}">
+   <div onclick="toggleAssignedPlanDay(${idx})" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer;">
+    <div style="min-width:0;">
+     <div style="display:flex;align-items:center;">
+      <span style="font-size:13px;font-weight:700;color:#e2e2e2;font-family:'Outfit',sans-serif;">${day}</span>${todayTag}${doneTag}
+     </div>
+     <div style="font-size:12px;color:#999;font-family:'Outfit',sans-serif;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeName} · ${exCount} exercise${exCount !== 1 ? 's' : ''}</div>
+    </div>
+    <svg id="assigned-plan-day-chev-${idx}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
+   </div>
+   <div id="assigned-plan-day-body-${idx}" style="display:none;padding:0 14px 14px;">
+    ${exRows}
+    <button onclick="event.stopPropagation();startAssignedPlanDay('${safeDay}')" style="margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;background:${doneToday ? 'rgba(255,255,255,0.05)' : 'rgba(61,203,114,0.15)'};border:1px solid ${doneToday ? 'rgba(255,255,255,0.14)' : 'rgba(61,203,114,0.35)'};border-radius:11px;color:${doneToday ? '#ccc' : '#3DCB72'};font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">
+     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${doneToday ? '<polyline points="20 6 9 17 4 12"/>' : '<polygon points="5 3 19 12 5 21 5 3"/>'}</svg>
+     ${doneToday ? 'View Completed Workout' : (isToday ? 'Log This Workout' : 'Log This Workout Now')}
+    </button>
+   </div>
+  </div>`;
+ }).join('');
+}
+
+// Loads a specific assigned day's workout into the logger so a client can
+// catch up on a day they missed, even if it isn't today. Completion is still
+// recorded against the real current timestamp, so the coach sees exactly
+// when it was actually done.
+async function startAssignedPlanDay(day) {
+ const plan = (typeof WORKOUTS !== 'undefined') ? WORKOUTS : {};
+ const w = plan[day];
+ if (!w || !w.exercises || !w.exercises.length) return;
+
+ // If a different workout is already active/in-progress, confirm first so
+ // unsaved sets aren't silently lost.
+ const hasActiveDifferent = todayWorkout && todayWorkout.exercises?.length && todayWorkout.dayName !== day;
+ if (hasActiveDifferent) {
+  const confirmed = await showConfirmDialog({
+   title: 'Switch workout?',
+   message: `Loading ${day}'s workout will replace what's currently in Log Workout. Anything not yet saved will be lost.`,
+   confirmText: 'Switch',
+   cancelText: 'Cancel'
+  });
+  if (!confirmed) return;
+ }
+
+ closeAssignedPlanModal();
+ if (typeof clearLoggerState === 'function') clearLoggerState();
+
+ todayWorkout = { dayName: day, ...w };
+ const dayBadge = document.getElementById('log-day-badge');
+ if (dayBadge) dayBadge.textContent = day;
+ const logSub = document.getElementById('log-sub');
+ if (logSub) logSub.textContent = w.name || 'Workout';
+ const barName = document.getElementById('wkt-bar-name');
+ if (barName) barName.textContent = w.name || 'Workout';
+
+ setTab('log');
+ await buildWorkoutLogger(todayWorkout);
+ showToast(`Loaded ${w.name || day + "'s Workout"} — log it now to catch up`, 'success');
+}
 </script>
 
 <!-- ══ GENERIC CONFIRM MODAL ══ -->
