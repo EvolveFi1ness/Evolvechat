@@ -1943,6 +1943,47 @@
     background: rgba(61,203,114,0.06);
   }
 
+  /* Undo toast — text toast + inline action button */
+  .undo-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translate(-50%, 16px);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(15,13,20,0.95);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 100px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    padding: 10px 10px 10px 18px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 9999;
+  }
+  .undo-toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .undo-toast-msg { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+  .undo-toast-btn {
+    background: var(--gold-dim, rgba(212,168,67,0.15));
+    border: 1px solid rgba(212,168,67,0.4);
+    color: var(--gold, #d4a843);
+    font-weight: 700;
+    font-size: 12px;
+    border-radius: 100px;
+    padding: 6px 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .undo-toast-btn:hover { background: rgba(212,168,67,0.28); border-color: rgba(212,168,67,0.6); }
+  @media(max-width:560px){ .undo-toast { bottom: calc(70px + env(safe-area-inset-bottom)); } }
+
   /* Calendar toolbar — dark theme (inherits from variables) */
 
   /* ══ CHECK-IN FORM — CLEAN REDESIGN ══ */
@@ -4040,7 +4081,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <div class="tpl-modal-overlay" id="save-template-modal">
   <div class="tpl-modal">
     <div class="tpl-modal-title">Save as Template</div>
-    <div class="tpl-modal-sub">Give this workout plan a name so you can quickly load it for any client later.</div>
+    <div class="tpl-modal-sub" id="tpl-modal-sub">Give this day's workout a name so you can quickly load it for any client later.</div>
     <input type="text" class="tpl-modal-input" id="tpl-name-input" placeholder="e.g. Push/Pull/Legs, Full Body Beginner…" maxlength="60" onkeydown="if(event.key==='Enter')confirmSaveTemplate()">
     <div id="tpl-days-preview" style="margin-bottom:16px;display:flex;flex-wrap:wrap;gap:6px;"></div>
     <div class="tpl-modal-actions">
@@ -6192,6 +6233,31 @@ function showToast(msg, type='') {
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 3500);
 }
+
+// Toast with an inline "Undo" action for reversible destructive actions
+// (deleting/loading a template). Replaces window.confirm() dialogs so
+// coaches can act instantly and still back out for a few seconds after.
+let _undoToastTimer = null;
+function showUndoToast(msg, onUndo) {
+  let t = document.getElementById('undo-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'undo-toast';
+    t.className = 'undo-toast';
+    t.innerHTML = `<span class="undo-toast-msg"></span><button type="button" class="undo-toast-btn">Undo</button>`;
+    document.body.appendChild(t);
+  }
+  clearTimeout(_undoToastTimer);
+  t.querySelector('.undo-toast-msg').textContent = msg;
+  const btn = t.querySelector('.undo-toast-btn');
+  btn.onclick = () => {
+    clearTimeout(_undoToastTimer);
+    t.classList.remove('show');
+    onUndo();
+  };
+  t.classList.add('show');
+  _undoToastTimer = setTimeout(() => t.classList.remove('show'), 6000);
+}
 function fmtDate(ts) {
   if (!ts) return '—';
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -6481,7 +6547,7 @@ function showPage(page) {
   document.getElementById('page-'+page).classList.add('active');
   document.getElementById('nav-'+page).classList.add('active');
   if (page==='chat') renderChatList();
-  if (page==='workouts') { populateClientSelect(); renderTemplateList(); }
+  if (page==='workouts') { populateClientSelect(); renderTemplateList(); loadTemplatesFromFirestore(); }
   if (page==='progress') { renderPtClientList(); }
   if (page==='dashboard') loadDashboardPhotos();
   if (page==='nutrition') initNutritionPage();
@@ -10815,11 +10881,26 @@ function addExerciseToPlan() {
 }
 
 function removeExercise(i) {
-  workoutPlan[currentDay].exercises.splice(i, 1);  // remove first
+  const day = currentDay;
+  const [removed] = workoutPlan[day].exercises.splice(i, 1);  // remove first
   renderExerciseList();
   updateBuilderSummary();
   updateDayCounts();
   autoSavePlanToFirebase();  // then push updated plan to Firestore
+
+  if (removed) {
+    const label = removed.name || 'Exercise';
+    showUndoToast(`"${label}" removed`, () => {
+      // Re-insert at original position (or end, if the list has since shrunk)
+      const exs = workoutPlan[day].exercises;
+      const insertAt = Math.min(i, exs.length);
+      exs.splice(insertAt, 0, removed);
+      if (day === currentDay) renderExerciseList();
+      updateBuilderSummary();
+      updateDayCounts();
+      autoSavePlanToFirebase();
+    });
+  }
 }
 
 function moveExercise(from, to) {
@@ -11290,22 +11371,46 @@ async function importFromCloudinary() {
 }
 
 // ─────────────────────────────────────────
-//  WORKOUT TEMPLATES (localStorage)
+//  WORKOUT TEMPLATES (Firestore — synced across devices)
+//  Stored at coaches/{COACH_FIXED_UID}/workoutTemplates/{id}
+//  A localStorage mirror is kept only as an offline fallback/cache.
 // ─────────────────────────────────────────
 const TPL_STORAGE_KEY = 'evolveWorkoutTemplates';
+let _templatesCache = null; // in-memory cache of the latest known templates, newest-first
 
+function templatesCollection() {
+  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  return db.collection('coaches').doc(uid).collection('workoutTemplates');
+}
+
+// Synchronous accessor used by render/load/delete — served from cache.
+// Cache is populated by loadTemplatesFromFirestore() and kept in sync locally
+// on every write, so callers don't need to be async.
 function getTemplates() {
+  if (_templatesCache) return _templatesCache;
   try { return JSON.parse(localStorage.getItem(TPL_STORAGE_KEY) || '[]'); }
   catch(_) { return []; }
 }
 
-function saveTemplates(arr) {
+function cacheTemplatesLocally(arr) {
+  _templatesCache = arr;
+  try { localStorage.setItem(TPL_STORAGE_KEY, JSON.stringify(arr)); } catch(_) {}
+}
+
+// Pulls the latest templates from Firestore (call on load / page switch).
+async function loadTemplatesFromFirestore() {
   try {
-    localStorage.setItem(TPL_STORAGE_KEY, JSON.stringify(arr));
-    return true;
-  } catch(e) {
-    console.error('saveTemplates failed:', e);
-    return false;
+    const snap = await templatesCollection().orderBy('savedAt', 'desc').get();
+    const templates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    cacheTemplatesLocally(templates);
+    renderTemplateList();
+  } catch (e) {
+    console.error('loadTemplatesFromFirestore failed:', e);
+    // Fall back to whatever's cached locally so the UI still works offline.
+    if (!_templatesCache) {
+      try { _templatesCache = JSON.parse(localStorage.getItem(TPL_STORAGE_KEY) || '[]'); } catch(_) { _templatesCache = []; }
+    }
+    renderTemplateList();
   }
 }
 
@@ -11314,20 +11419,25 @@ function renderTemplateList() {
   if (!list) return;
   const templates = getTemplates();
   if (!templates.length) {
-    list.innerHTML = `<div class="template-empty">No templates yet.<br>Build a plan &amp; save it here to reuse anytime.</div>`;
+    list.innerHTML = `<div class="template-empty">No templates yet.<br>Build a day's workout &amp; save it here to reuse anytime.</div>`;
     return;
   }
   list.innerHTML = templates.map(tpl => {
-    const activeDays = Object.entries(tpl.plan)
-      .filter(([,d]) => d.exercises && d.exercises.length > 0)
-      .map(([day]) => day.slice(0,3))
-      .join(', ');
-    const totalEx = Object.values(tpl.plan).reduce((s,d) => s + (d.exercises?.length||0), 0);
+    // New format: single-day templates have `day` + `exercises`.
+    // Legacy format (saved before this update) has a `plan` object keyed
+    // by weekday — still readable so old templates aren't lost.
+    const isLegacy = !!tpl.plan;
+    const dayLabel = isLegacy
+      ? Object.entries(tpl.plan).filter(([,d]) => d.exercises?.length).map(([day]) => day.slice(0,3)).join(', ') || 'No days set'
+      : (tpl.day ? tpl.day.slice(0,3) : '—');
+    const totalEx = isLegacy
+      ? Object.values(tpl.plan).reduce((s,d) => s + (d.exercises?.length||0), 0)
+      : (tpl.exercises?.length || 0);
     return `<div class="template-item">
       <div class="template-item-icon" style="display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
       <div class="template-item-info">
         <div class="template-item-name" title="${escapeAttr(tpl.name)}">${escapeHtml(tpl.name)}</div>
-        <div class="template-item-meta">${totalEx} ex · ${activeDays||'No days set'}</div>
+        <div class="template-item-meta">${totalEx} ex · ${dayLabel}</div>
       </div>
       <button class="template-load-btn" onclick="loadTemplate('${tpl.id}')">Load</button>
       <button class="template-del-btn" title="Delete template" onclick="deleteTemplate('${tpl.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -11336,19 +11446,18 @@ function renderTemplateList() {
 }
 
 function openSaveTemplateModal() {
-  const totalEx = Object.values(workoutPlan).reduce((s,d) => s + d.exercises.length, 0);
-  if (!totalEx) { showToast('Add at least one exercise before saving a template'); return; }
+  const dayData = workoutPlan[currentDay];
+  if (!dayData || !dayData.exercises.length) { showToast(`Add at least one exercise to ${currentDay} before saving a template`); return; }
 
-  // Populate preview tags
+  // Populate preview tag — only the currently selected day is saved.
   const preview = document.getElementById('tpl-days-preview');
-  preview.innerHTML = Object.entries(workoutPlan)
-    .filter(([,d]) => d.exercises.length)
-    .map(([day,d]) => `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--gold-dim);border:1px solid rgba(212,168,67,0.25);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--gold)">${day.slice(0,3)} · ${d.exercises.length} ex</span>`)
-    .join('');
+  preview.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--gold-dim);border:1px solid rgba(212,168,67,0.25);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--gold)">${currentDay} · ${dayData.exercises.length} ex</span>`;
 
-  // Pre-fill name from first active day's name or leave blank
-  const firstName = Object.values(workoutPlan).find(d=>d.name)?.name || '';
-  document.getElementById('tpl-name-input').value = firstName;
+  const sub = document.getElementById('tpl-modal-sub');
+  if (sub) sub.textContent = `Save just ${currentDay}'s workout as a template you can load for any client later.`;
+
+  // Pre-fill name from the day's name or leave blank
+  document.getElementById('tpl-name-input').value = dayData.name || '';
   document.getElementById('save-template-modal').classList.add('open');
   setTimeout(() => document.getElementById('tpl-name-input').focus(), 80);
 }
@@ -11357,7 +11466,7 @@ function closeSaveTemplateModal() {
   document.getElementById('save-template-modal').classList.remove('open');
 }
 
-function confirmSaveTemplate() {
+async function confirmSaveTemplate() {
   const name = getSanitizedValue('tpl-name-input', 80);
   if (!name) { showToast('Please enter a template name'); document.getElementById('tpl-name-input').focus(); return; }
   if (rateLimited('save-template', 3000, 'Please wait before saving again.')) return;
@@ -11366,18 +11475,17 @@ function confirmSaveTemplate() {
   btn.disabled = true; btn.textContent = 'Saving…';
 
   try {
-    // Deep-clone current workoutPlan
-    const planSnapshot = {};
-    Object.entries(workoutPlan).forEach(([day,d]) => {
-      planSnapshot[day] = { name: d.name||'', exercises: d.exercises.map(ex=>({...ex})) };
-    });
+    const dayData = workoutPlan[currentDay];
+    // Only the currently selected day's exercises are saved — not the whole week.
+    const exercisesSnapshot = dayData.exercises.map(ex => ({...ex}));
+
+    const newTpl = { name, day: currentDay, exercises: exercisesSnapshot, savedAt: Date.now() };
+    const docRef = await templatesCollection().add(newTpl);
 
     const templates = getTemplates();
-    templates.unshift({ id: 'tpl_' + Date.now(), name, plan: planSnapshot, savedAt: Date.now() });
-    if (!saveTemplates(templates)) {
-      showToast('Could not save template — storage may be full', 'error');
-      return;
-    }
+    templates.unshift({ id: docRef.id, ...newTpl });
+    cacheTemplatesLocally(templates);
+
     renderTemplateList();
     closeSaveTemplateModal();
     showToast(`Template "${name}" saved`, 'success');
@@ -11393,47 +11501,95 @@ function loadTemplate(id) {
   const tpl = getTemplates().find(t => t.id === id);
   if (!tpl) { showToast('Template not found'); return; }
 
-  const totalCurrent = Object.values(workoutPlan).reduce((s,d) => s + d.exercises.length, 0);
-  const proceed = () => {
-    // Apply template to workoutPlan
-    Object.keys(workoutPlan).forEach(day => {
-      if (tpl.plan[day]) {
-        workoutPlan[day] = { name: tpl.plan[day].name||'', exercises: (tpl.plan[day].exercises||[]).map(ex=>({...ex})) };
-      } else {
-        workoutPlan[day] = { name: '', exercises: [] };
+  // Legacy multi-day templates: still load into the whole week as before.
+  if (tpl.plan) {
+    const totalCurrent = Object.values(workoutPlan).reduce((s,d) => s + d.exercises.length, 0);
+    const previousPlan = {};
+    Object.entries(workoutPlan).forEach(([day,d]) => { previousPlan[day] = { name: d.name, exercises: d.exercises.map(ex=>({...ex})) }; });
+
+    const applyLegacy = () => {
+      Object.keys(workoutPlan).forEach(day => {
+        if (tpl.plan[day]) {
+          workoutPlan[day] = { name: tpl.plan[day].name||'', exercises: (tpl.plan[day].exercises||[]).map(ex=>({...ex})) };
+        } else {
+          workoutPlan[day] = { name: '', exercises: [] };
+        }
+      });
+      document.getElementById('workout-name-input').value = workoutPlan[currentDay].name;
+      renderExerciseList();
+      updateDayCounts();
+      const clientUid = document.getElementById('assign-client-select').value;
+      if (clientUid) {
+        autoSavePlanToFirebase(`Template "${tpl.name}" loaded and assigned.`);
       }
-    });
-    // Re-render
-    document.getElementById('workout-name-input').value = workoutPlan[currentDay].name;
-    renderExerciseList();
-    updateDayCounts();
-
-    // Auto-save immediately if a client is already selected — loading a
-    // template used to require a separate "Assign Plan →" click, which was
-    // easy to forget, leaving the client with their old (or no) plan even
-    // though the coach believed they'd assigned the new one.
-    const clientUid = document.getElementById('assign-client-select').value;
-    if (clientUid) {
-      autoSavePlanToFirebase(`Template "${tpl.name}" loaded and assigned.`);
-    } else {
-      showToast(`Template "${tpl.name}" loaded — select a client to assign it`, 'success');
-    }
-  };
-
-  if (totalCurrent > 0) {
-    if (!confirm(`Loading "${tpl.name}" will replace your current plan (${totalCurrent} exercises). Continue?`)) return;
+      showUndoToast(`Template "${tpl.name}" loaded — replaced your whole week`, () => {
+        Object.keys(workoutPlan).forEach(day => { workoutPlan[day] = { name: previousPlan[day].name, exercises: previousPlan[day].exercises.map(ex=>({...ex})) }; });
+        document.getElementById('workout-name-input').value = workoutPlan[currentDay].name;
+        renderExerciseList();
+        updateDayCounts();
+        if (clientUid) autoSavePlanToFirebase(`Reverted to plan before loading "${tpl.name}".`);
+        showToast('Undone', '');
+      });
+    };
+    if (totalCurrent === 0) { applyLegacy(); return; }
+    applyLegacy();
+    return;
   }
-  proceed();
+
+  // New single-day templates load into the currently selected day only.
+  const previousDay = { name: workoutPlan[currentDay].name, exercises: workoutPlan[currentDay].exercises.map(ex=>({...ex})) };
+  const targetDay = currentDay;
+
+  workoutPlan[targetDay] = { name: tpl.name || '', exercises: (tpl.exercises||[]).map(ex=>({...ex})) };
+  document.getElementById('workout-name-input').value = workoutPlan[currentDay].name;
+  renderExerciseList();
+  updateDayCounts();
+
+  const clientUid = document.getElementById('assign-client-select').value;
+  if (clientUid) {
+    autoSavePlanToFirebase(`Template "${tpl.name}" loaded into ${targetDay} and assigned.`);
+  }
+
+  showUndoToast(`Template "${tpl.name}" loaded into ${targetDay}`, () => {
+    workoutPlan[targetDay] = { name: previousDay.name, exercises: previousDay.exercises.map(ex=>({...ex})) };
+    if (currentDay === targetDay) {
+      document.getElementById('workout-name-input').value = workoutPlan[currentDay].name;
+      renderExerciseList();
+    }
+    updateDayCounts();
+    if (clientUid) autoSavePlanToFirebase(`Reverted ${targetDay} to plan before loading "${tpl.name}".`);
+    showToast('Undone', '');
+  });
 }
 
 function deleteTemplate(id) {
-  const tpl = getTemplates().find(t => t.id === id);
-  if (!tpl) return;
-  if (!confirm(`Delete template "${tpl.name}"?`)) return;
-  const updated = getTemplates().filter(t => t.id !== id);
-  saveTemplates(updated);
+  const templates = getTemplates();
+  const idx = templates.findIndex(t => t.id === id);
+  if (idx === -1) return;
+  const [removed] = templates.splice(idx, 1);
+  cacheTemplatesLocally(templates);
   renderTemplateList();
-  showToast('Template deleted', '');
+
+  templatesCollection().doc(id).delete().catch(e => {
+    console.error('deleteTemplate failed:', e);
+    showToast('Could not delete template: ' + e.message, 'error');
+  });
+
+  showUndoToast(`Template "${removed.name}" deleted`, () => {
+    const current = getTemplates();
+    current.splice(idx, 0, removed);
+    cacheTemplatesLocally(current);
+    renderTemplateList();
+
+    // Restore in Firestore under the same id so any other device stays in sync.
+    const { id: tplId, ...data } = removed;
+    templatesCollection().doc(tplId).set(data).catch(e => {
+      console.error('restore template failed:', e);
+      showToast('Could not restore template on server: ' + e.message, 'error');
+    });
+
+    showToast('Undone', '');
+  });
 }
 
 // ─────────────────────────────────────────
