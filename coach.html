@@ -4509,7 +4509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="nutr-field"><label>Protein (g)</label><input type="number" id="mt-protein" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
                 <div class="nutr-field"><label>Carbs (g)</label><input type="number" id="mt-carbs" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
                 <div class="nutr-field"><label>Fats (g)</label><input type="number" id="mt-fats" placeholder="0" min="0" inputmode="numeric" oninput="recalcMacroTotal()" /></div>
-                <div class="nutr-field"><label>Calories</label><input type="number" id="mt-calories" placeholder="auto" min="0" inputmode="numeric" oninput="mtCaloriesManuallySet=true" /></div>
+                <div class="nutr-field"><label>Calories</label><input type="number" id="mt-calories" placeholder="auto" min="0" inputmode="numeric" readonly tabindex="-1" style="opacity:0.75;cursor:not-allowed;" /></div>
               </div>
               <div class="nutr-field" style="margin-bottom:14px;"><label>Notes (optional)</label><textarea id="mt-notes" rows="2" placeholder="e.g. Hit protein first, carbs/fats flexible around training"></textarea></div>
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
@@ -4554,14 +4554,6 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="food-db-title">Food Database</div>
                   <div class="food-db-sub">Search & assign foods directly to client</div>
                 </div>
-              </div>
-
-              <!-- Target meal selector -->
-              <div class="food-db-target">
-                <div class="food-target-label">Add to</div>
-                <select id="food-target-meal" class="food-target-select">
-                  <option value="">— Select Meal —</option>
-                </select>
               </div>
 
               <!-- Search bar -->
@@ -6338,7 +6330,7 @@ const COACH_HEARTBEAT_MS = 25000;
 let _coachHeartbeatTimer = null;
 
 function _sendCoachHeartbeat() {
-  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  const uid = COACH_FIXED_UID; // always the shared coach doc — never the per-device anonymous auth uid
   if (document.visibilityState !== 'visible') return;
   db.collection('presence').doc(uid).set({
     app: 'coach',
@@ -6356,7 +6348,7 @@ function startCoachPresenceHeartbeat() {
 
 function stopCoachPresenceHeartbeat() {
   if (_coachHeartbeatTimer) { clearInterval(_coachHeartbeatTimer); _coachHeartbeatTimer = null; }
-  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  const uid = COACH_FIXED_UID; // always the shared coach doc — never the per-device anonymous auth uid
   db.collection('presence').doc(uid).delete().catch(()=>{});
 }
 
@@ -6365,7 +6357,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 window.addEventListener('beforeunload', () => {
-  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  const uid = COACH_FIXED_UID; // always the shared coach doc — never the per-device anonymous auth uid
   db.collection('presence').doc(uid).delete().catch(()=>{});
 });
 
@@ -11379,7 +11371,7 @@ const TPL_STORAGE_KEY = 'evolveWorkoutTemplates';
 let _templatesCache = null; // in-memory cache of the latest known templates, newest-first
 
 function templatesCollection() {
-  const uid = (auth && auth.currentUser && auth.currentUser.uid) || COACH_FIXED_UID;
+  const uid = COACH_FIXED_UID; // always the shared coach doc — never the per-device anonymous auth uid
   return db.collection('coaches').doc(uid).collection('workoutTemplates');
 }
 
@@ -13758,11 +13750,11 @@ function addNutrMeal() {
       <div class="nutr-meal-card-title">Meal ${idx}</div>
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="add-from-db-btn" onclick="setFoodDbTarget(${idx})"> Add from Food DB</button>
-        <button class="nutr-meal-del-btn" onclick="document.getElementById('nutr-meal-${idx}').remove();updateMealTargetDropdown();updateBuilderTotal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <button class="nutr-meal-del-btn" onclick="document.getElementById('nutr-meal-${idx}').remove();updateBuilderTotal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-      <div class="nutr-field"><label>Meal Name</label><input placeholder="e.g. Breakfast" class="nm-name-${idx}" oninput="updateMealTargetDropdown()" /></div>
+      <div class="nutr-field"><label>Meal Name</label><input placeholder="e.g. Breakfast" class="nm-name-${idx}" /></div>
       <div class="nutr-field"><label>Time</label><input placeholder="e.g. 7:00 AM" class="nm-time-${idx}" /></div>
     </div>
     <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;font-weight:600;display:grid;grid-template-columns:2fr 72px 60px 60px 60px 30px;gap:6px;padding:0 2px;">
@@ -13780,7 +13772,6 @@ function addNutrMeal() {
   `;
   container.appendChild(div);
   addFoodRow(idx);
-  updateMealTargetDropdown();
 }
 
 function addFoodRow(mealIdx, foodData) {
@@ -13853,28 +13844,8 @@ function updateBuilderTotal() {
   }
 }
 
-// ── MEAL TARGET DROPDOWN ──
-function updateMealTargetDropdown() {
-  const sel = document.getElementById('food-target-meal');
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">— Select Meal —</option>';
-  document.querySelectorAll('[id^="nutr-meal-"]').forEach(div => {
-    const idx = div.id.replace('nutr-meal-','');
-    const nameEl = div.querySelector('.nm-name-' + idx);
-    const mealName = nameEl?.value?.trim() || ('Meal ' + idx);
-    const opt = document.createElement('option');
-    opt.value = idx;
-    opt.textContent = mealName;
-    sel.appendChild(opt);
-  });
-  if (current) sel.value = current;
-}
-
 function setFoodDbTarget(mealIdx) {
   foodDbTargetMeal = mealIdx;
-  const sel = document.getElementById('food-target-meal');
-  if (sel) sel.value = mealIdx;
   // Scroll food panel into view
   document.getElementById('nutr-food-db-col')?.scrollIntoView({ behavior:'smooth', block:'start' });
   showToast('Food DB: adding to Meal ' + mealIdx);
@@ -17187,18 +17158,15 @@ function onAssignClientChange() {
 // just with an empty `meals` array — the client app already renders target
 // rings/bars purely off protein/carbs/fats/calories, regardless of meals.length.
 
-let mtCaloriesManuallySet = false;
-
 // docId of the macro plan currently being edited, or null when creating a new one
 let _editingMacroPlanId = null;
 
 function recalcMacroTotal() {
-  if (mtCaloriesManuallySet) return;
   const p = parseFloat(document.getElementById('mt-protein')?.value) || 0;
   const c = parseFloat(document.getElementById('mt-carbs')?.value) || 0;
   const f = parseFloat(document.getElementById('mt-fats')?.value) || 0;
   const calEl = document.getElementById('mt-calories');
-  if (calEl && (p || c || f)) calEl.value = Math.round(p * 4 + c * 4 + f * 9);
+  if (calEl) calEl.value = (p || c || f) ? Math.round(p * 4 + c * 4 + f * 9) : '';
 }
 
 function clearMacroTargetForm() {
@@ -17208,7 +17176,6 @@ function clearMacroTargetForm() {
   });
   const dayType = document.getElementById('mt-day-type');
   if (dayType) dayType.value = '';
-  mtCaloriesManuallySet = false;
   exitMacroEditMode();
 }
 
@@ -17360,9 +17327,8 @@ function editMacroPlan(docId) {
   setVal('mt-protein', d.protein || '');
   setVal('mt-carbs', d.carbs || '');
   setVal('mt-fats', d.fats || '');
-  setVal('mt-calories', d.calories || '');
   setVal('mt-notes', d.notes || '');
-  mtCaloriesManuallySet = true; // user-entered calories shouldn't be overwritten by recalc while editing
+  recalcMacroTotal(); // calories are always auto-derived from protein/carbs/fats
 
   const assignBtn = document.getElementById('mt-assign-btn');
   if (assignBtn) assignBtn.textContent = 'Update Macros →';
@@ -17395,7 +17361,7 @@ async function assignMacroTargetOnly() {
   const dayType  = document.getElementById('mt-day-type')?.value || '';
   const notes    = document.getElementById('mt-notes')?.value.trim() || '';
   const stepGoal = parseInt(document.getElementById('mt-step-goal')?.value) || 0;
-  const coachUid = auth.currentUser?.uid || COACH_FIXED_UID;
+  const coachUid = COACH_FIXED_UID; // always the shared coach doc — never the per-device anonymous auth uid
 
   const editingId = _editingMacroPlanId;
   const btn = document.getElementById('mt-assign-btn');
@@ -17773,7 +17739,6 @@ function clearNutrBuilder() {
   nutrMealCount = 0;
   addNutrMeal();
   updateBuilderTotal();
-  updateMealTargetDropdown();
 }
 
 async function saveNutritionPlan() {
@@ -17823,7 +17788,7 @@ async function saveNutritionPlan() {
   const calories  = parseFloat(document.getElementById('nb-calories').value) || Math.round(protein*4+carbs*4+fats*9);
   const dayType   = document.getElementById('nb-day-type').value;
   const notes     = sanitizeInput(document.getElementById('nb-notes').value, 1000);
-  const coachUid  = auth.currentUser?.uid || COACH_FIXED_UID;
+  const coachUid  = COACH_FIXED_UID; // always the shared coach doc — never the per-device anonymous auth uid
 
   try {
     await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
