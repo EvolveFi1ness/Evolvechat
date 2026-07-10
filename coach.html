@@ -6277,7 +6277,19 @@ async function sha256(str) {
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-const COACH_EMAIL = 'coach@evolvechat.app';
+async function getStoredHash() {
+  try {
+    const doc = await db.doc(COACH_DOC).get();
+    if (doc.exists && doc.data().passwordHash) return doc.data().passwordHash;
+    // First time: seed the default password
+    const defaultHash = await sha256('admin123');
+    await db.doc(COACH_DOC).set({ passwordHash: defaultHash });
+    return defaultHash;
+  } catch(e) {
+    // Fallback to default if Firestore unreachable
+    return await sha256('admin123');
+  }
+}
 
 async function handleCoachLogin() {
   const pass   = document.getElementById('auth-pass').value;
@@ -6286,16 +6298,18 @@ async function handleCoachLogin() {
   if (!pass) { status.textContent='Enter your password.'; status.className='auth-status error'; return; }
   btn.disabled=true; btn.textContent='Checking…'; status.className='auth-status';
   try {
-    // Real Firebase Authentication — verified server-side, not against a
-    // client-readable password hash. This is what lets Firestore rules
-    // reliably tell "the coach" apart from anyone else.
-    await auth.signInWithEmailAndPassword(COACH_EMAIL, pass);
+    const entered = await sha256(pass);
+    const stored  = await getStoredHash();
+    if (entered !== stored) throw new Error('Incorrect password. Please try again.');
+    // Auth handled by Firestore rules (see README — set allow read, write: if true)
+    // Store session in sessionStorage so page refresh stays logged in
+    sessionStorage.setItem('coachAuth', entered);
     if (db) {
       db.collection('logins').add({
         app: 'coach',
         uid: COACH_FIXED_UID,
         name: 'Coach',
-        email: COACH_EMAIL,
+        email: '',
         type: 'login',
         userAgent: navigator.userAgent,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -6303,8 +6317,7 @@ async function handleCoachLogin() {
     }
     bootApp();
   } catch(e) {
-    status.textContent = 'Incorrect password. Please try again.';
-    status.className='auth-status error';
+    status.textContent = e.message; status.className='auth-status error';
   } finally { btn.disabled=false; btn.textContent='Enter Dashboard'; }
 }
 
@@ -6370,13 +6383,20 @@ async function handleLogout() {
   document.getElementById('auth-status').className='auth-status';
 }
 
-// Auto-login if Firebase already has a persisted coach session (e.g. page refresh)
-document.addEventListener('DOMContentLoaded', () => {
-  auth.onAuthStateChanged(user => {
-    if (user && user.email === COACH_EMAIL) {
-      bootApp();
+// Auto-login if session exists
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const session = sessionStorage.getItem('coachAuth');
+    if (session) {
+      const stored = await getStoredHash();
+      if (session === stored) {
+        // no-op: auth not required
+        bootApp();
+        return;
+      }
+      sessionStorage.removeItem('coachAuth');
     }
-  });
+  } catch(e) { console.warn('[AutoLogin] failed:', e.message); }
 });
 
 function bootApp() {
@@ -6386,9 +6406,8 @@ function bootApp() {
   document.getElementById('coach-email').textContent = 'evolvefi1ness';
   document.getElementById('coach-av').textContent = 'C';
   document.getElementById('dash-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  // Coach is now signed in with a real Firebase Auth account (see handleCoachLogin),
-  // so Firestore rules can check request.auth.token.email to grant coach-level access.
-  (async () => {
+  // Sign in anonymously so Firestore calls are authenticated (required if rules use request.auth != null)
+  (auth.currentUser ? Promise.resolve() : auth.signInAnonymously()).catch(e => console.warn('[Auth] Anonymous sign-in failed:', e.message)).finally(() => {
     // Quick Firestore connectivity test — shows a banner if rules are blocking reads
     checkFirestoreAccess();
     loadAllClients();
@@ -6400,7 +6419,7 @@ function bootApp() {
     startCoachNotifListener();
     // Start sending presence heartbeats so admin.html sees the coach as online
     startCoachPresenceHeartbeat();
-  })();
+  });
 }
 
 let _coachNotifUnsub = null;
@@ -6492,21 +6511,21 @@ async function handleChangePassword() {
 
   btn.disabled=true; btn.textContent='Updating…';
   try {
-    // Re-authenticate with the current password first (Firebase requires this
-    // for sensitive operations like changing a password), then update it.
-    const cred = firebase.auth.EmailAuthProvider.credential(COACH_EMAIL, current);
-    await auth.currentUser.reauthenticateWithCredential(cred);
-    await auth.currentUser.updatePassword(newPass);
+    const currentHash = await sha256(current);
+    const stored      = await getStoredHash();
+    if (currentHash!==stored) throw new Error('Current password is incorrect.');
+
+    const newHash = await sha256(newPass);
+    await db.doc(COACH_DOC).set({ passwordHash: newHash });
+    // Update session
+    sessionStorage.setItem('coachAuth', newHash);
     status.textContent='Password updated successfully!';
     status.className='auth-status';
     status.style.cssText='margin-top:.75rem;background:rgba(93,202,165,.1);border:1px solid rgba(93,202,165,.3);color:#5dcaa5;display:block;padding:11px 14px;border-radius:6px;font-size:13px';
     showToast('Password changed! ', 'success');
     setTimeout(closeChangePass, 2000);
   } catch(e) {
-    status.textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential')
-      ? 'Current password is incorrect.'
-      : e.message;
-    status.className='auth-status error';
+    status.textContent=e.message; status.className='auth-status error';
   } finally { btn.disabled=false; btn.textContent='Update Password'; }
 }
 
