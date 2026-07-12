@@ -11821,7 +11821,24 @@ function renderNutrAssignedPlan() {
  const chipsEl = document.getElementById('nutr-macro-chips');
 
  const dateKey = nutrDateKey(nutrCurrentDate);
- const assigned = (nutrFoodLogs[dateKey]?.__assigned__) || [];
+ // Coach can tag each assigned food as All Days ('' / undefined), Training Day, or Rest Day.
+ // FIX: previously this picked a day type purely from todayWorkout and filtered assigned
+ // foods down to just that type with no way for the client to see the other type — so a
+ // client with no workout assigned at all could never see any food tagged "Training Day",
+ // and there was no UI (unlike the macro chips' tabs) to reach it. Now this shares the same
+ // window._nutrDayTypeFilter state as the macro tabs, and renders its own tabs when the
+ // assigned foods span more than one day type, so every assigned food stays reachable.
+ const allAssignedRaw = (nutrFoodLogs[dateKey]?.__assigned__) || [];
+ const isTrainingDayForFood = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
+ const currentFoodDayType = isTrainingDayForFood ? 'Training Day' : 'Rest Day';
+ const foodDayTypes = [...new Set(allAssignedRaw.map(item => item.dayType || ''))];
+ const savedFoodFilter = window._nutrDayTypeFilter;
+ const activeFoodType = (savedFoodFilter !== undefined && foodDayTypes.includes(savedFoodFilter))
+   ? savedFoodFilter
+   : (foodDayTypes.includes(currentFoodDayType)
+     ? currentFoodDayType
+     : (foodDayTypes.includes('') ? '' : foodDayTypes[0]));
+ const assigned = allAssignedRaw.filter(item => !item.dayType || item.dayType === activeFoodType);
  const day = nutrFoodLogs[dateKey] || {};
 
  // Build a map of "meal|food_name (lowercase)" → total grams already logged in that specific meal slot today
@@ -11903,8 +11920,30 @@ function renderNutrAssignedPlan() {
  // ── ASSIGNED FOOD ROWS: render in bottom Coach's Plan section ──
  if (!el) return;
 
- if (!assigned.length) {
+ if (!allAssignedRaw.length) {
   el.innerHTML = '';
+  return;
+ }
+
+ const foodTabLabel = dt => dt === 'Training Day' ? '🏋️ Training' : dt === 'Rest Day' ? '😴 Rest' : '📅 All Days';
+ const foodTabColor = dt => dt === 'Training Day' ? '#4ADE80' : dt === 'Rest Day' ? '#60A5FA' : '#c9a84c';
+ const foodTabBg    = dt => dt === 'Training Day' ? 'rgba(74,222,128,0.15)' : dt === 'Rest Day' ? 'rgba(96,165,250,0.15)' : 'rgba(201,168,76,0.15)';
+ const foodTabBorder= dt => dt === 'Training Day' ? 'rgba(74,222,128,0.5)' : dt === 'Rest Day' ? 'rgba(96,165,250,0.5)' : 'rgba(201,168,76,0.5)';
+ const foodTabBorderOff = 'rgba(255,255,255,0.1)';
+ const foodTabsHtml = foodDayTypes.length > 1 ? `
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+   ${foodDayTypes.map(dt => {
+    const isActive = dt === activeFoodType;
+    return `<button onclick="window._nutrDayTypeFilter='${dt}';renderNutritionTab();" style="font-size:11px;font-weight:700;letter-spacing:0.3px;border:1px solid ${isActive ? foodTabBorder(dt) : foodTabBorderOff};background:${isActive ? foodTabBg(dt) : 'transparent'};color:${isActive ? foodTabColor(dt) : '#555'};border-radius:100px;padding:5px 14px;cursor:pointer;transition:all 0.2s;font-family:inherit;">${foodTabLabel(dt)}</button>`;
+   }).join('')}
+  </div>` : '';
+
+ if (!assigned.length) {
+  el.innerHTML = `
+   <div style="background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15);border-radius:14px;padding:14px 16px;">
+    ${foodTabsHtml}
+    <div style="text-align:center;padding:10px 0;font-size:12px;color:#444;">No foods assigned for this day type.</div>
+   </div>`;
   return;
  }
 
@@ -11985,6 +12024,7 @@ function renderNutrAssignedPlan() {
 
  el.innerHTML = `
   <div style="background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.15);border-radius:14px;padding:14px 16px;">
+   ${foodTabsHtml}
    ${planHeader}
    <div style="font-size:11px;color:#555;margin-bottom:10px;">Grams needed per food item</div>
    ${mealSections}
