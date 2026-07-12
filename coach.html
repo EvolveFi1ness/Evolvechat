@@ -5889,14 +5889,19 @@ document.addEventListener('DOMContentLoaded', () => {
     <button onclick="closeFoodDetail()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:12px;">✕</button>
   </div>
   <div id="fd-macros" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 20px 14px;"></div>
-  <div style="display:flex;align-items:center;gap:10px;padding:0 20px 14px;">
-    <button onclick="adjServing(-10)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">−</button>
-    <div style="flex:1;display:flex;align-items:center;gap:6px;">
-      <input id="fd-serving" type="number" min="1" step="1" oninput="updateFdMacros()" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;min-width:0;"/>
-      <span style="font-size:13px;color:var(--muted);">g</span>
-    </div>
-    <button onclick="adjServing(10)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">+</button>
+  <div style="padding:0 20px 10px;display:flex;gap:7px;">
+    <button id="fd-unit-g" class="fd-meal-slot-btn active" onclick="toggleFdUnit('g')" type="button">Grams</button>
+    <button id="fd-unit-srv" class="fd-meal-slot-btn" onclick="toggleFdUnit('srv')" type="button">Servings</button>
   </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:0 20px 6px;">
+    <button onclick="adjServing(-1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">−</button>
+    <div style="flex:1;display:flex;align-items:center;gap:6px;">
+      <input id="fd-serving" type="number" min="0.5" step="1" oninput="updateFdMacros()" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:15px;font-family:'Inter',sans-serif;outline:none;text-align:center;min-width:0;"/>
+      <span id="fd-unit-label" style="font-size:13px;color:var(--muted);min-width:14px;">g</span>
+    </div>
+    <button onclick="adjServing(1)" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">+</button>
+  </div>
+  <div id="fd-serving-hint" style="padding:0 20px 14px;font-size:11px;color:var(--muted);"></div>
   <div style="padding:0 20px 10px;">
     <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Assigning to</div>
     <div id="fd-context-label" style="font-size:13px;font-weight:600;color:var(--gold);">— select client above —</div>
@@ -17084,20 +17089,89 @@ function updatePlanTotalPreview(deltaCal, deltaP, deltaC, deltaF) {
   }
 }
 
+// Unit mode for the food-detail serving input: 'g' (grams) or 'srv' (servings,
+// e.g. "2 eggs"). Reset to grams every time a new food is opened.
+let fdUnitMode = 'g';
+
 function showFoodDetail(food) {
   const panel = document.getElementById('food-detail-panel');
   if (!panel) return;
   panel.style.display = 'block';
   const bd=document.getElementById('food-detail-backdrop');if(bd){bd.style.display='block';bd.classList.add('open');}
   document.getElementById('fd-name').textContent = food.food_name || 'Food';
-  // Reset serving to food's default
+  // Reset unit mode + serving to food's default (grams)
+  fdUnitMode = 'g';
+  updateFdUnitToggleUI();
   const servingEl = document.getElementById('fd-serving');
-  if (servingEl) servingEl.value = food.serving_size_g || 100;
+  if (servingEl) { servingEl.value = food.serving_size_g || 100; servingEl.step = '1'; servingEl.min = '1'; }
   const serving = food.serving_size_g || 100;
   // Refresh plan totals cache whenever a new food is opened
   refreshPlanTotalsCache();
   renderFdMacros(food, serving);
   updateFdContextLabel();
+}
+
+// Extracts a human-friendly unit name from a food's serving_label for display
+// next to the input when in "Servings" mode, e.g. "1 jumbo (63g)" -> "jumbo",
+// "1 medium (44g)" -> "medium", "2 slices (30g)" -> "slices". Falls back to
+// "serving" when the label doesn't have a clean parseable unit name.
+function fdServingUnitName(food) {
+  const label = (food && food.serving_label) || '';
+  const m = label.match(/^[\d.\/\s]+([a-zA-Z][a-zA-Z\s]*?)\s*\(/);
+  if (m && m[1] && m[1].trim()) return m[1].trim();
+  // No parenthetical weight (e.g. "100g", "1 can") — try stripping a leading number
+  const m2 = label.match(/^[\d.\/\s]+([a-zA-Z][a-zA-Z\s]*)$/);
+  if (m2 && m2[1] && m2[1].trim()) return m2[1].trim();
+  return 'serving';
+}
+
+function toggleFdUnit(mode) {
+  if (!foodDbSelected || fdUnitMode === mode) return;
+  const inp = document.getElementById('fd-serving');
+  if (!inp) return;
+  const baseG = foodDbSelected.serving_size_g || 100;
+  const currentG = fdUnitMode === 'srv' ? (parseFloat(inp.value) || 1) * baseG : (parseFloat(inp.value) || baseG);
+  fdUnitMode = mode;
+  if (mode === 'srv') {
+    inp.value = Math.round((currentG / baseG) * 10) / 10;
+    inp.step = '0.5';
+    inp.min = '0.5';
+  } else {
+    inp.value = Math.round(currentG);
+    inp.step = '1';
+    inp.min = '1';
+  }
+  updateFdUnitToggleUI();
+  updateFdMacros();
+}
+
+function updateFdUnitToggleUI() {
+  const gBtn = document.getElementById('fd-unit-g');
+  const sBtn = document.getElementById('fd-unit-srv');
+  const lbl  = document.getElementById('fd-unit-label');
+  if (gBtn) gBtn.classList.toggle('active', fdUnitMode === 'g');
+  if (sBtn) sBtn.classList.toggle('active', fdUnitMode === 'srv');
+  if (lbl)  lbl.textContent = fdUnitMode === 'g' ? 'g' : '×';
+  const hint = document.getElementById('fd-serving-hint');
+  if (hint) {
+    if (fdUnitMode === 'srv' && foodDbSelected) {
+      hint.textContent = `1 serving = ${foodDbSelected.serving_label || (foodDbSelected.serving_size_g + 'g')}`;
+    } else {
+      hint.textContent = '';
+    }
+  }
+}
+
+// Returns the current input value converted to grams, regardless of which
+// unit mode (grams vs servings) the coach currently has selected.
+function fdServingGrams() {
+  const inp = document.getElementById('fd-serving');
+  const raw = parseFloat(inp?.value) || 0;
+  if (fdUnitMode === 'srv') {
+    const baseG = (foodDbSelected && foodDbSelected.serving_size_g) || 100;
+    return raw * baseG;
+  }
+  return raw || (foodDbSelected && foodDbSelected.serving_size_g) || 100;
 }
 
 function renderFdMacros(food, servingG) {
@@ -17123,14 +17197,21 @@ function renderFdMacros(food, servingG) {
 
 function updateFdMacros() {
   if (!foodDbSelected) return;
-  const serving = parseFloat(document.getElementById('fd-serving').value) || 100;
-  renderFdMacros(foodDbSelected, serving);
+  renderFdMacros(foodDbSelected, fdServingGrams());
 }
 
+// delta is expressed in "steps" (±1). In grams mode a step is 10g; in
+// servings mode a step is 0.5 servings (e.g. half an egg).
 function adjServing(delta) {
   const inp = document.getElementById('fd-serving');
   if (!inp) return;
-  inp.value = Math.max(1, (parseFloat(inp.value)||100) + delta);
+  if (fdUnitMode === 'srv') {
+    const step = 0.5 * (delta > 0 ? 1 : -1);
+    inp.value = Math.max(0.5, Math.round(((parseFloat(inp.value)||1) + step) * 10) / 10);
+  } else {
+    const step = 10 * (delta > 0 ? 1 : -1);
+    inp.value = Math.max(1, (parseFloat(inp.value)||100) + step);
+  }
   updateFdMacros();
 }
 
@@ -17462,7 +17543,7 @@ async function assignFoodToClient() {
   if (!clientUid) { showToast(' Select a client first'); return; }
   if (!foodDbSelected) { showToast(' Select a food first'); return; }
 
-  const servingG = parseFloat(document.getElementById('fd-serving')?.value) || foodDbSelected.serving_size_g || 100;
+  const servingG = fdServingGrams();
   const ratio = servingG / (foodDbSelected.serving_size_g || 100);
 
   // Get selected meal slot
