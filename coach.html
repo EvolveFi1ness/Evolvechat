@@ -17117,11 +17117,14 @@ function showFoodDetail(food) {
 // "serving" when the label doesn't have a clean parseable unit name.
 function fdServingUnitName(food) {
   const label = (food && food.serving_label) || '';
+  // Weight/volume abbreviations don't count as a real serving unit name —
+  // using them (e.g. "1 g") is indistinguishable from the grams input.
+  const WEIGHT_UNITS = new Set(['g','gram','grams','kg','mg','oz','lb','lbs','ml','l','fl','floz']);
   const m = label.match(/^[\d.\/\s]+([a-zA-Z][a-zA-Z\s]*?)\s*\(/);
-  if (m && m[1] && m[1].trim()) return m[1].trim();
+  if (m && m[1] && m[1].trim() && !WEIGHT_UNITS.has(m[1].trim().toLowerCase())) return m[1].trim();
   // No parenthetical weight (e.g. "100g", "1 can") — try stripping a leading number
   const m2 = label.match(/^[\d.\/\s]+([a-zA-Z][a-zA-Z\s]*)$/);
-  if (m2 && m2[1] && m2[1].trim()) return m2[1].trim();
+  if (m2 && m2[1] && m2[1].trim() && !WEIGHT_UNITS.has(m2[1].trim().toLowerCase())) return m2[1].trim();
   return 'serving';
 }
 
@@ -17554,6 +17557,12 @@ async function assignFoodToClient() {
   const activeDayBtn = document.querySelector('#fd-day-types .fd-meal-slot-btn.active');
   const dayType = activeDayBtn?.dataset?.day || '';
 
+  // Remember which unit mode the coach used (grams vs servings) so the
+  // Assigned Foods list can display "1 serving" instead of always showing
+  // the converted gram amount.
+  const servingInp = document.getElementById('fd-serving');
+  const srvQty = fdUnitMode === 'srv' ? (parseFloat(servingInp?.value) || 1) : null;
+
   const entry = {
     food_name:      foodDbSelected.food_name,
     category:       foodDbSelected.category || '',
@@ -17565,6 +17574,9 @@ async function assignFoodToClient() {
     fat_g:          Math.round((foodDbSelected.fat_g     || 0) * ratio * 10) / 10,
     mealSlot:       mealSlot,
     dayType:        dayType,
+    unitMode:       fdUnitMode,
+    srvQty:         srvQty,
+    srvUnitLabel:   fdUnitMode === 'srv' ? fdServingUnitName(foodDbSelected) : null,
     assignedByCoach: true,
     persistent:     true,
     assignedAt:     firebase.firestore.FieldValue.serverTimestamp()
@@ -17737,7 +17749,11 @@ async function loadAssignedFoodsPanel() {
                 <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;">
                   ${item.food_name||'Food'}${dayBadge}${statusBadge}
                 </div>
-                ${!isLogged ? `
+                ${!isLogged ? (item.unitMode === 'srv' && item.srvQty ? `
+                <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+                  <span style="font-size:12px;font-weight:700;color:var(--gold);">${item.srvQty} ${item.srvUnitLabel||'serving'}${item.srvQty!=1?'s':''}</span>
+                  <span style="font-size:11px;color:var(--muted);">· P:${Math.round(item.protein_g||0)}g C:${Math.round(item.carbs_g||0)}g F:${Math.round(item.fat_g||0)}g</span>
+                </div>` : `
                 <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
                   <input
                     id="afg-${item.logId}"
@@ -17756,7 +17772,7 @@ async function loadAssignedFoodsPanel() {
                     style="display:none;background:var(--gold);border:none;border-radius:6px;color:#0a0a0a;font-size:10px;font-weight:700;padding:3px 8px;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">
                     Save
                   </button>
-                </div>` : `<div style="font-size:11px;color:var(--muted);margin-top:2px;">${item.servingG||item.serving_size_g||100}g · P:${Math.round(item.protein_g||0)}g C:${Math.round(item.carbs_g||0)}g F:${Math.round(item.fat_g||0)}g</div>`}
+                </div>`) : `<div style="font-size:11px;color:var(--muted);margin-top:2px;">${item.unitMode === 'srv' && item.srvQty ? `${item.srvQty} ${item.srvUnitLabel||'serving'}${item.srvQty!=1?'s':''}` : `${item.servingG||item.serving_size_g||100}g`} · P:${Math.round(item.protein_g||0)}g C:${Math.round(item.carbs_g||0)}g F:${Math.round(item.fat_g||0)}g</div>`}
               </div>
               <div id="afg-kcal-${item.logId}" style="font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;">${item.calories||0} kcal</div>
               ${!isLogged ? `<button onclick="coachDeleteAssignedFood('${clientUid}','${item.logId}')"
