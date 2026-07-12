@@ -11469,6 +11469,27 @@ const NUTR_CATS = [...new Set(NUTR_FOODS.map(f=>f.category))].sort();
 
 let nutrCurrentDate  = new Date();
 let nutrFoodLogs   = {}; // { 'YYYY-MM-DD': { meal: [{...food, servingG, logId}] } }
+
+// Formats an assigned amount as both the serving count and total grams, e.g.
+// "4× 1 small (38g) = 152g", so the serving is visible instead of just grams.
+// Falls back to plain grams when no serving_label is available.
+function servingQtyLabel(servingG, sizeG, label) {
+ const base = sizeG || 100;
+ const g = servingG || base;
+ if (!label) return `${Math.round(g)}g`;
+ const qty = Math.round((g / base) * 10) / 10;
+ const qtyStr = Number.isInteger(qty) ? qty : qty.toFixed(1);
+ return `${qtyStr}× ${label} = ${Math.round(g)}g`;
+}
+// Formats a servings quantity for display without ever mentioning grams,
+// e.g. srvCountLabel(1.5, 'small') -> "1.5 smalls". Used for foods the coach
+// assigned in "Servings" mode (item.unitMode === 'srv').
+function srvCountLabel(qty, unit) {
+ const q = Math.round((qty || 0) * 10) / 10;
+ const qStr = Number.isInteger(q) ? q : q.toFixed(1);
+ const u = unit || 'serving';
+ return `${qStr} ${u}${q !== 1 ? 's' : ''}`;
+}
 let nutrPlan     = null;
 let nutrPlanId    = null; // doc id of the loaded nutritionPlans doc (for auto-clear below)
 let nutrAllMacroPlans = []; // all macro-only plans assigned by coach
@@ -11967,7 +11988,14 @@ function renderNutrAssignedPlan() {
   const p     = Math.round((item.protein_g||item.protein||0) * ratio);
   const c     = Math.round((item.carbs_g||item.carbs||0) * ratio);
   const fa    = Math.round((item.fat_g||item.fats||0) * ratio);
-  const servingLabel = item.serving_label ? `${assignedG}g (${item.serving_label})` : `${assignedG}g`;
+  // Servings-mode display: coach assigned this as e.g. "2 smalls" rather than
+  // grams, so show it (and the remaining/eaten amounts) in servings too.
+  const isSrv = item.unitMode === 'srv' && item.srvQty;
+  const perServingG = isSrv ? (item.serving_size_g || (assignedG / item.srvQty) || 100) : null;
+  const loggedSrv = isSrv ? (loggedG / perServingG) : 0;
+  const remainSrv = isSrv ? (remainG / perServingG) : 0;
+  const servingLabel = isSrv ? srvCountLabel(item.srvQty, item.srvUnitLabel) : (item.serving_label ? servingQtyLabel(assignedG, item.serving_size_g || 100, item.serving_label) : `${assignedG}g`);
+  const remainQtyLabel = (!isSrv && item.serving_label) ? servingQtyLabel(remainG, item.serving_size_g || 100, item.serving_label) : null;
   const progressPct = assignedG > 0 ? Math.min(100, Math.round(loggedG / assignedG * 100)) : 0;
   return {html: `
    <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-top:1px solid #161616;${isDone?'opacity:0.5;':''}">
@@ -11978,8 +12006,8 @@ function renderNutrAssignedPlan() {
      </div>
      <div style="font-size:11px;color:#444;margin-top:2px;">
       ${isDone
-       ? `All ${assignedG}g eaten · P:${Math.round(item.protein_g||item.protein||0)} C:${Math.round(item.carbs_g||item.carbs||0)} F:${Math.round(item.fat_g||item.fats||0)} · ${Math.round(item.calories||0)} kcal`
-       : `${loggedG > 0 ? `${loggedG}g eaten · ` : ''}${servingLabel} assigned · P:${p} C:${c} F:${fa} · ${cal} kcal remaining`
+       ? `All ${isSrv ? srvCountLabel(item.srvQty, item.srvUnitLabel) : assignedG+'g'} eaten · P:${Math.round(item.protein_g||item.protein||0)} C:${Math.round(item.carbs_g||item.carbs||0)} F:${Math.round(item.fat_g||item.fats||0)} · ${Math.round(item.calories||0)} kcal`
+       : `${loggedG > 0 ? `${isSrv ? srvCountLabel(loggedSrv, item.srvUnitLabel) : loggedG+'g'} eaten · ` : ''}${servingLabel} assigned · P:${p} C:${c} F:${fa} · ${cal} kcal remaining`
       }
      </div>
      ${loggedG > 0 && !isDone ? `
@@ -11997,8 +12025,9 @@ function renderNutrAssignedPlan() {
       ? 'background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);'
       : 'background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);'
      }border-radius:8px;padding:5px 10px;text-align:center;min-width:52px;">
-     <div style="font-size:14px;font-weight:700;color:${isDone?'#3DCB72':'#c9a84c'};line-height:1;">${isDone ? '0g' : remainG + 'g'}</div>
-     <div style="font-size:9px;color:${isDone?'#2a8a50':'#7a6a3a'};letter-spacing:0.5px;text-transform:uppercase;margin-top:2px;">${isDone ? 'done' : 'needed'}</div>
+     <div style="font-size:14px;font-weight:700;color:${isDone?'#3DCB72':'#c9a84c'};line-height:1;">${isDone ? '0' + (isSrv ? '' : 'g') : (isSrv ? Math.round(remainSrv*10)/10 : remainG + 'g')}</div>
+     <div style="font-size:9px;color:${isDone?'#2a8a50':'#7a6a3a'};letter-spacing:0.5px;text-transform:uppercase;margin-top:2px;">${isDone ? 'done' : (isSrv ? `${item.srvUnitLabel||'serving'}${remainSrv!==1?'s':''} needed` : 'needed')}</div>
+     ${(!isDone && remainQtyLabel) ? `<div style="font-size:8px;color:#7a6a3a;margin-top:2px;">${remainQtyLabel}</div>` : ''}
     </div>
    </div>`, meal: itemMeal};
  });
