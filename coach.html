@@ -3365,157 +3365,7 @@
 .ebi-vid-btn{width:46px;height:46px;border-radius:9px;background:rgba(212,168,83,0.1);border:1px solid rgba(212,168,83,0.22);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:18px;color:rgba(212,168,83,0.7);transition:background 0.2s;}
 .ebi-vid-btn:active{background:rgba(212,168,83,0.2);}
 
-/* ── LIVEKIT CALL STYLES ── */
-.call-btn {
-  background: rgba(74,222,128,0.12);
-  border: 1px solid rgba(74,222,128,0.3);
-  color: #4ade80;
-  border-radius: 8px;
-  width: 34px; height: 34px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 16px; flex-shrink: 0;
-  transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s; margin-left: auto;
-}
-.call-btn:hover { background: rgba(74,222,128,0.22); transform: scale(1.05); }
-.call-btn.in-call { background: rgba(248,113,113,0.15); border-color: rgba(248,113,113,0.4); color: #f87171; }
-
-/* coach video CSS moved into call overlay block above */
-
-/* ── Active call overlay — full-screen video call UI ── */
-#call-overlay {
-  display: none;
-  position: fixed; inset: 0; z-index: 9990;
-  background: #000;
-  flex-direction: column;
-}
-#call-overlay.active { display: flex; }
-
-/* Remote video fills the whole screen */
-#coach-remote-video {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
-  background: #111;
-  display: none;
-}
-.coach-video-active #coach-remote-video { display: block; }
-
-/* PiP local video — top-right corner */
-#coach-local-video {
-  position: absolute;
-  top: 16px; right: 16px;
-  width: 120px; height: 90px;
-  object-fit: cover;
-  border-radius: 12px;
-  border: 2px solid rgba(255,255,255,0.3);
-  background: #1a1a1a;
-  display: none;
-  z-index: 20;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-  transition: opacity 0.2s;
-}
-#coach-local-video:hover { opacity: 0.85; }
-.coach-video-active #coach-local-video { display: block; }
-
-/* No-video state: dark gradient bg */
-#call-overlay:not(.coach-video-active) {
-  background: radial-gradient(ellipse 80% 60% at 50% 30%, #1a1a1a 0%, #050505 100%);
-}
-
-/* Top info bar — name + timer */
-.call-info-bar {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 15;
-  padding: 20px 24px 16px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
-  display: flex; align-items: center; gap: 14px;
-}
-.call-quality { font-size: 11px; color: rgba(255,255,255,0.55); display: flex; align-items: center; gap: 4px; margin-left: auto; }
-
-/* Centered no-video avatar */
-.call-card {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  pointer-events: none;
-}
-.coach-video-active .call-card { display: none; }
-
-.call-avatar {
-  width: 96px; height: 96px; border-radius: 50%;
-  background: var(--gold-dim);
-  border: 2px solid rgba(212,168,67,0.35);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Syne', sans-serif; font-weight: 700;
-  font-size: 32px; color: var(--gold);
-  position: relative; margin-bottom: 1.25rem;
-}
-.call-avatar::after {
-  content: '';
-  position: absolute; inset: -8px;
-  border-radius: 50%;
-  border: 2px solid rgba(74,222,128,0.35);
-  animation: callPulse 1.8s ease-in-out infinite;
-}
-@keyframes callPulse {
-  0%,100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.1); opacity: 1; }
-}
-.call-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 22px; color: #fff; }
-.call-status { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 5px; letter-spacing: 0.5px; }
-.call-timer { font-size: 24px; color: var(--green); font-variant-numeric: tabular-nums; font-family: 'Syne', sans-serif; margin-top: 8px; min-height: 32px; font-weight: 700; letter-spacing: 1px; }
-
-/* ── Bottom controls bar ── */
-.call-controls {
-  position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
-  display: flex; gap: 20px; justify-content: center; align-items: center;
-  padding: 24px 24px 36px;
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
-}
-.ctrl-btn {
-  width: 60px; height: 60px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; border: none;
-  transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s; flex-shrink: 0;
-  backdrop-filter: blur(8px);
-}
-.ctrl-btn svg { pointer-events: none; }
-.ctrl-btn.mute { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
-.ctrl-btn.mute.active { background: rgba(248,113,113,0.25); color: #f87171; border-color: rgba(248,113,113,0.4); }
-.ctrl-btn.end { background: #ef4444; color: #fff; box-shadow: 0 6px 24px rgba(239,68,68,0.5); width: 68px; height: 68px; }
-.ctrl-btn.end:hover { background: #dc2626; transform: scale(1.08); }
-.ctrl-btn:hover:not(.end) { background: rgba(255,255,255,0.22); transform: scale(1.06); }
-.coach-cam-btn { background: rgba(255,255,255,0.15) !important; border: 1px solid rgba(255,255,255,0.2) !important; color: #fff !important; }
-.coach-cam-btn.cam-off { background: rgba(248,113,113,0.22) !important; border-color: rgba(248,113,113,0.45) !important; color: #f87171 !important; }
-
-/* Incoming call banner (coach side — when client calls) */
-#coach-incoming-call-banner {
-  display: none;
-  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
-  z-index: 9980;
-  background: #121212;
-  border: 1px solid rgba(74,222,128,0.35);
-  border-radius: 18px;
-  padding: 14px 18px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(74,222,128,0.1);
-  min-width: 280px; max-width: 320px;
-  animation: slideUpCoach 0.3s cubic-bezier(0.22,1,0.36,1);
-}
-#coach-incoming-call-banner.active { display: flex; align-items: center; gap: 12px; }
-@keyframes slideUpCoach { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
-.coach-inc-ring { width: 42px; height: 42px; border-radius: 50%; background: rgba(74,222,128,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; animation: ringPulseCoach 0.8s ease-in-out infinite; }
-@keyframes ringPulseCoach { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
-.coach-inc-info { flex: 1; }
-.coach-inc-title { font-size: 13px; font-weight: 700; color: #e8e8e8; }
-.coach-inc-sub { font-size: 11px; color: #888; margin-top: 2px; }
-.coach-inc-actions { display: flex; gap: 8px; }
-.coach-inc-accept { background: #4ade80; color: #0a0a0a; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
-.coach-inc-accept:hover { transform: scale(1.1); }
-.coach-inc-decline { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
-.coach-inc-decline:hover { transform: scale(1.1); background: rgba(248,113,113,0.25); }
 </style>
-
-<!-- LiveKit Client SDK -->
-<script defer src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
 
 <style>
 /* ═══════════════════════════════════════════════════════
@@ -3720,10 +3570,6 @@
 
   /* Toast at bottom above tab bar */
   .toast { bottom: calc(70px + env(safe-area-inset-bottom)) !important; }
-
-  /* Incoming call banner raise above tabs */
-  #coach-incoming-call-banner { bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
-  #call-overlay { z-index: 9999 !important; }
 }
 
 /* ── Small phones (480px and below) ── */
@@ -6276,6 +6122,15 @@ function fmtTime(ts) {
 function initials(first='', last='') {
   return ((first[0]||'?')+(last[0]||'')).toUpperCase();
 }
+// Returns a client's photo (if they've set one) as an <img>, else falls back
+// to the initials/text passed in. Drop-in replacement for bare initials in
+// any avatar div — the div's own size/border-radius/flex-centering still
+// apply, this just fills it with a real photo when one exists.
+function clientAvatarInner(c, fallback) {
+  return (c && c.profilePhotoURL)
+    ? `<img src="${c.profilePhotoURL}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;">`
+    : fallback;
+}
 
 // ─────────────────────────────────────────
 //  AUTH — Firestore password (no email login)
@@ -6381,9 +6236,6 @@ async function handleLogout() {
   if (_coachNotifUnsub) { _coachNotifUnsub(); _coachNotifUnsub = null; }
   if (_presenceWatchdogTimer) { clearInterval(_presenceWatchdogTimer); _presenceWatchdogTimer = null; }
   stopCoachPresenceHeartbeat();
-  // stopCoachCallListener lives in a later, separately-scoped <script> block,
-  // so it's reached via the global hook rather than a direct reference.
-  if (typeof window.stopCoachCallListener === 'function') window.stopCoachCallListener();
   _prevOnlineUids = new Set();
   _onlineNotifyReady = false;
   sessionStorage.removeItem('coachAuth');
@@ -6426,8 +6278,6 @@ function bootApp() {
     loadAllClients();
     listenForUnreadMessages();
     loadCloudinaryMedia();
-    // Start listening for incoming calls from clients
-    startCoachCallListener();
     // Listen for real-time check-in notifications from clients
     startCoachNotifListener();
     // Start sending presence heartbeats so admin.html sees the coach as online
@@ -6766,7 +6616,7 @@ function renderArchivedGrid() {
     <div class="client-card" style="opacity:0.75;border-color:rgba(248,113,113,0.2);">
       <div class="client-card-top">
         <div class="client-av-wrap">
-          <div class="client-av" style="background:rgba(248,113,113,0.15);color:var(--red);">${ini}</div>
+          <div class="client-av" style="background:rgba(248,113,113,0.15);color:var(--red);">${clientAvatarInner(c, ini)}</div>
         </div>
         <div style="flex:1;min-width:0;">
           <div class="client-name">${name}</div>
@@ -6817,7 +6667,7 @@ function renderPendingGrid() {
     <div class="client-card" style="border-color:rgba(212,168,67,0.25);">
       <div class="client-card-top">
         <div class="client-av-wrap">
-          <div class="client-av" style="background:rgba(212,168,67,0.15);color:var(--gold);">${ini}</div>
+          <div class="client-av" style="background:rgba(212,168,67,0.15);color:var(--gold);">${clientAvatarInner(c, ini)}</div>
         </div>
         <div style="flex:1;min-width:0;">
           <div class="client-name">${name}</div>
@@ -6855,7 +6705,7 @@ function updateOnlineStrip() {
   strip.classList.add('has-online');
   row.innerHTML = online.map(c => `
     <div class="online-chip" onclick="openClientModal('${c.uid}')" title="Online now">
-      <div class="online-chip-av">${initials(c.firstName,c.lastName)}</div>
+      <div class="online-chip-av">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
       <span>${c.firstName||'Client'}</span>
     </div>`).join('');
   // Also add a toast notification if a client just came online
@@ -6908,7 +6758,7 @@ function renderClientGrid() {
     <div class="client-card ${online?'is-online':''}" onclick="openClientModal('${c.uid}')">
       <div class="client-card-top">
         <div class="client-av-wrap">
-          <div class="client-av">${initials(c.firstName,c.lastName)}</div>
+          <div class="client-av">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
           <div class="online-dot"></div>
         </div>
         <div style="flex:1;min-width:0">
@@ -7086,7 +6936,7 @@ let currentModalUid = null;
 async function openClientModal(uid) {
   currentModalUid = uid;
   const client = allClients.find(c=>c.uid===uid) || {};
-  document.getElementById('m-av').textContent    = initials(client.firstName,client.lastName);
+  document.getElementById('m-av').innerHTML      = clientAvatarInner(client, initials(client.firstName,client.lastName));
   document.getElementById('m-name').textContent  = `${client.firstName||''} ${client.lastName||''}`;
   document.getElementById('m-email').textContent = client.email||'';
 
@@ -10532,7 +10382,7 @@ function loadMissedUpdates() {
     const initials = ((c.firstName||'?')[0] + (c.lastName||'')[0]).toUpperCase();
     const nextFmt = new Date(c.nextPhotoDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     return `<div class="missed-update-card">
-      <div class="muc-av">${initials}</div>
+      <div class="muc-av">${clientAvatarInner(c, initials)}</div>
       <div class="muc-info">
         <div class="muc-name">${c.firstName||''} ${c.lastName||''}</div>
         <div class="muc-detail">Was due ${nextFmt}</div>
@@ -10689,7 +10539,7 @@ function populateClientSelect() {
       // Use data attributes to avoid any string escaping issues in onclick
       const safeUid = (c.uid||'').replace(/"/g,'&quot;');
       return `<div class="ccs-option" data-value="${safeUid}" data-name="${name.replace(/"/g,'&quot;')}">
-        <div class="ccs-avatar">${initials}</div>
+        <div class="ccs-avatar">${clientAvatarInner(c, initials)}</div>
         <div class="ccs-info">
           <div class="ccs-name">${name}</div>
           <div class="ccs-email">${email}</div>
@@ -11003,8 +10853,16 @@ async function flushClientNotification() {
   try {
     const chatId = [coachUid, clientUid].sort().join('_');
     const dayList = Array.from(days);
+    const text = `Workout plan updated. Open your app to see this week's schedule (${dayList.join(', ')}).`;
+    // Guard against sending a duplicate — if the very last message in this
+    // chat is already this exact text, another path (e.g. the manual
+    // "Assign Plan" button, or a debounce that fired moments ago) already
+    // notified the client, so skip re-adding an identical bubble.
+    const lastSnap = await db.collection('chats').doc(chatId).collection('messages')
+      .orderBy('createdAt', 'desc').limit(1).get();
+    if (!lastSnap.empty && lastSnap.docs[0].data().text === text) return;
     await db.collection('chats').doc(chatId).collection('messages').add({
-      text: `Workout plan updated. Open your app to see this week's schedule (${dayList.join(', ')}).`,
+      text,
       senderId: coachUid,
       senderRole: 'coach',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -11263,14 +11121,21 @@ async function assignWorkoutToClient(evt) {
       });
       await ref.update(updateData);
 
-      // Chat notification
+      // Chat notification — skip if the last message already says this
+      // exact thing (e.g. a debounced auto-notification just sent it).
       const chatId = [coachUid, clientUid].sort().join('_');
-      await db.collection('chats').doc(chatId).collection('messages').add({
-        text: `Workout plan updated. Open your app to see this week's schedule (${Object.keys(p).join(', ')}).`,
-        senderId: coachUid,
-        senderRole: 'coach',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+      const text = `Workout plan updated. Open your app to see this week's schedule (${Object.keys(p).join(', ')}).`;
+      const lastSnap = await db.collection('chats').doc(chatId).collection('messages')
+        .orderBy('createdAt', 'desc').limit(1).get();
+      const alreadySent = !lastSnap.empty && lastSnap.docs[0].data().text === text;
+      if (!alreadySent) {
+        await db.collection('chats').doc(chatId).collection('messages').add({
+          text,
+          senderId: coachUid,
+          senderRole: 'coach',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
       await db.collection('chats').doc(chatId).set({
         participants: [coachUid, clientUid],
         lastMessage: 'Workout plan updated!',
@@ -11629,7 +11494,7 @@ function renderChatList(filter) {
   list.innerHTML = clients.map(c=>`
     <div class="chat-client-item ${activeChatUid===c.uid?'active':''}" id="cci-${c.uid}" onclick="openChatWith('${c.uid}')">
       <div class="cci-av-wrap">
-        <div class="cci-av">${initials(c.firstName,c.lastName)}</div>
+        <div class="cci-av">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
         <div class="cci-online-dot"></div>
       </div>
       <div class="cci-info">
@@ -11735,15 +11600,12 @@ function openChatWith(clientUid) {
       <button class="chat-back-btn" onclick="closeMobileChat()" title="Back">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <div class="chat-topbar-av">${clientInitials}</div>
+      <div class="chat-topbar-av">${clientAvatarInner(client, clientInitials)}</div>
       <div class="chat-topbar-info">
         <div class="chat-topbar-name">${clientFullName.trim()}</div>
         <div class="chat-topbar-status">Active now</div>
       </div>
       <div class="chat-topbar-actions">
-        <button class="chat-icon-btn" title="Start video call" onclick="initiateCall('${clientUid}','${clientFullName.trim()}')">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.82v6.36a1 1 0 0 1-1.447.894L15 14"/><rect x="1" y="6" width="15" height="12" rx="2" ry="2"/></svg>
-        </button>
         <button class="chat-icon-btn" title="View profile" onclick="openClientModal('${clientUid}')">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
@@ -11773,7 +11635,7 @@ function openChatWith(clientUid) {
   if (chatUnsub) chatUnsub();
   const chatId = [coachUid, clientUid].sort().join('_');
   chatUnsub = db.collection('chats').doc(chatId).collection('messages')
-    .orderBy('createdAt','asc').limit(100)
+    .orderBy('createdAt','desc').limit(100)
     .onSnapshot(snap=>{
       const area = document.getElementById('chat-messages-area');
       if (!area) return;
@@ -11783,7 +11645,20 @@ function openChatWith(clientUid) {
         area.scrollTop = area.scrollHeight;
         return;
       }
-      const docs = snap.docs;
+      // Collapse consecutive "Workout plan updated…" bubbles with identical
+      // text down to just the last occurrence — older duplicate history
+      // (from before duplicate-sends were guarded against) shouldn't clutter
+      // the thread with repeats of the same notification.
+      // Query is newest-first (so the 100-doc cap keeps the latest messages,
+      // not the oldest); reverse here so everything below can keep working
+      // in chronological order like before.
+      const rawDocs = [...snap.docs].reverse();
+      const docs = rawDocs.filter((doc, i) => {
+        if (i === rawDocs.length - 1) return true;
+        const cur = doc.data(), next = rawDocs[i+1].data();
+        const isAutoNotif = t => typeof t === 'string' && t.indexOf('Workout plan updated.') === 0;
+        return !(cur.senderRole === next.senderRole && cur.text === next.text && isAutoNotif(cur.text));
+      });
       docs.forEach((doc, i)=>{
         const m = doc.data();
         const isCoach = m.senderId===coachUid || m.senderRole==='coach';
@@ -11808,7 +11683,7 @@ function openChatWith(clientUid) {
 
         const isFirstInGroup = !isSameGroup; // first message in a new group
         const avatarHtml = isLastInGroup
-          ? `<div class="msg-avatar">${isCoach ? coachInitialsLabel : clientInitials}</div>`
+          ? `<div class="msg-avatar">${isCoach ? coachInitialsLabel : clientAvatarInner(client, clientInitials)}</div>`
           : `<div class="msg-avatar hidden"></div>`;
 
         const senderLabel = isFirstInGroup
@@ -12060,7 +11935,7 @@ function renderPtClientList() {
   }
   list.innerHTML = allClients.map(c => `
     <div class="pt-client-item ${ptSelectedUid===c.uid?'active':''}" id="pt-ci-${c.uid}" onclick="selectPtClient('${c.uid}')">
-      <div class="pt-ci-av">${initials(c.firstName,c.lastName)}</div>
+      <div class="pt-ci-av">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
       <div>
         <div class="pt-ci-name">${c.firstName||''} ${c.lastName||''}</div>
         <div class="pt-ci-sub" id="pt-ci-sub-${c.uid}">Loading…</div>
@@ -13696,7 +13571,7 @@ function renderNutrClientDropdown(clients, q) {
       style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background 0.12s;${borderBottom}"
       onmouseover="this.style.background='rgba(212,168,67,0.08)';this.style.color='var(--gold)'"
       onmouseout="this.style.background='';this.style.color=''">
-      <div style="width:30px;height:30px;border-radius:50%;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;">${initials}</div>
+      <div style="width:30px;height:30px;border-radius:50%;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.25);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--gold);flex-shrink:0;">${clientAvatarInner(c, initials)}</div>
       <div style="display:flex;flex-direction:column;gap:1px;overflow:hidden;">
         <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
         ${email ? `<div style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${email}</div>` : ''}
@@ -18503,328 +18378,11 @@ async function removeStepGoal() {
   </div>
 </div>
 
-<!-- ═══ INCOMING CALL BANNER (Coach — when client calls) ═══ -->
-<div id="coach-incoming-call-banner">
-  <div class="coach-inc-ring">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#4ade80"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-  </div>
-  <div class="coach-inc-info">
-    <div class="coach-inc-title">Incoming Call</div>
-    <div class="coach-inc-sub" id="coach-inc-call-from">A member</div>
-  </div>
-  <div class="coach-inc-actions">
-    <button class="coach-inc-accept" onclick="coachAcceptIncomingCall()" title="Accept">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-    </button>
-    <button class="coach-inc-decline" onclick="coachDeclineIncomingCall()" title="Decline">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-  </div>
-</div>
-
-<!-- ═══ LIVEKIT CALL OVERLAY (Coach) ═══ -->
-<div id="call-overlay">
-  <!-- Full-screen remote video -->
-  <video id="coach-remote-video" autoplay playsinline></video>
-  <!-- PiP local video (top-right) -->
-  <video id="coach-local-video" autoplay playsinline muted onclick="coachPipFlip()" title="Click to flip"></video>
-
-  <!-- Top info bar -->
-  <div class="call-info-bar">
-    <div style="display:flex;flex-direction:column;gap:2px;">
-      <div class="call-name" id="call-name-label" style="font-size:17px;">Client Name</div>
-      <div class="call-status" id="call-status-label">Calling…</div>
-    </div>
-    <div class="call-timer" id="call-timer" style="margin-left:auto;margin-top:0;font-size:18px;"></div>
-    <div class="call-quality" id="call-quality-indicator" style="margin-left:12px;"></div>
-  </div>
-
-  <!-- No-video avatar (hidden when video is active) -->
-  <div class="call-card">
-    <div class="call-avatar" id="call-avatar-initials">?</div>
-  </div>
-
-  <!-- Bottom controls -->
-  <div class="call-controls">
-    <!-- Mute -->
-    <button class="ctrl-btn mute" id="mute-btn" onclick="toggleMute()" title="Mute">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-    </button>
-    <!-- Camera -->
-    <button class="ctrl-btn coach-cam-btn" id="coach-cam-btn" onclick="coachToggleCamera()" title="Camera">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-    </button>
-    <!-- End call -->
-    <button class="ctrl-btn end" onclick="endCall()" title="End call">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-    </button>
-    <!-- Speaker -->
-    <button class="ctrl-btn mute" id="speaker-btn" onclick="toggleSpeaker()" title="Speaker">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-    </button>
-  </div>
-</div>
-
 <script>
 // ═══════════════════════════════════════════════════
-//  LIVEKIT CALL — COACH SIDE
+//  (video call feature removed)
 // ═══════════════════════════════════════════════════
 
-const LK_URL     = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
-const LK_API_KEY = 'APINy8wg8sjumEe';
-const LK_SECRET  = 'Gt6UJZQxNBNeKau7FaoJ2ffJHFdeKJhrhKOkQZv3hcxB';
-
-let lkRoom = null;
-let callTimerInterval = null;
-let callSeconds = 0;
-let isMuted = false;
-let activeChatCallUid = null;
-let callUnsub = null;
-
-// ── JWT generation (HS256 via SubtleCrypto) ──
-async function generateLkToken(roomName, participantIdentity, isCoach) {
-  const header  = { alg: 'HS256', typ: 'JWT' };
-  const now     = Math.floor(Date.now() / 1000);
-  const payload = {
-    iss: LK_API_KEY,
-    sub: participantIdentity,
-    jti: participantIdentity + '_' + now,
-    iat: now,
-    exp: now + 3600,
-    nbf: now,
-    video: {
-      room: roomName,
-      roomJoin: true,
-      canPublish: true,
-      canSubscribe: true,
-      canPublishData: true
-    }
-  };
-  const enc = txt => new TextEncoder().encode(txt);
-  const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  const hdrB64  = btoa(JSON.stringify(header)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  const payB64  = btoa(JSON.stringify(payload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  const signing = hdrB64 + '.' + payB64;
-  const key = await crypto.subtle.importKey(
-    'raw', enc(LK_SECRET), { name:'HMAC', hash:'SHA-256' }, false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc(signing));
-  return signing + '.' + b64url(sig);
-}
-
-// ── Initiate a call (coach calls client) ──
-async function initiateCall(clientUid, clientName) {
-  if (lkRoom) { showToast('Already in a call'); return; }
-  activeChatCallUid = clientUid;
-  const roomName = ['call', coachUid, clientUid].sort().join('_');
-
-  showCallOverlay(clientName, 'Calling…');
-
-  // Write call request to Firestore so client sees incoming call
-  try {
-    await db.collection('callRequests').doc(roomName).set({
-      roomName,
-      callerUid: coachUid,
-      callerName: 'Coach',
-      calleeUid: clientUid,
-      status: 'ringing',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  } catch(e) { console.error('Call signal failed', e); }
-
-  // Listen for client accepting
-  callUnsub = db.collection('callRequests').doc(roomName).onSnapshot(async snap => {
-    const d = snap.data();
-    if (!d) return;
-    if (d.status === 'accepted') {
-      if (callUnsub) { callUnsub(); callUnsub = null; }
-      updateCallStatus('Connected');
-      startCallTimer();
-      await joinLkRoom(roomName, 'coach_' + coachUid);
-    } else if (d.status === 'rejected' || d.status === 'ended') {
-      if (callUnsub) { callUnsub(); callUnsub = null; }
-      cleanupCall();
-    }
-  });
-
-  // Auto-cancel after 30s if no answer
-  setTimeout(() => {
-    if (lkRoom) return;
-    db.collection('callRequests').doc(roomName).update({ status: 'missed' }).catch(()=>{});
-    cleanupCall();
-  }, 30000);
-}
-
-async function joinLkRoom(roomName, identity) {
-  try {
-    const token = await generateLkToken(roomName, identity, true);
-    lkRoom = new LivekitClient.Room({
-      adaptiveStream: true,
-      dynacast: true,
-      audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-    });
-
-    lkRoom.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => {
-      endCall();
-    });
-    lkRoom.on(LivekitClient.RoomEvent.Disconnected, () => {
-      cleanupCall();
-    });
-    lkRoom.on(LivekitClient.RoomEvent.TrackSubscribed, (track, pub, participant) => {
-      if (track.kind === LivekitClient.Track.Kind.Audio) {
-        const el = track.attach();
-        el.style.display = 'none';
-        document.body.appendChild(el);
-      } else if (track.kind === LivekitClient.Track.Kind.Video) {
-        const remoteVid = document.getElementById('coach-remote-video');
-        track.attach(remoteVid);
-        document.getElementById('call-overlay').classList.add('coach-video-active');
-      }
-    });
-    lkRoom.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
-      if (track.kind === LivekitClient.Track.Kind.Video) {
-        const remoteVid = document.getElementById('coach-remote-video');
-        track.detach(remoteVid);
-        document.getElementById('call-overlay').classList.remove('coach-video-active');
-      }
-    });
-
-    await lkRoom.connect(LK_URL, token);
-    await lkRoom.localParticipant.setMicrophoneEnabled(true);
-    // Enable camera (optional)
-    try {
-      await lkRoom.localParticipant.setCameraEnabled(true);
-      const localVid  = document.getElementById('coach-local-video');
-      const camTrack  = lkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
-      if (camTrack && camTrack.track) {
-        camTrack.track.attach(localVid);
-        localVid.style.display = 'block';
-        document.getElementById('coach-cam-btn').classList.remove('cam-off');
-      }
-    } catch(camErr) {
-      document.getElementById('coach-cam-btn').classList.add('cam-off');
-    }
-    document.getElementById('call-quality-indicator').innerHTML = ' Live';
-  } catch(e) {
-    showToast('Call failed: ' + e.message);
-    cleanupCall();
-  }
-}
-
-function showCallOverlay(name, status) {
-  const parts = (name||'?').trim().split(' ');
-  const ini = (parts[0]?.[0]||'') + (parts[1]?.[0]||'');
-  document.getElementById('call-avatar-initials').textContent = ini.toUpperCase() || '?';
-  document.getElementById('call-name-label').textContent = name || 'Client';
-  updateCallStatus(status);
-  document.getElementById('call-timer').textContent = '';
-  document.getElementById('call-overlay').classList.add('active');
-}
-
-function updateCallStatus(txt) {
-  document.getElementById('call-status-label').textContent = txt;
-}
-
-function startCallTimer() {
-  callSeconds = 0;
-  callTimerInterval = setInterval(() => {
-    callSeconds++;
-    const m = String(Math.floor(callSeconds/60)).padStart(2,'0');
-    const s = String(callSeconds%60).padStart(2,'0');
-    document.getElementById('call-timer').textContent = m + ':' + s;
-  }, 1000);
-}
-
-async function toggleMute() {
-  if (!lkRoom) return;
-  isMuted = !isMuted;
-  await lkRoom.localParticipant.setMicrophoneEnabled(!isMuted);
-  const btn = document.getElementById('mute-btn');
-  btn.classList.toggle('active', isMuted);
-  btn.innerHTML = isMuted
-    ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`
-    : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
-}
-
-function toggleSpeaker() {
-  // Toggle mute on all remote audio elements
-  const audios = document.querySelectorAll('audio[data-lk]');
-  audios.forEach(a => { a.muted = !a.muted; });
-  const btn = document.getElementById('speaker-btn');
-  btn.classList.toggle('active');
-  const off = btn.classList.contains('active');
-  btn.innerHTML = off
-    ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`
-    : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
-}
-
-let coachCamEnabled = true;
-async function coachToggleCamera() {
-  if (!lkRoom) return;
-  coachCamEnabled = !coachCamEnabled;
-  const btn = document.getElementById('coach-cam-btn');
-  const localVid = document.getElementById('coach-local-video');
-  try {
-    await lkRoom.localParticipant.setCameraEnabled(coachCamEnabled);
-    if (coachCamEnabled) {
-      const camTrack = lkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
-      if (camTrack && camTrack.track) {
-        camTrack.track.attach(localVid);
-        localVid.style.display = 'block';
-      }
-      btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`;
-      btn.classList.remove('cam-off');
-    } else {
-      localVid.style.display = 'none';
-      btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
-      btn.classList.add('cam-off');
-    }
-  } catch(e) { showToast('Camera error: ' + e.message); }
-}
-
-function coachPipFlip() {
-  const v = document.getElementById('coach-local-video');
-  if (v.style.left) { v.style.left=''; v.style.right='16px'; }
-  else { v.style.right=''; v.style.left='16px'; }
-}
-
-async function endCall() {
-  // Outgoing call (coach initiated): room = sorted[coachUid, clientUid]
-  if (activeChatCallUid) {
-    const roomName = ['call', coachUid, activeChatCallUid].sort().join('_');
-    db.collection('callRequests').doc(roomName).update({ status: 'ended' }).catch(()=>{});
-  }
-  if (lkRoom) { try { await lkRoom.disconnect(); } catch(_){} lkRoom = null; }
-  cleanupCall();
-}
-
-function cleanupCall() {
-  if (callUnsub) { callUnsub(); callUnsub = null; }
-  if (callTimerInterval) { clearInterval(callTimerInterval); callTimerInterval = null; }
-  if (lkRoom) { try { lkRoom.disconnect(); } catch(_){} lkRoom = null; }
-  // Remove attached audio elements
-  document.querySelectorAll('audio[data-lk]').forEach(a => a.remove());
-  // Clean up video elements
-  const remoteVid = document.getElementById('coach-remote-video');
-  const localVid  = document.getElementById('coach-local-video');
-  if (remoteVid) { remoteVid.srcObject = null; remoteVid.style.display = 'none'; }
-  if (localVid)  { localVid.srcObject = null;  localVid.style.display = 'none'; }
-  document.getElementById('call-overlay').classList.remove('active', 'coach-video-active');
-  document.getElementById('coach-incoming-call-banner').classList.remove('active');
-  document.getElementById('call-quality-indicator').innerHTML = '';
-  isMuted = false;
-  coachCamEnabled = true;
-  callSeconds = 0;
-  activeChatCallUid = null;
-  coachPendingCallDoc = null;
-  coachPendingCallerUid = null;
-  const camBtn = document.getElementById('coach-cam-btn');
-  if (camBtn) { camBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`; camBtn.classList.remove('cam-off'); }
-  // Reset call button state
-  const btn = document.querySelector('.call-btn');
-  if (btn) { btn.classList.remove('in-call'); btn.title = 'Start video call'; }
-}
 
 // ═══════════════════════════════════════════════════
 //  NOTIFICATION SYSTEM — COACH
@@ -18927,20 +18485,6 @@ function getTimeAgo(date) {
 const _origShowToast = window.showToast;
 window._coachNotifHooked = true;
 
-// Observe new messages from clients and generate notifications
-(function hookCoachNotifications() {
-  // Watch for online clients coming online
-  const origOnlineNotify = window._onlineNotifyReady !== undefined;
-  
-  // We'll patch the Firestore message listener after auth
-  const _origStartCoachCallListener = window.startCoachCallListener;
-  if (_origStartCoachCallListener) {
-    window.startCoachCallListener = function() {
-      _origStartCoachCallListener.apply(this, arguments);
-    };
-  }
-})();
-
 // Patch showToast to also create notifications for important events
 const _originalShowToast = typeof showToast === 'function' ? showToast : null;
 function showToastAndNotify(msg, type) {
@@ -18955,100 +18499,6 @@ function showToastAndNotify(msg, type) {
 
 // Function to manually push a notification (callable from other parts of code)
 window.pushCoachNotif = addCoachNotification;
-
-
-let coachIncomingCallUnsub = null;
-let coachPendingCallDoc = null;
-let coachPendingCallerUid = null;
-
-function startCoachCallListener() {
-  if (coachIncomingCallUnsub) coachIncomingCallUnsub();
-  coachIncomingCallUnsub = db.collection('callRequests')
-    .where('calleeUid', '==', COACH_FIXED_UID)
-    .where('status', '==', 'ringing')
-    .onSnapshot(snap => {
-      snap.docChanges().forEach(change => {
-        if (change.type === 'added') {
-          const d = change.doc.data();
-          coachPendingCallDoc = change.doc.id;
-          coachPendingCallerUid = d.callerUid;
-          showCoachIncomingBanner(d.callerName || 'A member');
-        }
-      });
-    });
-}
-
-// Exposed globally so handleLogout (defined in an earlier, separately-scoped
-// <script> block) can tear down both the incoming-call listener and any
-// in-progress call's Firestore listener when the coach logs out.
-window.stopCoachCallListener = function() {
-  if (coachIncomingCallUnsub) { coachIncomingCallUnsub(); coachIncomingCallUnsub = null; }
-  if (callUnsub) { callUnsub(); callUnsub = null; }
-  coachPendingCallDoc = null;
-  coachPendingCallerUid = null;
-};
-
-function showCoachIncomingBanner(callerName) {
-  document.getElementById('coach-inc-call-from').textContent = callerName;
-  const banner = document.getElementById('coach-incoming-call-banner');
-  banner.classList.add('active');
-  if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
-  // Auto-dismiss after 30s
-  setTimeout(() => {
-    if (banner.classList.contains('active')) coachDeclineIncomingCall();
-  }, 30000);
-}
-
-async function coachAcceptIncomingCall() {
-  document.getElementById('coach-incoming-call-banner').classList.remove('active');
-  if (!coachPendingCallDoc) return;
-  if (lkRoom) { showToast('Already in a call'); return; }
-
-  const roomName = coachPendingCallDoc;
-  const callerUid = coachPendingCallerUid;
-
-  // Find caller name from allClients if available
-  const clientObj = (typeof allClients !== 'undefined' ? allClients : [])
-    .find(c => c.uid === callerUid);
-  const callerLabel = clientObj
-    ? ((clientObj.firstName || '') + ' ' + (clientObj.lastName || '')).trim()
-    : 'Member';
-
-  // Update Firestore status → accepted
-  try {
-    await db.collection('callRequests').doc(roomName).update({ status: 'accepted' });
-  } catch(e) { showToast('Could not accept: ' + e.message); return; }
-
-  // Show coach call overlay
-  showCallOverlay(callerLabel, 'Connecting…');
-  activeChatCallUid = callerUid;
-
-  // Join room as coach
-  await joinLkRoom(roomName, 'coach_' + COACH_FIXED_UID);
-  updateCallStatus('Connected');
-  startCallTimer();
-
-  // Listen for client ending the call
-  callUnsub = db.collection('callRequests').doc(roomName).onSnapshot(snap => {
-    const d = snap.data();
-    if (d && (d.status === 'ended' || d.status === 'missed')) {
-      cleanupCall();
-    }
-  });
-
-  coachPendingCallDoc = null;
-  coachPendingCallerUid = null;
-}
-
-async function coachDeclineIncomingCall() {
-  document.getElementById('coach-incoming-call-banner').classList.remove('active');
-  if (!coachPendingCallDoc) return;
-  try {
-    await db.collection('callRequests').doc(coachPendingCallDoc).update({ status: 'rejected' });
-  } catch(e) {}
-  coachPendingCallDoc = null;
-  coachPendingCallerUid = null;
-}
 </script>
 
 <script>
