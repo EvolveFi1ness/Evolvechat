@@ -3684,162 +3684,6 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
  color: var(--gold-2) !important;
 }
 
-/* ── LIVEKIT CALL STYLES (Client) ── */
-#incoming-call-banner {
- display: none;
- position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
- z-index: 9980;
- background: #121212;
- border: 1px solid rgba(74,222,128,0.35);
- border-radius: 18px;
- padding: 14px 18px;
- box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 0 1px rgba(74,222,128,0.1);
- min-width: 280px; max-width: 320px;
- animation: slideUp 0.3s cubic-bezier(0.22,1,0.36,1);
-}
-#incoming-call-banner.active { display: flex; align-items: center; gap: 12px; }
-@keyframes slideUp { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
-.inc-call-ring { width: 42px; height: 42px; border-radius: 50%; background: rgba(74,222,128,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; animation: ringPulse 0.8s ease-in-out infinite; }
-@keyframes ringPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
-.inc-call-info { flex: 1; }
-.inc-call-title { font-size: 13px; font-weight: 700; color: #e8e8e8; }
-.inc-call-sub { font-size: 11px; color: #555; margin-top: 2px; }
-.inc-call-actions { display: flex; gap: 8px; }
-.inc-accept { background: #4ade80; color: #0a0a0a; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
-.inc-accept:hover { transform: scale(1.1); }
-.inc-decline { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); border-radius: 50%; width: 38px; height: 38px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
-.inc-decline:hover { transform: scale(1.1); background: rgba(248,113,113,0.25); }
-
-/* ── Video call elements (client) ── */
-#cli-remote-video {
- position: absolute; inset: 0;
- width: 100%; height: 100%;
- object-fit: cover;
- background: #000;
- display: none;
- border-radius: 20px;
-}
-#cli-local-video {
- position: absolute;
- bottom: 130px; right: 16px;
- width: 110px; height: 82px;
- object-fit: cover;
- border-radius: 10px;
- border: 2px solid rgba(255,255,255,0.25);
- background: #111;
- display: none;
- z-index: 10;
- cursor: pointer;
- transform-origin: bottom right;
- box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-}
-.cli-video-overlay-active #cli-remote-video { display: block; }
-.cli-video-overlay-active #cli-local-video { display: block; }
-.cli-video-overlay-active .cli-call-avatar { display: none; }
-.cli-video-overlay-active .cli-call-name  { opacity: 0.75; font-size: 14px; }
-/* cli-cam-btn styles moved to call overlay block */
-
-/* Active call overlay (client) */
-#client-call-overlay {
- display: none;
- position: fixed; inset: 0; z-index: 9990;
- background: #000;
- flex-direction: column;
-}
-#client-call-overlay.active { display: flex; }
-
-/* Remote video fills the screen */
-#cli-remote-video {
- position: absolute; inset: 0;
- width: 100%; height: 100%;
- object-fit: cover;
- background: #111;
- display: none;
-}
-.cli-video-overlay-active #cli-remote-video { display: block; }
-
-/* PiP local video — bottom-right above controls */
-#cli-local-video {
- position: absolute;
- bottom: 120px; right: 16px;
- width: 100px; height: 140px;
- object-fit: cover;
- border-radius: 12px;
- border: 2px solid rgba(255,255,255,0.3);
- background: #1a1a1a;
- display: none;
- z-index: 20;
- cursor: pointer;
- box-shadow: 0 4px 20px rgba(0,0,0,0.6);
- transition: opacity 0.2s;
-}
-#cli-local-video:hover { opacity: 0.85; }
-.cli-video-overlay-active #cli-local-video { display: block; }
-
-#client-call-overlay:not(.cli-video-overlay-active) {
- background: radial-gradient(ellipse 80% 60% at 50% 30%, #1a1a1a 0%, #050505 100%);
-}
-
-/* Top info bar */
-.cli-call-info-bar {
- position: absolute; top: 0; left: 0; right: 0; z-index: 15;
- padding: 20px 24px 16px;
- background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
- display: flex; align-items: center; gap: 14px;
-}
-
-/* No-video avatar */
-.cli-call-card {
- position: absolute; inset: 0;
- display: flex; flex-direction: column; align-items: center; justify-content: center;
- pointer-events: none;
- padding-bottom: 120px;
-}
-.cli-video-overlay-active .cli-call-card { display: none; }
-
-.cli-call-avatar {
- width: 96px; height: 96px; border-radius: 50%;
- background: rgba(201,168,76,0.12);
- border: 2px solid rgba(201,168,76,0.35);
- display: flex; align-items: center; justify-content: center;
- font-size: 40px; margin-bottom: 1.25rem;
- position: relative;
-}
-.cli-call-avatar::after {
- content: '';
- position: absolute; inset: -8px; border-radius: 50%;
- border: 2px solid rgba(74,222,128,0.35);
- animation: cliCallPulse 1.8s ease-in-out infinite;
-}
-@keyframes cliCallPulse {
- 0%,100% { transform: scale(1); opacity: 0.5; }
- 50% { transform: scale(1.1); opacity: 1; }
-}
-.cli-call-name { font-weight: 700; font-size: 20px; color: #fff; }
-.cli-call-status { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 5px; letter-spacing: 0.5px; }
-.cli-call-timer { font-size: 24px; color: #4ade80; font-variant-numeric: tabular-nums; margin-top: 8px; min-height: 32px; font-family: 'Syne', sans-serif; font-weight: 700; letter-spacing: 1px; }
-
-/* Bottom controls */
-.cli-call-controls {
- position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
- display: flex; gap: 20px; justify-content: center; align-items: center;
- padding: 24px 24px 36px;
- background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
-}
-.cli-ctrl {
- width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
- font-size: 20px; display: flex; align-items: center; justify-content: center;
- transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s; backdrop-filter: blur(8px);
-}
-.cli-ctrl svg { pointer-events: none; }
-.cli-ctrl.mute { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
-.cli-ctrl.mute.active { background: rgba(248,113,113,0.25); color: #f87171; border-color: rgba(248,113,113,0.4); }
-.cli-ctrl.end { background: #ef4444; color: #fff; box-shadow: 0 6px 24px rgba(239,68,68,0.5); width: 68px; height: 68px; }
-.cli-ctrl.end:hover { background: #dc2626; transform: scale(1.08); }
-.cli-ctrl:hover:not(.end) { background: rgba(255,255,255,0.22); transform: scale(1.06); }
-.cli-cam-btn { background: rgba(255,255,255,0.15) !important; border: 1px solid rgba(255,255,255,0.2) !important; color: #fff !important; }
-.cli-cam-btn.cam-off { background: rgba(248,113,113,0.22) !important; border-color: rgba(248,113,113,0.45) !important; color: #f87171 !important; }
-
 /* ═══════════════════════════════════════════
    UI ENHANCEMENT LAYER — VISUAL POLISH
 ═══════════════════════════════════════════ */
@@ -4200,10 +4044,6 @@ html, body {
 .activity-feed     { animation: slideInUp 0.4s cubic-bezier(0.22,1,0.36,1) 0.18s both; }
 
 </style>
-
-<!-- LiveKit Client SDK -->
-<script src="https://cdn.jsdelivr.net/npm/livekit-client@2/dist/livekit-client.umd.min.js"></script>
-
 <style>
 /* ═══════════════════════════════════════════════════════
   RESPONSIVE — CLIENT APP
@@ -4289,9 +4129,6 @@ html, body {
 
  /* Calendar FAB */
  .cal-fab { right: 16px !important; bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
-
- /* Incoming call banner above nav */
- #incoming-call-banner { bottom: calc(72px + env(safe-area-inset-bottom)) !important; }
 
  /* Overflow protection */
  .web-main { overflow-x: hidden; }
@@ -4422,14 +4259,6 @@ img, video, iframe { max-width: 100%; }
  .pp-header { padding: 1.25rem !important; margin-bottom: 1.25rem !important; }
  .pp-name { font-size: 18px !important; }
  .pp-email { font-size: 12px !important; }
-
- /* ── Call screen ── */
- .cli-call-avatar { width: 80px !important; height: 80px !important; font-size: 32px !important; }
- .cli-call-name { font-size: 18px !important; }
- .cli-call-timer { font-size: 20px !important; }
- .cli-call-controls { padding: 16px 16px calc(24px + env(safe-area-inset-bottom)) !important; gap: 16px !important; }
- .cli-ctrl { width: 52px !important; height: 52px !important; font-size: 18px !important; }
- .cli-ctrl.end { width: 60px !important; height: 60px !important; }
 
  /* ── Notification panel full width on mobile ── */
  .client-notif-panel { left: 8px !important; right: 8px !important; width: auto !important; top: 8px !important; }
@@ -5546,10 +5375,6 @@ img, video, iframe { max-width: 100%; }
       <div style="font-size:14px;font-weight:700;color:#e8e8e8;font-family:'Inter',sans-serif">Your Coach</div>
       <div id="client-chat-coach-status" style="font-size:11px;color:#4ade80;margin-top:2px;font-family:'Inter',sans-serif">● Online</div>
      </div>
-     <button id="client-call-btn" onclick="clientInitiateCall()" title="Video call your coach"
-      style="width:38px;height:38px;border-radius:50%;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);color:#4ade80;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-     </button>
     </div>
     <!-- Messages: flex:1 + min-height:0 is the critical fix for overflow -->
     <div id="client-chat-messages" style="flex:1;min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
@@ -9400,7 +9225,7 @@ function subscribeClientChat(uid, coachUid) {
  if (clientChatUnsub) clientChatUnsub();
  const chatId = [uid, coachUid].sort().join('_');
  clientChatUnsub = db.collection('chats').doc(chatId).collection('messages')
-  .orderBy('createdAt','asc').limit(100)
+  .orderBy('createdAt','desc').limit(100)
   .onSnapshot(snap => {
    const area = document.getElementById('client-chat-messages');
    if (!area) return;
@@ -9409,7 +9234,10 @@ function subscribeClientChat(uid, coachUid) {
     return;
    }
    area.innerHTML = '';
-   snap.docs.forEach(doc => {
+   // Query is newest-first (so the 100-doc cap keeps the latest messages,
+   // not the oldest); reverse here so the thread still renders oldest→newest.
+   const docsAsc = [...snap.docs].reverse();
+   docsAsc.forEach(doc => {
     const m = doc.data();
     const isMe = m.senderId === uid;
     const bubble = document.createElement('div');
@@ -12361,404 +12189,7 @@ function uploadWtSetUnit(u) {
 }
 </script>
 
-<!-- ═══ INCOMING CALL BANNER ═══ -->
-<div id="incoming-call-banner">
- <div class="inc-call-ring"></div>
- <div class="inc-call-info">
-  <div class="inc-call-title">Incoming Call</div>
-  <div class="inc-call-sub" id="inc-call-from">Your Coach</div>
- </div>
- <div class="inc-call-actions">
-  <button class="inc-accept" onclick="acceptCall()" title="Accept"></button>
-  <button class="inc-decline" onclick="declineCall()" title="Decline"></button>
- </div>
-</div>
-
-<!-- ═══ ACTIVE CALL OVERLAY (Client) ═══ -->
-<div id="client-call-overlay">
- <!-- Full-screen remote video -->
- <video id="cli-remote-video" autoplay playsinline></video>
- <!-- PiP local video (top-right) -->
- <video id="cli-local-video" autoplay playsinline muted onclick="cliPipFlip()" title="Click to flip"></video>
-
- <!-- Top info bar -->
- <div class="cli-call-info-bar">
-  <div style="display:flex;flex-direction:column;gap:2px;">
-   <div class="cli-call-name" id="cli-call-name">Your Coach</div>
-   <div class="cli-call-status" id="cli-call-status">Calling…</div>
-  </div>
-  <div class="cli-call-timer" id="cli-call-timer" style="margin-left:auto;font-size:18px;"></div>
- </div>
-
- <!-- No-video avatar -->
- <div class="cli-call-card">
-  <div class="cli-call-avatar" id="cli-call-avatar">️</div>
- </div>
-
- <!-- Bottom controls -->
- <div class="cli-call-controls">
-  <!-- Mute -->
-  <button class="cli-ctrl mute" id="cli-mute-btn" onclick="cliToggleMute()" title="Mute">
-   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-  </button>
-  <!-- Camera -->
-  <button class="cli-ctrl cli-cam-btn" id="cli-cam-btn" onclick="cliToggleCamera()" title="Camera">
-   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-  </button>
-  <!-- End call -->
-  <button class="cli-ctrl end" onclick="cliEndCall()" title="End call">
-   <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
-  </button>
-  <!-- Speaker -->
-  <button class="cli-ctrl mute" id="cli-speaker-btn" onclick="cliToggleSpeaker()" title="Speaker">
-   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-  </button>
- </div>
-</div>
-
 <script>
-// ═══════════════════════════════════════════════════
-// LIVEKIT CALL — CLIENT SIDE
-// ═══════════════════════════════════════════════════
-
-const CLI_LK_URL   = 'wss://evolvechat-2bgf2ds8.livekit.cloud';
-const CLI_LK_API_KEY = 'APINy8wg8sjumEe';
-const CLI_LK_SECRET = 'Gt6UJZQxNBNeKau7FaoJ2ffJHFdeKJhrhKOkQZv3hcxB';
-
-let cliLkRoom = null;
-let cliCallTimerInterval = null;
-let cliCallSeconds = 0;
-let cliIsMuted = false;
-let pendingCallDoc = null;  // Firestore doc ID
-let callListenerUnsub = null;
-
-async function generateCliLkToken(roomName, participantIdentity) {
- const header = { alg: 'HS256', typ: 'JWT' };
- const now   = Math.floor(Date.now() / 1000);
- const payload = {
-  iss: CLI_LK_API_KEY,
-  sub: participantIdentity,
-  jti: participantIdentity + '_' + now,
-  iat: now,
-  exp: now + 3600,
-  nbf: now,
-  video: {
-   room: roomName,
-   roomJoin: true,
-   canPublish: true,
-   canSubscribe: true,
-   canPublishData: true
-  }
- };
- const enc = txt => new TextEncoder().encode(txt);
- const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf)))
-  .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
- const hdrB64 = btoa(JSON.stringify(header)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
- const payB64 = btoa(JSON.stringify(payload)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
- const signing = hdrB64 + '.' + payB64;
- const key = await crypto.subtle.importKey(
-  'raw', enc(CLI_LK_SECRET), { name:'HMAC', hash:'SHA-256' }, false, ['sign']
- );
- const sig = await crypto.subtle.sign('HMAC', key, enc(signing));
- return signing + '.' + b64url(sig);
-}
-
-// ── Listen for incoming calls after login ──
-function startCallListener(uid) {
- if (callListenerUnsub) callListenerUnsub();
- callListenerUnsub = db.collection('callRequests')
-  .where('calleeUid', '==', uid)
-  .where('status', '==', 'ringing')
-  .onSnapshot(snap => {
-   snap.docChanges().forEach(change => {
-    if (change.type === 'added') {
-     const d = change.doc.data();
-     pendingCallDoc = change.doc.id;
-     showIncomingCallBanner(d.callerName || 'Your Coach');
-    }
-   });
-  });
-}
-
-function showIncomingCallBanner(callerName) {
- document.getElementById('inc-call-from').textContent = callerName;
- const banner = document.getElementById('incoming-call-banner');
- banner.classList.add('active');
- // Vibrate if supported
- if (navigator.vibrate) navigator.vibrate([200,100,200,100,200]);
- // Auto-dismiss after 30s
- setTimeout(() => {
-  if (banner.classList.contains('active')) declineCall();
- }, 30000);
-}
-
-async function acceptCall() {
- const callerName = document.getElementById('inc-call-from').textContent || 'Your Coach';
- document.getElementById('incoming-call-banner').classList.remove('active');
- if (!pendingCallDoc) return;
- const uid = currentUid || auth.currentUser?.uid;
- try {
-  await db.collection('callRequests').doc(pendingCallDoc).update({ status: 'accepted' });
- } catch(e) {}
- // Show active call UI
- document.getElementById('cli-call-name').textContent = callerName;
- document.getElementById('client-call-overlay').classList.add('active');
- document.getElementById('cli-call-status').textContent = 'Connecting…';
- // Join room
- await cliJoinRoom(pendingCallDoc, 'client_' + uid);
- document.getElementById('cli-call-status').textContent = 'Connected';
- cliStartTimer();
- // Listen for coach ending
- db.collection('callRequests').doc(pendingCallDoc).onSnapshot(snap => {
-  const d = snap.data();
-  if (d && (d.status === 'ended' || d.status === 'missed')) {
-   cliCleanupCall();
-  }
- });
-}
-
-async function declineCall() {
- document.getElementById('incoming-call-banner').classList.remove('active');
- if (!pendingCallDoc) return;
- try {
-  await db.collection('callRequests').doc(pendingCallDoc).update({ status: 'rejected' });
- } catch(e) {}
- pendingCallDoc = null;
-}
-
-async function cliJoinRoom(roomName, identity) {
- try {
-  const token = await generateCliLkToken(roomName, identity);
-  cliLkRoom = new LivekitClient.Room({
-   adaptiveStream: true,
-   dynacast: true,
-   audioCaptureDefaults: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-  });
-  cliLkRoom.on(LivekitClient.RoomEvent.ParticipantDisconnected, () => { cliEndCall(); });
-  cliLkRoom.on(LivekitClient.RoomEvent.Disconnected, () => { cliCleanupCall(); });
-  cliLkRoom.on(LivekitClient.RoomEvent.TrackSubscribed, (track) => {
-   if (track.kind === LivekitClient.Track.Kind.Audio) {
-    const el = track.attach();
-    el.setAttribute('data-lk-cli', '1');
-    el.style.display = 'none';
-    document.body.appendChild(el);
-   } else if (track.kind === LivekitClient.Track.Kind.Video) {
-    const remoteVid = document.getElementById('cli-remote-video');
-    track.attach(remoteVid);
-    document.getElementById('client-call-overlay').classList.add('cli-video-overlay-active');
-   }
-  });
-  cliLkRoom.on(LivekitClient.RoomEvent.TrackUnsubscribed, (track) => {
-   if (track.kind === LivekitClient.Track.Kind.Video) {
-    const remoteVid = document.getElementById('cli-remote-video');
-    track.detach(remoteVid);
-    document.getElementById('client-call-overlay').classList.remove('cli-video-overlay-active');
-   }
-  });
-  await cliLkRoom.connect(CLI_LK_URL, token);
-
-  // Attach tracks from participants who were already in the room before the client joined
-  cliLkRoom.remoteParticipants.forEach(participant => {
-   participant.trackPublications.forEach(pub => {
-    if (!pub.isSubscribed || !pub.track) return;
-    if (pub.track.kind === LivekitClient.Track.Kind.Audio) {
-     const el = pub.track.attach();
-     el.setAttribute('data-lk-cli', '1');
-     el.style.display = 'none';
-     document.body.appendChild(el);
-    } else if (pub.track.kind === LivekitClient.Track.Kind.Video) {
-     const remoteVid = document.getElementById('cli-remote-video');
-     pub.track.attach(remoteVid);
-     document.getElementById('client-call-overlay').classList.add('cli-video-overlay-active');
-    }
-   });
-  });
-
-  await cliLkRoom.localParticipant.setMicrophoneEnabled(true);
-  // Enable camera (optional — user can toggle off)
-  try {
-   await cliLkRoom.localParticipant.setCameraEnabled(true);
-   const localVid = document.getElementById('cli-local-video');
-   const camTrack = cliLkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
-   if (camTrack && camTrack.track) {
-    camTrack.track.attach(localVid);
-    localVid.style.display = 'block';
-    document.getElementById('cli-cam-btn').classList.remove('cam-off');
-   }
-  } catch(camErr) {
-   // Camera permission denied — that's fine, audio-only
-   document.getElementById('cli-cam-btn').classList.add('cam-off');
-  }
- } catch(e) {
-  showToast('Call error: ' + e.message);
-  cliCleanupCall();
- }
-}
-
-function cliStartTimer() {
- cliCallSeconds = 0;
- cliCallTimerInterval = setInterval(() => {
-  cliCallSeconds++;
-  const m = String(Math.floor(cliCallSeconds/60)).padStart(2,'0');
-  const s = String(cliCallSeconds%60).padStart(2,'0');
-  document.getElementById('cli-call-timer').textContent = m + ':' + s;
- }, 1000);
-}
-
-async function cliToggleMute() {
- if (!cliLkRoom) return;
- cliIsMuted = !cliIsMuted;
- await cliLkRoom.localParticipant.setMicrophoneEnabled(!cliIsMuted);
- const btn = document.getElementById('cli-mute-btn');
- btn.classList.toggle('active', cliIsMuted);
- btn.innerHTML = cliIsMuted
-  ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`
-  : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>`;
-}
-
-function cliToggleSpeaker() {
- document.querySelectorAll('audio[data-lk-cli]').forEach(a => { a.muted = !a.muted; });
- const btn = document.getElementById('cli-speaker-btn');
- btn.classList.toggle('active');
- const off = btn.classList.contains('active');
- btn.innerHTML = off
-  ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>`
-  : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`;
-}
-
-let cliCamEnabled = true;
-async function cliToggleCamera() {
- if (!cliLkRoom) return;
- cliCamEnabled = !cliCamEnabled;
- const btn = document.getElementById('cli-cam-btn');
- const localVid = document.getElementById('cli-local-video');
- try {
-  await cliLkRoom.localParticipant.setCameraEnabled(cliCamEnabled);
-  if (cliCamEnabled) {
-   const camTrack = cliLkRoom.localParticipant.getTrackPublication(LivekitClient.Track.Source.Camera);
-   if (camTrack && camTrack.track) {
-    camTrack.track.attach(localVid);
-    localVid.style.display = 'block';
-   }
-   btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`;
-   btn.classList.remove('cam-off');
-  } else {
-   localVid.style.display = 'none';
-   btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
-   btn.classList.add('cam-off');
-  }
- } catch(e) { showToast('Camera error: ' + e.message); }
-}
-
-function cliPipFlip() {
- // Toggle local video between bottom-right corners
- const v = document.getElementById('cli-local-video');
- if (v.style.left) { v.style.left=''; v.style.right='16px'; }
- else { v.style.right=''; v.style.left='16px'; }
-}
-
-async function cliEndCall() {
- if (pendingCallDoc) {
-  db.collection('callRequests').doc(pendingCallDoc).update({ status: 'ended' }).catch(()=>{});
- }
- if (cliLkRoom) { try { await cliLkRoom.disconnect(); } catch(_){ /* disconnect may fail if already closed */ } cliLkRoom = null; }
- cliCleanupCall();
-}
-
-function cliCleanupCall() {
- if (cliCallTimerInterval) { clearInterval(cliCallTimerInterval); cliCallTimerInterval = null; }
- if (cliLkRoom) { try { cliLkRoom.disconnect(); } catch(_){ /* disconnect may fail if already closed */ } cliLkRoom = null; }
- document.querySelectorAll('audio[data-lk-cli]').forEach(a => a.remove());
- // Clean up video elements
- const remoteVid = document.getElementById('cli-remote-video');
- const localVid = document.getElementById('cli-local-video');
- if (remoteVid) { remoteVid.srcObject = null; remoteVid.style.display = 'none'; }
- if (localVid) { localVid.srcObject = null; localVid.style.display = 'none'; }
- document.getElementById('client-call-overlay').classList.remove('active', 'cli-video-overlay-active');
- document.getElementById('incoming-call-banner').classList.remove('active');
- cliIsMuted = false;
- cliCamEnabled = true;
- cliCallSeconds = 0;
- pendingCallDoc = null;
- const camBtn = document.getElementById('cli-cam-btn');
- if (camBtn) { camBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`; camBtn.classList.remove('cam-off'); }
- // Reset call button
- const btn = document.getElementById('client-call-btn');
- if (btn) { btn.style.background='rgba(74,222,128,0.08)'; btn.style.borderColor='rgba(74,222,128,0.25)'; btn.style.color='#4ade80'; btn.title='Video call your coach'; }
-}
-
-// ── Client-initiated call (client calls coach) ──
-let cliOutgoingCallUnsub = null;
-
-async function clientInitiateCall() {
- const uid = currentUid || auth.currentUser?.uid;
- if (!uid) { showToast('Please sign in first'); return; }
- if (cliLkRoom || pendingCallDoc) { showToast('Already in a call'); return; }
-
- const coachUid = COACH_FIXED_UID;
- const roomName = ['call', uid, coachUid].sort().join('_');
- pendingCallDoc = roomName;
-
- // Show calling state on overlay
- document.getElementById('client-call-overlay').classList.add('active');
- document.getElementById('cli-call-status').textContent = 'Calling…';
- document.getElementById('cli-call-timer').textContent = '';
-
- // Update call button to in-call state
- const btn = document.getElementById('client-call-btn');
- if (btn) { btn.style.background='rgba(248,113,113,0.15)'; btn.style.borderColor='rgba(248,113,113,0.4)'; btn.style.color='#f87171'; btn.title='In call'; }
-
- // Write call request to Firestore
- try {
-  await db.collection('callRequests').doc(roomName).set({
-   roomName,
-   callerUid: uid,
-   callerName: 'Member',
-   calleeUid: coachUid,
-   status: 'ringing',
-   createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
- } catch(e) { showToast('Call failed: ' + e.message); cliCleanupCall(); return; }
-
- // Listen for coach accepting / rejecting
- cliOutgoingCallUnsub = db.collection('callRequests').doc(roomName).onSnapshot(async snap => {
-  const d = snap.data();
-  if (!d) return;
-  if (d.status === 'accepted') {
-   if (cliOutgoingCallUnsub) { cliOutgoingCallUnsub(); cliOutgoingCallUnsub = null; }
-   document.getElementById('cli-call-status').textContent = 'Connected';
-   cliStartTimer();
-   await cliJoinRoom(roomName, 'client_' + uid);
-  } else if (d.status === 'rejected' || d.status === 'ended' || d.status === 'missed') {
-   if (cliOutgoingCallUnsub) { cliOutgoingCallUnsub(); cliOutgoingCallUnsub = null; }
-   showToast(d.status === 'rejected' ? 'Call declined' : 'Call ended');
-   cliCleanupCall();
-  }
- });
-
- // Auto-cancel after 30s if no answer
- setTimeout(() => {
-  if (!cliLkRoom && pendingCallDoc === roomName) {
-   db.collection('callRequests').doc(roomName).update({ status: 'missed' }).catch(()=>{});
-   if (cliOutgoingCallUnsub) { cliOutgoingCallUnsub(); cliOutgoingCallUnsub = null; }
-   showToast('No answer');
-   cliCleanupCall();
-  }
- }, 30000);
-}
-
-// Hook into auth state — start call listener after login/auto-login
-// Uses firebase auth directly so it works on page refresh AND explicit login
-firebase.auth().onAuthStateChanged(user => {
- if (user) {
-  startCallListener(user.uid);
- } else {
-  // User signed out — stop listener
-  if (callListenerUnsub) { callListenerUnsub(); callListenerUnsub = null; }
-  cliCleanupCall();
- }
-});
-
 // ═══════════════════════════════════════════════════
 // NOTIFICATION SYSTEM — CLIENT
 // ═══════════════════════════════════════════════════
@@ -12893,6 +12324,28 @@ window.pushClientNotif = addClientNotification;
 .pe-field textarea { resize:vertical;min-height:64px; }
 .pe-row-2 { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
 .pe-hint { font-size:11px;color:#444;margin-top:4px; }
+.pe-avatar-section { display:flex;align-items:center;gap:16px;margin-bottom:6px; }
+.pe-avatar-wrap { position:relative;width:76px;height:76px;flex-shrink:0; }
+.pe-avatar-preview {
+ width:76px;height:76px;border-radius:50%;overflow:hidden;
+ background:rgba(201,168,76,0.12);border:2px solid rgba(201,168,76,0.3);
+ display:flex;align-items:center;justify-content:center;
+ font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#c9a84c;
+}
+.pe-avatar-preview img { width:100%;height:100%;object-fit:cover;display:block; }
+.pe-avatar-edit-btn {
+ position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;
+ background:#c9a84c;border:2px solid #111;display:flex;align-items:center;justify-content:center;
+ cursor:pointer;padding:0;
+}
+.pe-avatar-actions { display:flex;flex-direction:column;gap:6px; }
+.pe-avatar-btn-text {
+ background:none;border:none;color:#c9a84c;font-size:12px;font-weight:700;
+ cursor:pointer;padding:0;text-align:left;letter-spacing:0.2px;
+}
+.pe-avatar-btn-text.remove { color:#888; }
+.pe-avatar-btn-text:hover { opacity:0.8; }
+.pe-avatar-hint { font-size:11px;color:#444; }
 .pe-actions { display:flex;gap:10px;margin-top:22px; }
 .pe-save-btn {
  flex:1;background:#c9a84c;border:none;color:#0a0a0a;padding:13px;
@@ -12901,11 +12354,19 @@ window.pushClientNotif = addClientNotification;
 }
 .pe-save-btn:hover { opacity:0.88; }
 .pe-save-btn:disabled { opacity:0.5;cursor:not-allowed; }
+.pe-save-btn { display:flex;align-items:center;justify-content:center;gap:8px; }
+.pe-spinner {
+ width:15px;height:15px;border-radius:50%;
+ border:2px solid rgba(10,10,10,0.3);border-top-color:#0a0a0a;
+ animation:pe-spin 0.7s linear infinite;flex-shrink:0;
+}
+@keyframes pe-spin { to { transform:rotate(360deg); } }
 .pe-cancel-btn {
  padding:13px 20px;background:none;border:1px solid #2a2a2a;color:#666;
  border-radius:12px;font-size:13px;cursor:pointer;transition:all 0.2s;
 }
 .pe-cancel-btn:hover { border-color:#444;color:#aaa; }
+.pe-cancel-btn:disabled, #pe-close-x-btn:disabled { cursor:not-allowed; }
 .pe-toast { display:none;position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
  background:#c9a84c;color:#0a0a0a;padding:10px 20px;border-radius:10px;
  font-size:13px;font-weight:700;z-index:9999;white-space:nowrap; }
@@ -12958,7 +12419,22 @@ window.pushClientNotif = addClientNotification;
    <div class="pe-title">Edit Profile</div>
    <div class="pe-sub">Your info is only visible to you and your coach</div>
   </div>
-  <button onclick="closeProfileEdit()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:2px 4px;"></button>
+  <button id="pe-close-x-btn" onclick="closeProfileEdit()" style="background:none;border:none;color:#555;font-size:22px;cursor:pointer;line-height:1;padding:2px 4px;"></button>
+ </div>
+
+ <div class="pe-avatar-section">
+  <div class="pe-avatar-wrap">
+   <div class="pe-avatar-preview" id="pe-avatar-preview">JC</div>
+   <button type="button" class="pe-avatar-edit-btn" onclick="document.getElementById('pe-photo-input').click()" title="Change photo">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+   </button>
+   <input type="file" id="pe-photo-input" accept="image/*" style="display:none" onchange="handlePeAvatarSelect(event)">
+  </div>
+  <div class="pe-avatar-actions">
+   <button type="button" class="pe-avatar-btn-text" onclick="document.getElementById('pe-photo-input').click()">Upload photo</button>
+   <button type="button" class="pe-avatar-btn-text remove" id="pe-avatar-remove-btn" onclick="removePeAvatarPhoto()" style="display:none">Remove photo</button>
+   <div class="pe-avatar-hint">JPG or PNG, up to 20MB</div>
+  </div>
  </div>
 
  <div class="pe-section-label">Body Stats</div>
@@ -13020,8 +12496,8 @@ window.pushClientNotif = addClientNotification;
  </div>
 
  <div class="pe-actions">
-  <button class="pe-cancel-btn" onclick="closeProfileEdit()">Cancel</button>
-  <button class="pe-save-btn" id="pe-save-btn" onclick="saveProfileEdit()">Save Changes</button>
+  <button class="pe-cancel-btn" id="pe-cancel-btn" onclick="closeProfileEdit()">Cancel</button>
+  <button class="pe-save-btn" id="pe-save-btn" onclick="saveProfileEdit()"><span id="pe-save-btn-spinner" class="pe-spinner" style="display:none"></span><span id="pe-save-btn-label">Save Changes</span></button>
  </div>
 </div>
 <div class="pe-toast" id="pe-toast"></div>
@@ -13029,6 +12505,33 @@ window.pushClientNotif = addClientNotification;
 <script>
 // ── PROFILE EDIT ──
 // _peCurrentData is declared near the top of the main script so loadHomeScreen can populate it before this block loads
+
+// Pending avatar-upload state (reset each time the modal opens)
+let _peSelectedPhotoDataUrl = null; // base64 data URL staged for upload on Save
+let _peRemovePhoto = false;         // true if the user wants to clear their existing photo
+
+function _setPeAvatarPreview(url, initials) {
+ const el = document.getElementById('pe-avatar-preview');
+ if (!el) return;
+ if (url) {
+  el.innerHTML = '<img src="' + url + '" alt="Profile photo">';
+ } else {
+  el.textContent = initials || '?';
+ }
+ const removeBtn = document.getElementById('pe-avatar-remove-btn');
+ if (removeBtn) removeBtn.style.display = url ? 'block' : 'none';
+}
+
+// Update the Save button's label and spinner. loading=true shows a spinner and disables it.
+function setPeSaveBtnState(label, loading) {
+ const btn     = document.getElementById('pe-save-btn');
+ const spinner = document.getElementById('pe-save-btn-spinner');
+ const lbl     = document.getElementById('pe-save-btn-label');
+ if (!btn) return;
+ btn.disabled = !!loading;
+ if (lbl) lbl.textContent = label;
+ if (spinner) spinner.style.display = loading ? 'inline-block' : 'none';
+}
 
 function _fillProfileModal(d) {
  document.getElementById('pe-age').value         = d.age || '';
@@ -13040,9 +12543,81 @@ function _fillProfileModal(d) {
  document.getElementById('pe-conditions').value   = (d.medicalConditions && d.medicalConditions.length) ? d.medicalConditions.join(', ') : '';
  document.getElementById('pe-firstname').value    = d.firstName || '';
  document.getElementById('pe-lastname').value     = d.lastName || '';
+
+ // Avatar preview — pending selection takes priority, else existing photo, else initials
+ const initials = (((d.firstName||'')[0]||'') + ((d.lastName||'')[0]||'')).toUpperCase() || '?';
+ if (_peSelectedPhotoDataUrl) {
+  _setPeAvatarPreview(_peSelectedPhotoDataUrl, initials);
+ } else if (!_peRemovePhoto && d.profilePhotoURL) {
+  _setPeAvatarPreview(d.profilePhotoURL, initials);
+ } else {
+  _setPeAvatarPreview(null, initials);
+ }
+}
+
+// Handle a file selection from the avatar file input: validate, compress, stage for upload
+function handlePeAvatarSelect(event) {
+ const file = event.target.files && event.target.files[0];
+ event.target.value = ''; // allow re-selecting the same file later
+ if (!file) return;
+ console.log('[Profile Photo] File selected:', file.name, file.type, file.size, 'bytes');
+ if (!file.type.startsWith('image/')) { showPeToast('Please select an image file', true); return; }
+ if (file.size > 20 * 1024 * 1024) { showPeToast('Image must be under 20MB', true); return; }
+
+ const reader = new FileReader();
+ reader.onload = async (ev) => {
+  try {
+   const compressed = await compressImageBase64(ev.target.result, 400, 0.82);
+   console.log('[Profile Photo] Compressed, base64 length:', compressed.length);
+   _peSelectedPhotoDataUrl = compressed;
+   _peRemovePhoto = false;
+   const initials = (((_peCurrentData.firstName||'')[0]||'') + ((_peCurrentData.lastName||'')[0]||'')).toUpperCase() || '?';
+   _setPeAvatarPreview(compressed, initials);
+   console.log('[Profile Photo] Preview updated — staged for upload on Save');
+  } catch (e) {
+   console.error('[Profile Photo] Compression FAILED:', e);
+   showPeToast('Could not process that image', true);
+  }
+ };
+ reader.onerror = () => { console.error('[Profile Photo] FileReader FAILED'); showPeToast('Could not read that image', true); };
+ reader.readAsDataURL(file);
+}
+
+// Clear the staged/existing photo (takes effect on Save)
+function removePeAvatarPhoto() {
+ _peSelectedPhotoDataUrl = null;
+ _peRemovePhoto = true;
+ const initials = (((_peCurrentData.firstName||'')[0]||'') + ((_peCurrentData.lastName||'')[0]||'')).toUpperCase() || '?';
+ _setPeAvatarPreview(null, initials);
+}
+
+// Upload a compressed base64 profile photo to Firebase Storage, return the download URL.
+// NOTE: stored under progressPhotos/{uid}/ (not a new profilePictures/ folder) so it's
+// covered by the same Storage security rules as the existing progress-photo uploads —
+// a new top-level folder would need its own rule added in the Firebase console first.
+async function uploadProfilePhotoToStorage(uid, base64DataUrl) {
+ console.log('[Profile Photo] Starting upload for uid:', uid);
+ const blob = dataURLtoBlob(base64DataUrl);
+ console.log('[Profile Photo] Blob created, size:', blob.size, 'type:', blob.type);
+ const path = `progressPhotos/${uid}/profile_photo.jpg`;
+ const ref = storage.ref(path);
+ console.log('[Profile Photo] Uploading to path:', path);
+ const uploadPromise = ref.put(blob, { contentType: 'image/jpeg' });
+ const timeoutPromise = new Promise((_, reject) =>
+  setTimeout(() => reject(new Error('Upload timed out. Check your connection or Firebase Storage rules.')), 30000)
+ );
+ const snapshot = await Promise.race([uploadPromise, timeoutPromise]);
+ console.log('[Profile Photo] Upload complete, fetching download URL…');
+ const url = await snapshot.ref.getDownloadURL();
+ console.log('[Profile Photo] Download URL:', url);
+ return url;
 }
 
 async function openProfileEdit() {
+ // Reset any pending (unsaved) avatar changes from a previous open
+ _peSelectedPhotoDataUrl = null;
+ _peRemovePhoto = false;
+
  const uid = currentUid
   || (typeof auth !== 'undefined' && auth.currentUser?.uid)
   || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
@@ -13067,8 +12642,7 @@ async function openProfileEdit() {
  document.body.style.overflow = 'hidden';
 
  // Disable save — always fetch fresh Firestore data before allowing save
- const saveBtn = document.getElementById('pe-save-btn');
- if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Loading…'; }
+ setPeSaveBtnState('Loading…', true);
 
  if (uid) {
   try {
@@ -13091,13 +12665,29 @@ async function openProfileEdit() {
  }
 
  // Re-enable save button
- if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Changes'; }
+ setPeSaveBtnState('Save Changes', false);
 }
 
+let _peIsSaving = false;
+
 function closeProfileEdit() {
+ if (_peIsSaving) {
+  showPeToast("Please wait — saving your changes…");
+  return;
+ }
  document.getElementById('pe-backdrop').classList.remove('open');
  document.getElementById('pe-modal').classList.remove('open');
  document.body.style.overflow = '';
+}
+
+function _setPeModalLocked(locked) {
+ _peIsSaving = locked;
+ const cancelBtn = document.getElementById('pe-cancel-btn');
+ const closeXBtn = document.getElementById('pe-close-x-btn');
+ if (cancelBtn) cancelBtn.disabled = locked;
+ if (closeXBtn) closeXBtn.disabled = locked;
+ if (cancelBtn) cancelBtn.style.opacity = locked ? '0.5' : '';
+ if (closeXBtn) closeXBtn.style.opacity = locked ? '0.5' : '';
 }
 
 function showPeToast(msg, isError) {
@@ -13106,7 +12696,7 @@ function showPeToast(msg, isError) {
  t.style.background = isError ? '#F87171' : '#c9a84c';
  t.style.color = isError ? '#fff' : '#0a0a0a';
  t.classList.add('show');
- setTimeout(() => t.classList.remove('show'), 2800);
+ setTimeout(() => t.classList.remove('show'), isError ? 5000 : 2800);
 }
 
 async function saveProfileEdit() {
@@ -13116,8 +12706,8 @@ async function saveProfileEdit() {
 
  if (!uid) { showPeToast('Not signed in — please refresh', true); return; }
 
- const btn = document.getElementById('pe-save-btn');
- btn.disabled = true; btn.textContent = 'Saving…';
+ _setPeModalLocked(true);
+ setPeSaveBtnState('Saving…', true);
 
  // Read fields
  const ageRaw    = document.getElementById('pe-age').value.trim();
@@ -13161,6 +12751,22 @@ async function saveProfileEdit() {
   updates.bmi = null;
  }
 
+ // Handle profile photo: upload a newly selected photo, or clear it if the user removed it
+ try {
+  if (_peSelectedPhotoDataUrl) {
+   console.log('[Profile Photo] Save clicked with a staged photo — uploading now…');
+   setPeSaveBtnState('Uploading photo…', true);
+   updates.profilePhotoURL = await uploadProfilePhotoToStorage(uid, _peSelectedPhotoDataUrl);
+   console.log('[Profile Photo] Upload succeeded, will save this URL to Firestore:', updates.profilePhotoURL);
+  } else if (_peRemovePhoto) {
+   updates.profilePhotoURL = null;
+  }
+ } catch (e) {
+  console.error('[Profile Photo] Upload FAILED — code:', e.code, '| message:', e.message, '| full error:', e);
+  showPeToast('Photo upload failed: ' + (e.code || e.message || 'unknown error'), true);
+ }
+ setPeSaveBtnState('Saving…', true);
+
  console.log('[Profile] Saving to Firestore:', updates);
 
  try {
@@ -13173,7 +12779,7 @@ async function saveProfileEdit() {
   if (!_peCurrentData.email && resolvedEmail) _peCurrentData.email = resolvedEmail;
 
   // Update cache list — skip Firestore Timestamps (not JSON-serialisable)
-  const cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','assignedWorkoutPlan','personalRecords'];
+  const cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','assignedWorkoutPlan','personalRecords','profilePhotoURL'];
   const cacheObj = {};
   cacheFields.forEach(k => {
    if (_peCurrentData[k] === undefined) return;
@@ -13183,6 +12789,10 @@ async function saveProfileEdit() {
   });
   try { safeLocalStorageSet('evolve_profile_cache', JSON.stringify(cacheObj)); } catch(e) {}
 
+  _peSelectedPhotoDataUrl = null;
+  _peRemovePhoto = false;
+
+  _setPeModalLocked(false);
   closeProfileEdit();
   showPeToast('✓ Saved!');
   refreshProfileDisplay(_peCurrentData);
@@ -13198,7 +12808,8 @@ async function saveProfileEdit() {
    showPeToast('Save failed: ' + e.message, true);
   }
  } finally {
-  btn.disabled = false; btn.textContent = 'Save Changes';
+  _setPeModalLocked(false);
+  setPeSaveBtnState('Save Changes', false);
  }
 }
 
@@ -13213,9 +12824,15 @@ function refreshProfileDisplay(data) {
  // Name + avatars
  set('pp-name',  fullName || 'Athlete');
  set('pp-email', data.email || (typeof auth !== 'undefined' && auth.currentUser?.email) || '');
+ const initials = ((first[0]||'') + (last[0]||'')).toUpperCase() || fullName[0]?.toUpperCase() || '?';
  ['home-avatar','pp-avatar','sidebar-avatar'].forEach(id => {
   const e = document.getElementById(id);
-  if (e) e.textContent = ((first[0]||'') + (last[0]||'')).toUpperCase() || fullName[0]?.toUpperCase() || '?';
+  if (!e) return;
+  if (data.profilePhotoURL) {
+   e.innerHTML = '<img src="' + data.profilePhotoURL + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;">';
+  } else {
+   e.textContent = initials;
+  }
  });
  const sn = document.getElementById('sidebar-name');
  if (sn) sn.textContent = fullName;
