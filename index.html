@@ -7665,27 +7665,6 @@ function showCompletedWorkoutView(workout, log) {
 // Fuzzy exercise name lookup — exact match first, then fuzzy word-overlap
 // (≥0.7 score, 1-char typo tolerance) — e.g. "Bycicle" finds "Bicycle" data.
 // Reads window._prevSetMap directly so it always reflects the latest fetch.
-//
-// FIX: word-overlap alone isn't enough — "Smith Bench Press" vs "Smith
-// Incline Bench Press" share 3 of 4 words (score 0.75) and used to be
-// treated as the same exercise, which meant one variant's logged sets
-// silently overwrote/impersonated the other's PREVIOUS column. Any word
-// in _EX_MODIFIER_WORDS changes the actual movement, so if it's present
-// on only one side of the comparison, the two names are never allowed
-// to match regardless of overall word-overlap score.
-const _EX_MODIFIER_WORDS = new Set([
- 'incline','decline','flat','wide','narrow','close','reverse','seated','standing',
- 'single','double','unilateral','bilateral','underhand','overhand','neutral',
- 'behind','front','rear','back','pause','deficit','sumo','conventional','trap',
- 'zercher','hack','box','pin','banded','chain'
-]);
-function _hasModifierMismatch(aT, bT) {
- const aSet = new Set(aT), bSet = new Set(bT);
- for (const w of _EX_MODIFIER_WORDS) {
-  if (aSet.has(w) !== bSet.has(w)) return true; // present on one side only
- }
- return false;
-}
 function _prevSetLookup(name) {
  const map = window._prevSetMap || {};
  const key = (name || '').toLowerCase().trim();
@@ -7696,7 +7675,6 @@ function _prevSetLookup(name) {
  let bestKey = null, bestScore = 0;
  Object.keys(map).forEach(k => {
   const kT = tkn(k);
-  if (_hasModifierMismatch(qT, kT)) return; // e.g. "incline" only on one side
   const shared = qT.filter(t => kT.some(kt =>
    kt === t || (Math.abs(kt.length - t.length) <= 1 &&
     [...t].filter((c,i) => kt[i] !== c).length <= 1)
@@ -7753,11 +7731,6 @@ async function _refreshPrevSetMap(workout, myToken) {
   const _tkn = s => s.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(Boolean);
   const _fuzzyMatch = (a, b) => {
    const aT = _tkn(a), bT = _tkn(b);
-   // Guard: a modifier word (incline/decline/flat/etc — see _EX_MODIFIER_WORDS)
-   // present on only one side means these are different exercises even if
-   // every other word overlaps (e.g. "Smith Bench Press" vs "Smith Incline
-   // Bench Press") — never let those collapse into the same canonical slot.
-   if (_hasModifierMismatch(aT, bT)) return 0;
    const shared = aT.filter(t => bT.some(kt =>
     kt === t || (Math.abs(kt.length - t.length) <= 1 &&
      [...t].filter((c,i) => kt[i] !== c).length <= 1)
@@ -11563,12 +11536,24 @@ document.addEventListener('visibilitychange', () => {
 });
 // ────────────────────────────────────────────────────────────────────────────
 
-function nutrDateKey(d) { return d.toISOString().slice(0,10); }
+function nutrDateKey(d) {
+ // Use PH local time (not UTC) so the nutrition day rolls over at midnight
+ // in the user's timezone instead of midnight UTC (which was causing the
+ // day/meals to only reset ~8 hours late, since PH is UTC+8).
+ const phStr = d.toLocaleString('en-US', { timeZone: PH_TZ });
+ const phD = new Date(phStr);
+ return phD.getFullYear() + '-' +
+  String(phD.getMonth()+1).padStart(2,'0') + '-' +
+  String(phD.getDate()).padStart(2,'0');
+}
 
 function nutrFormatDate(d) {
- const today = new Date(); today.setHours(0,0,0,0);
- const t = new Date(d); t.setHours(0,0,0,0);
- const diff = Math.round((t-today)/(86400000));
+ // Compare using PH-local calendar days (same basis as nutrDateKey) so the
+ // "Today"/"Yesterday" label never disagrees with which day's logs are shown.
+ const todayKey = nutrDateKey(new Date());
+ const dKey = nutrDateKey(d);
+ const toUtcMidnight = (key) => { const [y,m,day] = key.split('-').map(Number); return Date.UTC(y, m-1, day); };
+ const diff = Math.round((toUtcMidnight(dKey) - toUtcMidnight(todayKey)) / 86400000);
  if (diff === 0) return 'Today';
  if (diff === -1) return 'Yesterday';
  if (diff === 1) return 'Tomorrow';
