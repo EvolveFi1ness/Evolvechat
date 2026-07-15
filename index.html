@@ -95,12 +95,6 @@
    contain: layout style;
  }
 
- /* Sticky topbar — dedicated GPU layer */
- .home-topbar {
-   will-change: transform;
-   transform: translateZ(0);
- }
-
  /* Progress bar — GPU layer for width anim */
  .progress-fill {
    will-change: width;
@@ -358,18 +352,6 @@
 
  /* ════ HOME SCREEN ════ */
  #screen-home { max-width: 480px; margin: 0 auto; padding-bottom: 100px; }
-
- /* TOP BAR */
- .home-topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 1.25rem;
-  height: 58px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  position: sticky; top: 0; z-index: 50;
-  background: rgba(4,4,4,0.95);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 1px 0 rgba(212,168,67,0.05);
- }
  .home-topbar .brand {
   font-family: 'Syne', sans-serif;
   font-weight: 800;
@@ -639,8 +621,6 @@
  .activity-row:hover { background: rgba(255,255,255,0.02); }
  .activity-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
  .dot-gold { background: var(--gold); box-shadow: 0 0 8px rgba(212,168,67,0.5); }
- .dot-green { background: var(--green); box-shadow: 0 0 8px rgba(74,222,128,0.5); }
- .dot-blue { background: var(--blue); box-shadow: 0 0 8px rgba(96,165,250,0.5); }
  .activity-text { font-size: 13px; color: var(--text2); flex: 1; line-height: 1.5; }
  .activity-text strong { color: var(--text); font-weight: 600; }
  .activity-time { font-size: 11px; color: var(--text3); white-space: nowrap; }
@@ -652,10 +632,6 @@
  .home-photo-strip-header {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 10px;
- }
- .home-photo-strip-title {
-  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--text3); font-weight: 600;
  }
  .home-photo-strip-actions { display: flex; align-items: center; gap: 8px; }
  .home-photo-upload-btn {
@@ -751,7 +727,6 @@
   overflow: hidden;
   border: 1px solid rgba(255,255,255,0.1);
  }
- .log-ex-accent { display: none; }
 
  .log-ex-header {
   padding: 0;
@@ -893,29 +868,6 @@
   letter-spacing: 0.3px; cursor: pointer; transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
  }
  .add-set-btn:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); background: rgba(201,168,76,0.04); }
-
- /* ── WORKOUT COMPLETED STATE ── */
- .wkt-completed-banner {
-  background: linear-gradient(135deg, rgba(61,203,114,0.12) 0%, rgba(61,203,114,0.06) 100%);
-  border: 1px solid rgba(61,203,114,0.3);
-  border-radius: 16px;
-  padding: 2rem 1.5rem;
-  text-align: center;
-  margin: 1rem;
- }
- .wkt-completed-icon { font-size: 48px; margin-bottom: 10px; }
- .wkt-completed-title { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: #3DCB72; margin-bottom: 6px; }
- .wkt-completed-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
- .wkt-completed-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 16px; }
- .wkt-completed-stat { text-align: center; }
- .wkt-completed-stat-val { font-size: 22px; font-weight: 700; color: var(--text); font-family: 'Outfit', sans-serif; }
- .wkt-completed-stat-lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
- .wkt-completed-ex-list { text-align: left; margin-top: 14px; }
- .wkt-completed-ex-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
- .wkt-completed-ex-row:last-child { border-bottom: none; }
- .wkt-completed-check { width: 20px; height: 20px; border-radius: 50%; background: rgba(61,203,114,0.15); border: 1px solid rgba(61,203,114,0.4); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 11px; color: #3DCB72; }
- .wkt-completed-ex-name { flex: 1; font-weight: 500; color: var(--text); }
- .wkt-completed-ex-detail { font-size: 11px; color: var(--muted); }
  .log-ex-card.locked { pointer-events: none; opacity: 0.6; filter: grayscale(0.3); }
  .log-ex-card.locked .set-done-btn { display: none; }
  .log-ex-card.locked .set-input { background: var(--bg3) !important; cursor: default; }
@@ -1102,39 +1054,6 @@
  .progress-photos-header { padding: 1.5rem 1.25rem 0; }
  .progress-photos-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 26px; color: var(--text); letter-spacing: -0.5px; }
  .progress-photos-sub { font-size: 13px; color: var(--text2); margin-top: 4px; margin-bottom: 1.25rem; }
-
- .upload-zone {
-  margin: 0 1.25rem 1.25rem;
-  border: 2px dashed var(--border);
-  border-radius: 18px;
-  padding: 2.5rem;
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
-  background: var(--bg2);
-  position: relative;
- }
- .upload-zone:hover, .upload-zone.drag-over { border-color: var(--gold); background: var(--gold-glow); }
- .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
- .upload-icon { font-size: 36px; margin-bottom: 10px; }
- .upload-main { font-size: 14px; color: var(--text2); margin-bottom: 4px; }
- .upload-main strong { color: var(--gold); }
- .upload-hint { font-size: 11px; color: var(--text3); }
-
- .upload-preview { margin: 0 1.25rem 1rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; display: none; }
- .up-img-wrap { position: relative; }
- .up-img-wrap img { width: 100%; max-height: 320px; object-fit: cover; display: block; }
- .up-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%); }
- .up-meta { padding: 12px 16px; }
- .up-note-field {
-  width: 100%; background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 10px; padding: 10px 12px; color: var(--text);
-  font-size: 13px; font-family: 'Inter', sans-serif; outline: none; resize: none; height: 70px;
-  transition: border-color 0.2s;
- }
- .up-note-field:focus { border-color: rgba(212,168,67,0.4); }
- .up-note-field::placeholder { color: var(--text3); }
- .up-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 16px 16px; }
  .up-cancel {
   background: transparent; border: 1px solid var(--border); color: var(--text2);
   padding: 11px; border-radius: 10px; font-family: 'Inter', sans-serif;
@@ -1420,34 +1339,6 @@
 
  /* Legacy photo grid fallback */
  .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 1.25rem; }
- .photo-card {
-  background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
-  overflow: hidden; cursor: pointer; transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
- }
- .photo-card:hover { border-color: var(--border2); transform: translateY(-2px); }
- .photo-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; max-height: 220px; }
- .photo-card-meta { padding: 10px 12px; }
- .photo-card-date { font-size: 11px; color: var(--text3); }
- .photo-card-note { font-size: 12px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
- .photo-angle-badge {
-  display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; background: var(--gold-dim); color: var(--gold);
-  border: 1px solid rgba(212,168,67,0.3); border-radius: 100px;
-  padding: 2px 7px; margin-bottom: 3px;
- }
-
- /* ── VIEW TOGGLE in progress photos header ── */
- .prog-view-toggle {
-  display: flex; gap: 4px; background: var(--bg3);
-  border: 1px solid var(--border); border-radius: 10px; padding: 3px;
-  margin: 0 1.25rem 1rem;
- }
- .pvt-btn {
-  flex: 1; padding: 8px 10px; border-radius: 8px; font-size: 11px;
-  font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-  cursor: pointer; border: none; background: transparent; color: var(--text3);
-  transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; font-family: 'Inter', sans-serif;
- }
  .pvt-btn.active { background: var(--gold); color: #0a0a0a; }
 
  /* lightbox */
@@ -1554,39 +1445,6 @@
 
  /* ── CALENDAR SCREEN (full-bleed) ── */
  #screen-calendar-full { display: none; background: var(--bg); width: 100%; min-height: 100vh; overflow-y: auto; padding-bottom: 6rem; }
-
- .fcal-page-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(5,5,5,0.92);
-  backdrop-filter: blur(12px);
-  position: sticky; top: 0; z-index: 50;
- }
- .fcal-today-btn {
-  padding: 7px 16px; border-radius: 100px;
-  background: transparent; border: 1px solid var(--border);
-  color: var(--text); font-size: 12px; font-family: 'Inter', sans-serif;
-  cursor: pointer; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; white-space: nowrap; font-weight: 500;
- }
- .fcal-today-btn:hover { border-color: rgba(212,168,67,0.4); color: var(--gold); }
- .fcal-nav-group { display: flex; gap: 2px; }
- .fcal-arrow {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: transparent; border: none;
-  color: var(--text2); font-size: 18px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; line-height: 1;
- }
- .fcal-arrow:hover { background: var(--bg3); color: var(--text); }
- .fcal-month-title { font-size: 16px; font-weight: 600; color: var(--text); font-family: 'Syne', sans-serif; margin: 0 4px; }
-
- .fcal-grid-wrap { background: var(--bg); margin: 0; overflow: hidden; }
- .fcal-dow { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--bg2); border-bottom: 1px solid var(--border); }
- .fcal-dow span { text-align: center; font-size: 10px; color: var(--text3); padding: 9px 0; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
- .fcal-dow span:first-child { color: var(--red); }
- .fcal-dow span:last-child { color: var(--blue); }
- .fcal-days { display: grid; grid-template-columns: repeat(7, 1fr); }
  .fcal-day {
   min-height: 72px; padding: 6px 5px 4px;
   border-right: 1px solid rgba(255,255,255,0.04);
@@ -1618,8 +1476,6 @@
  .fcal-ev.ev-checkin { background: rgba(167,139,250,0.15); color: #A78BFA; }
  .fcal-ev.ev-rest  { background: var(--bg4); color: var(--text3); }
  .fcal-ev.ev-mine  { background: var(--gold-dim); color: var(--gold); }
- .fcal-upcoming { padding: 14px 16px 8px; font-size: 12px; font-weight: 700; color: var(--text); border-top: 1px solid var(--border); background: var(--bg2); letter-spacing: 0.3px; }
- .fcal-ev-list { display: flex; flex-direction: column; padding: 0; }
  .cli-ev-list { display: flex; flex-direction: column; }
  .cli-ev-item {
   display: flex; align-items: flex-start; gap: 12px;
@@ -1758,43 +1614,6 @@
  }
  @keyframes gcalPop { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
  @keyframes evSlideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
-
- /* Title bar */
- .ev-modal-topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px 0;
- }
- .ev-modal-handle { display: none; }
- .ev-modal-header { display: none; }
-
- .ev-modal-drag {
-  color: rgba(255,255,255,0.3); font-size: 18px; cursor: grab; padding: 2px 6px;
- }
- .ev-modal-close {
-  width: 32px; height: 32px; border-radius: 50%;
-  background: transparent; border: none;
-  color: rgba(255,255,255,0.5); font-size: 16px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
- }
- .ev-modal-close:hover { background: rgba(255,255,255,0.08); color: var(--text); }
-
- /* Big title input */
- .ev-title-input-wrap {
-  padding: 6px 20px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
- }
- .ev-title-input {
-  width: 100%; background: transparent; border: none; outline: none;
-  font-family: 'DM Serif Display', serif; font-size: 26px; font-weight: 400;
-  color: var(--text); letter-spacing: -0.3px;
-  caret-color: var(--gold);
- }
- .ev-title-input::placeholder { color: rgba(255,255,255,0.2); }
-
- /* Type tabs row */
- .ev-type-tabs {
-  display: flex; gap: 6px; padding: 14px 20px 10px;
- }
  .ev-type-tab {
   display: flex; align-items: center; gap: 6px;
   padding: 7px 14px; border-radius: 100px;
@@ -1806,80 +1625,6 @@
  .ev-type-tab .et-icon { font-size: 14px; }
  .ev-type-tab:hover { color: var(--text); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.04); }
  .ev-type-tab.selected { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.4); color: var(--gold-2); }
-
- /* Row items (icon + content) */
- .ev-row {
-  display: flex; align-items: flex-start; gap: 14px;
-  padding: 10px 20px; transition: background 0.1s;
- }
- .ev-row:hover { background: rgba(255,255,255,0.025); }
- .ev-row-icon {
-  width: 20px; height: 20px; flex-shrink: 0; margin-top: 2px;
-  color: rgba(255,255,255,0.4);
-  display: flex; align-items: center; justify-content: center;
- }
- .ev-row-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
- .ev-row-content { flex: 1; min-width: 0; }
-
- /* Date/time display pill */
- .ev-date-pill {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; padding: 8px 14px;
-  font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text);
-  cursor: pointer; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; width: 100%;
- }
- .ev-date-pill:hover { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.05); }
- .ev-date-pill input[type=date] {
-  background: transparent; border: none; outline: none;
-  font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text);
-  cursor: pointer; flex: 1; appearance: none; -webkit-appearance: none;
-  color-scheme: dark;
- }
-
- /* Time row */
- .ev-time-inline {
-  display: flex; align-items: center; gap: 8px; margin-top: 8px;
- }
- .ev-time-input {
-  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px; padding: 7px 12px;
-  font-family: 'Outfit', sans-serif; font-size: 13px; color: var(--text);
-  outline: none; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; width: 110px; appearance: none;
-  color-scheme: dark;
- }
- .ev-time-input:focus { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.04); }
- .ev-time-sep { color: rgba(255,255,255,0.3); font-size: 13px; }
- .ev-add-time-btn {
-  background: transparent; border: none; color: var(--gold);
-  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
-  cursor: pointer; padding: 0; transition: opacity 0.15s;
- }
- .ev-add-time-btn:hover { opacity: 0.7; }
-
- /* Notes input */
- .ev-notes-input {
-  width: 100%; background: transparent; border: none; outline: none; resize: none;
-  font-family: 'Outfit', sans-serif; font-size: 14px; color: rgba(255,255,255,0.7);
-  line-height: 1.5; min-height: 36px; max-height: 100px;
-  caret-color: var(--gold);
- }
- .ev-notes-input::placeholder { color: rgba(255,255,255,0.2); }
-
- /* Footer */
- .ev-modal-footer {
-  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-  padding: 14px 20px 18px;
-  border-top: 1px solid rgba(255,255,255,0.07);
-  margin-top: 4px;
- }
- .ev-cancel-btn {
-  background: transparent; border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px; padding: 9px 20px;
-  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
-  color: rgba(255,255,255,0.5); cursor: pointer; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
- }
- .ev-cancel-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
  .ev-save-btn {
   background: var(--gold); border: none; border-radius: 8px; padding: 9px 24px;
   font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
@@ -1895,25 +1640,8 @@
  .ev-modal .ev-time-row { display: none !important; }
  .fcal-ev.ev-mine { background: var(--gold-dim); color: var(--gold); }
  .cli-badge-mine { background: var(--gold-dim); color: var(--gold); }
-
- /* FAB */
- .cal-fab {
-  position: fixed; bottom: 80px; right: calc(50% - 230px);
-  width: 56px; height: 56px; border-radius: 18px;
-  background: var(--gold); border: none; color: #0A0A0A; font-size: 26px;
-  cursor: pointer; display: none; align-items: center; justify-content: center;
-  box-shadow: 0 4px 20px rgba(212,168,67,0.5); z-index: 200; transition: transform 0.2s, opacity 0.2s, border-color 0.2s, background-color 0.2s, box-shadow 0.2s; line-height: 1;
-  font-weight: 300;
- }
- .cal-fab:hover { box-shadow: 0 6px 28px rgba(212,168,67,0.7); transform: translateY(-2px); }
  .cal-fab.visible { display: flex; }
- @media (max-width: 480px) { .cal-fab { right: 16px; } }
-
- /* PROG SUB TABS */
- .prog-subtab { transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; }
-
- /* check-in ratings */
- .ci-rating-btn { transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; }
+ @media (max-width: 480px) { }
 
  /* profile section scroll fix */
  .pp-section .pp-row .val { word-break: break-word; }
@@ -2112,14 +1840,6 @@
   color: var(--gold-2);
   border-color: rgba(201,168,76,0.35);
   box-shadow: 0 0 12px rgba(201,168,76,0.08);
- }
-
- /* Home topbar */
- .home-topbar {
-  background: rgba(5,4,7,0.93);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
  }
 
  .home-topbar .brand {
@@ -2322,35 +2042,6 @@
   font-size: 28px;
  }
 
- .upload-zone {
-  border: 2px dashed rgba(255,255,255,0.07);
-  border-radius: 22px;
-  background: rgba(255,255,255,0.015);
-  transition: all 0.25s;
- }
- .upload-zone:hover, .upload-zone.drag-over {
-  border-color: rgba(201,168,76,0.35);
-  background: rgba(201,168,76,0.04);
- }
-
- .upload-main { font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text2); }
- .upload-main strong { color: var(--gold-2); }
- .upload-hint { font-family: 'Outfit', sans-serif; font-size: 11px; }
-
- /* Photo cards */
- .photo-card {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 18px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
- }
- .photo-card:hover {
-  border-color: rgba(201,168,76,0.2);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.4);
- }
-
  /* Profile */
  .pp-header {
   background: linear-gradient(135deg, rgba(201,168,76,0.07) 0%, transparent 100%);
@@ -2453,12 +2144,6 @@
   box-shadow: 0 -8px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.05);
  }
 
- .ev-modal-title {
-  font-family: 'DM Serif Display', serif;
-  font-weight: 400;
-  font-size: 22px;
- }
-
  .ev-type-btn {
   background: rgba(255,255,255,0.025);
   border-color: rgba(255,255,255,0.07);
@@ -2471,17 +2156,6 @@
   box-shadow: 0 0 20px rgba(201,168,76,0.1);
  }
  .ev-type-btn .et-lbl { font-family: 'Outfit', sans-serif; }
-
- .ev-field input, .ev-field select, .ev-field textarea {
-  background: rgba(255,255,255,0.03);
-  border-color: rgba(255,255,255,0.07);
-  border-radius: 12px;
-  font-family: 'Outfit', sans-serif;
- }
- .ev-field input:focus, .ev-field select:focus, .ev-field textarea:focus {
-  border-color: rgba(201,168,76,0.4);
-  box-shadow: 0 0 0 3px rgba(201,168,76,0.07);
- }
 
  .ev-save-btn {
   background: linear-gradient(135deg, var(--gold-2), var(--gold));
@@ -2506,19 +2180,6 @@
   transform: translateY(-2px);
   box-shadow: 0 12px 36px rgba(0,0,0,0.3);
  }
- 
-
- /* FAB */
- .cal-fab {
-  background: linear-gradient(135deg, var(--gold-2), var(--gold));
-  border-radius: 20px;
-  box-shadow: 0 4px 24px rgba(201,168,76,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
-  transition: all 0.25s;
- }
- .cal-fab:hover {
-  box-shadow: 0 8px 36px rgba(201,168,76,0.7);
-  transform: translateY(-3px);
- }
 
  /* Step titles in onboarding */
  .step-title {
@@ -2542,18 +2203,6 @@
  /* Empty state */
  .empty-title { font-family: 'Outfit', sans-serif; font-size: 15px; font-weight: 600; color: var(--text2); }
  .empty-sub { font-family: 'Outfit', sans-serif; font-size: 12px; color: var(--text3); }
-
- /* Calendar */
- .fcal-month-title {
-  font-family: 'DM Serif Display', serif;
-  font-weight: 400;
-  font-size: 18px;
- }
-
- .fcal-page-header {
-  background: rgba(5,4,7,0.93);
-  backdrop-filter: blur(20px);
- }
 
  /* Scrollbar */
  ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -2603,8 +2252,6 @@
 
 .exrow-vid-thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;cursor:pointer;background:#1a1a1a;}
 .exrow-vid-btn{width:52px;height:52px;border-radius:10px;background:rgba(212,168,83,0.1);border:1px solid rgba(212,168,83,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:20px;color:rgba(212,168,83,0.65);}
-.logex-vid-thumb{width:50px;height:50px;border-radius:10px;object-fit:cover;flex-shrink:0;cursor:pointer;background:#1a1a1a;}
-.logex-vid-btn{width:50px;height:50px;border-radius:10px;background:rgba(212,168,83,0.1);border:1px solid rgba(212,168,83,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:18px;color:rgba(212,168,83,0.65);}
 
 
 /* ══════════════════════════════════════════
@@ -2684,46 +2331,6 @@
  background: rgba(255,255,255,0.04) !important;
 }
 
-/* Primary button */
-.btn-primary {
- background: linear-gradient(135deg, var(--gold-2) 0%, var(--gold) 100%) !important;
- border-radius: 14px !important;
- font-family: 'Outfit', sans-serif !important;
- font-size: 14px !important;
- font-weight: 600 !important;
- letter-spacing: 0.3px !important;
- padding: 15px !important;
- box-shadow:
-  0 4px 24px rgba(201,168,76,0.35),
-  0 1px 0 rgba(255,255,255,0.15) inset,
-  0 -1px 0 rgba(0,0,0,0.2) inset !important;
- transition: all 0.25s cubic-bezier(0.22,1,0.36,1) !important;
-}
-.btn-primary:hover {
- transform: translateY(-2px) !important;
- box-shadow: 0 8px 32px rgba(201,168,76,0.45), 0 1px 0 rgba(255,255,255,0.2) inset !important;
- background: linear-gradient(135deg, var(--gold-3) 0%, var(--gold-2) 100%) !important;
-}
-
-/* Top nav bar */
-.top-nav {
- background: linear-gradient(180deg, rgba(9,8,13,0.98) 0%, rgba(9,8,13,0.92) 100%) !important;
- border-bottom: 1px solid rgba(255,255,255,0.05) !important;
- backdrop-filter: blur(20px) !important;
- box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
-}
-.nav-logo {
- font-family: 'DM Serif Display', serif !important;
- font-weight: 400 !important;
- font-size: 22px !important;
- letter-spacing: 0 !important;
- background: linear-gradient(135deg, var(--gold-3), var(--gold-2), var(--gold)) !important;
- -webkit-background-clip: text !important;
- -webkit-text-fill-color: transparent !important;
- background-clip: text !important;
- filter: drop-shadow(0 0 10px rgba(201,168,76,0.25));
-}
-
 /* Bottom nav */
 .bottom-nav {
  background: linear-gradient(180deg, rgba(9,8,13,0.97) 0%, rgba(6,5,10,0.99) 100%) !important;
@@ -2764,30 +2371,6 @@ h1, h2, h3 {
  border-color: rgba(201,168,76,0.2) !important;
  box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(201,168,76,0.08) !important;
 }
-
-/* Stat / metric cards */
-.stat-card, .metric-card, .checkin-stat {
- background: linear-gradient(145deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%) !important;
- border: 1px solid rgba(255,255,255,0.07) !important;
- border-radius: 18px !important;
- box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 8px 32px rgba(0,0,0,0.3) !important;
- position: relative; overflow: hidden;
-}
-.stat-card::before, .metric-card::before {
- content: '';
- position: absolute; top: 0; left: 0; right: 0; height: 1px;
- background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
-}
-
-/* Photo cards */
-.photo-card {
- background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%) !important;
- border: 1px solid rgba(255,255,255,0.07) !important;
- border-radius: 18px !important;
- box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
- transition: all 0.3s cubic-bezier(0.22,1,0.36,1) !important;
-}
-.photo-card:hover { border-color: rgba(201,168,76,0.2) !important; transform: translateY(-3px) !important; }
 
 /* Angle upload slots */
 .angle-slot {
@@ -2917,21 +2500,6 @@ h1, h2, h3 {
 }
 .progress-photos-sub { font-family: 'Outfit', sans-serif !important; color: var(--muted) !important; }
 
-/* Subtabs */
-.prog-subtab {
- font-family: 'Outfit', sans-serif !important;
- font-size: 10px !important;
- letter-spacing: 2px !important;
-}
-
-/* Check-in card */
-.checkin-card, .prog-card {
- background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%) !important;
- border: 1px solid rgba(255,255,255,0.06) !important;
- border-radius: 20px !important;
- box-shadow: 0 4px 24px rgba(0,0,0,0.3) !important;
-}
-
 /* Exercise rows */
 .exercise-row {
  background: rgba(255,255,255,0.015) !important;
@@ -2950,15 +2518,6 @@ h1, h2, h3 {
  border-color: rgba(201,168,76,0.4) !important;
  color: var(--gold-2) !important;
  box-shadow: 0 0 12px rgba(201,168,76,0.08) !important;
-}
-
-/* Photo angle badge */
-.photo-angle-badge {
- font-family: 'Outfit', sans-serif !important;
- background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.06)) !important;
- border-color: rgba(201,168,76,0.3) !important;
- color: var(--gold-2) !important;
- box-shadow: 0 0 10px rgba(201,168,76,0.08) !important;
 }
 
 /* Note area */
@@ -3014,67 +2573,10 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 /* ── Hide bottom nav, use sidebar instead ── */
 .bottom-nav { display: none !important; }
 
-/* ── Top Website Header (replaces home-topbar) ── */
-.home-topbar { display: none !important; }
-.home-topbar-hidden {
- max-width: none !important;
- padding: 0 2.5rem !important;
- height: 64px;
- border-bottom: 1px solid rgba(255,255,255,0.06) !important;
- background: rgba(6,5,10,0.97) !important;
- display: flex !important;
- align-items: center !important;
- justify-content: space-between !important;
- position: sticky !important;
- top: 0 !important;
- z-index: 200 !important;
- backdrop-filter: blur(24px) !important;
- -webkit-backdrop-filter: blur(24px) !important;
-}
-
 /* Add nav links to topbar via a real top-nav approach */
 .home-topbar .brand {
  font-size: 26px !important;
  letter-spacing: 0 !important;
-}
-
-/* Website navigation tabs — horizontal in topbar */
-.web-nav {
- display: flex;
- align-items: center;
- gap: 4px;
- flex: 1;
- margin: 0 3rem;
-}
-.web-nav-item {
- display: flex;
- align-items: center;
- gap: 7px;
- padding: 8px 14px;
- border-radius: 8px;
- font-family: 'Outfit', sans-serif;
- font-size: 13px;
- font-weight: 500;
- color: var(--text2);
- cursor: pointer;
- transition: transform 0.18s, opacity 0.18s, border-color 0.18s, background-color 0.18s, box-shadow 0.18s;
- letter-spacing: 0.2px;
- white-space: nowrap;
- border: 1px solid transparent;
-}
-.web-nav-item svg {
- width: 16px; height: 16px;
- flex-shrink: 0;
- stroke: currentColor;
- fill: none;
- stroke-width: 1.8;
- stroke-linecap: round;
- stroke-linejoin: round;
-}
-.web-nav-item:hover {
- color: var(--text);
- background: rgba(255,255,255,0.04);
- border-color: rgba(255,255,255,0.06);
 }
 .web-nav-item.active {
  color: var(--gold-2);
@@ -3223,7 +2725,6 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 .angle-upload-grid { margin-left: 0 !important; margin-right: 0 !important; }
 .photo-grid { margin-left: 0 !important; margin-right: 0 !important; }
 .progress-photos-header { padding-left: 0 !important; }
-.log-header { padding-left: 0 !important; }
 .log-ex-card { margin-left: 0 !important; margin-right: 0 !important; }
 
 
@@ -3235,26 +2736,6 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
 #tab-progress-panel,
 #tab-chat-panel,
 #tab-profile-panel { padding-left: 0 !important; padding-right: 0 !important; }
-
-/* Website-style page headers */
-.page-header-web {
- margin-bottom: 2rem;
- padding-bottom: 1.5rem;
- border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.page-header-web h1 {
- font-family: 'DM Serif Display', serif;
- font-size: 36px;
- font-weight: 400;
- color: var(--text);
- letter-spacing: -0.5px;
- margin-bottom: 6px;
-}
-.page-header-web p {
- font-size: 14px;
- color: var(--text2);
- font-family: 'Outfit', sans-serif;
-}
 
 /* Wider content grids on desktop */
 .stat-strip {
@@ -3304,10 +2785,6 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
  margin: 0 auto;
  padding-bottom: 0 !important;
  overflow-y: visible !important;
-}
-.fcal-page-header {
- max-width: none;
- padding: 1rem 3rem;
 }
 /* Calendar FAB hidden on desktop, shown on mobile */
 .cal-fab { display: none !important; }
@@ -3369,8 +2846,6 @@ input, select, textarea { font-family: 'Outfit', sans-serif !important; }
  .bottom-nav { display: flex !important; }
  .web-main { padding: 1.25rem; }
  #screen-home-inner { padding-bottom: 100px !important; }
- .home-topbar { padding: 0 1.25rem !important; }
- .web-nav { display: none; }
  .stat-strip { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
@@ -3389,16 +2864,6 @@ html, body {
  font-family: 'Inter', sans-serif !important;
 }
 
-/* ── Topbar — exactly like coach ── */
-.home-topbar {
- background: var(--bg2) !important;
- border-bottom: 1px solid var(--border) !important;
- backdrop-filter: none !important;
- -webkit-backdrop-filter: none !important;
- box-shadow: none !important;
- height: 64px !important;
-}
-
 .home-topbar .brand {
  font-family: 'Syne', sans-serif !important;
  font-weight: 800 !important;
@@ -3409,22 +2874,6 @@ html, body {
  -webkit-text-fill-color: transparent !important;
  background-clip: text !important;
  filter: none !important;
-}
-
-/* Web nav items */
-.web-nav-item {
- font-family: 'Inter', sans-serif !important;
- font-size: 13px !important;
- font-weight: 500 !important;
- color: var(--muted) !important;
- border: none !important;
- border-radius: 8px !important;
- transition: all 0.15s !important;
-}
-.web-nav-item:hover {
- color: var(--text) !important;
- background: var(--bg3) !important;
- border: none !important;
 }
 .web-nav-item.active {
  color: var(--gold) !important;
@@ -3677,13 +3126,6 @@ html, body {
  font-weight: 400 !important;
 }
 
-/* Auth tag */
-.auth-tag {
- font-family: 'Inter', sans-serif !important;
- font-size: 10px !important;
- letter-spacing: 1.5px !important;
-}
-
 /* Fields — coach style */
 .field label {
  font-family: 'Inter', sans-serif !important;
@@ -3917,42 +3359,6 @@ html, body {
  letter-spacing: -0.5px !important;
 }
 .progress-photos-sub { font-family: 'Inter', sans-serif !important; }
-.upload-zone {
- border: 2px dashed var(--border) !important;
- border-radius: 18px !important;
- background: var(--bg2) !important;
- box-shadow: none !important;
-}
-.upload-zone:hover, .upload-zone.drag-over {
- border-color: var(--gold) !important;
- background: var(--gold-glow) !important;
-}
-.upload-main { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
-.upload-main strong { color: var(--gold) !important; }
-.upload-hint { font-family: 'Inter', sans-serif !important; }
-
-/* Photo cards */
-.photo-card {
- background: var(--bg2) !important;
- border: 1px solid var(--border) !important;
- border-radius: 14px !important;
- box-shadow: none !important;
- transition: all 0.2s !important;
-}
-.photo-card:hover {
- border-color: var(--border2) !important;
- transform: translateY(-2px) !important;
- box-shadow: none !important;
-}
-.photo-card-date { font-family: 'Inter', sans-serif !important; }
-.photo-card-note { font-family: 'Inter', sans-serif !important; }
-.photo-angle-badge {
- font-family: 'Inter', sans-serif !important;
- background: var(--gold-dim) !important;
- color: var(--gold) !important;
- border-color: rgba(212,168,67,0.3) !important;
- box-shadow: none !important;
-}
 
 /* Angle slots */
 .angle-slot {
@@ -4154,11 +3560,6 @@ html, body {
 .step-title { font-family: 'Syne', sans-serif !important; font-weight: 700 !important; font-size: 22px !important; }
 .step-sub { font-family: 'Inter', sans-serif !important; }
 
-/* ── Calendar ── */
-.fcal-month-title { font-family: 'Syne', sans-serif !important; font-weight: 600 !important; font-size: 16px !important; }
-.fcal-page-header { background: rgba(4,4,4,0.97) !important; backdrop-filter: blur(12px) !important; }
-.fcal-today-btn { font-family: 'Inter', sans-serif !important; }
-
 /* ── Done overlay ── */
 .done-close {
  background: var(--gold) !important;
@@ -4223,13 +3624,6 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
 /* ── Hint ── */
 .hint { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
 
-/* ── Upload zone — compact on desktop ── */
-.upload-zone {
- padding: 1.5rem 2rem !important;
- margin: 0 0 1rem !important;
-}
-.upload-icon { font-size: 28px !important; margin-bottom: 8px !important; }
-
 /* ── Angle upload grid — 4 columns, fixed height on desktop ── */
 .angle-upload-grid {
  grid-template-columns: repeat(4, 1fr) !important;
@@ -4243,7 +3637,6 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
 @media (max-width: 768px) {
  .angle-upload-grid { grid-template-columns: 1fr 1fr !important; }
  .angle-slot { height: auto !important; aspect-ratio: 3/4 !important; }
- .upload-zone { padding: 2rem 1.25rem !important; }
 }
 
 /* ── Home photo strip ── */
@@ -4269,23 +3662,6 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
 #tab-nutrition-panel input, #tab-nutrition-panel select, #tab-nutrition-panel textarea {
  font-family: 'Inter', sans-serif !important;
 }
-
-/* ── Prog subtabs ── */
-.prog-subtab {
- font-family: 'Inter', sans-serif !important;
- font-size: 11px !important;
- letter-spacing: 0.5px !important;
- text-transform: uppercase !important;
- font-weight: 600 !important;
-}
-
-/* Event modal */
-.ev-title-input {
- font-family: 'Syne', sans-serif !important;
- font-weight: 700 !important;
- font-size: 22px !important;
- letter-spacing: -0.5px !important;
-}
 .ev-save-btn {
  background: var(--gold) !important;
  border: none !important;
@@ -4301,23 +3677,12 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
  transform: none !important;
  box-shadow: 0 4px 16px rgba(212,168,67,0.4) !important;
 }
-.ev-cancel-btn { font-family: 'Inter', sans-serif !important; }
 .ev-type-tab { font-family: 'Inter', sans-serif !important; }
 .ev-type-tab.selected {
  background: rgba(212,168,67,0.12) !important;
  border-color: rgba(212,168,67,0.4) !important;
  color: var(--gold-2) !important;
 }
-
-/* ── Page header web ── */
-.page-header-web h1 {
- font-family: 'Syne', sans-serif !important;
- font-weight: 700 !important;
- font-size: 32px !important;
- letter-spacing: -1px !important;
- color: var(--text) !important;
-}
-.page-header-web p { font-family: 'Inter', sans-serif !important; color: var(--muted) !important; }
 
 /* ── LIVEKIT CALL STYLES (Client) ── */
 #incoming-call-banner {
@@ -4368,7 +3733,6 @@ input, select, textarea, button { font-family: 'Inter', sans-serif !important; }
  transform-origin: bottom right;
  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
-#cli-local-video.pip-hidden { opacity: 0; pointer-events: none; }
 .cli-video-overlay-active #cli-remote-video { display: block; }
 .cli-video-overlay-active #cli-local-video { display: block; }
 .cli-video-overlay-active .cli-call-avatar { display: none; }
@@ -6756,10 +6120,6 @@ function _notifyUnexpectedError(err) {
 window.addEventListener('error', e => _notifyUnexpectedError(e.error || e.message));
 window.addEventListener('unhandledrejection', e => _notifyUnexpectedError(e.reason));
 
-function jsAttrSafe(s) {
-  const jsEscaped = String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  return jsEscaped.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
 function escapeHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }
@@ -6813,16 +6173,6 @@ function phIsoDate() {
  return d.getFullYear() + '-' +
   String(d.getMonth()+1).padStart(2,'0') + '-' +
   String(d.getDate()).padStart(2,'0');
-}
-function phFmtDate(date, opts) {
- if (!date) return '';
- const d = (date instanceof Date) ? date : date.toDate ? date.toDate() : new Date(date);
- return d.toLocaleDateString('en-PH', { timeZone: PH_TZ, ...opts });
-}
-function phFmtTime(date) {
- if (!date) return '';
- const d = (date instanceof Date) ? date : date.toDate ? date.toDate() : new Date(date);
- return d.toLocaleTimeString('en-PH', { timeZone: PH_TZ, hour: 'numeric', minute: '2-digit' });
 }
 
 // ─────────────────────────────────────────
@@ -6889,7 +6239,6 @@ function closeWorkoutVidModal() {
  if (vidEl) { vidEl.pause(); vidEl.src = ''; }
 }
 
-function loadCloudinaryMedia() { return Promise.resolve(); }
 
 function clientPreviewVideo(name) {
  // Delegate to unified workout video modal
@@ -9156,15 +8505,6 @@ function openWktDrawer(idx) {
  document.body.style.overflow = 'hidden';
 }
 
-function repeatWorkoutFromDrawer() {
- const d = _wdrCurrentData;
- if (!d) return;
- closeWktDrawer();
- // Switch to log tab — the workout will already be loaded from today's plan
- // If no plan, we just pre-fill a note
- showToast('Load your workout in the Log tab to repeat it');
- setTab('log');
-}
 
 function closeWktDrawer(e) {
  // If called from overlay backdrop click, only close if clicking the backdrop itself
@@ -9516,7 +8856,6 @@ async function submitAnglePhotos() {
 
 // Legacy stubs for coach-side compatibility
 function handlePhotoSelect(e) { handleAngleSelect(e, 'front'); }
-function cancelPhotoUpload() { cancelAngleUpload(); }
 async function submitPhoto() { await submitAnglePhotos(); }
 
 // Compress a base64 data URL to a max width, returning a new base64 data URL
@@ -9790,7 +9129,6 @@ function setBaDivider(pct) { /* no-op */ }
 function initBaSlider()    { /* no-op */ }
 
 // Keep compat
-function setProgPhotoView(v) {}
 
 async function loadHomePhotoStrip() {
  const uid = currentUid || auth.currentUser?.uid;
@@ -10392,54 +9730,7 @@ const CLI_MONTH_NAMES = ['January','February','March','April','May','June','July
 const CLI_PIP_CLASS  = { session:'pip-session', checkin:'pip-checkin', rest:'pip-rest', other:'pip-other' };
 const CLI_BADGE_CLASS = { session:'cli-badge-session', checkin:'cli-badge-checkin', rest:'cli-badge-rest', other:'cli-badge-other' };
 
-function initClientCalendar() {
- // Always render the grid immediately so it's visible before Firestore responds
- renderCliCalGrid();
- const uid = currentUid || auth.currentUser?.uid;
- if (!uid) return;
- if (cliCalUnsub) return; // already listening
- listenMyEvents(); // also listen for personal events
- // Listen for events assigned to this client OR all clients
- const COACH_UID = (typeof COACH_FIXED_UID !== 'undefined' && COACH_FIXED_UID) || 'evolve_coach_001';
- cliCalUnsub = db.collection('calendarEvents')
-  .where('coachId', '==', COACH_UID)
-  .onSnapshot(snap => {
-   const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-   // Filter: show events assigned to 'all' OR this specific client
-   cliCalEvents = all.filter(ev => ev.assignTo === 'all' || ev.assignTo === uid);
-   cliCalEvents.sort((a,b) => a.date.localeCompare(b.date));
-   renderCliCalGrid();
-   renderCliEvList();
-  }, err => {
-   // Fallback without ordering
-   db.collection('calendarEvents')
-    .where('coachId', '==', COACH_UID)
-    .onSnapshot(snap => {
-     const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-     cliCalEvents = all.filter(ev => ev.assignTo === 'all' || ev.assignTo === uid);
-     cliCalEvents.sort((a,b) => a.date.localeCompare(b.date));
-     renderCliCalGrid();
-     renderCliEvList();
-    });
-  });
-}
 
-function cliCalPrev() {
- cliCalMonth--;
- if (cliCalMonth < 0) { cliCalMonth = 11; cliCalYear--; }
- renderCliCalGrid();
-}
-function cliCalNext() {
- cliCalMonth++;
- if (cliCalMonth > 11) { cliCalMonth = 0; cliCalYear++; }
- renderCliCalGrid();
-}
-function cliCalGoToday() {
- const now = (typeof phNow === 'function') ? phNow() : new Date();
- cliCalYear = now.getFullYear();
- cliCalMonth = now.getMonth();
- renderCliCalGrid();
-}
 
 function renderCliCalGrid() {
  const monthLabelEl = document.getElementById('cli-cal-month-label');
@@ -10551,18 +9842,7 @@ function openAddEventModal(dateStr) {
  document.getElementById('ev-modal-overlay').classList.add('open');
 }
 
-function closeAddEventModal(e) {
- if (e && e.target !== document.getElementById('ev-modal-overlay')) return;
- document.getElementById('ev-modal-overlay').classList.remove('open');
-}
 
-function selectEvType(el, type) {
- document.querySelectorAll('.ev-type-btn').forEach(b => b.classList.remove('selected'));
- document.querySelectorAll('.ev-type-tab').forEach(b => b.classList.remove('selected'));
- // Select matching elements in both sets
- document.querySelectorAll(`[data-type="${type}"]`).forEach(b => b.classList.add('selected'));
- newEvType = type;
-}
 
 async function saveClientEvent() {
  const uid = currentUid || auth.currentUser?.uid;
@@ -10695,12 +9975,6 @@ function triggerReqPhotoUpload(reqId) {
 // Override photo select to intercept request fulfillment
 const _origHandlePhotoSelect = typeof handlePhotoSelect === 'function' ? handlePhotoSelect : null;
 
-function handlePhotoSelectWithReq(event) {
- // Let original preview logic run first
- if (_origHandlePhotoSelect) _origHandlePhotoSelect(event);
- // If triggered via a photo request, store the req id
- // (handled in submitPhoto override below)
-}
 
 // Patch submitPhoto to also fulfill request if activeReqId is set
 const _origSubmitPhoto = typeof window.submitPhoto === 'function' ? window.submitPhoto : null;
@@ -11329,11 +10603,6 @@ const EXLIB_DB = [
 
 let exLibFilter = 'All';
 
-function openExLib() {
- document.getElementById('exlib-overlay').style.display = 'block';
- document.body.style.overflow = 'hidden';
- renderExLib();
-}
 function closeExLib() {
  _exLibPickerMode = false;
  const overlay = document.getElementById('exlib-overlay');
@@ -11355,32 +10624,7 @@ function setExLibFilter(cat, btn) {
 }
 let _exLibPickerMode = false; // when true, tapping an exercise adds it to the custom workout builder
 
-function openExLibFromBuilder() {
- _exLibPickerMode = true;
- // Reset filters
- exLibFilter = 'All';
- document.querySelectorAll('.exlib-fbtn').forEach(b => b.classList.toggle('active', b.dataset.cat === 'All'));
- document.getElementById('exlib-search').value = '';
- // Update header
- const headerTitle = document.querySelector('#exlib-panel .exlib-header-title');
- if (headerTitle) headerTitle.textContent = 'Add from Library';
- const doneBtn = document.getElementById('exlib-done-btn');
- if (doneBtn) doneBtn.style.display = '';
- // Show overlay above the custom workout modal
- const overlay = document.getElementById('exlib-overlay');
- overlay.style.display = 'block';
- overlay.style.zIndex = '9300';
- renderExLib();
-}
 
-function closeExLibPicker() {
- _exLibPickerMode = false;
- const overlay = document.getElementById('exlib-overlay');
- overlay.style.display = 'none';
- overlay.style.zIndex = '8000';
- const headerTitle = document.getElementById('exlib-panel')?.querySelector('.exlib-header-title');
- if (headerTitle) headerTitle.textContent = 'Exercise Library';
-}
 
 function addExLibExToBuilder(name) {
  if (_cwktExercises.some(e => e.name.toLowerCase() === name.toLowerCase())) {
@@ -11503,6 +10747,34 @@ let nutrSearchTimer  = null;
 let nutrRenderOffset = 0;
 let nutrSearchResultsCache = [];
 
+// ── RECENT FOODS ─────────────────────────────
+// Keeps a small, most-recent-first list of food names the client has actually
+// logged, so the Add Food modal can surface "what did I eat last time" instead
+// of forcing a search every time.
+const NUTR_RECENT_KEY = 'evolve_recent_foods';
+const NUTR_RECENT_MAX = 20;
+
+function nutrGetRecentNames() {
+ try {
+  const raw = localStorage.getItem(NUTR_RECENT_KEY);
+  const arr = raw ? JSON.parse(raw) : [];
+  return Array.isArray(arr) ? arr : [];
+ } catch(e) { return []; }
+}
+
+function nutrTrackRecentFood(foodName) {
+ if (!foodName) return;
+ let names = nutrGetRecentNames().filter(n => n !== foodName);
+ names.unshift(foodName);
+ if (names.length > NUTR_RECENT_MAX) names = names.slice(0, NUTR_RECENT_MAX);
+ safeLocalStorageSet(NUTR_RECENT_KEY, JSON.stringify(names));
+}
+
+function nutrGetRecentFoods() {
+ const names = nutrGetRecentNames();
+ return names.map(n => NUTR_FOODS.find(f => f.food_name === n)).filter(Boolean);
+}
+
 // ── MIDNIGHT RESET ──────────────────────────────────────────────────────────
 // Tracks what "today" was the last time we checked, so we can detect a date rollover.
 let nutrLastKnownDate = nutrDateKey(new Date());
@@ -11560,11 +10832,6 @@ function nutrFormatDate(d) {
  return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
 }
 
-function nutrChangeDay(delta) {
- nutrCurrentDate = new Date(nutrCurrentDate);
- nutrCurrentDate.setDate(nutrCurrentDate.getDate() + delta);
- renderNutritionTab();
-}
 
 let _nutrInitialized = false;
 async function initClientNutrition() {
@@ -12075,25 +11342,26 @@ function renderNutrAssignedPlan() {
 // ── FOOD SEARCH ──────────────────────────────
 function openNutrFoodSearch(meal) {
  nutrSearchMeal = meal;
- nutrCatFilter = 'All';
+ const hasRecents = nutrGetRecentFoods().length > 0;
+ nutrCatFilter = hasRecents ? 'Recent' : 'All';
  const modal = document.getElementById('nutr-search-modal');
  modal.style.display = 'flex'; modal.classList.add('open');
  const lbl = document.getElementById('nutr-search-meal-label');
  if (lbl) lbl.textContent = meal !== 'any' ? '→ ' + meal : '';
- // Category pills
+ // Category pills — "Recent" leads (only if there's history), then All, then real categories
  const pills = document.getElementById('nutr-cat-pills');
  if (pills) {
-  const allCats = ['All', ...NUTR_CATS];
+  const allCats = [...(hasRecents ? ['Recent'] : []), 'All', ...NUTR_CATS];
   pills.innerHTML = allCats.map(cat =>
    `<button onclick="nutrSetCat('${cat.replace(/'/g,"\'")}')" id="nutrcat-${cat.replace(/[^a-z0-9]/gi,'_')}"
     style="flex-shrink:0;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.3px;white-space:nowrap;
-        background:${cat==='All'?'rgba(201,168,76,0.15)':'transparent'};
-        color:${cat==='All'?'#c9a84c':'#555'};
-        border:1px solid ${cat==='All'?'rgba(201,168,76,0.4)':'#222'};"
-   >${cat}</button>`
+        background:${cat===nutrCatFilter?'rgba(201,168,76,0.15)':'transparent'};
+        color:${cat===nutrCatFilter?'#c9a84c':'#555'};
+        border:1px solid ${cat===nutrCatFilter?'rgba(201,168,76,0.4)':'#222'};"
+   >${cat === 'Recent' ? '🕐 Recent' : cat}</button>`
   ).join('');
  }
- // Default results — show popular / recent
+ // Default results — Recent if we have history, otherwise the full list
  nutrShowDefaultFoods();
  // Focus search
  setTimeout(() => { const inp = document.getElementById('nutr-search-input'); if(inp){ inp.value=''; inp.focus(); } }, 100);
@@ -12102,7 +11370,9 @@ function openNutrFoodSearch(meal) {
 function nutrShowDefaultFoods() {
  const res = document.getElementById('nutr-search-results');
  if (!res) return;
- const pool = nutrCatFilter === 'All' ? NUTR_FOODS : NUTR_FOODS.filter(f => f.category === nutrCatFilter);
+ const pool = nutrCatFilter === 'Recent' ? nutrGetRecentFoods()
+  : nutrCatFilter === 'All' ? NUTR_FOODS
+  : NUTR_FOODS.filter(f => f.category === nutrCatFilter);
  nutrRenderFoodList(pool, true);
 }
 
@@ -12113,7 +11383,7 @@ function closeNutrFoodSearch() {
 function nutrSetCat(cat) {
  nutrCatFilter = cat;
  // Update pill styles
- NUTR_CATS.concat(['All']).forEach(c => {
+ NUTR_CATS.concat(['All', 'Recent']).forEach(c => {
   const el = document.getElementById('nutrcat-' + c.replace(/[^a-z0-9]/gi,'_'));
   if (!el) return;
   const active = c === cat;
@@ -12139,7 +11409,9 @@ function nutrSearchFoods(q) {
  clearTimeout(nutrSearchTimer);
  nutrSearchTimer = setTimeout(() => {
   const query = q.toLowerCase().trim();
-  let pool = nutrCatFilter === 'All' ? NUTR_FOODS : NUTR_FOODS.filter(f => f.category === nutrCatFilter);
+  let pool = nutrCatFilter === 'Recent' ? nutrGetRecentFoods()
+   : nutrCatFilter === 'All' ? NUTR_FOODS
+   : NUTR_FOODS.filter(f => f.category === nutrCatFilter);
   if (query.length >= 1) {
    // Score: exact start > word start > contains
    pool = pool.map(f => {
@@ -12164,7 +11436,9 @@ function nutrRenderFoodList(items, reset) {
  const res = document.getElementById('nutr-search-results');
  if (!res) return;
  if (items.length === 0) {
-  res.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#444;font-size:14px;">No foods found.<br><span style="font-size:12px;color:#333;">Try a different search term</span></div>';
+  res.innerHTML = nutrCatFilter === 'Recent'
+   ? '<div style="text-align:center;padding:40px 20px;color:#444;font-size:14px;">No recent foods yet.<br><span style="font-size:12px;color:#333;">Foods you log will show up here next time</span></div>'
+   : '<div style="text-align:center;padding:40px 20px;color:#444;font-size:14px;">No foods found.<br><span style="font-size:12px;color:#333;">Try a different search term</span></div>';
   return;
  }
  const slice = items.slice(nutrRenderOffset, nutrRenderOffset + BATCH);
@@ -12210,20 +11484,6 @@ function nutrRenderFoodList(items, reset) {
  }
 }
 
-function nutrCatEmoji(cat) {
- const map = {
-  'Poultry':'','Beef':'','Pork':'','Seafood':'','Fish':'',
-  'Eggs & Dairy':'','Plant Protein':'🫘','Grains':'','Vegetables':'',
-  'Fruits':'','Nuts & Seeds':'','Fats & Oils':'🫒','Beverages':'',
-  'Snacks':'','Fast Food':'','Condiments':'','Breakfast':'',
-  'Supplements':'','Filipino Food':'','Philippine Brand':'',
-  'Philippine Supplement':'','Philippine Snacks':'','World Snacks':'',
-  'World Candy':'','Packaged Pastries':'','Ice Cream & Frozen':'',
-  'World Street Food':'','PH Processed':'','World Processed':'',
-  'Raw Meat':'🥩',
- };
- return map[cat] || '';
-}
 
 // ── FOOD DETAIL ──────────────────────────────
 let nutrDetailUnits = []; // [{label, grams}]
@@ -12426,19 +11686,6 @@ function nutrSelectDayType(dt) {
  if (badge) badge.style.display = (dt !== undefined && dt !== null && dt !== '__none__') ? 'none' : 'inline-block';
 }
 
-function nutrResetDayTypeSelector() {
- nutrDetailDayType = '__none__';
- const container = document.getElementById('nutr-day-type-btns');
- if (container) {
-  container.querySelectorAll('button').forEach(btn => {
-   btn.style.background = '#0d0d10';
-   btn.style.color      = '#555';
-   btn.style.border     = '1px solid #1e1e1e';
-  });
- }
- const badge = document.getElementById('nutr-day-type-required-badge');
- if (badge) badge.style.display = 'inline-block';
-}
 
 function nutrApplyDayTypeLock(lockedDt) {
  const container = document.getElementById('nutr-day-type-btns');
@@ -12475,12 +11722,6 @@ function nutrApplyDayTypeLock(lockedDt) {
  }
 }
 
-function nutrRemoveDayTypeLock() {
- const container = document.getElementById('nutr-day-type-btns');
- const hint = document.getElementById('nutr-day-type-lock-hint');
- if (hint) hint.remove();
- // Re-render will restore interactive buttons
-}
 
 function nutrRenderMealSelector() {
  document.getElementById('nutr-meal-selector-btns').innerHTML = NUTR_MEALS.map(m =>
@@ -12559,7 +11800,6 @@ function nutrSetServingUnits(multiplier) {
  nutrRenderDetailMacros();
 }
 
-function nutrSetServing(g) { nutrSetServingGrams(g); }
 
 function nutrSliderChange(val) {
  const unit = nutrDetailUnits[nutrDetailUnitIdx];
@@ -12716,6 +11956,7 @@ async function nutrConfirmAdd() {
  _nutrConfirmInFlight = true;
  try {
   await db.collection('members').doc(uid).collection('mealLogs').add(entry);
+  nutrTrackRecentFood(f.food_name);
   showClientToast(' Added to ' + nutrDetailMeal);
   closeNutrDetail();
   closeNutrFoodSearch();
@@ -12731,33 +11972,6 @@ async function nutrConfirmAdd() {
 }
 
 // Log a coach-assigned food to a client-chosen meal slot
-function nutrLogAssignedFood(logId) {
- const dateKey = nutrDateKey(nutrCurrentDate);
- const item = (nutrFoodLogs[dateKey]?.__assigned__ || []).find(i => i.logId === logId);
- if (!item) return;
-
- // Build a simple meal-picker overlay
- const overlay = document.createElement('div');
- overlay.id = 'assign-meal-picker';
- overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1100;display:flex;align-items:flex-end;justify-content:center;';
- overlay.innerHTML = `
-  <div style="width:100%;max-width:480px;background:#0f0f0f;border-radius:20px 20px 0 0;border:1px solid #1f1f1f;padding:20px 20px 32px;">
-   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-    <div style="font-size:14px;font-weight:700;color:#e8e8e8;">Log "${item.food_name}" to…</div>
-    <button onclick="document.getElementById('assign-meal-picker').remove()" style="background:none;border:none;color:#555;cursor:pointer;font-size:20px;"></button>
-   </div>
-   <div style="display:flex;flex-direction:column;gap:8px;">
-    ${NUTR_MEALS.map(meal => `
-     <button onclick="nutrConfirmLogAssigned('${logId}','${meal}')"
-      style="display:flex;align-items:center;gap:12px;background:#141414;border:1px solid #222;border-radius:12px;padding:12px 16px;color:#ddd;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;transition:border-color 0.15s;"
-      onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='#222'">
-      <span style="font-size:18px;">${MEAL_ICONS[meal]||''}</span>${meal}
-     </button>`).join('')}
-   </div>
-  </div>`;
- document.body.appendChild(overlay);
- overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-}
 
 async function nutrConfirmLogAssigned(logId, meal) {
  document.getElementById('assign-meal-picker')?.remove();
@@ -13102,10 +12316,6 @@ async function nutrEditSave() {
 }
 
 // Legacy compat stubs
-function openCliMealLogger() { openNutrFoodSearch('any'); }
-function closeCliMealLogger() { closeNutrFoodSearch(); }
-function renderCliMacroBars() { renderNutritionTab(); }
-function loadCliTodayLogs(uid) { return nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate)).then(() => renderNutritionTab()); }
 
 // Date navigation
 function nutrPrevDay() {
@@ -13126,7 +12336,6 @@ function nutrNextDay() {
 }
 
 // Alias for detail modal log button
-function nutrLogDetailFood() { nutrConfirmAdd(); }
 
 function showClientToast(msg) {
  if (typeof showToast === 'function') { showToast(msg); return; }
@@ -13620,12 +12829,6 @@ function clientMarkAllRead() {
  updateClientNotifBadge();
 }
 
-function toggleClientNotifPanel() {
- const panel = document.getElementById('client-notif-panel');
- if (!panel) return;
- clientNotifOpen = !clientNotifOpen;
- panel.classList.toggle('open', clientNotifOpen);
-}
 
 // Close panel on outside click
 document.addEventListener('click', function(e) {
@@ -13710,20 +12913,6 @@ window.pushClientNotif = addClientNotification;
 </style>
 
 <style>
-/* ── SIMPLIFICATION OVERRIDES ── */
-
-/* Flatten stat/summary cards */
-.stat-card, .home-stat-card, .home-summary-card {
-  background: rgba(255,255,255,0.03) !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
-  border-radius: 14px !important;
-  box-shadow: none !important;
-}
-.stat-card::before, .home-stat-card::before { display: none !important; }
-.stat-card:hover, .home-stat-card:hover {
-  transform: none !important;
-  box-shadow: none !important;
-}
 
 /* Simpler workout cards */
 .workout-card, .past-log-card, .wkt-card {
@@ -13740,17 +12929,6 @@ window.pushClientNotif = addClientNotification;
 .sidebar-nav-item:hover { background: rgba(255,255,255,0.04) !important; }
 .sidebar-nav-item.active { background: rgba(212,168,67,0.1) !important; box-shadow: none !important; }
 .sidebar-nav-item.active::before, .sidebar-nav-item.active::after { display: none !important; }
-
-/* Remove page decorative lines */
-.page-header::after, .tab-header::after { display: none !important; }
-
-/* Tighter spacing */
-.home-section { margin-bottom: 1.25rem !important; }
-.home-section-title {
-  font-size: 11px !important;
-  letter-spacing: 0.8px !important;
-  margin-bottom: 8px !important;
-}
 
 /* Flatten action buttons */
 .start-btn, .log-btn, .action-btn {
@@ -14556,7 +13734,6 @@ function showConfirmDialog(opts) {
 }
 .cwkt-chip-thumb img { width:100%;height:100%;object-fit:cover;border-radius:10px; }
 .cwkt-chip-thumb svg { width:20px;height:20px; }
-.cwkt-chip-thumb-icon { font-size:16px; }
 .cwkt-chip-name { font-size:13px;font-weight:700;color:#e2e2e2;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .cwkt-chip-bottom { display:flex;align-items:center;gap:8px; }
 .cwkt-chip-ctrl { display:flex;align-items:center;gap:5px;flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:5px 8px; }
