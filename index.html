@@ -12591,26 +12591,40 @@ function removePeAvatarPhoto() {
  _setPeAvatarPreview(null, initials);
 }
 
-// Upload a compressed base64 profile photo to Firebase Storage, return the download URL.
-// NOTE: stored under progressPhotos/{uid}/ (not a new profilePictures/ folder) so it's
-// covered by the same Storage security rules as the existing progress-photo uploads —
-// a new top-level folder would need its own rule added in the Firebase console first.
+// Resolve the value to store as profilePhotoURL for a compressed base64 photo.
+// Tries Firebase Storage first (gives a short CDN URL); if that fails for any
+// reason — e.g. the Storage bucket's CORS config doesn't allow this origin,
+// which shows up as a browser CORS/preflight error and a hung upload — it
+// falls back to saving the compressed base64 data URL directly in the
+// Firestore document instead. The compressed image is small (tens of KB,
+// well under Firestore's 1MB document limit), so this fallback is safe and
+// needs no Storage/CORS configuration to work.
 async function uploadProfilePhotoToStorage(uid, base64DataUrl) {
- console.log('[Profile Photo] Starting upload for uid:', uid);
- const blob = dataURLtoBlob(base64DataUrl);
- console.log('[Profile Photo] Blob created, size:', blob.size, 'type:', blob.type);
- const path = `progressPhotos/${uid}/profile_photo.jpg`;
- const ref = storage.ref(path);
- console.log('[Profile Photo] Uploading to path:', path);
- const uploadPromise = ref.put(blob, { contentType: 'image/jpeg' });
- const timeoutPromise = new Promise((_, reject) =>
-  setTimeout(() => reject(new Error('Upload timed out. Check your connection or Firebase Storage rules.')), 30000)
- );
- const snapshot = await Promise.race([uploadPromise, timeoutPromise]);
- console.log('[Profile Photo] Upload complete, fetching download URL…');
- const url = await snapshot.ref.getDownloadURL();
- console.log('[Profile Photo] Download URL:', url);
- return url;
+ try {
+  console.log('[Profile Photo] Starting Storage upload for uid:', uid);
+  const blob = dataURLtoBlob(base64DataUrl);
+  console.log('[Profile Photo] Blob created, size:', blob.size, 'type:', blob.type);
+  const path = `progressPhotos/${uid}/profile_photo.jpg`;
+  const ref = storage.ref(path);
+  console.log('[Profile Photo] Uploading to path:', path);
+  const uploadPromise = ref.put(blob, { contentType: 'image/jpeg' });
+  // Shorter timeout than before — this is now just an optimization attempt,
+  // not the only path, so we don't need the user to wait 30s for it to fail.
+  const timeoutPromise = new Promise((_, reject) =>
+   setTimeout(() => reject(new Error('Storage upload timed out')), 8000)
+  );
+  const snapshot = await Promise.race([uploadPromise, timeoutPromise]);
+  console.log('[Profile Photo] Upload complete, fetching download URL…');
+  const url = await snapshot.ref.getDownloadURL();
+  console.log('[Profile Photo] Download URL:', url);
+  return url;
+ } catch (e) {
+  // Common cause: the Storage bucket has no CORS entry for this site's
+  // origin, so the browser blocks the upload's preflight request. Rather
+  // than surface an error to the client, just store the photo inline.
+  console.warn('[Profile Photo] Storage upload failed, falling back to storing photo directly in Firestore:', e && (e.code || e.message) || e);
+  return base64DataUrl;
+ }
 }
 
 async function openProfileEdit() {
