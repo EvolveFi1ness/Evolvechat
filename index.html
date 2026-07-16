@@ -3,7 +3,7 @@
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Evolves — Client Portal</title>
+ <title>Evolve</title>
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -4821,7 +4821,7 @@ img, video, iframe { max-width: 100%; }
 
  // Build manifest as a Blob so the whole app stays a single file
  var manifest = {
-  name: "Evolve — Client Portal",
+  name: "Evolve",
   short_name: "Evolve",
   start_url: location.pathname + location.search,
   scope: location.pathname,
@@ -9340,7 +9340,7 @@ async function savePhotoSchedule() {
 // ─────────────────────────────────────────
 // BOTTOM NAV TABS
 // ─────────────────────────────────────────
-function setTab(tab) {
+function setTab(tab, _fromPopState) {
  window._currentClientTab = tab;
  const homeScreen = document.getElementById('screen-home');
  if (homeScreen) homeScreen.style.display = '';
@@ -9377,7 +9377,32 @@ function setTab(tab) {
  if (tab==='nutrition') initClientNutrition();
  if (tab==='profile')  { _refreshProfileTab(); }
  window.scrollTo({ top:0, behavior:'smooth' });
+
+ // ── Phone / browser back button support ──
+ // Each tab switch gets its own history entry so pressing back steps to the
+ // previously-viewed tab instead of exiting the installed app. Skipped when
+ // triggered BY a popstate (back press) itself, to avoid re-pushing a loop.
+ if (!_fromPopState) {
+  try {
+   if (!window._tabHistoryInit) {
+    window._tabHistoryInit = true;
+    history.replaceState({ appTab: tab }, '', location.href);
+   } else if (!history.state || history.state.appTab !== tab) {
+    history.pushState({ appTab: tab }, '', location.href);
+   }
+  } catch(e) {}
+ }
 }
+
+// Handle phone/browser back (and forward) button presses — restore whichever
+// tab that history entry belongs to instead of letting the app exit/reload.
+window.addEventListener('popstate', function(e) {
+ if (e.state && e.state.appTab && typeof setTab === 'function') {
+  setTab(e.state.appTab, true);
+ }
+});
+
+
 
 // ─────────────────────────────────────────
 // PROFILE TAB REFRESH
