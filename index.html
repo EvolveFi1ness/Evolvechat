@@ -5173,7 +5173,6 @@ img, video, iframe { max-width: 100%; }
      <div class="sidebar-user-avatar" id="sidebar-avatar">JC</div>
      <div class="sidebar-user-info">
       <div class="sidebar-user-name" id="sidebar-name">Welcome back</div>
-      <div class="sidebar-user-plan" id="sidebar-plan">⭐ Premium</div>
      </div>
     </div>
 
@@ -5217,7 +5216,7 @@ img, video, iframe { max-width: 100%; }
   <!-- ═══ TAB: HOME ═══ -->
   <div id="tab-home-panel" class="tab-visible">
    <div class="greeting-section">
-    <div class="greeting-pill"><div class="greeting-pill-dot"></div><span class="greeting-pill-text" id="greeting-time">Good Morning</span></div>
+    <div class="greeting-pill" style="display:none"><div class="greeting-pill-dot"></div><span class="greeting-pill-text" id="greeting-time">Good Morning</span></div>
     <div class="greeting-name" id="greeting-name">Welcome back</div>
     <div class="greeting-sub" id="greeting-sub">Ready to crush today's session?</div>
     <div id="home-avatar" style="display:none"></div>
@@ -5293,7 +5292,7 @@ img, video, iframe { max-width: 100%; }
 
    <!-- Sticky active-workout bar with live timer -->
    <div class="wkt-active-bar" id="wkt-active-bar">
-    <div class="wkt-bar-left">
+    <div class="wkt-bar-left" style="display:none">
      <div class="wkt-bar-dot"></div>
      <div class="wkt-bar-name" id="wkt-bar-name">Workout</div>
     </div>
@@ -5599,7 +5598,6 @@ img, video, iframe { max-width: 100%; }
      <div style="width:38px;height:38px;border-radius:50%;background:rgba(201,168,76,0.12);border:1.5px solid rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#c9a84c;flex-shrink:0;font-family:'Syne',sans-serif">E</div>
      <div style="flex:1;min-width:0">
       <div style="font-size:14px;font-weight:700;color:#e8e8e8;font-family:'Inter',sans-serif">Your Coach</div>
-      <div id="client-chat-coach-status" style="font-size:11px;color:#4ade80;margin-top:2px;font-family:'Inter',sans-serif">● Online</div>
      </div>
     </div>
     <!-- Messages: flex:1 + min-height:0 is the critical fix for overflow -->
@@ -5777,10 +5775,96 @@ img, video, iframe { max-width: 100%; }
     style="width:100%;background:#141414;border:1px solid #252525;border-radius:12px;padding:10px 36px 10px 14px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
    <button id="nutr-search-clear" onclick="nutrClearSearch()" style="display:none;position:absolute;right:26px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;cursor:pointer;font-size:16px;">✕</button>
   </div>
+  <!-- Add your own food -->
+  <div style="padding:0 16px 8px;flex-shrink:0;">
+   <button onclick="openNutrCustomFoodModal()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:12px;background:rgba(201,168,76,0.08);border:1px dashed rgba(201,168,76,0.35);color:#c9a84c;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;">
+    <span style="font-size:15px;line-height:1;">+</span> Add Your Own Food
+   </button>
+  </div>
   <!-- Category pills -->
   <div id="nutr-cat-pills" style="display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;"></div>
   <!-- Results -->
   <div id="nutr-search-results" style="flex:1;overflow-y:auto;"></div>
+ </div>
+</div>
+
+<!-- ══ CUSTOM FOOD CREATION MODAL ══ -->
+<div id="nutr-custom-food-modal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,0.88);align-items:flex-end;justify-content:center;">
+ <div style="background:#0a0a0a;border:1px solid #1e1e1e;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #1a1a1a;flex-shrink:0;">
+   <div style="font-size:15px;font-weight:800;color:#e8e8e8;font-family:'Syne',sans-serif;">Add Your Own Food</div>
+   <button onclick="closeNutrCustomFoodModal()" style="background:rgba(255,255,255,0.06);border:none;color:#888;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="padding:16px 20px;overflow-y:auto;">
+   <div style="font-size:12px;color:#555;margin-bottom:14px;">Enter the nutrition facts for one serving — you can log any amount of it after saving.</div>
+
+   <div style="margin-bottom:12px;">
+    <label style="display:block;font-size:11px;font-weight:700;color:#888;margin-bottom:5px;letter-spacing:0.3px;">FOOD NAME *</label>
+    <input id="cf-name" type="text" placeholder="e.g. Lola's Chicken Curry" maxlength="80"
+     style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+   </div>
+
+   <div style="display:flex;gap:10px;margin-bottom:12px;">
+    <div style="flex:1;">
+     <label style="display:block;font-size:11px;font-weight:700;color:#888;margin-bottom:5px;letter-spacing:0.3px;">SERVING SIZE *</label>
+     <input id="cf-serving-amount" type="number" inputmode="decimal" placeholder="1" min="0" step="any"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    </div>
+    <div style="flex:1;">
+     <label style="display:block;font-size:11px;font-weight:700;color:#888;margin-bottom:5px;letter-spacing:0.3px;">UNIT</label>
+     <select id="cf-serving-unit"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;">
+      <option value="g">g</option>
+      <option value="ml">ml</option>
+      <option value="serving">serving</option>
+      <option value="piece">piece</option>
+      <option value="cup">cup</option>
+     </select>
+    </div>
+   </div>
+   <div style="margin-bottom:16px;">
+    <label style="display:block;font-size:11px;font-weight:700;color:#888;margin-bottom:5px;letter-spacing:0.3px;">SERVING WEIGHT (grams, for scaling)</label>
+    <input id="cf-serving-grams" type="number" inputmode="decimal" placeholder="e.g. 200" min="0" step="any"
+     style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    <div style="font-size:10.5px;color:#444;margin-top:4px;">Optional — leave blank to default to 100g. Lets you log this food in grams/oz/etc. later.</div>
+   </div>
+
+   <div style="font-size:11px;font-weight:700;color:#888;letter-spacing:0.3px;margin-bottom:8px;">PER SERVING</div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+    <div>
+     <label style="display:block;font-size:11px;color:#666;margin-bottom:5px;">Calories *</label>
+     <input id="cf-calories" type="number" inputmode="decimal" placeholder="0" min="0" step="any"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    </div>
+    <div>
+     <label style="display:block;font-size:11px;color:#666;margin-bottom:5px;">Protein (g)</label>
+     <input id="cf-protein" type="number" inputmode="decimal" placeholder="0" min="0" step="any"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    </div>
+    <div>
+     <label style="display:block;font-size:11px;color:#666;margin-bottom:5px;">Carbs (g)</label>
+     <input id="cf-carbs" type="number" inputmode="decimal" placeholder="0" min="0" step="any"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    </div>
+    <div>
+     <label style="display:block;font-size:11px;color:#666;margin-bottom:5px;">Fat (g)</label>
+     <input id="cf-fat" type="number" inputmode="decimal" placeholder="0" min="0" step="any"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    </div>
+    <div>
+     <label style="display:block;font-size:11px;color:#666;margin-bottom:5px;">Fiber (g)</label>
+     <input id="cf-fiber" type="number" inputmode="decimal" placeholder="0" min="0" step="any"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    </div>
+    <div>
+     <label style="display:block;font-size:11px;color:#666;margin-bottom:5px;">Sugar (g)</label>
+     <input id="cf-sugar" type="number" inputmode="decimal" placeholder="0" min="0" step="any"
+      style="width:100%;background:#141414;border:1px solid #252525;border-radius:10px;padding:10px 12px;color:#e8e8e8;font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
+    </div>
+   </div>
+
+   <button id="cf-save-btn" onclick="nutrSaveCustomFood()" style="width:100%;padding:13px;border-radius:12px;background:linear-gradient(135deg,#e0b354,#c9a84c);border:none;color:#141414;font-size:14px;font-weight:800;cursor:pointer;font-family:'Outfit',sans-serif;margin-top:4px;">Save & Log Food</button>
+  </div>
  </div>
 </div>
 
@@ -10825,6 +10909,8 @@ let nutrCatFilter   = 'All';
 let nutrSearchTimer  = null;
 let nutrRenderOffset = 0;
 let nutrSearchResultsCache = [];
+let nutrCustomFoods  = []; // client's own custom foods, loaded from Firestore members/{uid}/customFoods
+let _nutrCustomFoodsLoaded = false;
 
 // ── RECENT FOODS ─────────────────────────────
 // Keeps a small, most-recent-first list of food names the client has actually
@@ -10961,6 +11047,13 @@ async function initClientNutrition() {
     else { nutrPlan = null; nutrPlanId = null; }
   }
  } catch(e) { console.error('initClientNutrition plan load:', e); }
+ // Load the client's own custom foods (created via "Add Your Own Food")
+ try {
+  const cfSnap = await db.collection('members').doc(uid).collection('customFoods')
+    .orderBy('createdAt', 'desc').limit(200).get();
+  nutrCustomFoods = cfSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+ } catch(e) { console.error('initClientNutrition customFoods load:', e); nutrCustomFoods = []; }
+ _nutrCustomFoodsLoaded = true;
  // Load today's logs
  await nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate));
  renderNutritionTab();
@@ -11422,22 +11515,24 @@ function renderNutrAssignedPlan() {
 function openNutrFoodSearch(meal) {
  nutrSearchMeal = meal;
  const hasRecents = nutrGetRecentFoods().length > 0;
+ const hasCustom = (nutrCustomFoods || []).length > 0;
  nutrCatFilter = hasRecents ? 'Recent' : 'All';
  const modal = document.getElementById('nutr-search-modal');
  modal.style.display = 'flex'; modal.classList.add('open');
  const lbl = document.getElementById('nutr-search-meal-label');
  if (lbl) lbl.textContent = meal !== 'any' ? '→ ' + meal : '';
- // Category pills — "Recent" leads (only if there's history), then All, then real categories
+ // Category pills — "Recent" leads (only if there's history), "My Foods" next
+ // (only if the client has created any), then All, then real categories
  const pills = document.getElementById('nutr-cat-pills');
  if (pills) {
-  const allCats = [...(hasRecents ? ['Recent'] : []), 'All', ...NUTR_CATS];
+  const allCats = [...(hasRecents ? ['Recent'] : []), ...(hasCustom ? ['My Foods'] : []), 'All', ...NUTR_CATS];
   pills.innerHTML = allCats.map(cat =>
    `<button onclick="nutrSetCat('${cat.replace(/'/g,"\'")}')" id="nutrcat-${cat.replace(/[^a-z0-9]/gi,'_')}"
     style="flex-shrink:0;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.3px;white-space:nowrap;
         background:${cat===nutrCatFilter?'rgba(201,168,76,0.15)':'transparent'};
         color:${cat===nutrCatFilter?'#c9a84c':'#555'};
         border:1px solid ${cat===nutrCatFilter?'rgba(201,168,76,0.4)':'#222'};"
-   >${cat === 'Recent' ? '🕐 Recent' : cat}</button>`
+   >${cat === 'Recent' ? '🕐 Recent' : cat === 'My Foods' ? '⭐ My Foods' : cat}</button>`
   ).join('');
  }
  // Default results — Recent if we have history, otherwise the full list
@@ -11450,7 +11545,8 @@ function nutrShowDefaultFoods() {
  const res = document.getElementById('nutr-search-results');
  if (!res) return;
  const pool = nutrCatFilter === 'Recent' ? nutrGetRecentFoods()
-  : nutrCatFilter === 'All' ? NUTR_FOODS
+  : nutrCatFilter === 'My Foods' ? (nutrCustomFoods || [])
+  : nutrCatFilter === 'All' ? [...(nutrCustomFoods || []), ...NUTR_FOODS]
   : NUTR_FOODS.filter(f => f.category === nutrCatFilter);
  nutrRenderFoodList(pool, true);
 }
@@ -11462,7 +11558,7 @@ function closeNutrFoodSearch() {
 function nutrSetCat(cat) {
  nutrCatFilter = cat;
  // Update pill styles
- NUTR_CATS.concat(['All', 'Recent']).forEach(c => {
+ NUTR_CATS.concat(['All', 'Recent', 'My Foods']).forEach(c => {
   const el = document.getElementById('nutrcat-' + c.replace(/[^a-z0-9]/gi,'_'));
   if (!el) return;
   const active = c === cat;
@@ -11489,7 +11585,8 @@ function nutrSearchFoods(q) {
  nutrSearchTimer = setTimeout(() => {
   const query = q.toLowerCase().trim();
   let pool = nutrCatFilter === 'Recent' ? nutrGetRecentFoods()
-   : nutrCatFilter === 'All' ? NUTR_FOODS
+   : nutrCatFilter === 'My Foods' ? (nutrCustomFoods || [])
+   : nutrCatFilter === 'All' ? [...(nutrCustomFoods || []), ...NUTR_FOODS]
    : NUTR_FOODS.filter(f => f.category === nutrCatFilter);
   if (query.length >= 1) {
    // Score: exact start > word start > contains
@@ -11563,6 +11660,79 @@ function nutrRenderFoodList(items, reset) {
  }
 }
 
+
+// ── CUSTOM FOOD (client-created) ─────────────
+function openNutrCustomFoodModal() {
+ // Clear the form
+ ['cf-name','cf-serving-amount','cf-serving-grams','cf-calories','cf-protein','cf-carbs','cf-fat','cf-fiber','cf-sugar'].forEach(id => {
+  const el = document.getElementById(id); if (el) el.value = '';
+ });
+ const unitEl = document.getElementById('cf-serving-unit'); if (unitEl) unitEl.value = 'g';
+ const modal = document.getElementById('nutr-custom-food-modal');
+ if (modal) modal.style.display = 'flex';
+ setTimeout(() => { const inp = document.getElementById('cf-name'); if (inp) inp.focus(); }, 100);
+}
+
+function closeNutrCustomFoodModal() {
+ const modal = document.getElementById('nutr-custom-food-modal');
+ if (modal) modal.style.display = 'none';
+}
+
+async function nutrSaveCustomFood() {
+ const name = getSanitizedValue('cf-name', 80);
+ if (!name) { showToast('Please enter a food name'); return; }
+
+ const calories = parseFloat(document.getElementById('cf-calories').value) || 0;
+ const protein  = parseFloat(document.getElementById('cf-protein').value) || 0;
+ const carbs   = parseFloat(document.getElementById('cf-carbs').value) || 0;
+ const fat    = parseFloat(document.getElementById('cf-fat').value) || 0;
+ const fiber   = parseFloat(document.getElementById('cf-fiber').value) || 0;
+ const sugar   = parseFloat(document.getElementById('cf-sugar').value) || 0;
+
+ if (calories <= 0 && protein <= 0 && carbs <= 0 && fat <= 0) {
+  showToast('Add at least calories or a macro amount'); return;
+ }
+
+ const servingAmount = parseFloat(document.getElementById('cf-serving-amount').value) || 1;
+ const servingUnit  = document.getElementById('cf-serving-unit').value || 'g';
+ let servingGrams  = parseFloat(document.getElementById('cf-serving-grams').value) || 0;
+ if (!servingGrams) servingGrams = (servingUnit === 'g' || servingUnit === 'ml') ? servingAmount : 100;
+
+ const servingLabel = `${servingAmount}${servingUnit === 'g' || servingUnit === 'ml' ? servingUnit : ' ' + servingUnit + (servingAmount === 1 ? '' : 's')}`;
+
+ const food = {
+  food_name: name,
+  category: 'My Foods',
+  serving_label: servingLabel,
+  serving_size_g: servingGrams,
+  calories, protein_g: protein, carbs_g: carbs, fat_g: fat, fiber_g: fiber, sugar_g: sugar, sodium_mg: 0,
+  notes: 'Custom food you added', isCustom: true,
+ };
+
+ const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const btn = document.getElementById('cf-save-btn');
+ if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+ try {
+  if (uid) {
+   const docRef = await db.collection('members').doc(uid).collection('customFoods').add({
+    ...food,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+   });
+   food.id = docRef.id;
+   nutrCustomFoods = [food, ...(nutrCustomFoods || [])];
+  }
+  closeNutrCustomFoodModal();
+  closeNutrFoodSearch();
+  showToast(`"${name}" added to My Foods`, 'success');
+  // Jump straight into logging this food, since that's almost always the goal
+  openNutrDetail(food);
+ } catch(e) {
+  console.error('nutrSaveCustomFood failed:', e);
+  showToast('Could not save food: ' + e.message, 'error');
+ } finally {
+  if (btn) { btn.disabled = false; btn.textContent = 'Save & Log Food'; }
+ }
+}
 
 // ── FOOD DETAIL ──────────────────────────────
 let nutrDetailUnits = []; // [{label, grams}]
