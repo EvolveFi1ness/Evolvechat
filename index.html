@@ -14705,55 +14705,55 @@ setTimeout(applySideNavState, 150);
 
 
 <!-- ══ CUSTOM WORKOUT BUILDER MODAL ══ -->
-<div id="custom-wkt-modal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,0.88);align-items:flex-end;justify-content:center;">
- <div id="custom-wkt-sheet" style="background:var(--bg3);border:1px solid rgba(30,22,12,0.14);border-radius:22px 22px 0 0;width:100%;max-width:620px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;transform:translateY(100%);transition:transform 0.32s cubic-bezier(.32,0,.18,1);">
+<div id="custom-wkt-modal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;">
+ <div id="custom-wkt-sheet" style="background:var(--bg3);border:1px solid var(--border2);border-radius:22px 22px 0 0;width:100%;max-width:620px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;transform:translateY(100%);transition:transform 0.32s cubic-bezier(.32,0,.18,1);">
   <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
    <div>
     <div style="font-size:16px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif;letter-spacing:-0.3px;">Custom Workout</div>
     <div style="font-size:12px;color:var(--text2);margin-top:2px;font-family:'Outfit',sans-serif;">Add exercises and track your session</div>
    </div>
-   <button onclick="closeCustomWorkoutBuilder()" style="background:rgba(255,255,255,0.07);border:none;color:#888;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+   <button onclick="closeCustomWorkoutBuilder()" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text2);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
   </div>
   <!-- Workout name -->
   <div style="padding:14px 20px 0;flex-shrink:0;">
    <input id="custom-wkt-name" type="text" placeholder="Workout name (e.g. Push Day, Leg Day…)" maxlength="60"
-    style="width:100%;background:var(--bg3);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
-    onfocus="this.style.borderColor='rgba(193,68,14,0.45)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"/>
+    style="width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:12px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'Outfit',sans-serif;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
+    onfocus="this.style.borderColor='rgba(193,68,14,0.45)'" onblur="this.style.borderColor='var(--border2)'"/>
   </div>
   <!-- Exercise list -->
-  <div id="custom-wkt-exercise-list" style="flex:1;overflow-y:auto;padding:14px 20px 0;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent;"></div>
+  <div id="custom-wkt-exercise-list" style="flex:1;overflow-y:auto;padding:14px 20px 0;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;"></div>
   <!-- Add exercise row -->
   <div style="padding:12px 20px 0;flex-shrink:0;">
    <div style="display:flex;gap:8px;align-items:center;">
     <input id="custom-wkt-ex-input" type="text" placeholder="Exercise name (e.g. Bench Press)" maxlength="60"
-     style="flex:1;background:var(--bg3);border:1px solid rgba(255,255,255,0.1);border-radius:11px;padding:10px 14px;color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
-     onfocus="this.style.borderColor='rgba(193,68,14,0.35)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"
+     style="flex:1;background:var(--bg4);border:1px solid var(--border2);border-radius:11px;padding:10px 14px;color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;outline:none;box-sizing:border-box;transition:border-color 0.2s;"
+     onfocus="this.style.borderColor='rgba(193,68,14,0.35)'" onblur="this.style.borderColor='var(--border2)'"
      onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomExercise();}"/>
     <button onclick="addCustomExercise()" style="padding:10px 16px;background:rgba(193,68,14,0.14);border:1px solid rgba(193,68,14,0.3);border-radius:11px;color:var(--gold);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;white-space:nowrap;transition:all 0.15s;flex-shrink:0;" onmouseover="this.style.background='rgba(193,68,14,0.22)'" onmouseout="this.style.background='rgba(193,68,14,0.14)'">+ Add</button>
    </div>
    <!-- Inline Exercise Library -->
-   <div id="cwkt-inline-lib" style="margin-top:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:13px;overflow:hidden;">
+   <div id="cwkt-inline-lib" style="margin-top:10px;background:var(--bg2);border:1px solid var(--border2);border-radius:13px;overflow:hidden;">
     <!-- Search + filters header -->
-    <div style="padding:10px 12px 8px;border-bottom:1px solid rgba(255,255,255,0.06);">
+    <div style="padding:10px 12px 8px;border-bottom:1px solid var(--border);">
      <div style="position:relative;margin-bottom:8px;">
       <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;">
        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       </span>
       <input id="cwkt-lib-search" type="text" placeholder="Search exercises…"
-       style="width:100%;padding:8px 10px 8px 30px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:9px;color:#e0e0e0;font-size:12px;font-family:'Outfit',sans-serif;outline:none;box-sizing:border-box;"
-       oninput="renderCwktInlineLib()" onfocus="this.style.borderColor='rgba(193,68,14,0.35)'" onblur="this.style.borderColor='rgba(255,255,255,0.09)'">
+       style="width:100%;padding:8px 10px 8px 30px;background:var(--bg4);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:12px;font-family:'Outfit',sans-serif;outline:none;box-sizing:border-box;"
+       oninput="renderCwktInlineLib()" onfocus="this.style.borderColor='rgba(193,68,14,0.35)'" onblur="this.style.borderColor='var(--border2)'">
      </div>
      <div id="cwkt-lib-filters" style="display:flex;gap:5px;flex-wrap:wrap;"></div>
     </div>
     <!-- Scrollable list -->
-    <div id="cwkt-lib-list" style="max-height:200px;overflow-y:auto;padding:6px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.08) transparent;"></div>
+    <div id="cwkt-lib-list" style="max-height:200px;overflow-y:auto;padding:6px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;"></div>
    </div>
   </div>
   <!-- Start button -->
   <div style="padding:16px 20px calc(20px + env(safe-area-inset-bottom));flex-shrink:0;display:flex;gap:8px;">
-   <button id="cwkt-save-tpl-btn" onclick="saveCwktAsTemplate()" disabled style="flex:0 0 auto;padding:15px 16px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;color:#aaa;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;opacity:0.45;transition:all 0.2s;white-space:nowrap;" title="Save this list of exercises as a reusable template">Save Template</button>
-   <button id="custom-wkt-start-btn" onclick="startCustomWorkout()" disabled style="flex:1;padding:15px;background:rgba(61,203,114,0.15);border:1px solid rgba(61,203,114,0.3);border-radius:14px;color:#3DCB72;font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;opacity:0.45;transition:all 0.2s;letter-spacing:0.3px;">Start Workout</button>
+   <button id="cwkt-save-tpl-btn" onclick="saveCwktAsTemplate()" disabled style="flex:0 0 auto;padding:15px 16px;background:var(--bg2);border:1px solid var(--border2);border-radius:14px;color:var(--text2);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;opacity:0.45;transition:all 0.2s;white-space:nowrap;" title="Save this list of exercises as a reusable template">Save Template</button>
+   <button id="custom-wkt-start-btn" onclick="startCustomWorkout()" disabled style="flex:1;padding:15px;background:rgba(61,203,114,0.15);border:1px solid rgba(61,203,114,0.3);border-radius:14px;color:#1F9450;font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;opacity:0.45;transition:all 0.2s;letter-spacing:0.3px;">Start Workout</button>
   </div>
  </div>
 </div>
@@ -15067,7 +15067,7 @@ function showConfirmDialog(opts) {
 <style>
 /* Custom workout modal exercise chip */
 .cwkt-ex-chip {
- background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+ background:var(--bg4);border:1px solid var(--border2);
  border-radius:var(--radius-md);padding:10px 12px;margin-bottom:8px;
  font-family:'Outfit',sans-serif;
  animation:cwkt-slide-in 0.18s ease;
@@ -15076,33 +15076,33 @@ function showConfirmDialog(opts) {
 .cwkt-chip-top { display:flex;align-items:center;gap:10px;margin-bottom:8px; }
 .cwkt-chip-thumb {
  width:42px;height:42px;border-radius:var(--radius-sm);flex-shrink:0;overflow:hidden;
- background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);
+ background:var(--bg2);border:1px solid var(--border2);
  display:flex;align-items:center;justify-content:center;
 }
 .cwkt-chip-thumb img { width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm); }
 .cwkt-chip-thumb svg { width:20px;height:20px; }
-.cwkt-chip-name { font-size:13px;font-weight:700;color:#e2e2e2;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.cwkt-chip-name { font-size:13px;font-weight:700;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .cwkt-chip-bottom { display:flex;align-items:center;gap:8px; }
-.cwkt-chip-ctrl { display:flex;align-items:center;gap:5px;flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:var(--radius-xs);padding:5px 8px; }
+.cwkt-chip-ctrl { display:flex;align-items:center;gap:5px;flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-xs);padding:5px 8px; }
 .cwkt-chip-ctrl-label { font-size:10px;color:var(--text2);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;white-space:nowrap; }
 .cwkt-sets-btn {
- width:24px;height:24px;border-radius:var(--radius-xs);border:1px solid rgba(255,255,255,0.1);
- background:rgba(255,255,255,0.06);color:#ccc;cursor:pointer;
+ width:24px;height:24px;border-radius:var(--radius-xs);border:1px solid var(--border2);
+ background:var(--bg4);color:var(--text);cursor:pointer;
  font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;
  transition:background 0.15s;line-height:1;padding:0;flex-shrink:0;
 }
-.cwkt-sets-btn:hover { background:rgba(255,255,255,0.14); }
+.cwkt-sets-btn:hover { background:var(--bg2); }
 .cwkt-sets-val { font-size:14px;font-weight:700;color:var(--text);min-width:20px;text-align:center; }
 .cwkt-ex-remove {
- background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-xs);
+ background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-xs);
  color:var(--text2);cursor:pointer;font-size:14px;width:28px;height:28px;
  display:flex;align-items:center;justify-content:center;
  padding:0;line-height:1;transition:all 0.15s;flex-shrink:0;
 }
 .cwkt-ex-remove:hover { color:#F87171;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3); }
 .cwkt-suggestion-pill {
- padding:5px 12px;border-radius:var(--radius-pill);background:rgba(255,255,255,0.05);
- border:1px solid rgba(255,255,255,0.09);color:var(--text2);font-size:11px;
+ padding:5px 12px;border-radius:var(--radius-pill);background:var(--bg2);
+ border:1px solid var(--border2);color:var(--text2);font-size:11px;
  font-family:'Outfit',sans-serif;cursor:pointer;transition:all 0.15s;white-space:nowrap;
 }
 .cwkt-suggestion-pill:hover {
@@ -15527,7 +15527,7 @@ function _initCwktInlineLib() {
  const filterWrap = document.getElementById('cwkt-lib-filters');
  if (!filterWrap) return;
  filterWrap.innerHTML = cats.map(cat =>
-  `<button onclick="setCwktLibFilter('${cat}',this)" style="padding:3px 10px;border-radius:20px;border:1px solid ${cat===_cwktLibFilter?'rgba(193,68,14,0.5)':'rgba(255,255,255,0.1)'};background:${cat===_cwktLibFilter?'rgba(193,68,14,0.12)':'rgba(255,255,255,0.04)'};color:${cat===_cwktLibFilter?'var(--gold)':'#888'};font-size:10px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;transition:all 0.15s;white-space:nowrap;">${cat}</button>`
+  `<button onclick="setCwktLibFilter('${cat}',this)" style="padding:3px 10px;border-radius:20px;border:1px solid ${cat===_cwktLibFilter?'rgba(193,68,14,0.5)':'var(--border2)'};background:${cat===_cwktLibFilter?'rgba(193,68,14,0.12)':'var(--bg4)'};color:${cat===_cwktLibFilter?'var(--gold)':'var(--text2)'};font-size:10px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;transition:all 0.15s;white-space:nowrap;">${cat}</button>`
  ).join('');
  renderCwktInlineLib();
 }
@@ -15562,12 +15562,12 @@ function renderCwktInlineLib() {
  const COLORS = typeof EXLIB_COLORS !== 'undefined' ? EXLIB_COLORS : {};
  list.innerHTML = filtered.map((ex, i) => {
   const isAdded = added.has(ex.name.toLowerCase());
-  const c = COLORS[ex.category] || { accent:'#888', bg:'rgba(255,255,255,0.08)' };
+  const c = COLORS[ex.category] || { accent:'#8A8171', bg:'var(--bg2)' };
   const abbr = CWKT_CAT_ABBR[ex.category] || ex.category.slice(0,2).toUpperCase();
   const isLast = i === filtered.length - 1;
   const safeName = ex.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-  return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:transparent;border-bottom:${isLast?'none':'1px solid rgba(255,255,255,0.05)'};transition:background 0.12s;cursor:default;"
-   onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+  return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:transparent;border-bottom:${isLast?'none':'1px solid var(--border)'};transition:background 0.12s;cursor:default;"
+   onmouseover="this.style.background='var(--bg4)'"
    onmouseout="this.style.background='transparent'">
    <!-- Exercise thumbnail with colored badge fallback -->
    <div style="width:42px;height:42px;border-radius:10px;background:${c.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid ${c.accent}33;overflow:hidden;color:${c.accent};">
@@ -15575,7 +15575,7 @@ function renderCwktInlineLib() {
    </div>
    <!-- Name + muscles -->
    <div style="flex:1;min-width:0;">
-    <div style="font-size:13px;font-weight:600;color:#e2e2e2;font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;">${ex.name}</div>
+    <div style="font-size:13px;font-weight:600;color:var(--text);font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3;">${ex.name}</div>
     <div style="font-size:11px;color:var(--text2);font-family:'Outfit',sans-serif;margin-top:1px;">${ex.muscles}</div>
    </div>
    <!-- Add / Added button -->
