@@ -8060,6 +8060,10 @@ async function _refreshPrevSetMap(workout, myToken) {
   const _tkn = s => s.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(Boolean);
   const _fuzzyMatch = (a, b) => {
    const aT = _tkn(a), bT = _tkn(b);
+   // Only tolerate typos within the SAME word count. If one name has an
+   // extra/missing word (e.g. "Smith Bench Press" vs "Smith Incline Bench
+   // Press"), that's a different exercise variant, not a typo — never merge.
+   if (aT.length !== bT.length) return 0;
    const shared = aT.filter(t => bT.some(kt =>
     kt === t || (Math.abs(kt.length - t.length) <= 1 &&
      [...t].filter((c,i) => kt[i] !== c).length <= 1)
