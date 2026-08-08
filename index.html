@@ -14705,6 +14705,11 @@ setTimeout(applySideNavState, 150);
 
 
 <!-- ══ CUSTOM WORKOUT BUILDER MODAL ══ -->
+<style>
+ #custom-wkt-name::placeholder,
+ #custom-wkt-ex-input::placeholder,
+ #cwkt-lib-search::placeholder { color: var(--text2); opacity: 1; }
+</style>
 <div id="custom-wkt-modal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,0.55);align-items:flex-end;justify-content:center;">
  <div id="custom-wkt-sheet" style="background:var(--bg3);border:1px solid var(--border2);border-radius:22px 22px 0 0;width:100%;max-width:620px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;transform:translateY(100%);transition:transform 0.32s cubic-bezier(.32,0,.18,1);">
   <!-- Header -->
