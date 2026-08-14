@@ -999,6 +999,77 @@
  }
  .complete-workout-btn:hover { background: #48d97e; }
  .complete-workout-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+ /* ── Edit-past-workout mode ── */
+ .edit-mode-bar {
+  margin: 0 12px 4px;
+  background: linear-gradient(135deg, rgba(193,68,14,0.12), rgba(193,68,14,0.04));
+  border: 1px solid rgba(193,68,14,0.35);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+ }
+ .edit-mode-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 9px; }
+ .edit-mode-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--gold); background: var(--gold-dim); border: 1px solid rgba(193,68,14,0.3);
+  padding: 4px 10px; border-radius: var(--radius-pill);
+ }
+ .edit-mode-date { font-size: 11px; color: var(--text2); font-family: 'Outfit', sans-serif; text-align: right; }
+ .edit-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+ .edit-name-lbl {
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); font-weight: 700; font-family: 'Outfit', sans-serif; flex-shrink: 0;
+ }
+ .edit-name-input {
+  flex: 1; min-width: 0;
+  background: var(--bg4); border: 1.5px solid var(--border2); border-radius: var(--radius-sm);
+  padding: 9px 12px; color: var(--text); font-family: 'Syne', sans-serif;
+  font-size: 16px; font-weight: 800; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+ }
+ .edit-name-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(193,68,14,0.1); }
+ .edit-mode-actions { display: flex; gap: 8px; }
+ .edit-cancel-btn {
+  flex: 1; padding: 11px; border-radius: var(--radius-sm);
+  background: transparent; border: 1px solid var(--border2); color: var(--text2);
+  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer;
+  transition: all 0.15s;
+ }
+ .edit-cancel-btn:hover { color: var(--red); border-color: rgba(184,64,46,0.45); background: var(--red-dim); }
+ .edit-save-btn {
+  flex: 1.4; padding: 11px; border-radius: var(--radius-sm);
+  background: var(--gold-grad); border: none; color: #fff;
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; cursor: pointer;
+  box-shadow: var(--shadow-gold); transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
+ }
+ .edit-save-btn:hover:not(:disabled) { transform: translateY(-1px); }
+ .edit-save-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+ .edit-mode-unsaved {
+  display: none; align-items: center; gap: 5px; margin-top: 9px;
+  font-size: 10.5px; color: var(--gold); font-weight: 700; font-family: 'Outfit', sans-serif;
+ }
+ .edit-mode-unsaved.show { display: inline-flex; }
+ .edit-mode-unsaved .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: wktPulse 1.6s ease-in-out infinite; }
+
+ /* Exercise card edit controls (move up/down, duplicate) */
+ .ex-edit-controls { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+ .ex-move-btn, .ex-dup-btn {
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text3);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; line-height: 1; padding: 0; font-weight: 800;
+  transition: all 0.12s; flex-shrink: 0; border-radius: 6px;
+ }
+ .ex-move-btn { width: 26px; height: 20px; }
+ .ex-dup-btn { width: 26px; height: 26px; }
+ .ex-move-btn:hover, .ex-dup-btn:hover { border-color: var(--border-gold); color: var(--gold); background: var(--gold-glow); }
+ .ex-move-btn:disabled { opacity: 0.25; cursor: default; pointer-events: none; }
+
+ /* "Edited" badge on history cards */
+ .plc-edited {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; color: var(--gold);
+  font-family: 'Outfit', sans-serif; margin-top: 3px;
+ }
  /* push log content up so sticky bar doesn't cover it — no longer needed with sticky positioning */
 
  /* ── Past logs ── */
@@ -1085,6 +1156,17 @@
   transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
  }
  .wkt-drawer-close:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .wdr-edit-btn {
+   position: absolute; top: 14px; right: 56px;
+   height: 32px; padding: 0 13px; border-radius: 100px;
+   background: var(--gold); border: none;
+   color: #fff; font-size: 12px; font-weight: 700;
+   font-family: 'Outfit', sans-serif; cursor: pointer;
+   display: flex; align-items: center; gap: 5px;
+   transition: transform 0.15s, background-color 0.15s, opacity 0.15s;
+  }
+  .wdr-edit-btn:hover { background: var(--gold-2); }
+  .wdr-edit-btn:active { transform: scale(0.96); }
 
  .wkt-drawer-body { overflow-y: auto; flex: 1; padding-bottom: 24px; }
 
@@ -5889,6 +5971,23 @@ img, video, iframe { max-width: 100%; }
     </div>
    </div>
 
+   <!-- Edit-past-workout toolbar (shown only while editing a past log) -->
+   <div id="edit-mode-bar" class="edit-mode-bar" style="display:none;">
+    <div class="edit-mode-head">
+     <span class="edit-mode-badge">✏️ Editing</span>
+     <span class="edit-mode-date" id="edit-mode-date"></span>
+    </div>
+    <div class="edit-name-row">
+     <span class="edit-name-lbl">Workout name</span>
+     <input class="edit-name-input" id="edit-wkt-name" maxlength="80" placeholder="Workout name" oninput="onEditNameInput(this.value)">
+    </div>
+    <div class="edit-mode-actions">
+     <button class="edit-cancel-btn" onclick="cancelEditWorkout()">Cancel</button>
+     <button class="edit-save-btn" id="edit-save-btn" onclick="saveEditWorkout()" disabled>Save Changes</button>
+    </div>
+    <div class="edit-mode-unsaved" id="edit-unsaved-hint"><span class="dot"></span>Unsaved changes</div>
+   </div>
+
    <!-- Exercise cards injected here (unit toggle moved per-card) -->
    <div id="log-exercises-container"></div>
 
@@ -6694,10 +6793,14 @@ img, video, iframe { max-width: 100%; }
     <span class="wkt-drawer-stat-chip" id="wdr-chip-sets"></span>
     <span class="wkt-drawer-stat-chip" id="wdr-chip-vol"></span>
    </div>
-   <button class="wkt-drawer-close" onclick="closeWktDrawer()">✕</button>
-  </div>
-  <!-- Summary strip -->
-  <div id="wdr-summary-strip" style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;"></div>
+<button class="wdr-edit-btn" onclick="editWorkoutFromHistory()">
+     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+     Edit Workout
+    </button>
+    <button class="wkt-drawer-close" onclick="closeWktDrawer()">✕</button>
+   </div>
+   <!-- Summary strip -->
+   <div id="wdr-summary-strip" style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;"></div>
   <div class="wkt-drawer-body" id="wdr-body"></div>
  </div>
 </div>
@@ -7773,7 +7876,12 @@ async function loadHomeScreen(data) {
     const hadPlan = countEx(JSON.parse(window._lastAssignedPlanJSON || '{}')) > 0;
     const hasPlan = countEx(newPlan) > 0;
     window._lastAssignedPlanJSON = planJSON;
-    if (!hasPlan && hadPlan) {
+    if (window._editingLogId) {
+     // Client is editing a past workout — never wipe the editor, just queue
+     // the new plan so it applies after the edit session ends.
+     window._pendingPlanUpdate = updated;
+     showToast('Your coach updated your workout plan. Changes apply after you finish editing.', 'success');
+    } else if (!hasPlan && hadPlan) {
      // Coach removed the plan — clear everything immediately, even mid-session.
      window._workoutLoggingActive = false;
      window._pendingPlanUpdate = null;
@@ -7869,6 +7977,9 @@ async function checkAnyCompletionToday() {
 }
 
 async function checkTodayCompletion(workout) {
+ // While the client is editing a past (completed) workout, never flip to the
+ // locked "completed today" view — the editor must stay editable until saved.
+ if (window._editingLogId) return false;
  // Returns true if the workout was completed today AND the coach hasn't reassigned
  // the plan after the completion (in which case the new workout takes priority).
  const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
@@ -8262,16 +8373,23 @@ async function buildWorkoutLogger(workout) {
       <div class="log-ex-thumb-fallback" id="ex-fallback-${exIdx}" style="display:flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(193,68,14,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></div>
       <div class="play-overlay">▶</div>
      </div>
-     <div class="log-ex-info">
-      <div class="log-ex-name">${exName}</div>
-      <div class="log-ex-muscles">${ex.detail || ''}</div>
-      <div class="log-ex-target-badge">${ex.target || ''}</div>
+      <div class="log-ex-info">
+       <div class="log-ex-name">${exName}</div>
+       <div class="log-ex-muscles">${ex.detail || ''}</div>
+       <div class="log-ex-target-badge">${ex.target || ''}</div>
+      </div>
+      <div class="ex-edit-controls">
+       <button class="ex-move-btn" onclick="moveExercise(${exIdx},-1)" title="Move exercise up">▲</button>
+       <button class="ex-move-btn" onclick="moveExercise(${exIdx},1)" title="Move exercise down">▼</button>
+      </div>
+      <button class="ex-dup-btn" onclick="duplicateExercise(${exIdx})" title="Duplicate exercise">
+       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+      <button class="ex-remove-btn" onclick="removeExercise(${exIdx})" title="Remove exercise">
+       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
      </div>
-     <button class="ex-remove-btn" onclick="removeExercise(${exIdx})" title="Remove exercise">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-     </button>
     </div>
-   </div>
    <div class="log-sets-area">
     <div class="set-table-head">
      <div class="set-th">SET</div>
@@ -8480,24 +8598,8 @@ function removeExercise(exIdx) {
  card.style.transform = 'scale(0.97)';
  setTimeout(() => {
   card.remove();
-  // Re-index remaining cards so addSet / removeSet still work
-  document.querySelectorAll('.log-ex-card').forEach((c, i) => {
-   c.dataset.exIdx = i;
-   // Update the add-set-btn onclick
-   const addBtn = c.querySelector('.add-set-btn');
-   if (addBtn) addBtn.setAttribute('onclick', `addSet(${i}, 0, '', false, 10)`);
-   // Update remove-exercise btn
-   const rmBtn = c.querySelector('.ex-remove-btn');
-   if (rmBtn) rmBtn.setAttribute('onclick', `removeExercise(${i})`);
-   // Update sets container id
-   const setsEl = c.querySelector('[id^="sets-"]');
-   if (setsEl) setsEl.id = 'sets-' + i;
-   // Update kg/lbs unit btn ids
-   const kgBtn = c.querySelector('[id^="exu-kg-"]');
-   if (kgBtn) { kgBtn.id = 'exu-kg-' + i; kgBtn.setAttribute('onclick', `setExerciseUnit(${i},'kg')`); }
-   const lbsBtn = c.querySelector('[id^="exu-lbs-"]');
-   if (lbsBtn) { lbsBtn.id = 'exu-lbs-' + i; lbsBtn.setAttribute('onclick', `setExerciseUnit(${i},'lbs')`); }
-  });
+  // Re-index remaining cards so addSet / removeSet / reorder still work
+  reindexExerciseCards();
   updateSummary();
   // Always update the exercise count chip
   const chipExCount = document.getElementById('wkt-chip-ex');
@@ -8572,7 +8674,81 @@ function removeExercise(exIdx) {
     }
    }
   }
- }, 200);
+  }, 200);
+}
+
+// Re-index every exercise card in DOM order so set/exercise actions still
+// work after any add / remove / reorder. Rewires all index-based ids and
+// inline handlers.
+function reindexExerciseCards() {
+ document.querySelectorAll('.log-ex-card').forEach((c, i) => {
+  c.dataset.exIdx = i;
+  const addBtn = c.querySelector('.add-set-btn');
+  if (addBtn) addBtn.setAttribute('onclick', `addSet(${i}, 0, '', false, 10)`);
+  const rmBtn = c.querySelector('.ex-remove-btn');
+  if (rmBtn) rmBtn.setAttribute('onclick', `removeExercise(${i})`);
+  const upBtn = c.querySelector('.ex-move-btn');
+  if (upBtn) upBtn.setAttribute('onclick', `moveExercise(${i},-1)`);
+  const dnBtn = c.querySelectorAll('.ex-move-btn')[1];
+  if (dnBtn) dnBtn.setAttribute('onclick', `moveExercise(${i},1)`);
+  const dupBtn = c.querySelector('.ex-dup-btn');
+  if (dupBtn) dupBtn.setAttribute('onclick', `duplicateExercise(${i})`);
+  const setsEl = c.querySelector('[id^="sets-"]');
+  if (setsEl) setsEl.id = 'sets-' + i;
+  const kgBtn = c.querySelector('[id^="exu-kg-"]');
+  if (kgBtn) { kgBtn.id = 'exu-kg-' + i; kgBtn.setAttribute('onclick', `setExerciseUnit(${i},'kg')`); }
+  const lbsBtn = c.querySelector('[id^="exu-lbs-"]');
+  if (lbsBtn) { lbsBtn.id = 'exu-lbs-' + i; lbsBtn.setAttribute('onclick', `setExerciseUnit(${i},'lbs')`); }
+  const noteEl = c.querySelector('[id^="note-"]');
+  if (noteEl) noteEl.id = 'note-' + i;
+  const thumbEl = c.querySelector('[id^="ex-thumb-"]');
+  if (thumbEl) thumbEl.id = 'ex-thumb-' + i;
+  const fbEl = c.querySelector('[id^="ex-fallback-"]');
+  if (fbEl) fbEl.id = 'ex-fallback-' + i;
+ });
+ // Update move-up / move-down affordances (first card can't go up, last can't go down)
+ const cards = document.querySelectorAll('.log-ex-card');
+ cards.forEach((c, i) => {
+  const btns = c.querySelectorAll('.ex-move-btn');
+  if (btns[0]) btns[0].disabled = (i === 0);
+  if (btns[1]) btns[1].disabled = (i === cards.length - 1);
+ });
+}
+
+// Swap an exercise card with its neighbour (dir: -1 up, 1 down)
+function moveExercise(exIdx, dir) {
+ const cards = document.querySelectorAll('.log-ex-card');
+ const idx = Array.from(cards).findIndex(c => parseInt(c.dataset.exIdx, 10) === exIdx);
+ if (idx < 0) return;
+ const target = idx + dir;
+ if (target < 0 || target >= cards.length) return;
+ const container = cards[idx].parentElement;
+ container.insertBefore(cards[idx], dir < 0 ? cards[target] : cards[target].nextSibling);
+ reindexExerciseCards();
+ updateSummary();
+ if (!window._loggerRestoring) saveLoggerState();
+}
+
+// Clone an exercise card (sets, unit, note) right below the original
+function duplicateExercise(exIdx) {
+ const card = document.querySelector('.log-ex-card[data-ex-idx="' + exIdx + '"]');
+ if (!card) return;
+ const clone = card.cloneNode(true);
+ // Reset transient state the clone must not inherit
+ const nameEl = clone.querySelector('.log-ex-name');
+ if (nameEl) nameEl.textContent = (nameEl.textContent.trim() || 'Exercise') + ' (2)';
+ const prBadge = clone.querySelector('.log-ex-pr-badge');
+ if (prBadge) prBadge.remove();
+ card.after(clone);
+ reindexExerciseCards();
+ updateSummary();
+ if (!window._loggerRestoring) saveLoggerState();
+ // Update the exercise count chip
+ const chipExCount = document.getElementById('wkt-chip-ex');
+ if (chipExCount) {
+  const rem = document.querySelectorAll('.log-ex-card').length;
+  chipExCount.textContent = rem + ' exercise' + (rem !== 1 ? 's' : '');
+ }
 }
 
 // ─────────────────────────────────────────
@@ -8682,12 +8858,17 @@ function updateSummary() {
   const hasExercises = document.querySelectorAll('.log-ex-card').length > 0;
   completeBtn.style.display = hasExercises ? '' : 'none';
  }
+ // Keep the edit-mode Save button + unsaved-changes hint in sync
+ if (window._editingLogId) refreshEditSaveBtn();
 }
 
 // ─────────────────────────────────────────
 // LOGGER STATE PERSISTENCE (localStorage)
 // ─────────────────────────────────────────
 function _loggerStorageKey() {
+ // While editing a PAST workout the session state is kept under a dedicated
+ // key so it can never clobber — or be clobbered by — today's live session.
+ if (window._editingLogId) return 'evolve_logger_edit_' + window._editingLogId;
  // Key is scoped to today's date (PH timezone) so yesterday's session doesn't bleed in
  const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
  return 'evolve_logger_' + today;
@@ -8964,19 +9145,25 @@ async function completeWorkout() {
   return;
  }
 
+ const editingLog = !!window._editingLogId;
+
  // Last chance to add anything extra before this workout gets locked in.
  // Clicking "Add More Exercises" opens the builder pre-loaded with the
  // current exercises (same flow as the "+ Add Exercise" button) instead of
- // finalizing right away.
- const readyToFinish = await showConfirmDialog({
-  title: 'Finish workout?',
-  message: "Did you do everything for today? You can still add more exercises before wrapping up.",
-  confirmText: 'Finish Workout',
-  cancelText: 'Add More Exercises'
- });
- if (!readyToFinish) {
-  openCustomWorkoutBuilder();
-  return;
+ // finalizing right away. Editing a past workout saves immediately — no
+ // confirmation dialog, the Save button in the edit toolbar is the gate.
+ let readyToFinish = true;
+ if (!editingLog) {
+  readyToFinish = await showConfirmDialog({
+   title: 'Finish workout?',
+   message: "Did you do everything for today? You can still add more exercises before wrapping up.",
+   confirmText: 'Finish Workout',
+   cancelText: 'Add More Exercises'
+  });
+  if (!readyToFinish) {
+   openCustomWorkoutBuilder();
+   return;
+  }
  }
 
  // Collect all exercise data
@@ -9012,42 +9199,84 @@ async function completeWorkout() {
  btn.disabled = true; btn.textContent = 'Saving…';
 
  try {
-  // Save workout log
-  await db.collection('members').doc(uid).collection('workoutLogs').add({
-   workoutName: todayWorkout?.name || 'Workout',
-   dayName:   todayWorkout?.dayName || '',
-   exercises,
-   totalSets: doneSets, totalReps: doneReps, totalVolume: doneWeight,
-   totalVolumeDisplay: doneWeightDisplay, // in kg (normalized)
-   weightUnit: 'kg',                     // totalVolume is always in kg (per-exercise units are per-set)
-   completedAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  const editingLogId = window._editingLogId;
+  if (editingLogId) {
+   // Editing a past (completed) workout — update the ORIGINAL log in place.
+   // No new document, no attendance increment, no duplicate activity entry.
+   // Name comes from the editable field in the edit toolbar (falls back to
+   // the existing name if the user cleared it).
+   const editedName = (document.getElementById('edit-wkt-name')?.value || '').trim()
+    || (window._editingLogData?.workoutName) || 'Workout';
+   await db.collection('members').doc(uid).collection('workoutLogs').doc(editingLogId).update({
+    workoutName: editedName,
+    dayName:   window._editingLogData?.dayName || todayWorkout?.dayName || '',
+    exercises,
+    totalSets: doneSets, totalReps: doneReps, totalVolume: doneWeight,
+    totalVolumeDisplay: doneWeightDisplay, // in kg (normalized)
+    weightUnit: 'kg',                     // totalVolume is always in kg (per-exercise units are per-set)
+    editedAt: firebase.firestore.FieldValue.serverTimestamp()
+   });
+   // Persist any new/updated personal records found while editing
+   await db.collection('members').doc(uid).update({ personalRecords });
+  } else {
+   // Save workout log
+   await db.collection('members').doc(uid).collection('workoutLogs').add({
+    workoutName: todayWorkout?.name || 'Workout',
+    dayName:   todayWorkout?.dayName || '',
+    exercises,
+    totalSets: doneSets, totalReps: doneReps, totalVolume: doneWeight,
+    totalVolumeDisplay: doneWeightDisplay, // in kg (normalized)
+    weightUnit: 'kg',                     // totalVolume is always in kg (per-exercise units are per-set)
+    completedAt: firebase.firestore.FieldValue.serverTimestamp()
+   });
 
-  // Increment attendance, and persist any new/updated personal records from this session
-  await db.collection('members').doc(uid).update({
-   attendanceCount: firebase.firestore.FieldValue.increment(1),
-   personalRecords: personalRecords
-  });
+   // Increment attendance, and persist any new/updated personal records from this session
+   await db.collection('members').doc(uid).update({
+    attendanceCount: firebase.firestore.FieldValue.increment(1),
+    personalRecords: personalRecords
+   });
 
-  // Update UI
-  const sessEl = document.getElementById('stat-sessions');
-  sessEl.textContent = parseInt(sessEl.textContent || 0, 10) + 1;
+   // Update UI
+   const sessEl = document.getElementById('stat-sessions');
+   sessEl.textContent = parseInt(sessEl.textContent || 0, 10) + 1;
 
-  // Add to activity feed
-  const feedEl = document.getElementById('activity-feed');
-  if (feedEl) {
-   const feedRow = document.createElement('div');
-   feedRow.className = 'activity-row';
-   const timeStr = new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila',hour:'numeric',minute:'2-digit'});
-   feedRow.innerHTML = `<div class="activity-dot" style="background:#5dcaa5"></div><div class="activity-text"><strong>${escapeHtml(todayWorkout?.name||'Workout')}</strong> completed — ${doneSets} sets, ${doneReps} reps</div><div class="activity-time">${timeStr}</div>`;
-   // Insert after the "Account created" row
-   const firstRow = feedEl.querySelector('.activity-row');
-   if (firstRow) feedEl.insertBefore(feedRow, firstRow.nextSibling);
-   else feedEl.prepend(feedRow);
+   // Add to activity feed
+   const feedEl = document.getElementById('activity-feed');
+   if (feedEl) {
+    const feedRow = document.createElement('div');
+    feedRow.className = 'activity-row';
+    const timeStr = new Date().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila',hour:'numeric',minute:'2-digit'});
+    feedRow.innerHTML = `<div class="activity-dot" style="background:#5dcaa5"></div><div class="activity-text"><strong>${escapeHtml(todayWorkout?.name||'Workout')}</strong> completed — ${doneSets} sets, ${doneReps} reps</div><div class="activity-time">${timeStr}</div>`;
+    // Insert after the "Account created" row
+    const firstRow = feedEl.querySelector('.activity-row');
+    if (firstRow) feedEl.insertBefore(feedRow, firstRow.nextSibling);
+    else feedEl.prepend(feedRow);
+   }
+
+   // Stamp a local completion flag so reload detection is instant
+   markWorkoutCompletedToday();
   }
 
-  // Stamp a local completion flag so reload detection is instant
-  markWorkoutCompletedToday();
+  // ── EDIT-SAVE TAIL ──
+  // A past-workout edit never opens the "Workout Done" celebration — it
+  // just exits edit mode, refreshes history and returns home.
+  if (editingLogId) {
+   stopWktTimer();
+   window._workoutLoggingActive = false;
+   const pending = window._pendingPlanUpdate;
+   window._pendingPlanUpdate = null;
+   exitEditMode();
+   await loadPastLogs();
+   showToast('Workout updated — changes saved', 'success');
+   try {
+    const mDoc = await db.collection('members').doc(uid).get();
+    loadHomeScreen(pending || mDoc.data());
+   } catch(e) {
+    showScreen('screen-home');
+    setTab('home');
+   }
+   return;
+  }
 
   // Lock all exercise cards so values stay visible but nothing is editable
   lockLoggerCards();
@@ -9056,15 +9285,18 @@ async function completeWorkout() {
   document.getElementById('done-sets').textContent = doneSets;
   document.getElementById('done-reps').textContent = doneReps;
   document.getElementById('done-vol').textContent = doneWeightDisplay;
-  document.getElementById('done-sub').textContent = todayWorkout?.name + ' complete!';
+  document.getElementById('done-sub').textContent = todayWorkout?.name + (editingLogId ? ' updated!' : ' complete!');
   document.getElementById('done-overlay').classList.add('open');
   stopWktTimer();
 
   // Keep persisted logger state so sets/checks are visible if the page is refreshed
   // (the state is already scoped to today's date and won't bleed into tomorrow)
 
-  // Clear the active-logging guard and apply any plan update that arrived mid-session
+  // Clear the active-logging guard, exit edit mode, and apply any plan update
+  // that arrived mid-session
   window._workoutLoggingActive = false;
+  window._editingLogId = null;
+  window._editingLogData = null;
   if (window._pendingPlanUpdate) {
    loadHomeScreen(window._pendingPlanUpdate);
    window._pendingPlanUpdate = null;
@@ -9083,7 +9315,7 @@ async function completeWorkout() {
    showToast('Could not save workout — please try again. If this persists, refresh the page.', 'error');
   }
  } finally {
-  btn.disabled = false; btn.textContent = 'Complete Workout';
+  btn.disabled = false; btn.textContent = window._editingLogId ? 'Save Changes' : 'Complete Workout';
  }
 }
 
@@ -9098,6 +9330,9 @@ function closeDoneOverlay() {
 // clean slate and drops them straight into the "build a workout" flow.
 function startNewWorkoutSession() {
  document.getElementById('done-overlay').classList.remove('open');
+
+ // If a past-workout edit session was active, leave it cleanly first
+ if (window._editingLogId) exitEditMode();
 
  // Clear today's completed workout definition so the builder treats this as
  // a fresh start rather than "add more to what I just finished".
@@ -9165,11 +9400,12 @@ async function loadPastLogs() {
    card.className = 'past-log-card';
    const exCount = d.exercises?.length || 0;
    card.innerHTML = `
-    <div class="plc-header">
-     <div style="flex:1;min-width:0;">
-      <div class="plc-name">${escapeHtml(d.workoutName || 'Workout')}</div>
-      <div class="plc-day">${escapeHtml(d.dayName || '')}</div>
-     </div>
+     <div class="plc-header">
+      <div style="flex:1;min-width:0;">
+       <div class="plc-name">${escapeHtml(d.workoutName || 'Workout')}</div>
+       <div class="plc-day">${escapeHtml(d.dayName || '')}</div>
+       ${d.editedAt ? `<div class="plc-edited" title="${d.editedAt.toDate ? 'Edited ' + d.editedAt.toDate().toLocaleString('en-PH', { timeZone:'Asia/Manila' }) : ''}">✏️ Edited</div>` : ''}
+      </div>
      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
       <div class="plc-date">${date}</div>
       <div class="plc-chevron">›</div>
@@ -9464,16 +9700,37 @@ function openWktDrawer(idx) {
  document.getElementById('wdr-date').textContent = date;
  document.getElementById('wdr-chip-sets').textContent = (d.totalSets || 0) + ' sets';
  document.getElementById('wdr-chip-vol').textContent = (d.totalVolume || 0) + ' kg';
- if (durationStr) {
-  let durChip = document.getElementById('wdr-chip-dur');
-  if (!durChip) {
-   durChip = document.createElement('span');
-   durChip.id = 'wdr-chip-dur';
-   durChip.className = 'wkt-drawer-stat-chip';
-   document.querySelector('.wkt-drawer-meta').appendChild(durChip);
+  if (durationStr) {
+   let durChip = document.getElementById('wdr-chip-dur');
+   if (!durChip) {
+    durChip = document.createElement('span');
+    durChip.id = 'wdr-chip-dur';
+    durChip.className = 'wkt-drawer-stat-chip';
+    document.querySelector('.wkt-drawer-meta').appendChild(durChip);
+   }
+   durChip.textContent = '⏱ ' + durationStr;
   }
-  durChip.textContent = '⏱ ' + durationStr;
- }
+
+  // "Edited" badge in the drawer header
+  let edChip = document.getElementById('wdr-chip-edited');
+  const metaWrap = document.querySelector('.wkt-drawer-meta');
+  if (d.editedAt) {
+   const edStr = d.editedAt.toDate
+    ? d.editedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', month:'short', day:'numeric', year:'numeric' })
+    : '';
+   if (!edChip) {
+    edChip = document.createElement('span');
+    edChip.id = 'wdr-chip-edited';
+    edChip.className = 'wkt-drawer-stat-chip';
+    edChip.style.color = 'var(--gold)';
+    edChip.style.borderColor = 'rgba(193,68,14,0.35)';
+    edChip.style.fontWeight = '700';
+    if (metaWrap) metaWrap.appendChild(edChip);
+   }
+   edChip.textContent = '✏️ Edited' + (edStr ? ' ' + edStr : '');
+  } else if (edChip) {
+   edChip.remove();
+  }
 
  // Summary strip
  const strip = document.getElementById('wdr-summary-strip');
@@ -9548,6 +9805,259 @@ function openWktDrawer(idx) {
  document.body.style.overflow = 'hidden';
 }
 
+// ─────────────────────────────────────────
+// EDIT A PAST (COMPLETED) WORKOUT FROM HISTORY
+// ─────────────────────────────────────────
+// The client can reopen any finished session from its history card, tap
+// "Edit Workout" in the detail drawer, and change the workout name, sets,
+// reps, weights, notes, reorder or duplicate exercises, add/remove sets.
+// Saving updates the ORIGINAL log document in place — it never creates a
+// duplicate session or double-counts attendance.
+//
+// NOTE: the canonical edit state lives on window._editingLogId /
+// window._editingLogData (completeWorkout reads those) — editWorkoutFromHistory
+// used to write to a separate module `let`, which meant the edit-save path
+// never triggered and editing past workouts silently created duplicates.
+// State is also stored under a dedicated localStorage key
+// (evolve_logger_edit_<logId>) so editing a past workout can never clobber
+// — or be clobbered by — today's live session.
+let _editOriginalStateJSON = null;
+
+function editWorkoutFromHistory() {
+ const d = _wdrCurrentData;
+ if (!d || !d._id) return;
+ // Already editing another log — don't silently swap the session
+ if (window._editingLogId) {
+  showToast('Finish or cancel the current edit first', '⚠️');
+  return;
+ }
+ closeWktDrawer();
+
+ window._editingLogId = d._id;
+ window._editingLogData = d;
+ _editOriginalStateJSON = originalEditState();
+
+ // Build a lightweight workout object so the logger renders this log's
+ // exercises exactly as they were saved (name-matched on restore).
+ const editWorkout = {
+  name: d.workoutName || 'Workout',
+  dayName: d.dayName || '',
+  isCustom: true,
+  exercises: (d.exercises || []).map(ex => ({
+   name: ex.name || 'Exercise',
+   detail: '',
+   target: '',
+   sets: ex.sets || []
+  }))
+ };
+ todayWorkout = editWorkout;
+
+ // Pre-seed the edit-scoped localStorage state so restoreLoggerState()
+ // fills each card exactly as it was logged. (_loggerStorageKey returns the
+ // edit key once window._editingLogId is set, so today's session is safe.)
+ try {
+  const seeded = {
+   exercises: (d.exercises || []).map(ex => {
+    const unit = ex.weightUnit || d.weightUnit || 'kg';
+    return {
+     name: ex.name || 'Exercise',
+     detail: '',
+     target: '',
+     note: ex.note || '',
+     weightUnit: unit,
+     sets: (ex.sets || []).map(s => ({
+      weight: (s.weightDisplay !== undefined && s.weightDisplay !== null && s.weightDisplay !== '')
+       ? s.weightDisplay
+       : (s.weight || ''),
+      reps: s.reps || '',
+      done: !!s.done
+     }))
+    };
+   }),
+   timerElapsed: 0,
+   weightUnit: d.weightUnit || workoutWeightUnit,
+   workoutName: editWorkout.name,
+   dayName: editWorkout.dayName
+  };
+  safeLocalStorageSet(_loggerStorageKey(), JSON.stringify(seeded));
+ } catch(e) {}
+
+ // Show the edit toolbar + editable name field
+ const bar = document.getElementById('edit-mode-bar');
+ if (bar) bar.style.display = '';
+ const nameInput = document.getElementById('edit-wkt-name');
+ if (nameInput) nameInput.value = d.workoutName || 'Workout';
+ const dateEl = document.getElementById('edit-mode-date');
+ if (dateEl) {
+  dateEl.textContent = d.completedAt?.toDate
+   ? d.completedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', weekday:'long', month:'short', day:'numeric', year:'numeric' })
+   : '';
+ }
+ const saveBtn = document.getElementById('edit-save-btn');
+ if (saveBtn) saveBtn.disabled = true;
+ const hint = document.getElementById('edit-unsaved-hint');
+ if (hint) hint.classList.remove('show');
+
+ // Update the log header so the client knows they're editing, not logging fresh
+ const dayBadge = document.getElementById('log-day-badge');
+ if (dayBadge) dayBadge.textContent = 'Editing past workout';
+ const logSub = document.getElementById('log-sub');
+ if (logSub) logSub.textContent = editWorkout.name;
+ const chipEx = document.getElementById('wkt-chip-ex');
+ if (chipEx) chipEx.textContent = editWorkout.exercises.length + ' exercise' + (editWorkout.exercises.length !== 1 ? 's' : '');
+ const chipSets = document.getElementById('wkt-chip-sets');
+ if (chipSets) chipSets.textContent = '0 sets done';
+
+ // Repurpose the bottom bar CTA
+ const completeBtn = document.getElementById('complete-btn');
+ if (completeBtn) completeBtn.textContent = 'Save Changes';
+
+ setTab('log');
+
+ buildWorkoutLogger(editWorkout).then(() => {
+  // Restore the session's timer to its original duration instead of 0:00
+  if (d.durationSeconds) _wktStartTime = Date.now() - d.durationSeconds * 1000;
+  refreshEditSaveBtn();
+ });
+
+ showToast('Editing ' + (d.workoutName || 'workout') + ' — make your changes, then tap Save Changes', '✏️');
+}
+
+// ── Edit-state diff helpers ────────────────────────────────
+function _editToNum(v) {
+ if (v === undefined || v === null || String(v).trim() === '') return '';
+ const n = parseFloat(v);
+ return isNaN(n) ? String(v).trim() : n;
+}
+
+// Serialize the CURRENT logger DOM the same way every time
+function collectEditState() {
+ const exercises = [];
+ document.querySelectorAll('.log-ex-card').forEach(card => {
+  const nameEl = card.querySelector('.log-ex-name');
+  const sets = [];
+  card.querySelectorAll('.log-set-row').forEach(row => {
+   sets.push({
+    weight: _editToNum(row.querySelector('.weight-input').value),
+    reps: _editToNum(row.querySelector('.reps-input').value),
+    done: row.dataset.done === '1'
+   });
+  });
+  exercises.push({
+   name: nameEl ? nameEl.textContent.trim() : '',
+   note: document.getElementById('note-' + card.dataset.exIdx)?.value || '',
+   weightUnit: card.dataset.weightUnit || 'kg',
+   sets
+  });
+ });
+ return JSON.stringify({
+  workoutName: (document.getElementById('edit-wkt-name')?.value || '').trim(),
+  exercises
+ });
+}
+
+// Serialize the ORIGINAL log the same way (must stay in sync with
+// collectEditState so an untouched edit is exactly equal)
+function originalEditState() {
+ const d = window._editingLogData || {};
+ const exercises = (d.exercises || []).map(e => ({
+  name: (e.name || ''),
+  note: e.note || '',
+  weightUnit: e.weightUnit || d.weightUnit || 'kg',
+  sets: (e.sets || []).map(s => ({
+   weight: _editToNum((s.weightDisplay !== undefined && s.weightDisplay !== null && s.weightDisplay !== '')
+    ? s.weightDisplay : s.weight),
+   reps: _editToNum(s.reps),
+   done: !!s.done
+  }))
+ }));
+ return JSON.stringify({ workoutName: d.workoutName || 'Workout', exercises });
+}
+
+function isEditDirty() {
+ if (!window._editingLogId || _editOriginalStateJSON === null) return false;
+ return collectEditState() !== _editOriginalStateJSON;
+}
+
+function refreshEditSaveBtn() {
+ if (!window._editingLogId) return;
+ const saveBtn = document.getElementById('edit-save-btn');
+ if (!saveBtn) return;
+ const dirty = isEditDirty();
+ saveBtn.disabled = !dirty;
+ const hint = document.getElementById('edit-unsaved-hint');
+ if (hint) hint.classList.toggle('show', dirty);
+}
+
+function onEditNameInput(value) {
+ const logSub = document.getElementById('log-sub');
+ if (logSub) logSub.textContent = value.trim() || 'Workout';
+ refreshEditSaveBtn();
+}
+
+// ── Save ───────────────────────────────────────────────────
+async function saveEditWorkout() {
+ if (!window._editingLogId || isEditDirty() === false) return;
+ const saveBtn = document.getElementById('edit-save-btn');
+ if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+ try {
+  await completeWorkout();
+ } catch(e) {
+  console.error('[saveEditWorkout] failed:', e);
+ } finally {
+  if (saveBtn) saveBtn.textContent = 'Save Changes';
+ }
+}
+
+// ── Cancel / discard ───────────────────────────────────────
+async function cancelEditWorkout() {
+ if (!window._editingLogId) return;
+ if (isEditDirty()) {
+  const discard = await showConfirmDialog({
+   title: 'Discard changes?',
+   message: 'Your edits to this workout have not been saved. Discard them?',
+   confirmText: 'Discard',
+   cancelText: 'Keep Editing',
+   danger: true
+  });
+  if (!discard) return;
+ }
+ doCancelEdit();
+}
+
+function doCancelEdit() {
+ const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ exitEditMode();
+ stopWktTimer();
+ showToast('Edit cancelled — no changes saved', 'info');
+ if (uid) {
+  db.collection('members').doc(uid).get().then(doc => {
+   if (doc.exists) loadHomeScreen(doc.data());
+   else { showScreen('screen-home'); setTab('home'); }
+  }).catch(() => { showScreen('screen-home'); setTab('home'); });
+ } else {
+  showScreen('screen-home'); setTab('home');
+ }
+}
+
+// Leave edit mode and clean up ALL edit-scoped state
+function exitEditMode() {
+ const id = window._editingLogId;
+ window._editingLogId = null;
+ window._editingLogData = null;
+ _editOriginalStateJSON = null;
+ if (id) {
+  try { localStorage.removeItem('evolve_logger_edit_' + id); } catch(e) {}
+ }
+ const bar = document.getElementById('edit-mode-bar');
+ if (bar) bar.style.display = 'none';
+ const saveBtn = document.getElementById('edit-save-btn');
+ if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Save Changes'; }
+ const hint = document.getElementById('edit-unsaved-hint');
+ if (hint) hint.classList.remove('show');
+ const completeBtn = document.getElementById('complete-btn');
+ if (completeBtn) completeBtn.textContent = 'Complete Workout';
+}
 
 function closeWktDrawer(e) {
  // If called from overlay backdrop click, only close if clicking the backdrop itself
@@ -11080,14 +11590,15 @@ function listenClientPhotoRequests() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid || clientPhotoReqUnsub) return;
  const COACH_UID = 'evolve_coach_001';
- clientPhotoReqUnsub = db.collection('photoRequests')
-  .where('coachId', '==', COACH_UID)
-  .onSnapshot(snap => {
-   const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-   // Show requests assigned to 'all' or this client, not yet fulfilled
-   pendingPhotoReqs = all.filter(r =>
-    (r.assignTo === 'all' || r.clientId === uid) && !r.fulfilled
-   );
+clientPhotoReqUnsub = db.collection('photoRequests')
+   .where('coachId', '==', COACH_UID)
+   .where('clientId', 'in', [uid, 'all'])
+   .onSnapshot(snap => {
+    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Show requests assigned to 'all' or this client, not yet fulfilled
+    pendingPhotoReqs = all.filter(r =>
+     (r.assignTo === 'all' || r.clientId === uid || r.clientId === 'all') && !r.fulfilled
+    );
    pendingPhotoReqs.sort((a,b) => (a.dueDate||'').localeCompare(b.dueDate||''));
    renderClientPhotoReqBanner();
    checkHomePhotoRequestAlert(); // Fix: update home screen alert immediately on each change
@@ -16030,6 +16541,12 @@ function startCustomWorkout() {
   // Update header
   const logSubEl = document.getElementById('log-sub');
   if (logSubEl) logSubEl.textContent = wktName;
+
+  // While editing a past workout, keep the edit toolbar's name in sync too
+  if (window._editingLogId) {
+   const editNameInput = document.getElementById('edit-wkt-name');
+   if (editNameInput) editNameInput.value = wktName;
+  }
 
   // Rebuild the full logger immediately (preserves set/rep data for unchanged
   // exercises via restoreLoggerState). Previously delayed via setTimeout,
