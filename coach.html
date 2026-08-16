@@ -6683,24 +6683,28 @@ document.addEventListener('DOMContentLoaded', () => {
     db      = firebase.firestore();
     storage = firebase.storage();
 
-    // ── Offline persistence (IndexedDB) ──────────────────────────────
-    // Caches every document this app reads (client list, workouts, progress
-    // photos, etc.) to the browser's local IndexedDB. On the next page load —
-    // even after fully closing the browser — Firestore serves that cached
-    // data immediately instead of waiting on a network round-trip, then syncs
-    // any changes in the background. cacheSizeBytes is set to unlimited
-    // because progress photos are stored as base64 strings, which are much
-    // bigger than typical Firestore docs and would otherwise get evicted.
-    db.settings({ cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED });
-    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-      if (err.code === 'failed-precondition') {
-        console.warn('[Firebase] Persistence unavailable: multiple tabs without synchronizeTabs support.');
-      } else if (err.code === 'unimplemented') {
-        console.warn('[Firebase] Persistence unavailable: browser does not support it.');
-      } else {
-        console.warn('[Firebase] Persistence failed:', err.message);
-      }
+    // ── Connectivity watchdog (was: offline persistence block) ────────
+    // FIX (gh-pages-clients-nutrition): the old db.enablePersistence()
+    // + CACHE_SIZE_UNLIMITED block was REMOVED. On the deployed GitHub Pages
+    // origin, a wedged Firestore channel left every request to
+    // firestore.googleapis.com pending forever, while the persistent
+    // IndexedDB cache kept serving a stale members snapshot — Clients →
+    // Active rendered empty (the cache only held the archived/pending docs)
+    // and Nutrition reads for uncached data hung on "Loading…" forever.
+    // Without a local cache, reads either resolve from the live database or
+    // fail loudly — no silent stale data.
+    // The watchdog below re-establishes the Firestore channel whenever it
+    // might have wedged: enableNetwork() is a cheap no-op when the channel
+    // is healthy, and forces a fresh connection when it isn't.
+    function _kickFirestoreChannel() {
+      if (!db) return;
+      db.enableNetwork().catch(() => {});
+    }
+    window.addEventListener('online', _kickFirestoreChannel);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') _kickFirestoreChannel();
     });
+    setInterval(_kickFirestoreChannel, 60000);
   } catch(e) {
     console.error('[Firebase] Init failed:', e.message);
   }
@@ -8068,6 +8072,21 @@ const STATS_REFRESH_MS = 60000; // only refetch from network at most once a minu
 let _lastStatsFetch = 0;
 let _statsFetchInFlight = false;
 
+// Deadline wrapper: turns a never-settling Firestore request into a fast
+// failure so dashboard sections render empty states instead of hanging on
+// "Loading…"/"—" forever when the Firestore channel wedges (see watchdog
+// comment above). The underlying promise keeps running; the UI just stops
+// waiting on it after `ms`. Promise.race subscribes to the loser, so a late
+// rejection of the underlying query is consumed and can't surface as an
+// unhandled rejection.
+function withTimeout(promise, ms, label) {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timed out: ' + (label || 'query'))), ms);
+  });
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => clearTimeout(timer));
+}
+
 // Animate a stat-card number counting up (or down) to its new value instead
 // of snapping instantly.
 function animateStatValue(id, value) {
@@ -8102,26 +8121,36 @@ async function updateDashboardStats(force) {
   const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayTs = firebase.firestore.Timestamp.fromDate(yesterday);
 
+  const timeoutMs = 10000;
   try {
-    const [totalLogsSnap, todayLogsSnap, yesterdayLogsSnap, totalPhotosSnap] = await Promise.all([
-      db.collectionGroup('workoutLogs').count().get(),
-      db.collectionGroup('workoutLogs').where('completedAt', '>=', todayTs).count().get(),
-      db.collectionGroup('workoutLogs').where('completedAt', '>=', yesterdayTs).where('completedAt', '<', todayTs).count().get(),
-      db.collectionGroup('progressPhotos').count().get(),
-    ]);
-    animateStatValue('stat-active-today', todayLogsSnap.data().count);
-    animateStatValue('stat-workouts-logged', totalLogsSnap.data().count);
-    animateStatValue('stat-photos', totalPhotosSnap.data().count);
-    _dashYesterdayLogs = yesterdayLogsSnap.data().count;
-  } catch (e) {
-    console.warn('[COACH] collectionGroup count() unavailable, falling back to per-client scan:', e.code, e.message);
-    await _updateDashboardStatsFallback(today, yesterday);
+    try {
+      const [totalLogsSnap, todayLogsSnap, yesterdayLogsSnap, totalPhotosSnap] = await withTimeout(Promise.all([
+        db.collectionGroup('workoutLogs').count().get(),
+        db.collectionGroup('workoutLogs').where('completedAt', '>=', todayTs).count().get(),
+        db.collectionGroup('workoutLogs').where('completedAt', '>=', yesterdayTs).where('completedAt', '<', todayTs).count().get(),
+        db.collectionGroup('progressPhotos').count().get(),
+      ]), timeoutMs, 'stats count batch');
+      animateStatValue('stat-active-today', todayLogsSnap.data().count);
+      animateStatValue('stat-workouts-logged', totalLogsSnap.data().count);
+      animateStatValue('stat-photos', totalPhotosSnap.data().count);
+      _dashYesterdayLogs = yesterdayLogsSnap.data().count;
+    } catch (e) {
+      console.warn('[COACH] collectionGroup count() unavailable/timed out, falling back to per-client scan:', e.code || '', e.message || e);
+      await _updateDashboardStatsFallback(today, yesterday);
+    }
+  } finally {
+    // Always un-wedge the throttle — a hung primary batch must not disable
+    // future refreshes until the page reloads.
+    _statsFetchInFlight = false;
   }
   renderDashSummary();
 
   // Activity feed — fire-and-forget, don't block stats rendering
   const feed = document.getElementById('recent-activity-list');
-  db.collectionGroup('workoutLogs').orderBy('completedAt', 'desc').limit(6).get().then(recent => {
+  withTimeout(
+    db.collectionGroup('workoutLogs').orderBy('completedAt', 'desc').limit(6).get(),
+    timeoutMs, 'activity feed'
+  ).then(recent => {
     const activities = recent.docs.map(doc => {
       const uid = doc.ref.parent.parent.id;
       const c = allClients.find(cl => cl.uid === uid) || {};
@@ -8130,11 +8159,9 @@ async function updateDashboardStats(force) {
     });
     _renderActivityFeed(feed, activities);
   }).catch(async (e) => {
-    console.warn('[COACH] collectionGroup orderBy unavailable, falling back:', e.code, e.message);
+    console.warn('[COACH] collectionGroup orderBy unavailable/timed out, falling back:', e.code || '', e.message || e);
     await _updateActivityFeedFallback(feed);
   });
-
-  _statsFetchInFlight = false;
 }
 
 const _ractDotColors = ['#16A34A', '#FF5A2B', '#2563EB'];
@@ -8163,22 +8190,30 @@ async function _updateDashboardStatsFallback(today, yesterday) {
     return;
   }
   let totalLogs=0, todayLogs=0, yesterdayLogs=0, totalPhotos=0;
-  // Batch in groups of 5 to avoid saturating Firestore connections
-  for (let i = 0; i < allClients.length; i += 5) {
-    const batch = allClients.slice(i, i + 5);
-    await Promise.all(batch.map(async c => {
-      try {
-        const logs = await db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get();
-        logs.forEach(l => {
-          totalLogs++;
-          const d = l.data().completedAt?.toDate?.();
-          if (d && d >= today) todayLogs++;
-          else if (d && yesterday && d >= yesterday && d < today) yesterdayLogs++;
-        });
-        const photos = await db.collection('members').doc(c.uid).collection('progressPhotos').limit(50).get();
-        totalPhotos += photos.size;
-      } catch(_) {}
-    }));
+  // Batch in groups of 5 to avoid saturating Firestore connections.
+  // The whole batch is deadline-wrapped: a wedged channel yields partial
+  // counts (rendered immediately) instead of hanging the cards forever.
+  try {
+    await withTimeout((async () => {
+      for (let i = 0; i < allClients.length; i += 5) {
+        const batch = allClients.slice(i, i + 5);
+        await Promise.all(batch.map(async c => {
+          try {
+            const logs = await withTimeout(db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get(), 8000, 'fallback logs '+c.uid);
+            logs.forEach(l => {
+              totalLogs++;
+              const d = l.data().completedAt?.toDate?.();
+              if (d && d >= today) todayLogs++;
+              else if (d && yesterday && d >= yesterday && d < today) yesterdayLogs++;
+            });
+            const photos = await withTimeout(db.collection('members').doc(c.uid).collection('progressPhotos').limit(50).get(), 8000, 'fallback photos '+c.uid);
+            totalPhotos += photos.size;
+          } catch(_) {}
+        }));
+      }
+    })(), 20000, 'stats fallback loop');
+  } catch (e) {
+    console.warn('[COACH] stats per-client fallback timed out; using partial counts:', e.message);
   }
   window._statsFallbackCache = { totalLogs, todayLogs, yesterdayLogs, totalPhotos, ts: Date.now() };
   animateStatValue('stat-active-today', todayLogs);
@@ -8247,15 +8282,19 @@ async function _updateActivityFeedFallback(feed) {
     return;
   }
   const activities = [];
-  await Promise.all(allClients.slice(0,10).map(async c => {
-    try {
-      const logs = await db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(1).get();
-      logs.forEach(l => {
-        const d = l.data();
-        activities.push({ name:`${c.firstName||''} ${c.lastName||''}`, action:'logged '+d.workoutName, ts:d.completedAt });
-      });
-    } catch(_) {}
-  }));
+  try {
+    await withTimeout(Promise.all(allClients.slice(0,10).map(async c => {
+      try {
+        const logs = await withTimeout(db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(1).get(), 8000, 'activity fallback '+c.uid);
+        logs.forEach(l => {
+          const d = l.data();
+          activities.push({ name:`${c.firstName||''} ${c.lastName||''}`, action:'logged '+d.workoutName, ts:d.completedAt });
+        });
+      } catch(_) {}
+    })), 15000, 'activity fallback loop');
+  } catch (e) {
+    console.warn('[COACH] activity feed fallback timed out; showing partial results:', e.message);
+  }
   activities.sort((a,b)=> (b.ts?.seconds||0)-(a.ts?.seconds||0));
   const sliced = activities.slice(0,6);
   window._activityFeedCache = { activities: sliced, ts: Date.now() };
@@ -12102,18 +12141,8 @@ async function loadDashboardPhotos() {
     feed.innerHTML = `<div class="dash-photo-empty">No clients yet — photos will appear here once clients upload them.</div>`;
     return;
   }
-  try {
-    // Parallel per-client queries (collectionGroup requires extra Firestore setup)
-    const results = [];
-    await Promise.all(allClients.slice(0, 8).map(async c => {
-      try {
-        const snap = await db.collection('members').doc(c.uid).collection('progressPhotos')
-          .orderBy('uploadedAt','desc').limit(2).get();
-        snap.docs.forEach(d => {
-          results.push({ docId: d.id, data: d.data(), client: c });
-        });
-      } catch(_) {}
-    }));
+  const timeoutMs = 10000;
+  const renderResults = (results) => {
     if (!results.length) {
       feed.innerHTML = `<div class="dash-photo-empty">No progress photos yet.<br>Photos will appear here once clients upload them.</div>`;
       return;
@@ -12141,8 +12170,44 @@ async function loadDashboardPhotos() {
       const note  = tile.dataset.note;
       tile.onclick = () => openLightboxById(docId, date, note);
     });
-  } catch(e) {
-    feed.innerHTML = `<div class="dash-photo-empty" style="color:var(--red)">${e.message}</div>`;
+  };
+  try {
+    // Primary: ONE collectionGroup query across all clients (lightweight —
+    // replaces the old 8 per-client queries). Requires a collection-group
+    // scoped index on progressPhotos.uploadedAt; if it's missing this rejects
+    // with failed-precondition and we fall back to per-client queries below.
+    // Create the index from the error link Firestore prints to the console —
+    // only the project owner can do this in the Firebase console.
+    const snap = await withTimeout(
+      db.collectionGroup('progressPhotos').orderBy('uploadedAt','desc').limit(8).get(),
+      timeoutMs, 'dashboard photos feed'
+    );
+    const results = snap.docs.map(d => {
+      const uid = d.ref.parent.parent.id; // members/{uid}/progressPhotos/{docId}
+      const c = allClients.find(cl => cl.uid === uid) || {};
+      return { docId: d.id, data: d.data(), client: c };
+    });
+    renderResults(results);
+  } catch (e) {
+    console.warn('[COACH] collectionGroup photos feed unavailable/timed out, falling back to per-client:', e.code || '', e.message || e);
+    // Fallback: parallel per-client queries, each with its own deadline so a
+    // single wedged request can't hold the whole feed hostage.
+    try {
+      const results = [];
+      await Promise.all(allClients.slice(0, 8).map(async c => {
+        try {
+          const snap = await withTimeout(db.collection('members').doc(c.uid).collection('progressPhotos')
+            .orderBy('uploadedAt','desc').limit(2).get(), 8000, 'dashboard photos fallback '+c.uid);
+          snap.docs.forEach(d => {
+            results.push({ docId: d.id, data: d.data(), client: c });
+          });
+        } catch(_) {}
+      }));
+      renderResults(results);
+    } catch(e2) {
+      feed.innerHTML = `<div class="dash-photo-empty" style="color:var(--red)">Couldn't load photos right now — check your connection.</div>`;
+      console.warn('[COACH] dashboard photos fallback failed:', e2.message || e2);
+    }
   }
 }
 // Used by progress photo grid when photos are stored as base64 (too large for onclick attr)
