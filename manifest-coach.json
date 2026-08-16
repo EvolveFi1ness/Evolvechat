@@ -1,0 +1,16 @@
+{
+  "name": "Evolve Coach",
+  "short_name": "Evolve Coach",
+  "description": "Coach dashboard for Evolve — manage clients, programs, nutrition and chat.",
+  "id": "evolve-coach",
+  "start_url": "./coach.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#040404",
+  "theme_color": "#040404",
+  "icons": [
+    { "src": "icons/coach-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/coach-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/coach-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
