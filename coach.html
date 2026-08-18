@@ -6658,10 +6658,10 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 
 <script>
 // ─────────────────────────────────────────
@@ -7271,6 +7271,7 @@ async function handleLogout() {
   if (clientsUnsub) { clientsUnsub(); clientsUnsub = null; }
   if (unreadMsgsUnsub) { unreadMsgsUnsub(); unreadMsgsUnsub = null; }
   if (_coachNotifUnsub) { _coachNotifUnsub(); _coachNotifUnsub = null; }
+  if (typeof _teardownChatPreviews === 'function') _teardownChatPreviews();
   if (_presenceWatchdogTimer) { clearInterval(_presenceWatchdogTimer); _presenceWatchdogTimer = null; }
   stopCoachPresenceHeartbeat();
   _prevOnlineUids = new Set();
@@ -7457,6 +7458,13 @@ function showPage(page, _fromPopState) {
   const prev = _currentPage;
   _currentPage = page;
   window._currentCoachPage = page;
+  // Leaving the Chat page: tear down per-client preview listeners so they
+  // never accumulate across navigation (see _chatPreviewUnsubs).
+  if (prev === 'chat' && typeof _teardownChatPreviews === 'function') {
+    _teardownChatPreviews();
+    if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+    activeChatUid = null;
+  }
   // Toggle only the previous and new page instead of querying all pages
   if (prev) {
     const prevEl = document.getElementById('page-' + prev);
@@ -8494,7 +8502,7 @@ async function loadClientLogs(uid) {
       }
     });
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px">${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px">Couldn't load workout logs${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}<br><button onclick="loadClientLogs('${uid}')" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></td></tr>`;
   }
 }
 
@@ -8955,7 +8963,7 @@ async function loadClientFoodLogs(uid) {
     }
 
   } catch(e) {
-    container.innerHTML = `<div style="text-align:center;color:var(--red);padding:2rem">${e.message}</div>`;
+    container.innerHTML = `<div style="text-align:center;color:var(--red);padding:2rem">Couldn't load food logs${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}<br><button onclick="loadClientFoodLogs('${uid}')" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
   }
 }
 
@@ -9704,7 +9712,7 @@ async function loadClientCheckins(uid) {
     }
 
   } catch(e) {
-    wrap.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">${e.message}</div>`;
+    wrap.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">Couldn't load check-in summary${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}<br><button onclick="loadClientCheckins('${uid}')" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
   }
 }
 
@@ -11706,7 +11714,7 @@ async function loadClientPhotos(uid, forceRefresh) {
     // Cache the finished render so reopening this client's Photos tab is instant next time.
     window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, photoCacheEntries };
   } catch(e) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text" style="color:var(--red)">${e.message}</div></div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text" style="color:var(--red)">Couldn't load photos${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}</div><button onclick="loadClientPhotos('${uid}', true)" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
   }
 }
 
@@ -13306,11 +13314,34 @@ function sortChatList() {
   items.forEach(item => list.appendChild(item));
 }
 
+// Per-client chat preview listeners are TRACKED so re-renders of the chat
+// list (page visits, filter keystrokes, members snapshots) never stack up
+// duplicate onSnapshot subscriptions. Each client gets at most one pair of
+// listeners, and they are torn down when the coach leaves the Chat page.
+let _chatPreviewUnsubs = {}; // clientUid -> { unread: fn, preview: fn }
+function _teardownChatPreviews() {
+  Object.keys(_chatPreviewUnsubs).forEach(uid => {
+    Object.values(_chatPreviewUnsubs[uid]).forEach(fn => { try { fn(); } catch(_) {} });
+  });
+  _chatPreviewUnsubs = {};
+}
+function _pruneChatPreviewUnsubs(validUids) {
+  const valid = new Set(validUids || []);
+  Object.keys(_chatPreviewUnsubs).forEach(uid => {
+    if (!valid.has(uid)) {
+      Object.values(_chatPreviewUnsubs[uid]).forEach(fn => { try { fn(); } catch(_) {} });
+      delete _chatPreviewUnsubs[uid];
+    }
+  });
+}
+
 function renderChatList(filter) {
   const list = document.getElementById('chat-list-items');
   const clients = filter
     ? allClients.filter(c=>`${c.firstName||''} ${c.lastName||''}`.toLowerCase().includes(filter.toLowerCase()))
     : allClients;
+  // Drop preview listeners for clients no longer shown (or removed entirely)
+  _pruneChatPreviewUnsubs(allClients.map(c=>c.uid));
   if (!clients.length) {
     list.innerHTML = `<div style="padding:1.5rem;text-align:center;font-size:13px;color:var(--muted)">No clients found</div>`;
     return;
@@ -13339,9 +13370,11 @@ function filterChatList(val) {
 
 async function loadLastMessage(clientUid) {
   const chatId = [coachUid, clientUid].sort().join('_');
+  if (_chatPreviewUnsubs[clientUid]) return; // already listening — never double-subscribe
+  const entry = {};
   try {
     // Listen to chat doc for unread count
-    db.collection('chats').doc(chatId).onSnapshot(chatDoc => {
+    entry.unread = db.collection('chats').doc(chatId).onSnapshot(chatDoc => {
       const unreadEl = document.getElementById('cci-unread-'+clientUid);
       if (unreadEl && chatDoc.exists) {
         const data = chatDoc.data();
@@ -13360,9 +13393,9 @@ async function loadLastMessage(clientUid) {
           unreadEl.classList.remove('show');
         }
       }
-    }, () => {});
+    }, () => { /* silent — previews are non-critical */ });
 
-    db.collection('chats').doc(chatId).collection('messages')
+    entry.preview = db.collection('chats').doc(chatId).collection('messages')
       .orderBy('createdAt','desc').limit(1)
       .onSnapshot(snap => {
         const el = document.getElementById('cci-preview-'+clientUid);
@@ -13380,7 +13413,9 @@ async function loadLastMessage(clientUid) {
             sortChatList();
           }
         }
-      }, () => {});
+      }, () => { /* silent — previews are non-critical */ });
+
+    _chatPreviewUnsubs[clientUid] = entry;
   } catch(_) {}
 }
 
@@ -13732,6 +13767,8 @@ function listenForUnreadMessages() {
         if (count > 0) { cmtBadge.textContent = countLabel; cmtBadge.style.display = 'flex'; }
         else { cmtBadge.style.display = 'none'; }
       }
+    }, e => {
+      console.warn('[COACH] unread-messages listener failed:', e.code || '', e.message);
     });
 }
 //  PROGRESS TRACKER
@@ -13802,6 +13839,8 @@ function selectPtClient(uid) {
         ptCheckins = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>b.date.localeCompare(a.date));
         renderCheckinTable();
         renderPtChart();
+      }).catch(e => {
+        console.warn('[COACH] progress fallback fetch failed:', e.code || '', e.message);
       });
     });
 }
@@ -17332,7 +17371,12 @@ async function loadNutritionMonitor() {
       </div>`;
   }).join('');
 
-  clients.forEach(async c => {
+  clients.forEach(async c => { await loadNutritionMonitorCard(c); });
+
+  // Fetches and fills ONE client's card independently. Isolated per card so a
+  // single failure (or even a systemic Firestore error) degrades to a retry
+  // state on that card only — never a blank/error page for the whole grid.
+  async function loadNutritionMonitorCard(c) {
     const cardEl = document.getElementById(`nutr-card-${c.uid}`);
     if (!cardEl) return;
     try {
@@ -17380,9 +17424,91 @@ async function loadNutritionMonitor() {
           '<div style="font-size:12px;color:var(--muted);padding:4px 0;">No foods logged for today yet.</div>'}
         </div>`;
     } catch(e) {
-      cardEl.outerHTML = `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;color:var(--muted);">${c.email||'Client'}<br><small style="color:var(--red)">${e.message}</small></div>`;
+      // Per-card failure state with retry — one bad card never takes down the grid
+      const clientName = ((c.firstName||'')+' '+(c.lastName||'')).trim() || c.email || 'Client';
+      cardEl.outerHTML = `
+        <div data-uid="${c.uid}" data-name="${escapeAttr(clientName)}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;">
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">${escapeHtml(clientName)}</div>
+          <div style="font-size:12px;color:var(--red);margin-bottom:10px;">Couldn't load today's log${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}</div>
+          <button onclick="retryNutrCard('${c.uid}')" style="background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button>
+        </div>`;
     }
-  });
+  }
+}
+
+// One-card retry for the Nutrition > Monitor grid (see loadNutritionMonitorCard)
+function retryNutrCard(uid) {
+  const c = (allClients || []).find(x => x.uid === uid);
+  const grid = document.getElementById('nutr-monitor-grid');
+  if (!grid || !c) return;
+  const clientName = ((c.firstName||'')+' '+(c.lastName||'')).trim() || c.email || c.name || 'Client';
+  const el = document.getElementById('nutr-card-' + uid);
+  if (el) {
+    el.outerHTML = `
+      <div id="nutr-card-${c.uid}" data-uid="${c.uid}" data-name="${escapeAttr(clientName)}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;cursor:pointer;" onmouseover="this.style.borderColor='rgba(255,90,43,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="font-size:14px;font-weight:700;color:var(--text);">${escapeHtml(clientName)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Loading…</div>
+      </div>`;
+  }
+  const today = new Date().toISOString().slice(0,10);
+  (async () => {
+    try {
+      const logSnap = await db.collection('members').doc(c.uid).collection('mealLogs').where('date','==',today).limit(20).get();
+      const logs = logSnap.docs.map(d=>d.data());
+      const total = logs.reduce((acc,l)=>({
+        protein:  acc.protein  + (l.protein_g ?? l.protein ?? 0),
+        carbs:    acc.carbs    + (l.carbs_g   ?? l.carbs   ?? 0),
+        fats:     acc.fats     + (l.fat_g     ?? l.fats    ?? 0),
+        calories: acc.calories + (l.calories  ?? 0)
+      }), {protein:0, carbs:0, fats:0, calories:0});
+      const hasData = logs.length > 0;
+      const cardEl = document.getElementById(`nutr-card-${c.uid}`);
+      if (!cardEl) return;
+      cardEl.outerHTML = `
+        <div onclick="openMonitorClient(this)" data-uid="${c.uid}" data-name="${clientName}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;cursor:pointer;transition:border-color 0.2s;" onmouseover="this.style.borderColor='rgba(255,90,43,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--text);">${escapeHtml(clientName)}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">${hasData ? logs.length+' item'+(logs.length!==1?'s':'')+' logged today' : 'No food logged today'}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;color:var(--gold);line-height:1;">${Math.round(total.calories)}</div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">kcal</div>
+            </div>
+          </div>
+          ${hasData ? `
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
+            <div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#60A5FA;">${Math.round(total.protein*10)/10}g</div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">Protein</div>
+            </div>
+            <div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--gold);">${Math.round(total.carbs*10)/10}g</div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">Carbs</div>
+            </div>
+            <div style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;">
+              <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#F87171;">${Math.round(total.fats*10)/10}g</div>
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-top:2px;">Fats</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${logs.slice(0,4).map(l=>`<span style="font-size:11px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:3px 9px;color:var(--muted);">${escapeHtml(l.food_name||l.mealName||'Food')}</span>`).join('')}
+            ${logs.length>4?`<span style="font-size:11px;color:var(--muted);padding:3px 6px;">+${logs.length-4} more</span>`:''}
+          </div>` :
+          '<div style="font-size:12px;color:var(--muted);padding:4px 0;">No foods logged for today yet.</div>'}
+        </div>`;
+    } catch(e2) {
+      const cardEl2 = document.getElementById(`nutr-card-${c.uid}`);
+      if (cardEl2) {
+        cardEl2.outerHTML = `
+          <div data-uid="${c.uid}" data-name="${escapeAttr(clientName)}" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:18px 20px;">
+            <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;">${escapeHtml(clientName)}</div>
+            <div style="font-size:12px;color:var(--red);margin-bottom:10px;">Couldn't load today's log${e2.message ? ' — ' + escapeHtml(String(e2.message).slice(0,140)) : ''}</div>
+            <button onclick="retryNutrCard('${c.uid}')" style="background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button>
+          </div>`;
+      }
+    }
+  })();
 }
 
 function macroPBar(label, consumed, target, color) {
@@ -17531,6 +17657,8 @@ function closeNutrLightbox() {
 async function openMonitorClient(el) {
   const uid  = el.dataset.uid;
   const name = el.dataset.name;
+  _monitorRetryUid = uid;
+  _monitorRetryName = name;
   const panel    = document.getElementById('monitor-detail-panel');
   const backdrop = document.getElementById('monitor-detail-backdrop');
   const today    = new Date().toISOString().slice(0,10);
@@ -17661,8 +17789,26 @@ async function openMonitorClient(el) {
     }).join('');
 
   } catch(e) {
-    document.getElementById('mdc-body').innerHTML = `<div style="color:var(--red);font-size:13px;text-align:center;padding:28px 0;">Error: ${e.message}</div>`;
+    document.getElementById('mdc-body').innerHTML = `
+      <div style="color:var(--red);font-size:13px;text-align:center;padding:28px 0;">Couldn't load this client's log${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,160)) : ''}</div>
+      <div style="text-align:center;padding:0 0 20px;"><button onclick="retryMonitorClient()" style="background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
   }
+}
+
+let _monitorRetryUid = null;
+let _monitorRetryName = '';
+// Re-runs the last Monitor detail panel load (used by the Retry button in the
+// panel's error state — isolated to this one client, never the whole grid).
+function retryMonitorClient() {
+  if (!_monitorRetryUid) return;
+  const grid = document.getElementById('nutr-monitor-grid');
+  const el = grid ? grid.querySelector(`[data-uid="${_monitorRetryUid}"]`) : null;
+  if (el) { openMonitorClient(el); return; }
+  // Element gone (grid re-rendered) — rebuild a proxy element and open it
+  const proxy = document.createElement('div');
+  proxy.dataset.uid = _monitorRetryUid;
+  proxy.dataset.name = _monitorRetryName;
+  openMonitorClient(proxy);
 }
 
 function closeMonitorDetail() {
