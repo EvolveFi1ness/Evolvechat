@@ -12681,14 +12681,16 @@ async function nutrLoadDayLogs(uid, dateKey) {
   });
 
   // Query 2: persistent coach-assigned foods (no date field — always-on plan)
+  // Single-field query: filtering on both assignedByCoach AND persistent would
+  // require a composite index; persistent is filtered client-side instead.
   const snapCoach = await db.collection('members').doc(uid).collection('mealLogs')
     .where('assignedByCoach','==',true)
-    .where('persistent','==',true)
     .get();
   snapCoach.docs.forEach(doc => {
    const d = doc.data();
    // Skip if it has a date (already handled above or belongs to a specific day)
    if (d.date) return;
+   if (d.persistent !== true) return;
    if (!nutrFoodLogs[dateKey].__assigned__) nutrFoodLogs[dateKey].__assigned__ = [];
    // Avoid duplicates
    const alreadyIn = (nutrFoodLogs[dateKey].__assigned__ || []).some(i => i.logId === doc.id);

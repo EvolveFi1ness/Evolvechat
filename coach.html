@@ -17220,7 +17220,7 @@ async function loadNutritionSimpleView() {
     return;
   }
 
-  const today = new Date().toISOString().slice(0,10);
+  const today = _dateKey(0);
   const weekAgo = _dateKey(-6);
 
   listEl.innerHTML = clients.map(c => {
@@ -17353,7 +17353,7 @@ async function loadNutritionMonitor() {
     grid.innerHTML = '<div style="color:var(--muted);font-size:13px;">No clients found.</div>';
     return;
   }
-  const today = new Date().toISOString().slice(0,10);
+  const today = _dateKey(0);
 
   // Render a skeleton card per client immediately so the grid never sits on one global
   // "Loading..." placeholder — each card fills in independently as its own query resolves,
@@ -17380,7 +17380,7 @@ async function loadNutritionMonitor() {
     const cardEl = document.getElementById(`nutr-card-${c.uid}`);
     if (!cardEl) return;
     try {
-      const logSnap = await db.collection('members').doc(c.uid).collection('mealLogs').where('date','==',today).limit(20).get();
+      const logSnap = await fetchMealLogsRange(c.uid, today, today, 20);
       const logs = logSnap.docs.map(d=>d.data());
       const total = logs.reduce((acc,l)=>({
         protein:  acc.protein  + (l.protein_g ?? l.protein ?? 0),
@@ -17450,10 +17450,10 @@ function retryNutrCard(uid) {
         <div style="font-size:11px;color:var(--muted);margin-top:2px;">Loading…</div>
       </div>`;
   }
-  const today = new Date().toISOString().slice(0,10);
+  const today = _dateKey(0);
   (async () => {
     try {
-      const logSnap = await db.collection('members').doc(c.uid).collection('mealLogs').where('date','==',today).limit(20).get();
+      const logSnap = await fetchMealLogsRange(c.uid, today, today, 20);
       const logs = logSnap.docs.map(d=>d.data());
       const total = logs.reduce((acc,l)=>({
         protein:  acc.protein  + (l.protein_g ?? l.protein ?? 0),
@@ -17523,15 +17523,38 @@ function macroPBar(label, consumed, target, color) {
 // ── MEAL LOGS ──
 // Helper: build YYYY-MM-DD string for a given Date offset
 function _dateKey(offsetDays) {
-  const d = new Date();
-  d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().slice(0,10);
+  // PH-local calendar day (Asia/Manila), same basis as the client app's
+  // nutrDateKey — mealLogs 'date' strings are PH days, so a UTC-based key
+  // silently misses everything logged between 00:00 and 08:00 PH.
+  const ph = new Date(new Date(Date.now() + (offsetDays||0) * 86400000)
+    .toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  return ph.getFullYear() + '-' +
+    String(ph.getMonth()+1).padStart(2,'0') + '-' +
+    String(ph.getDate()).padStart(2,'0');
 }
+
+// Shared bounded mealLogs fetch: range query on the 'date' string field plus
+// a hard timeout so a wedged Firestore request (the class of failure that
+// previously left the Food logs tab on "Loading…" forever) always surfaces
+// as a visible, retryable error instead of hanging the UI indefinitely.
+// Single-field range on 'date' — no composite index required.
+async function fetchMealLogsRange(clientUid, startKey, endKey, maxDocs) {
+  const req = db.collection('members').doc(clientUid).collection('mealLogs')
+    .where('date', '>=', startKey).where('date', '<=', endKey)
+    .limit(maxDocs || 100).get();
+  const guard = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Timed out waiting for Firestore (20s). Check the network and hit Retry.')), 20000)
+  );
+  return Promise.race([req, guard]);
+}
+
+let _mealLogsToken = 0; // stale-response guard for the Food logs tab
 
 async function loadClientMealLogs() {
   const clientUid = document.getElementById('nutr-log-client').value;
   const period    = document.getElementById('nutr-log-date').value;
   const list      = document.getElementById('nutr-meal-logs-list');
+  const token     = ++_mealLogsToken;
   if (!clientUid) {
     list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Select a client to view meal logs.</div>';
     return;
@@ -17548,8 +17571,8 @@ async function loadClientMealLogs() {
       startDate = _dateKey(-6);
       endDate = _dateKey(0);
     }
-    const logSnap = await db.collection('members').doc(clientUid).collection('mealLogs')
-      .where('date', '>=', startDate).where('date', '<=', endDate).limit(100).get();
+    const logSnap = await fetchMealLogsRange(clientUid, startDate, endDate, 100);
+    if (token !== _mealLogsToken) return; // a newer selection superseded this one
 
     let allDocs = logSnap.docs;
     allDocs.sort((a, b) => {
@@ -17628,8 +17651,9 @@ async function loadClientMealLogs() {
         </div>`;
     }).join('');
   } catch(e) {
-    list.innerHTML = `<div style="color:var(--red);font-size:13px;">Error loading logs: ${e.message}</div>`;
     console.error('[MealLogs]', e);
+    if (token !== _mealLogsToken) return; // a newer selection superseded this one
+    list.innerHTML = `<div style="text-align:center;color:#f87171;font-size:13px;padding:20px 0;">Couldn't load food logs${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}<br><button onclick="loadClientMealLogs()" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
   }
 }
 
@@ -17661,7 +17685,7 @@ async function openMonitorClient(el) {
   _monitorRetryName = name;
   const panel    = document.getElementById('monitor-detail-panel');
   const backdrop = document.getElementById('monitor-detail-backdrop');
-  const today    = new Date().toISOString().slice(0,10);
+  const today    = _dateKey(0);
 
   // Show panel immediately with loading state
   document.getElementById('mdc-name').textContent = name;
@@ -17672,13 +17696,15 @@ async function openMonitorClient(el) {
   panel.style.display = 'flex';
 
   try {
+    // Single-field queries only — the assignedByCoach+persistent pair used to
+    // require a composite index; persistent is now filtered client-side below.
     const [snap, coachSnap] = await Promise.all([
-      db.collection('members').doc(uid).collection('mealLogs').where('date','==',today).get(),
-      db.collection('members').doc(uid).collection('mealLogs').where('assignedByCoach','==',true).where('persistent','==',true).limit(300).get()
+      fetchMealLogsRange(uid, today, today, 300),
+      db.collection('members').doc(uid).collection('mealLogs').where('assignedByCoach','==',true).limit(300).get()
     ]);
     const todayLogs   = snap.docs.map(d => ({id: d.id, ...d.data()}))
       .sort((a,b) => (b.loggedAt?.toMillis?.() || 0) - (a.loggedAt?.toMillis?.() || 0));
-    const coachFoods  = coachSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    const coachFoods  = coachSnap.docs.map(d => ({id: d.id, ...d.data()})).filter(f => f.persistent === true);
     // Merge: coach-assigned persistent foods show alongside today's logs,
     // but suppress a coach food if the client already logged something with the same name today
     const loggedNames = new Set(
