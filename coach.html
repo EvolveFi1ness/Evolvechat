@@ -12778,7 +12778,7 @@ async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
     // Build updated plan (only days that still have exercises)
     const plan = {};
     Object.entries(workoutPlan).forEach(([day, d]) => {
-      if (d.exercises.length) plan[day] = { name: d.name || day + ' Workout', exercises: d.exercises };
+      if (d.exercises.length) plan[day] = { name: d.name || day + ' Workout', exercises: d.exercises.map(ex => stripUndefined(ex)) };
     });
 
     // Persist to localStorage BEFORE the async Firestore write so that if the
@@ -12985,7 +12985,7 @@ async function assignWorkoutToClient(evt) {
       const p = {};
       Object.entries(workoutPlan).forEach(([day,d])=>{
         if(d.exercises.length) {
-          p[day] = { name: d.name||day+' Workout', exercises: d.exercises };
+          p[day] = { name: d.name||day+' Workout', exercises: d.exercises.map(ex => stripUndefined(ex)) };
         }
       });
 
@@ -13245,7 +13245,7 @@ async function confirmSaveTemplate() {
     // Only the currently selected day's exercises are saved — not the whole week.
     const exercisesSnapshot = dayData.exercises.map(ex => ({...ex}));
 
-    const newTpl = { name, day: currentDay, exercises: exercisesSnapshot, savedAt: Date.now() };
+    const newTpl = stripUndefined({ name, day: currentDay, exercises: exercisesSnapshot, savedAt: Date.now() });
     const docRef = await templatesCollection().add(newTpl);
 
     const templates = getTemplates();
@@ -13349,7 +13349,7 @@ function deleteTemplate(id) {
 
     // Restore in Firestore under the same id so any other device stays in sync.
     const { id: tplId, ...data } = removed;
-    templatesCollection().doc(tplId).set(data).catch(e => {
+    templatesCollection().doc(tplId).set(stripUndefined(data)).catch(e => {
       console.error('restore template failed:', e);
       showToast('Could not restore template on server: ' + e.message, 'error');
     });
@@ -13720,6 +13720,20 @@ function sanitizeInput(raw, maxLen) {
 function getSanitizedValue(id, maxLen) {
   const el = document.getElementById(id);
   return el ? sanitizeInput(el.value, maxLen) : '';
+}
+
+// Strips undefined/null values from an object so Firestore doesn't reject the write.
+// Firestore compat SDK throws "INTERNAL ASSERTION FAILED: Unexpected state" on undefined values.
+function stripUndefined(obj) {
+  if (Array.isArray(obj)) return obj.map(stripUndefined);
+  if (obj && typeof obj === 'object' && !(obj instanceof Date)) {
+    const clean = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (v !== undefined) clean[k] = v;
+    }
+    return clean;
+  }
+  return obj;
 }
 
 function isSameDay(a, b) {
