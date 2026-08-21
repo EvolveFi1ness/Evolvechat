@@ -6769,6 +6769,52 @@ function queueWorkoutSave(fn) {
   return run;
 }
 
+// ── PENDING SAVE BACKUP ──────────────────────────────
+// If the coach closes the tab mid-save, the async Firestore write may never
+// complete.  We persist the plan to localStorage *before* starting the write
+// so the data survives a tab close.  On the next page load the recovery
+// function picks it up and pushes it to Firestore.
+const _PENDING_SAVE_KEY = 'evolvePendingWorkoutSave';
+
+function _persistPendingSave(clientUid, plan) {
+  try {
+    localStorage.setItem(_PENDING_SAVE_KEY, JSON.stringify({ clientUid, plan, ts: Date.now() }));
+  } catch (_) {}
+}
+
+function _clearPendingSave() {
+  try { localStorage.removeItem(_PENDING_SAVE_KEY); } catch (_) {}
+}
+
+function _recoverPendingSave() {
+  try {
+    const raw = localStorage.getItem(_PENDING_SAVE_KEY);
+    if (!raw) return;
+    const { clientUid, plan } = JSON.parse(raw);
+    if (!clientUid || !plan || typeof plan !== 'object') { _clearPendingSave(); return; }
+    // Only recover if the coach is logged in and Firestore is available
+    if (!db || !coachUid) return;
+    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const ref = db.collection('members').doc(clientUid);
+    // Rebuild the same two-step write the auto-save uses
+    const clearData = { workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
+    DAYS.forEach(day => { clearData[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete(); });
+    ref.update(clearData).then(() => {
+      const writeData = { workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
+      Object.entries(plan).forEach(([day, d]) => { writeData[`assignedWorkoutPlan.${day}`] = d; });
+      return ref.update(writeData);
+    }).then(() => {
+      _clearPendingSave();
+      // Notify the client about the recovered plan
+      const exs = Object.values(plan).reduce((s, d) => s + (d.exercises?.length || 0), 0);
+      if (exs > 0) scheduleClientNotification(clientUid, Object.keys(plan));
+    }).catch(e => {
+      console.error('[recoverPendingSave]', e);
+      // Leave the backup in localStorage — will retry on next load
+    });
+  } catch (_) { _clearPendingSave(); }
+}
+
 // ─────────────────────────────────────────
 //  WORKOUTS TAB — program list view + quick-assign modal
 // ─────────────────────────────────────────
@@ -7346,6 +7392,10 @@ function bootApp() {
   })();
   // Auth already completed in handleCoachLogin — just load data
   loadAllClients();
+  // Recover any workout plan that was persisted to localStorage before a
+  // tab close interrupted the Firestore write.  Runs once on login so the
+  // client always gets their latest plan even if the coach forgot to wait.
+  _recoverPendingSave();
   listenForUnreadMessages();
   scheduleIdle(() => {
     checkFirestoreAccess();
@@ -12731,6 +12781,11 @@ async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
       if (d.exercises.length) plan[day] = { name: d.name || day + ' Workout', exercises: d.exercises };
     });
 
+    // Persist to localStorage BEFORE the async Firestore write so that if the
+    // coach closes the tab mid-write the plan is not lost — the next page load
+    // will recover and push it.
+    _persistPendingSave(clientUid, plan);
+
     // Step 1 — delete all day fields so removed days don't linger
     const clearData = { workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
     DAYS.forEach(day => { clearData[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete(); });
@@ -12742,6 +12797,9 @@ async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
       Object.entries(plan).forEach(([day, d]) => { writeData[`assignedWorkoutPlan.${day}`] = d; });
       await ref.update(writeData);
     }
+
+    // Firestore write succeeded — the backup is no longer needed
+    _clearPendingSave();
 
     const totalEx = Object.values(plan).reduce((s, d) => s + d.exercises.length, 0);
     const totalDays = Object.keys(plan).length;
@@ -12931,6 +12989,9 @@ async function assignWorkoutToClient(evt) {
         }
       });
 
+      // Persist to localStorage before the async write as a safety net
+      _persistPendingSave(clientUid, p);
+
       // First delete ALL existing day fields so stale days from old plans don't persist
       const ref  = db.collection('members').doc(clientUid);
       const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -12952,6 +13013,9 @@ async function assignWorkoutToClient(evt) {
         updateData[`assignedWorkoutPlan.${day}`] = d;
       });
       await ref.update(updateData);
+
+      // Firestore write succeeded — the backup is no longer needed
+      _clearPendingSave();
 
       // Chat notification — skip if the last message already says this
       // exact thing (e.g. a debounced auto-notification just sent it).
