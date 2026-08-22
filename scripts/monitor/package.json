@@ -1,0 +1,11 @@
+{
+  "name": "evolvechat-monitoring",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EvolveChat website monitoring worker (GitHub Actions cron)",
+  "main": "run-checks.js",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  }
+}

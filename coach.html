@@ -4243,6 +4243,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="nav-label">Messages</span>
         <span class="nav-badge hidden" id="chat-badge" >0</span>
       </div>
+      <div class="nav-item" onclick="showPage('monitoring')" id="nav-monitoring" data-label="Monitoring">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+        <span class="nav-label">Monitoring</span>
+      </div>
 
     </nav>
     <div class="sidebar-footer">
@@ -5109,6 +5113,246 @@ document.addEventListener('DOMContentLoaded', () => {
     <!-- ═══ PROGRESS TRACKER ═══ -->
 
     <!-- ═══ SETTINGS ═══ -->
+    <!-- ═══ MONITORING ═══ -->
+    <style id="monitoring-styles">
+      .mon-stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px; }
+      .mon-stat { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:14px 16px; }
+      .mon-stat-label { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:'Outfit',sans-serif; margin-bottom:6px; }
+      .mon-stat-value { font-size:22px; font-weight:800; font-family:'Syne',sans-serif; color:var(--text); line-height:1.1; display:flex; align-items:center; gap:8px; }
+      .mon-stat-sub { font-size:11px; color:var(--muted); margin-top:4px; font-family:'Outfit',sans-serif; }
+      .mon-dot { width:10px; height:10px; border-radius:50%; flex:0 0 auto; }
+      .mon-dot.up { background:var(--green); box-shadow:0 0 8px rgba(74,222,128,.5); }
+      .mon-dot.down { background:var(--red); box-shadow:0 0 8px rgba(248,113,113,.5); animation:monPulse 1.2s ease-in-out infinite; }
+      .mon-dot.degraded { background:#FBBF24; box-shadow:0 0 8px rgba(251,191,36,.5); }
+      .mon-dot.paused, .mon-dot.unknown { background:var(--muted); opacity:.6; }
+      @keyframes monPulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+      .mon-toolbar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+      .mon-tabs { display:flex; gap:6px; flex-wrap:wrap; }
+      .mon-tab-btn { background:var(--bg2); border:1px solid var(--border); border-radius:100px; padding:7px 16px; font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; color:var(--muted); cursor:pointer; transition:all .15s; }
+      .mon-tab-btn.active { background:var(--gold-dim); border-color:rgba(255,90,43,.35); color:var(--gold); }
+      .mon-actions { display:flex; gap:8px; flex-wrap:wrap; }
+      .mon-btn { background:var(--gold); color:#fff; border:none; border-radius:11px; padding:9px 18px; font-size:12.5px; font-weight:700; font-family:'Outfit',sans-serif; cursor:pointer; transition:filter .15s, transform .1s; white-space:nowrap; }
+      .mon-btn:hover { filter:brightness(1.08); } .mon-btn:active { transform:scale(.97); }
+      .mon-btn.secondary { background:var(--bg3); color:var(--text); border:1px solid var(--border2); }
+      .mon-btn.small { padding:6px 12px; font-size:11.5px; border-radius:9px; }
+      .mon-btn.danger { background:transparent; color:var(--red); border:1px solid rgba(248,113,113,.35); }
+
+      .mon-card { background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:6px 0; overflow:hidden; }
+      .mon-table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+      table.mon-table { width:100%; border-collapse:collapse; min-width:720px; }
+      .mon-table th { text-align:left; font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:'Outfit',sans-serif; padding:12px 14px; border-bottom:1px solid var(--border); white-space:nowrap; }
+      .mon-table td { padding:12px 14px; font-size:13px; color:var(--text); border-bottom:1px solid var(--border); vertical-align:middle; }
+      .mon-table tr:last-child td { border-bottom:none; }
+      .mon-table tr.mon-row-click { cursor:pointer; transition:background .12s; }
+      .mon-table tr.mon-row-click:hover td { background:var(--gold-glow); }
+      .mon-name-cell { font-weight:700; font-family:'Outfit',sans-serif; }
+      .mon-url-cell { max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:12px; }
+      .mon-type-chip { display:inline-block; font-size:9.5px; font-weight:800; letter-spacing:.06em; background:var(--bg4); border:1px solid var(--border2); border-radius:6px; padding:2px 7px; color:var(--muted); }
+      .mon-rt-badge { font-size:12px; font-weight:700; font-family:'Outfit',sans-serif; }
+      .mon-rt-badge.slow { color:#FBBF24; } .mon-rt-badge.ok { color:var(--text); }
+      .mon-last-check { font-size:11.5px; color:var(--muted); white-space:nowrap; }
+      .mon-row-btns { display:flex; gap:6px; }
+      .mon-icon-btn { background:var(--bg3); border:1px solid var(--border2); color:var(--muted); border-radius:8px; padding:5px 8px; cursor:pointer; font-size:11px; font-weight:700; font-family:'Outfit',sans-serif; transition:all .15s; white-space:nowrap; }
+      .mon-icon-btn:hover { color:var(--text); border-color:var(--gold); }
+
+      .mon-empty { text-align:center; padding:44px 20px; color:var(--muted); font-size:13px; font-family:'Outfit',sans-serif; line-height:1.7; }
+      .mon-empty-icon { opacity:.45; margin-bottom:8px; }
+
+      .mon-inc-item { display:flex; align-items:flex-start; gap:12px; padding:14px; border-bottom:1px solid var(--border); }
+      .mon-inc-item:last-child { border-bottom:none; }
+      .mon-inc-title { font-weight:700; font-size:13.5px; font-family:'Outfit',sans-serif; color:var(--text); }
+      .mon-inc-reason { font-size:12px; color:var(--muted); margin-top:2px; word-break:break-word; }
+      .mon-inc-meta { font-size:11px; color:var(--muted); margin-top:5px; font-family:'Outfit',sans-serif; }
+      .mon-inc-badge { font-size:10px; font-weight:800; letter-spacing:.05em; border-radius:100px; padding:3px 10px; flex:0 0 auto; }
+      .mon-inc-badge.open { background:rgba(248,113,113,.12); color:var(--red); border:1px solid rgba(248,113,113,.3); }
+      .mon-inc-badge.resolved { background:rgba(74,222,128,.1); color:var(--green); border:1px solid rgba(74,222,128,.25); }
+
+      /* Modals */
+      .mon-overlay { position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter:blur(4px); z-index:9000; display:none; align-items:center; justify-content:center; padding:18px; }
+      .mon-overlay.open { display:flex; }
+      .mon-modal { background:var(--bg2); border:1px solid var(--border2); border-radius:20px; padding:24px; width:min(480px, 100%); max-height:88vh; overflow-y:auto; box-shadow:0 24px 80px rgba(0,0,0,.5); }
+      .mon-modal.wide { width:min(640px, 100%); }
+      .mon-modal-title { font-family:'Syne',sans-serif; font-size:19px; font-weight:800; color:var(--text); margin-bottom:4px; }
+      .mon-modal-sub { font-size:12.5px; color:var(--muted); font-family:'Outfit',sans-serif; margin-bottom:18px; line-height:1.55; }
+      .mon-field { margin-bottom:14px; }
+      .mon-field label { display:block; font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-family:'Outfit',sans-serif; margin-bottom:6px; }
+      .mon-field input[type=text], .mon-field input[type=number], .mon-field input[type=url], .mon-field select {
+        width:100%; background:var(--bg3); border:1px solid var(--border2); border-radius:11px;
+        padding:11px 13px; font-size:13.5px; color:var(--text); font-family:'Inter',sans-serif; outline:none; transition:border-color .15s;
+      }
+      .mon-field input:focus, .mon-field select:focus { border-color:var(--gold); }
+      .mon-field-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+      .mon-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+      .mon-toggle-row:last-child { border-bottom:none; }
+      .mon-toggle-label { font-size:13px; font-weight:600; font-family:'Outfit',sans-serif; color:var(--text); }
+      .mon-switch { position:relative; width:38px; height:21px; background:var(--bg4); border:1px solid var(--border2); border-radius:100px; transition:background .2s; flex:0 0 auto; }
+      .mon-switch::after { content:''; position:absolute; top:2px; left:2px; width:15px; height:15px; border-radius:50%; background:var(--muted); transition:all .2s; }
+      .mon-switch.on { background:var(--gold); border-color:var(--gold); }
+      .mon-switch.on::after { left:19px; background:#fff; }
+      .mon-modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+      /* Detail modal */
+      .mon-detail-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+      .mon-detail-status { display:flex; align-items:center; gap:10px; }
+      .mon-detail-name { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; color:var(--text); }
+      .mon-detail-url { font-size:12px; color:var(--muted); word-break:break-all; }
+      #mon-chart-canvas { width:100%; height:170px; display:block; background:var(--bg); border:1px solid var(--border); border-radius:12px; }
+      .mon-window-chips { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
+      .mon-wchip { background:var(--bg3); border:1px solid var(--border2); border-radius:10px; padding:7px 12px; font-size:11.5px; color:var(--muted); font-family:'Outfit',sans-serif; }
+      .mon-wchip b { color:var(--text); display:block; font-size:13px; margin-top:1px; }
+      .mon-checks-list { max-height:190px; overflow-y:auto; margin-top:8px; }
+      .mon-check-row { display:flex; align-items:center; gap:10px; padding:8px 4px; border-bottom:1px solid var(--border); font-size:12px; font-family:'Outfit',sans-serif; }
+      .mon-check-row:last-child { border-bottom:none; }
+      .mon-check-time { color:var(--muted); flex:0 0 110px; }
+      .mon-check-err { color:var(--red); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; }
+      .mon-section-label { font-size:10.5px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:'Outfit',sans-serif; margin:16px 0 8px; }
+      .mon-hint { font-size:11.5px; color:var(--muted); line-height:1.6; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-family:'Outfit',sans-serif; }
+    </style>
+
+    <div class="page" id="page-monitoring">
+      <div class="page-header" style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div class="page-title">Monitoring</div>
+          <div class="page-sub">Website &amp; endpoint health — checked automatically every few minutes</div>
+        </div>
+        <div class="mon-actions">
+          <button class="mon-btn secondary small" onclick="refreshMonitoring()">↻ Refresh</button>
+          <button class="mon-btn secondary small" onclick="openMonSettings()">⚙ Settings</button>
+          <button class="mon-btn small" onclick="openMonitorModal()">+ Add Monitor</button>
+        </div>
+      </div>
+
+      <div class="mon-stats-grid" style="margin-top:16px;">
+        <div class="mon-stat"><div class="mon-stat-label">Monitors</div><div class="mon-stat-value" id="mon-stat-total">—</div><div class="mon-stat-sub" id="mon-stat-enabled"></div></div>
+        <div class="mon-stat"><div class="mon-stat-label">Online</div><div class="mon-stat-value"><span class="mon-dot up"></span><span id="mon-stat-up">—</span></div></div>
+        <div class="mon-stat"><div class="mon-stat-label">Down</div><div class="mon-stat-value"><span class="mon-dot down"></span><span id="mon-stat-down">—</span></div></div>
+        <div class="mon-stat"><div class="mon-stat-label">Degraded</div><div class="mon-stat-value"><span class="mon-dot degraded"></span><span id="mon-stat-degraded">—</span></div></div>
+        <div class="mon-stat"><div class="mon-stat-label">Open Incidents</div><div class="mon-stat-value" id="mon-stat-incidents">—</div></div>
+        <div class="mon-stat"><div class="mon-stat-label">Avg Response</div><div class="mon-stat-value" id="mon-stat-rt">—</div><div class="mon-stat-sub">last 24h</div></div>
+        <div class="mon-stat"><div class="mon-stat-label">Uptime</div><div class="mon-stat-value" id="mon-stat-uptime">—</div><div class="mon-stat-sub">last 24h</div></div>
+      </div>
+
+      <div class="mon-toolbar">
+        <div class="mon-tabs">
+          <button class="mon-tab-btn active" id="montab-monitors" onclick="setMonView('monitors')">Monitors</button>
+          <button class="mon-tab-btn" id="montab-incidents" onclick="setMonView('incidents')">Incidents <span id="mon-open-count"></span></button>
+        </div>
+        <div class="mon-stat-sub" id="mon-worker-note" style="font-family:'Outfit',sans-serif;"></div>
+      </div>
+
+      <div class="mon-card" id="mon-monitors-view">
+        <div class="mon-table-scroll">
+          <table class="mon-table">
+            <thead><tr>
+              <th>Status</th><th>Monitor</th><th>URL</th><th>Type</th>
+              <th>Response</th><th>Uptime 24h</th><th>Last Check</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="mon-tbody"></tbody>
+          </table>
+        </div>
+        <div id="mon-empty" class="mon-empty" style="display:none;">
+          <div class="mon-empty-icon"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+          No monitors yet.<br>Add your first monitor — the worker checks it automatically every interval.
+        </div>
+      </div>
+
+      <div class="mon-card" id="mon-incidents-view" style="display:none;">
+        <div id="mon-inc-list"></div>
+      </div>
+    </div>
+
+    <!-- ADD / EDIT MONITOR MODAL -->
+    <div class="mon-overlay" id="mon-editor-overlay">
+      <div class="mon-modal">
+        <div class="mon-modal-title" id="mon-editor-title">Add Monitor</div>
+        <div class="mon-modal-sub">The scheduled worker (GitHub Actions) will check this target automatically.</div>
+        <div class="mon-field"><label>Monitor Name</label><input type="text" id="monf-name" maxlength="60" placeholder="e.g. EvolveChat Website"></div>
+        <div class="mon-field"><label>URL</label><input type="url" id="monf-url" placeholder="https://example.com"></div>
+        <div class="mon-field-row">
+          <div class="mon-field"><label>Type</label>
+            <select id="monf-type">
+              <option value="HTTP">HTTP</option>
+              <option value="API">API</option>
+              <option value="PAGE">PAGE (check page content)</option>
+            </select>
+          </div>
+          <div class="mon-field"><label>Interval</label>
+            <select id="monf-interval">
+              <option value="5">Every 5 minutes</option>
+              <option value="10">Every 10 minutes</option>
+              <option value="15">Every 15 minutes</option>
+              <option value="30">Every 30 minutes</option>
+              <option value="60">Every hour</option>
+            </select>
+          </div>
+        </div>
+        <div class="mon-field-row">
+          <div class="mon-field"><label>Timeout (seconds)</label><input type="number" id="monf-timeout" min="2" max="60" value="10"></div>
+          <div class="mon-field"><label>Expected Status</label><input type="text" id="monf-status" placeholder="200" value="200"></div>
+        </div>
+        <div class="mon-field"><label>Expected Text (optional)</label><input type="text" id="monf-text" maxlength="120" placeholder='e.g. "EVOLVE" — fails if not found in body'></div>
+        <div class="mon-toggle-row" onclick="toggleSwitch('monf-enabled')">
+          <span class="mon-toggle-label">Enabled</span>
+          <span class="mon-switch on" id="monf-enabled"></span>
+        </div>
+        <div class="mon-modal-actions">
+          <button class="mon-btn secondary" onclick="closeModal('mon-editor-overlay')">Cancel</button>
+          <button class="mon-btn" id="mon-editor-save" onclick="saveMonitor()">Save Monitor</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="mon-overlay" id="mon-settings-overlay">
+      <div class="mon-modal">
+        <div class="mon-modal-title">Monitoring Settings</div>
+        <div class="mon-modal-sub">Alert thresholds and Telegram notification toggles.</div>
+        <div class="mon-field-row">
+          <div class="mon-field"><label>Failures before DOWN</label><input type="number" id="mons-threshold" min="1" max="10" value="3"></div>
+          <div class="mon-field"><label>Slow threshold (ms)</label><input type="number" id="mons-slowms" min="200" step="100" value="2000"></div>
+        </div>
+        <div class="mon-section-label">Telegram Alerts</div>
+        <div class="mon-hint">Tokens are stored as GitHub repo secrets (<b>TELEGRAM_BOT_TOKEN</b>, <b>TELEGRAM_CHAT_ID</b>) — never in this app or the database.</div>
+        <div class="mon-toggle-row" onclick="toggleSwitch('mons-tg')"><span class="mon-toggle-label">Enable Telegram notifications</span><span class="mon-switch on" id="mons-tg"></span></div>
+        <div class="mon-toggle-row" onclick="toggleSwitch('mons-tg-down')"><span class="mon-toggle-label">DOWN alerts</span><span class="mon-switch on" id="mons-tg-down"></span></div>
+        <div class="mon-toggle-row" onclick="toggleSwitch('mons-tg-rec')"><span class="mon-toggle-label">Recovery alerts</span><span class="mon-switch on" id="mons-tg-rec"></span></div>
+        <div class="mon-toggle-row" onclick="toggleSwitch('mons-tg-ssl')"><span class="mon-toggle-label">SSL expiry alerts</span><span class="mon-switch on" id="mons-tg-ssl"></span></div>
+        <div class="mon-toggle-row" onclick="toggleSwitch('mons-tg-slow')"><span class="mon-toggle-label">Slow response alerts</span><span class="mon-switch" id="mons-tg-slow"></span></div>
+        <div class="mon-modal-actions">
+          <button class="mon-btn secondary" onclick="closeModal('mon-settings-overlay')">Cancel</button>
+          <button class="mon-btn" onclick="saveMonSettings()">Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONITOR DETAIL MODAL -->
+    <div class="mon-overlay" id="mon-detail-overlay" onclick="if(event.target===this)closeModal('mon-detail-overlay')">
+      <div class="mon-modal wide">
+        <div class="mon-detail-head">
+          <div class="mon-detail-status">
+            <span class="mon-dot unknown" id="mond-dot"></span>
+            <div>
+              <div class="mon-detail-name" id="mond-name">—</div>
+              <div class="mon-detail-url" id="mond-url">—</div>
+            </div>
+          </div>
+          <div class="mon-actions">
+            <button class="mon-btn small" onclick="requestCheck(_monDetailId)">Check Now</button>
+            <button class="mon-btn secondary small" onclick="closeModal('mon-detail-overlay')">Close</button>
+          </div>
+        </div>
+        <canvas id="mon-chart-canvas"></canvas>
+        <div class="mon-window-chips" id="mond-windows"></div>
+        <div class="mon-section-label">Recent Checks</div>
+        <div class="mon-checks-list" id="mond-checks"></div>
+        <div class="mon-section-label">Recent Incidents</div>
+        <div id="mond-incidents"></div>
+        <div class="mon-section-label">SSL Certificate</div>
+        <div class="mon-stat-sub" id="mond-ssl" style="font-size:12px;">No SSL data yet</div>
+      </div>
+    </div>
+
     <div class="page" id="page-settings">
       <div class="settings-wrap">
         <div class="page-header">
@@ -7530,6 +7774,7 @@ function showPage(page, _fromPopState) {
   if (page==='workouts') { wkShowList(); populateClientSelect(); renderTemplateList(); loadTemplatesFromFirestore(); }
   if (page==='dashboard') loadDashboardPhotos();
   if (page==='nutrition') initNutritionPage();
+  if (page==='monitoring') initMonitoringPage();
   // Sync mobile bottom tabs
   document.querySelectorAll('.cmt-tab').forEach(t => t.classList.remove('active'));
   const mTab = document.getElementById('cmt-' + page);
@@ -19561,6 +19806,462 @@ textarea:focus-visible, select:focus-visible,
    }
   }
  </script>
+
+ <script>
+ // ─────────────────────────────────────────
+ //  WEBSITE MONITORING (dashboard)
+ //  Worker: GitHub Actions cron → scripts/monitor/run-checks.js
+ //  Data: monitors · monitorChecks · incidents · monitorConfig (Firestore)
+ // ─────────────────────────────────────────
+ let _monUnsub = null;
+ let _monitorsCache = [];
+ let _monChecksCache = [];   // last 24h of checks across all monitors (stats + per-monitor uptime)
+ let _monIncidentsOpen = [];
+ let _monIncidentsAll = [];  // latest 50 for incidents tab
+ let _monDetailId = null;
+
+ function monTsDate(ts) {
+   try {
+     if (!ts) return null;
+     if (ts.toDate) return ts.toDate();
+     if (ts.seconds) return new Date(ts.seconds * 1000);
+     return new Date(ts);
+   } catch(_) { return null; }
+ }
+
+ function monRelTime(ts) {
+   const d = typeof ts === 'object' && ts && ts.toDate ? ts.toDate() : (ts instanceof Date ? ts : monTsDate(ts));
+   if (!d) return 'never';
+   const s = Math.floor((Date.now() - d.getTime()) / 1000);
+   if (s < 5) return 'just now';
+   if (s < 60) return s + ' seconds ago';
+   if (s < 3600) return Math.floor(s / 60) + ' min ago';
+   if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+   return Math.floor(s / 86400) + 'd ago';
+ }
+
+ function _monDotClass(status) {
+   return { UP:'up', DOWN:'down', DEGRADED:'degraded', PAUSED:'paused' }[status] || 'unknown';
+ }
+
+ function initMonitoringPage() {
+   refreshMonitoring();
+   if (!_monUnsub && typeof db !== 'undefined' && db) {
+     _monUnsub = db.collection('monitors').onSnapshot(() => {
+       refreshMonitoring();
+     }, err => console.warn('[monitoring] listener:', err.message));
+   }
+ }
+
+ async function refreshMonitoring() {
+   if (typeof db === 'undefined' || !db) return;
+   try {
+     const snap = await db.collection('monitors').orderBy('name').get();
+     _monitorsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+     const since24 = new Date(Date.now() - 86400000);
+     const checksSnap = await db.collection('monitorChecks')
+       .where('checkedAt', '>=', since24).orderBy('checkedAt', 'desc').limit(2000).get();
+     _monChecksCache = checksSnap.docs.map(d => d.data());
+
+     const [incOpen, incAll] = await Promise.all([
+       db.collection('incidents').where('status', '==', 'open').get(),
+       db.collection('incidents').orderBy('startedAt', 'desc').limit(50).get()
+     ]);
+     _monIncidentsOpen = incOpen.docs.map(d => ({ id: d.id, ...d.data() }));
+     _monIncidentsAll = incAll.docs.map(d => ({ id: d.id, ...d.data() }));
+
+     renderMonStats();
+     renderMonTable();
+     renderMonIncidents();
+   } catch(e) {
+     console.error('[monitoring] load failed:', e);
+     showToast('Could not load monitoring data: ' + e.message, 'error');
+   }
+ }
+
+ function renderMonStats() {
+   const total = _monitorsCache.length;
+   const enabled = _monitorsCache.filter(m => m.enabled !== false).length;
+   const up    = _monitorsCache.filter(m => m.status === 'UP').length;
+   const down  = _monitorsCache.filter(m => m.status === 'DOWN').length;
+   const deg   = _monitorsCache.filter(m => m.status === 'DEGRADED').length;
+   set('mon-stat-total', total || '—');
+   document.getElementById('mon-stat-enabled').textContent = enabled ? enabled + ' enabled' : '';
+   set('mon-stat-up', up); set('mon-stat-down', down); set('mon-stat-degraded', deg);
+   set('mon-stat-incidents', _monIncidentsOpen.length || '0');
+   document.getElementById('mon-open-count').textContent = _monIncidentsOpen.length ? `(${_monIncidentsOpen.length})` : '';
+
+   // Honest "no data yet" states until the worker has recorded real checks
+   if (!_monChecksCache.length) {
+     set('mon-stat-rt', '—'); set('mon-stat-uptime', 'No data yet');
+     document.getElementById('mon-worker-note').textContent = 'No monitoring data yet — waiting for first scheduled check.';
+   } else {
+     const ok = _monChecksCache.filter(c => c.success);
+     const avgRt = ok.length ? Math.round(ok.reduce((s,c) => s + (c.responseTime||0), 0) / ok.length) : null;
+     set('mon-stat-rt', avgRt != null ? avgRt + ' ms' : '—');
+     const pct = (ok.length / _monChecksCache.length * 100);
+     set('mon-stat-uptime', pct.toFixed(2) + '%');
+     const newest = _monChecksCache[0];
+     document.getElementById('mon-worker-note').textContent =
+       'Worker runs every ~5 min via GitHub Actions · last result ' + monRelTime(newest.checkedAt);
+   }
+   function set(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+ }
+
+ function monUptimePct24h(monitorId) {
+   const rows = _monChecksCache.filter(c => c.monitorId === monitorId);
+   if (!rows.length) return null;
+   return (rows.filter(c => c.success).length / rows.length * 100);
+ }
+
+ function renderMonTable() {
+   const tbody = document.getElementById('mon-tbody');
+   if (!tbody) return;
+   if (!_monitorsCache.length) {
+     tbody.innerHTML = '';
+     document.getElementById('mon-empty').style.display = '';
+     return;
+   }
+   document.getElementById('mon-empty').style.display = 'none';
+   tbody.innerHTML = _monitorsCache.map(m => {
+     const st = m.enabled === false ? 'PAUSED' : (m.status || 'UNKNOWN');
+     const up = monUptimePct24h(m.id);
+     return `<tr class="mon-row-click" onclick="openMonDetail('${m.id}')">
+       <td><span style="display:inline-flex;align-items:center;gap:7px;">
+         <span class="mon-dot ${_monDotClass(st)}"></span><span style="font-size:12px;font-weight:700;font-family:'Outfit',sans-serif;">${st}</span></span></td>
+       <td class="mon-name-cell">${escapeHtml(m.name || '')}</td>
+       <td class="mon-url-cell" title="${escapeAttr(m.url || '')}">${escapeHtml(m.url || '')}</td>
+       <td><span class="mon-type-chip">${escapeHtml(m.type || 'HTTP')}</span></td>
+       <td>${m.lastResponseTime != null ? `<span class="mon-rt-badge ${m.lastResponseTime > 2000 ? 'slow' : 'ok'}">${Number(m.lastResponseTime).toLocaleString()} ms</span>` : '<span style="color:var(--muted)">—</span>'}</td>
+       <td>${up != null ? up.toFixed(2) + '%' : '<span style="color:var(--muted)">No data yet</span>'}</td>
+       <td class="mon-last-check">${monRelTime(monTsDate(m.lastCheckAt))}</td>
+       <td onclick="event.stopPropagation();"><div class="mon-row-btns">
+         <button class="mon-icon-btn" title="Check now" onclick="requestCheck('${m.id}')">Check</button>
+         <button class="mon-icon-btn" title="${m.enabled !== false ? 'Pause' : 'Resume'}" onclick="toggleMonitorPause('${m.id}')">${m.enabled !== false ? 'Pause' : 'Resume'}</button>
+         <button class="mon-icon-btn" title="Edit" onclick="openMonitorModal('${m.id}')">Edit</button>
+         <button class="mon-icon-btn" title="Delete" onclick="deleteMonitor('${m.id}')">✕</button>
+       </div></td>
+     </tr>`;
+   }).join('');
+ }
+
+ function renderMonIncidents() {
+   const list = document.getElementById('mon-inc-list');
+   if (!list) return;
+   if (!_monIncidentsAll.length) {
+     list.innerHTML = `<div class="mon-empty"><div class="mon-empty-icon">🎉</div>No incidents recorded.<br>When a monitor goes DOWN, an incident is created here automatically.</div>`;
+     return;
+   }
+   list.innerHTML = _monIncidentsAll.map(i => {
+     const started = monTsDate(i.startedAt);
+     const resolved = monTsDate(i.resolvedAt);
+     const dur = i.durationMs != null ? fmtDurationShort(i.durationMs) : (i.status === 'open' ? 'ongoing' : '');
+     return `<div class="mon-inc-item">
+       <span class="mon-inc-badge ${i.status === 'open' ? 'open' : 'resolved'}">${i.status === 'open' ? 'DOWN' : 'RECOVERED'}</span>
+       <div style="flex:1;min-width:0;">
+         <div class="mon-inc-title">${escapeHtml(i.monitorName || 'Monitor')}</div>
+         <div class="mon-inc-reason">${escapeHtml(i.reason || '')}${i.httpStatus ? ' · HTTP ' + i.httpStatus : ''}</div>
+         <div class="mon-inc-meta">
+           Started ${started ? started.toLocaleString() : '?'}
+           ${dur ? ' · Downtime ' + dur : ''}
+           ${resolved ? ' · Recovered ' + resolved.toLocaleTimeString() : ''}
+         </div>
+       </div>
+     </div>`;
+   }).join('');
+ }
+
+ function fmtDurationShort(ms) {
+   const s = Math.max(0, Math.round(ms/1000)), m = Math.floor(s/60), sec = s % 60;
+   if (m >= 60) { const h = Math.floor(m/60); return h + 'h ' + (m%60) + 'm'; }
+   return m + 'm ' + String(sec).padStart(2,'0') + 's';
+ }
+
+ function setMonView(view) {
+   ['monitors','incidents'].forEach(v => {
+     const btn = document.getElementById('montab-' + v);
+     const pane = document.getElementById(v === 'monitors' ? 'mon-monitors-view' : 'mon-incidents-view');
+     if (btn) btn.classList.toggle('active', v === view);
+     if (pane) pane.style.display = v === view ? '' : 'none';
+   });
+ }
+
+ function closeModal(id) { const el = document.getElementById(id); if (el) el.classList.remove('open'); }
+ function toggleSwitch(id) { const el = document.getElementById(id); if (el) el.classList.toggle('on'); }
+
+ // Client-side SSRF pre-check — the worker enforces authoritatively too.
+ function validateMonitorUrl(raw) {
+   let u;
+   try { u = new URL(raw); } catch(_) { return 'Enter a valid URL'; }
+   if (!/^https?:$/.test(u.protocol)) return 'Only http:// and https:// URLs are allowed';
+   const h = u.hostname.toLowerCase();
+   if (h === 'localhost' || h.endsWith('.localhost') || h === '0.0.0.0' || h === '[::1]' || h === '::1') return 'Local addresses are not allowed';
+   if (/^127\./.test(h)) return 'Loopback addresses are not allowed';
+   if (/^10\./.test(h) || /^192\.168\./.test(h) || /^169\.254\./.test(h)) return 'Private IP ranges are not allowed';
+   if (/^172\.(1[6-9]|2\d|3[01])\./.test(h)) return 'Private IP ranges are not allowed';
+   if (/^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(h)) return 'Private IP ranges are not allowed';
+   return '';
+ }
+
+ let _monEditorId = null;
+ function openMonitorModal(id) {
+   _monEditorId = id || null;
+   const m = id ? _monitorsCache.find(x => x.id === id) : null;
+   document.getElementById('mon-editor-title').textContent = m ? 'Edit Monitor' : 'Add Monitor';
+   document.getElementById('monf-name').value  = m?.name || '';
+   document.getElementById('monf-url').value   = m?.url || 'https://';
+   document.getElementById('monf-type').value  = m?.type || 'HTTP';
+   document.getElementById('monf-interval').value = String(m?.intervalMin || 5);
+   document.getElementById('monf-timeout').value  = m?.timeoutSec || 10;
+   document.getElementById('monf-status').value   = (m?.expectedStatus || [200]).join(',');
+   document.getElementById('monf-text').value     = m?.expectedText || '';
+   const sw = document.getElementById('monf-enabled');
+   sw.classList.toggle('on', m ? m.enabled !== false : true);
+   document.getElementById('mon-editor-overlay').classList.add('open');
+ }
+
+ async function saveMonitor() {
+   const name = getSanitizedValue('monf-name', 60);
+   const url  = getSanitizedValue('monf-url', 500).replace(/\s+/g,'');
+   const type = document.getElementById('monf-type').value;
+   const intervalMin = parseInt(document.getElementById('monf-interval').value, 10) || 5;
+   const timeoutSec  = parseInt(document.getElementById('monf-timeout').value, 10) || 10;
+   const expectedStatus = document.getElementById('monf-status').value.split(',').map(s => parseInt(s.trim(),10)).filter(n => n >= 100 && n <= 599);
+   const expectedText = getSanitizedValue('monf-text', 120);
+   const enabled = document.getElementById('monf-enabled').classList.contains('on');
+
+   if (!name) { showToast('Enter a monitor name'); return; }
+   const urlErr = validateMonitorUrl(url);
+   if (urlErr) { showToast(urlErr); return; }
+   if (!expectedStatus.length) { showToast('Expected status must be e.g. 200 or 200,301'); return; }
+    if (rateLimited('mon-save', 1500, 'Please wait…')) return;
+
+   const data = { name, url, type, intervalMin, timeoutSec, expectedStatus, expectedText, enabled };
+   const btn = document.getElementById('mon-editor-save');
+   btn.disabled = true; btn.textContent = 'Saving…';
+   try {
+     if (_monEditorId) {
+       await db.collection('monitors').doc(_monEditorId).update(data);
+       showToast('Monitor updated', 'success');
+     } else {
+       await db.collection('monitors').add({ ...data, status:'UNKNOWN', consecutiveFailures:0, lastCheckAt:null, lastResponseTime:null, lastSuccessAt:null, openIncidentId:null, lastSslAlertLevel:366, checkRequested:false, createdAt:new Date() });
+       showToast('Monitor added — first check runs within ~5 minutes', 'success');
+     }
+     closeModal('mon-editor-overlay');
+     refreshMonitoring();
+   } catch(e) {
+     showToast('Could not save monitor: ' + e.message, 'error');
+   } finally { btn.disabled = false; btn.textContent = 'Save Monitor'; }
+ }
+
+ async function deleteMonitor(id) {
+   const m = _monitorsCache.find(x => x.id === id);
+   if (!confirm(`Delete monitor "${m?.name || id}"? Its history stays in incident records.`)) return;
+   try {
+     await db.collection('monitors').doc(id).delete();
+     showToast('Monitor deleted', 'success');
+     refreshMonitoring();
+   } catch(e) { showToast('Delete failed: ' + e.message, 'error'); }
+ }
+
+ async function toggleMonitorPause(id) {
+   const m = _monitorsCache.find(x => x.id === id);
+   if (!m) return;
+   const pausing = m.enabled !== false;
+   try {
+     await db.collection('monitors').doc(id).update({
+       enabled: !pausing,
+       ...(pausing ? { status: 'PAUSED' } : {})
+     });
+     showToast(pausing ? 'Monitor paused' : 'Monitor resumed — next scheduled run will check it', 'success');
+     refreshMonitoring();
+   } catch(e) { showToast('Update failed: ' + e.message, 'error'); }
+ }
+
+ async function requestCheck(id) {
+   try {
+     await db.collection('monitors').doc(id).update({ checkRequested: true });
+     showToast('Check queued — the worker picks it up on its next run (≤5 min)', 'success');
+   } catch(e) { showToast('Could not queue check: ' + e.message, 'error'); }
+ }
+
+ // ── Settings ────────────────────────────────
+ async function openMonSettings() {
+   try {
+     const snap = await db.collection('monitorConfig').doc('settings').get();
+     const s = snap.exists ? snap.data() : {};
+     document.getElementById('mons-threshold').value = s.failureThreshold || 3;
+     document.getElementById('mons-slowms').value = s.slowResponseMs || 2000;
+     const a = s.alerts || {};
+     [['mons-tg','enabled'],['mons-tg-down','down'],['mons-tg-rec','recovery'],['mons-tg-ssl','ssl'],['mons-tg-slow','slow']]
+       .forEach(([id, k]) => document.getElementById(id).classList.toggle('on', a[k] !== false && (k !== 'slow' || !!a[k])));
+     document.getElementById('mon-settings-overlay').classList.add('open');
+   } catch(e) { showToast('Could not load settings: ' + e.message, 'error'); }
+ }
+
+ async function saveMonSettings() {
+   const failureThreshold = Math.max(1, Math.min(10, parseInt(document.getElementById('mons-threshold').value,10) || 3));
+   const slowResponseMs = Math.max(200, parseInt(document.getElementById('mons-slowms').value,10) || 2000);
+   const alerts = {
+     enabled:  document.getElementById('mons-tg').classList.contains('on'),
+     down:     document.getElementById('mons-tg-down').classList.contains('on'),
+     recovery: document.getElementById('mons-tg-rec').classList.contains('on'),
+     ssl:      document.getElementById('mons-tg-ssl').classList.contains('on'),
+     slow:     document.getElementById('mons-tg-slow').classList.contains('on')
+   };
+   try {
+     await db.collection('monitorConfig').doc('settings').set({ failureThreshold, slowResponseMs, alerts }, { merge: true });
+     showToast('Settings saved — applies from the next worker run', 'success');
+     closeModal('mon-settings-overlay');
+   } catch(e) { showToast('Could not save settings: ' + e.message, 'error'); }
+ }
+
+ // ── Detail modal + chart ────────────────────
+ async function openMonDetail(id) {
+   const m = _monitorsCache.find(x => x.id === id);
+   if (!m) return;
+   _monDetailId = id;
+   const st = m.enabled === false ? 'PAUSED' : (m.status || 'UNKNOWN');
+   document.getElementById('mond-dot').className = 'mon-dot ' + _monDotClass(st);
+   document.getElementById('mond-name').textContent = m.name || 'Monitor';
+   document.getElementById('mond-url').textContent = (m.url || '') + ' · ' + st;
+   document.getElementById('mond-checks').innerHTML = '<div class="mon-empty" style="padding:16px;">Loading…</div>';
+   document.getElementById('mond-incidents').innerHTML = '';
+   document.getElementById('mond-windows').innerHTML = '';
+   document.getElementById('mond-ssl').textContent = 'No SSL data yet';
+   document.getElementById('mon-detail-overlay').classList.add('open');
+
+   try {
+     // Composite-index queries (monitorId + time). If the index isn't
+     // deployed yet, fall back to an equality-only fetch sorted in JS so
+     // the modal still works (see firestore.indexes.json).
+     let checksDocs, incDocs;
+     try {
+      const [a, b] = await Promise.all([
+       db.collection('monitorChecks').where('monitorId','==',id).orderBy('checkedAt','desc').limit(1000).get(),
+       db.collection('incidents').where('monitorId','==',id).orderBy('startedAt','desc').limit(10).get()
+      ]);
+      checksDocs = a.docs; incDocs = b.docs;
+     } catch(ixErr) {
+      if (!/index/i.test(ixErr.message || '')) throw ixErr;
+      const [a, b] = await Promise.all([
+       db.collection('monitorChecks').where('monitorId','==',id).get(),
+       db.collection('incidents').where('monitorId','==',id).get()
+      ]);
+      checksDocs = a.docs.slice().sort((x,y) => {
+        const tx = monTsDate(x.data().checkedAt), ty = monTsDate(y.data().checkedAt);
+        return (ty?.getTime()||0) - (tx?.getTime()||0);
+      }).slice(0, 1000);
+      incDocs = b.docs.slice().sort((x,y) => {
+        const tx = monTsDate(x.data().startedAt), ty = monTsDate(y.data().startedAt);
+        return (ty?.getTime()||0) - (tx?.getTime()||0);
+      }).slice(0, 10);
+     }
+     // asc order for the chart; desc for the recent list
+     const checksAsc = checksDocs.map(d => d.data()).reverse();
+
+     // Uptime windows — computed ONLY from real retained data
+     const WINDOWS = [['1h',3600000],['24h',86400000],['7d',604800000],['30d',2592000000]];
+     document.getElementById('mond-windows').innerHTML = WINDOWS.map(([label,ms]) => {
+       const cutoff = Date.now() - ms;
+       const rows = checksAsc.filter(c => { const t = monTsDate(c.checkedAt); return t && t.getTime() >= cutoff; });
+       if (!rows.length) return `<div class="mon-wchip">${label}<b>—</b></div>`;
+       const pct = rows.filter(c => c.success).length / rows.length * 100;
+       const downtimeRows = rows.filter(c => !c.success);
+       return `<div class="mon-wchip">${label}<b>${pct.toFixed(2)}%</b></div>`;
+     }).join('');
+
+     drawMonChart(document.getElementById('mon-chart-canvas'), checksAsc.slice(-300));
+
+     document.getElementById('mond-checks').innerHTML = checksDocs.slice(0,20).map(d => {
+       const c = d.data(); const t = monTsDate(c.checkedAt);
+       return `<div class="mon-check-row">
+         <span class="mon-dot ${c.success ? (c.degraded ? 'degraded' : 'up') : 'down'}" style="width:7px;height:7px;"></span>
+         <span class="mon-check-time">${t ? t.toLocaleString() : '?'}</span>
+         <span style="font-weight:700;">${c.success ? c.httpStatus : 'FAIL'}</span>
+         <span>${c.responseTime != null ? Number(c.responseTime).toLocaleString() + ' ms' : '—'}</span>
+         ${c.error ? `<span class="mon-check-err" title="${escapeAttr(c.error)}">${escapeHtml(c.error)}</span>` : ''}
+       </div>`;
+     }).join('') || '<div class="mon-empty" style="padding:16px;">No checks have run yet</div>';
+
+     const incs = incDocs.map(d => d.data());
+     document.getElementById('mond-incidents').innerHTML = incs.length ? incs.map(i =>
+       `<div class="mon-check-row"><span class="mon-inc-badge ${i.status==='open'?'open':'resolved'}">${i.status==='open'?'OPEN':'OK'}</span>
+        <span class="mon-check-time">${monTsDate(i.startedAt)?.toLocaleString() || ''}</span>
+        <span class="mon-check-err">${escapeHtml((i.reason||'') + (i.durationMs!=null ? ' · ' + fmtDurationShort(i.durationMs) : ''))}</span></div>`
+     ).join('') : '<div class="mon-stat-sub" style="font-size:12px;">No incidents 🎉</div>';
+
+     if (m.sslValidTo) {
+       const days = m.sslDaysRemaining;
+       const warn = days <= 7 ? 'var(--red)' : days <= 30 ? '#FBBF24' : 'var(--green)';
+       document.getElementById('mond-ssl').innerHTML =
+         `<span style="color:${warn};font-weight:700;">${days} day${days===1?'':'s'} remaining</span> · Issuer: ${escapeHtml(m.sslIssuer||'?')} · Expires ${new Date(monTsDate(m.sslValidTo)||m.sslValidTo).toLocaleDateString()}`;
+     }
+   } catch(e) {
+     console.error('[monitoring] detail failed:', e);
+     showToast('Could not load details: ' + e.message, 'error');
+   }
+ }
+
+ function drawMonChart(canvas, points) {
+   const dpr = window.devicePixelRatio || 1;
+   const W = canvas.clientWidth || canvas.parentElement.clientWidth || 600;
+   const H = 170;
+   canvas.width = W * dpr; canvas.height = H * dpr;
+   const ctx = canvas.getContext('2d');
+   ctx.scale(dpr, dpr);
+   ctx.clearRect(0, 0, W, H);
+
+   const styled = points.map(p => ({ t: monTsDate(p.checkedAt), ms: p.responseTime, fail: !p.success })).filter(p => p.t);
+   if (!styled.length) {
+     ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#888';
+     ctx.font = '12px Outfit, sans-serif'; ctx.textAlign = 'center';
+     ctx.fillText('No monitoring data yet', W/2, H/2);
+     return;
+   }
+   const padL = 44, padR = 10, padT = 12, padB = 22;
+   const iw = W - padL - padR, ih = H - padT - padB;
+   const maxMs = Math.max(100, ...styled.filter(p => !p.fail).map(p => p.ms || 0)) * 1.15;
+   const x = i => padL + (styled.length === 1 ? iw/2 : (i / (styled.length - 1)) * iw);
+   const y = ms => padT + ih - Math.min(1, (ms || 0) / maxMs) * ih;
+
+   // grid + y labels
+   ctx.strokeStyle = 'rgba(128,128,128,.15)'; ctx.fillStyle = 'rgba(150,150,150,.8)';
+   ctx.font = '10px Outfit, sans-serif'; ctx.textAlign = 'right'; ctx.lineWidth = 1;
+   for (let g = 0; g <= 4; g++) {
+     const gy = padT + (ih * g / 4);
+     ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
+     ctx.fillText(Math.round(maxMs * (4 - g) / 4) + '', padL - 6, gy + 3);
+   }
+   // response polyline
+   const gold = getComputedStyle(document.documentElement).getPropertyValue('--gold') || '#FF5A2B';
+   const red  = getComputedStyle(document.documentElement).getPropertyValue('--red')  || '#F87171';
+   ctx.strokeStyle = gold.trim(); ctx.lineWidth = 1.8; ctx.beginPath();
+   let startedLine = false;
+   styled.forEach((p, i) => {
+     if (p.fail) { startedLine = false; return; }  // break line at failures
+     if (!startedLine) { ctx.moveTo(x(i), y(p.ms)); startedLine = true; }
+     else ctx.lineTo(x(i), y(p.ms));
+   });
+   ctx.stroke();
+   // failure markers along the top
+   ctx.fillStyle = red.trim();
+   styled.forEach((p, i) => { if (p.fail) { ctx.beginPath(); ctx.arc(x(i), padT + 4, 2.6, 0, Math.PI*2); ctx.fill(); } });
+   // x labels
+   ctx.fillStyle = 'rgba(150,150,150,.8)'; ctx.textAlign = 'left';
+   const fmt = d => d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+   ctx.fillText(fmt(styled[0].t), padL, H - 6);
+   ctx.textAlign = 'right';
+   ctx.fillText(fmt(styled[styled.length - 1].t), W - padR, H - 6);
+ }
+
+ // Close detail with Escape
+ document.addEventListener('keydown', e => {
+   if (e.key === 'Escape') ['mon-editor-overlay','mon-settings-overlay','mon-detail-overlay'].forEach(closeModal);
+ });
+ </script>
+
  <style id="sw-update-styles">
   #sw-update-banner {
    position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateY(-90px);
