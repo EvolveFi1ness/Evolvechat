@@ -1,0 +1,43 @@
+name: Website Monitoring
+
+# Runs the EvolveChat monitoring worker on a schedule.
+# GitHub cron minimum granularity is 5 minutes; runs may be
+# delayed by a few minutes during peak load (documented in MONITORING.md).
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}   # allow manual "Run workflow" for testing
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitoring
+  cancel-in-progress: false   # never kill an in-flight check run
+
+jobs:
+  run-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: scripts/monitor/package-lock.json
+
+      - name: Install dependencies
+        working-directory: scripts/monitor
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      - name: Run monitoring checks
+        working-directory: scripts/monitor
+        env:
+          FIREBASE_SERVICE_ACCOUNT_B64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node run-checks.js

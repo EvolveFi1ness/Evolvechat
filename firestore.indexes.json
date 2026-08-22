@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "monitorChecks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "monitorId", "order": "ASCENDING" },
+        { "fieldPath": "checkedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "incidents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "monitorId", "order": "ASCENDING" },
+        { "fieldPath": "startedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

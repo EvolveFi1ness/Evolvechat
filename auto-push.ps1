@@ -83,7 +83,8 @@ try {
             $count = $files.Count
 
             $timestamp = Get-Date -Format "HH:mm:ss"
-            Write-Host "  [$timestamp] $count file(s) changed — committing..." -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "  [$timestamp] $count file(s) changed — staging..." -ForegroundColor Yellow
 
             git add -A
             $status = git status --porcelain
@@ -99,14 +100,51 @@ try {
                 if ($deleted -gt 0)  { $parts += "$deleted deleted" }
                 $summary = $parts -join ", "
 
-                $msg = "Auto-push: $summary"
-                git commit -m $msg 2>$null | Out-Null
+                # Show what's about to be committed
+                Write-Host ""
+                Write-Host "  Changes to commit:" -ForegroundColor Cyan
+                Write-Host "  -------------------" -ForegroundColor DarkGray
+                $status | ForEach-Object {
+                    $line = $_.Trim()
+                    if ($line -match '^\?\?\s+(.+)$') {
+                        Write-Host "    [NEW]    $($Matches[1])" -ForegroundColor Green
+                    } elseif ($line -match '^.M\s+(.+)$') {
+                        Write-Host "    [EDIT]   $($Matches[1])" -ForegroundColor Yellow
+                    } elseif ($line -match '^.D\s+(.+)$') {
+                        Write-Host "    [DEL]    $($Matches[1])" -ForegroundColor Red
+                    } elseif ($line -match '^.R\s+.+\s+->\s+(.+)$') {
+                        Write-Host "    [REN]    $($Matches[1])" -ForegroundColor Magenta
+                    } else {
+                        Write-Host "    [CHANGE] $line" -ForegroundColor DarkYellow
+                    }
+                }
+                Write-Host "  -------------------" -ForegroundColor DarkGray
+                Write-Host "  Total: $summary" -ForegroundColor White
 
-                $pushResult = git push 2>&1
-                if ($LASTEXITCODE -eq 0) {
-                    Write-Host "  [$timestamp] Pushed: $msg" -ForegroundColor Green
+                # Show diff stats (line-level summary)
+                $diffStat = git diff --staged --stat 2>$null
+                if ($diffStat) {
+                    Write-Host ""
+                    Write-Host "  Diff summary:" -ForegroundColor Cyan
+                    $diffStat | ForEach-Object { Write-Host "    $_" -ForegroundColor DarkGray }
+                }
+
+                # Ask for review
+                Write-Host ""
+                $confirm = Read-Host "  Push to GitHub? [Y/n]"
+                if ($confirm -eq '' -or $confirm -eq 'y' -or $confirm -eq 'Y') {
+                    $msg = "Auto-push: $summary"
+                    git commit -m $msg 2>$null | Out-Null
+
+                    $pushResult = git push 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "  [$timestamp] Pushed: $msg" -ForegroundColor Green
+                    } else {
+                        Write-Host "  [$timestamp] Push failed: $pushResult" -ForegroundColor Red
+                    }
                 } else {
-                    Write-Host "  [$timestamp] Push failed: $pushResult" -ForegroundColor Red
+                    Write-Host "  [$timestamp] Skipped — changes unstaged" -ForegroundColor DarkGray
+                    git reset HEAD 2>$null | Out-Null
                 }
             }
         }
