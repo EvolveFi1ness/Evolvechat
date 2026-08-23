@@ -7266,8 +7266,12 @@ async function handleLogin() {
     isOnline: true,
     lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
    }, { merge: true });
-  startPresenceHeartbeat();
-  subscribeChatUnread(user.uid);
+   startPresenceHeartbeat();
+   // FIX (JAVASCRIPT-K4-9): removed `subscribeChatUnread(user.uid)` — no
+   // `user` variable exists in this scope (it lives in the auth-state
+   // observer), so this threw ReferenceError on every login and aborted the
+   // try-block before subscribeChatUnread(currentUid) below could run,
+   // leaving chat-unread badges uninitialized until the next auth event.
    subscribeChatUnread(currentUid);
   } catch(presenceErr) {
    console.error('[EVOLVE] handleLogin: presence write FAILED:', presenceErr.code, presenceErr.message);
@@ -10109,7 +10113,9 @@ function cancelAngleUpload() {
 // Convert a base64 data URL to a Blob for Firebase Storage upload
 function dataURLtoBlob(dataUrl) {
  const [header, data] = dataUrl.split(',');
- const mime = header.match(/:(.*?);/)[1];
+ if (!header || !data) return new Blob([], { type: 'application/octet-stream' });
+ const mimeMatch = header.match(/:(.*?);/);
+ const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
  const binary = atob(data);
  const arr = new Uint8Array(binary.length);
  for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
@@ -10847,7 +10853,7 @@ async function _refreshProfileTab() {
     if (!fresh.email && _au.email) fresh.email = _au.email;
     if (!fresh.firstName && _au.displayName) {
      const _p = _au.displayName.trim().split(' ');
-     fresh.firstName = fresh.firstName || _p[0] || '';;
+     fresh.firstName = fresh.firstName || _p[0] || '';
      fresh.lastName  = fresh.lastName  || _p.slice(1).join(' ') || '';
     }
    }
@@ -10887,7 +10893,6 @@ function _updateCoachStatus() {
  const el = document.getElementById('client-chat-coach-status');
  if (!el) return;
  const wasOnline = el.dataset.online === '1';
- const nowOnline = Boolean(el.dataset.online) && el.dataset.online === '1';
  const offline = el.dataset.lastSeen && (Date.now() - Number(el.dataset.lastSeen) > 75000);
  if (offline && wasOnline) { el.dataset.online = '0'; el.textContent = '● Offline'; el.style.color = 'var(--text3)'; }
 }
@@ -10901,8 +10906,8 @@ function subscribeCoachPresence() {
    const el = document.getElementById('client-chat-coach-status');
    if (!el) return;
    if (!snap.exists) { el.dataset.online = '0'; el.textContent = '● Offline'; el.style.color = 'var(--text3)'; return; }
-   const last = snap.data().lastSeen;
-   const ts = last && last.toMillis ? last.toMillis() : Date.now();
+    const last = snap.data().lastSeen;
+    const ts = last && last.toMillis ? last.toMillis() : 0;
    el.dataset.online = '1';
    el.dataset.lastSeen = String(ts);
    el.textContent = (Date.now() - ts < 75000) ? '● Online' : '● Away';
@@ -11103,6 +11108,8 @@ async function handleLogout() {
   if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
   if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
   if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
+  if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
+  if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
   currentUid = null; step1Data = {}; todayWorkout = null; _peCurrentData = {};
   _setChatBadge('');
  explicitAuthInProgress = false;
@@ -11122,18 +11129,20 @@ async function handleBlockedSignOut() {
   }, { merge: true }).catch(()=>{});
  }
  if (clientChatUnsub) { clientChatUnsub(); clientChatUnsub = null; }
- if (chatUnreadUnsub) { chatUnreadUnsub(); chatUnreadUnsub = null; }
- if (coachPresenceUnsub) { coachPresenceUnsub(); coachPresenceUnsub = null; }
- if (cliCalUnsub) { cliCalUnsub(); cliCalUnsub = null; }
- if (cliMyEvUnsub) { cliMyEvUnsub(); cliMyEvUnsub = null; }
- if (clientPhotoReqUnsub) { clientPhotoReqUnsub(); clientPhotoReqUnsub = null; }
- if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
- if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
- if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
- currentUid = null;
- explicitAuthInProgress = false;
- showScreen('screen-auth');
- switchTab('login');
+  if (chatUnreadUnsub) { chatUnreadUnsub(); chatUnreadUnsub = null; }
+  if (coachPresenceUnsub) { coachPresenceUnsub(); coachPresenceUnsub = null; }
+  if (cliCalUnsub) { cliCalUnsub(); cliCalUnsub = null; }
+  if (cliMyEvUnsub) { cliMyEvUnsub(); cliMyEvUnsub = null; }
+  if (clientPhotoReqUnsub) { clientPhotoReqUnsub(); clientPhotoReqUnsub = null; }
+  if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
+  if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
+  if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
+  if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
+  if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
+  currentUid = null;
+  explicitAuthInProgress = false;
+  showScreen('screen-auth');
+  switchTab('login');
 }
 
 // ─────────────────────────────────────────
