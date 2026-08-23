@@ -7625,10 +7625,10 @@ async function loadHomeScreen(data) {
   if (cardFooter) cardFooter.style.display = '';
  }
 
- // BMI
- if (data.heightCm > 0 && data.weightKg > 0) {
-  const bmi = Math.round((data.weightKg / Math.pow(data.heightCm/100, 2)) * 10) / 10;
-  let cat='', cls='';
+  // BMI
+  let bmi = null, cat='', cls='';
+  if (data.heightCm > 0 && data.weightKg > 0) {
+   bmi = Math.round((data.weightKg / Math.pow(data.heightCm/100, 2)) * 10) / 10;
   if   (bmi<18.5) { cat='Underweight'; cls='bmi-under'; }
   else if (bmi<25)  { cat='Normal';   cls='bmi-normal'; }
   else if (bmi<30)  { cat='Overweight'; cls='bmi-over'; }
@@ -7679,7 +7679,8 @@ async function loadHomeScreen(data) {
    _set('pp-since', data.memberSince.toDate().toLocaleDateString('en-PH', {timeZone:'Asia/Manila',year:'numeric',month:'long',day:'numeric'}));
   }
  } catch(ppErr) {
-  console.error('[Profile] Error updating profile panel:', ppErr);
+  console.error('[Profile] Error updating profile panel:',
+   ppErr instanceof Error ? (ppErr.stack || (ppErr.name + ': ' + ppErr.message)) : JSON.stringify(ppErr));
  }
 
  showScreen('screen-home');
