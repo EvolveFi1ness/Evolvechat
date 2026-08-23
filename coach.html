@@ -6628,10 +6628,10 @@ document.addEventListener('DOMContentLoaded', () => {
 })();
 </script>
 
-<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script defer src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 
 <script>
 // ─────────────────────────────────────────
@@ -6663,18 +6663,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // and Nutrition reads for uncached data hung on "Loading…" forever.
     // Without a local cache, reads either resolve from the live database or
     // fail loudly — no silent stale data.
-    // The watchdog below re-establishes the Firestore channel whenever it
-    // might have wedged: enableNetwork() is a cheap no-op when the channel
-    // is healthy, and forces a fresh connection when it isn't.
+    // FIX (JAVASCRIPT-K4-3, round 2 — 2026-08-23): the previous watchdog
+    // kicked enableNetwork() from 'online', visibilitychange AND a 60s
+    // interval. Even debounced, each kick raced the ~10 live onSnapshot
+    // listeners and tripped Firestore's "INTERNAL ASSERTION FAILED:
+    // Unexpected state" — Sentry logged ~142 events in 25 minutes from one
+    // coach, ~5-6 per minute, matching the kick cadence. Decisive evidence:
+    // index.html loads the identical SDK version with a comparable listener
+    // load, has NO watchdog, and reports zero such errors. Firestore v10
+    // already re-establishes its own channel on connectivity and visibility
+    // changes, and the original wedge this watchdog worked around only
+    // occurred under the since-removed enablePersistence() cache. Blind
+    // periodic kicking is therefore pure risk. Retained: a single kick on
+    // the rare offline->online transition, which coincides with the SDK's
+    // own reconnect path.
+    let _kickInFlight = false;
     function _kickFirestoreChannel() {
-      if (!db) return;
-      db.enableNetwork().catch(() => {});
+      if (!db || _kickInFlight) return;
+      _kickInFlight = true;
+      // Race a settle timeout so a hung enableNetwork() can't wedge the flag
+      // shut — the next genuine 'online' event will simply retry the kick.
+      Promise.race([
+        Promise.resolve(db.enableNetwork()).catch(() => {}),
+        new Promise(_res => setTimeout(_res, 10000))
+      ]).then(() => { _kickInFlight = false; });
     }
     window.addEventListener('online', _kickFirestoreChannel);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') _kickFirestoreChannel();
-    });
-    setInterval(_kickFirestoreChannel, 60000);
   } catch(e) {
     console.error('[Firebase] Init failed:', e.message);
   }
@@ -13654,8 +13668,35 @@ function safeLocalStorageSet(key, value) {
 // (rate-limited) surfaced to the coach instead of failing silently with no
 // visible signal that something broke.
 let _lastGlobalErrorToast = 0;
+// JAVASCRIPT-K4-5: one event reached Sentry as "Unhandled error: {}" because
+// the thrown/rejected value wasn't an Error and stringified to nothing
+// useful. Describe ANY value (Error, DOMException, plain object, undefined,
+// circular structures) into a diagnostic string so future occurrences are
+// actionable instead of opaque.
+function _describeErrorValue(err) {
+  if (err === undefined) return 'undefined (rejection or throw with no reason)';
+  if (err === null) return 'null';
+  if (err instanceof Error) {
+    return err.name + ': ' + err.message + (err.stack ? '\n' + err.stack : '');
+  }
+  var type = typeof err;
+  var name = (err && err.constructor && err.constructor.name) || '';
+  var json;
+  try { json = JSON.stringify(err); } catch(_) { json = '[unserializable:' + type + ']'; }
+  return type + (name ? ' (' + name + ')' : '') + ': ' + (json === undefined ? String(err) : json);
+}
 function _notifyUnexpectedError(err) {
-  console.error('Unhandled error:', err);
+  const msg = (err && (err.message || (err.reason && err.reason.message))) || String(err || '');
+  if (msg.indexOf('INTERNAL ASSERTION FAILED') !== -1) {
+    // JAVASCRIPT-K4-3 marker: Firestore internal-state corruption. The
+    // enableNetwork watchdog kicks that caused this were removed
+    // (2026-08-23); a sighting now means the channel corrupted some other
+    // way and the coach may be seeing stale data until a manual refresh.
+    console.error('[Firebase] Firestore internal assertion observed — hard-refresh recommended if data looks stale.', msg);
+  }
+  // JAVASCRIPT-K4-5: log a serialized description rather than the raw value,
+  // so opaque rejections ({}, DOMException, undefined) carry diagnostics.
+  console.error('Unhandled error:', _describeErrorValue(err));
   // Toast removed — was firing for any uncaught error/rejection with no
   // useful detail. Still logged to console above for debugging.
 }
