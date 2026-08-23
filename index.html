@@ -6752,18 +6752,25 @@ img, video, iframe { max-width: 100%; }
   const APP_NAME = 'client';
   const IS_LOCAL = ['localhost','127.0.0.1'].includes(location.hostname);
 
-  // ---- Sentry (error tracking) ----
-  // Paste your Sentry DSN below to start sending errors to sentry.io.
-  // Get one free at https://sentry.io -> Create Project -> JavaScript
-  const SENTRY_DSN = "";
-  if (window.Sentry && SENTRY_DSN) {
-    Sentry.init({
-      dsn: SENTRY_DSN,
-      environment: IS_LOCAL ? 'development' : 'production',
-      release: APP_NAME + '@1.0.0',
-      tracesSampleRate: 0.1,
-      beforeSend(event) { return IS_LOCAL ? null : event; }
-    });
+  // ---- Sentry (error tracking) — THE bug & log monitor ----
+  // 1) Create a project at https://sentry.io  (Platform: JavaScript)
+  // 2) Paste the DSN between the quotes below. That's it — the SDK loads
+  //    itself, then every console error, uncaught exception and unhandled
+  //    rejection reports automatically with full stack traces.
+  const SENTRY_DSN = "https://0c02705f34c21b060d6efa6afc8a5d14@o4511957471789056.ingest.de.sentry.io/4511957495316560";
+  if (SENTRY_DSN && !window.Sentry) {
+    var _sentryScript = document.createElement('script');
+    _sentryScript.src = 'https://browser.sentry-cdn.com/7.19.0/bundle.min.js';
+    _sentryScript.crossOrigin = 'anonymous';
+    _sentryScript.onload = function() {
+      Sentry.init({
+        dsn: SENTRY_DSN,
+        environment: IS_LOCAL ? 'development' : 'production',
+        release: APP_NAME + '@1.0.0',
+        beforeSend(event) { return IS_LOCAL ? null : event; }
+      });
+    };
+    document.head.appendChild(_sentryScript);
   }
 
   // ---- Core in-app logger ----
@@ -6793,41 +6800,6 @@ img, video, iframe { max-width: 100%; }
       Sentry.addBreadcrumb({ category: 'console', level, message: entry.msg });
       if (level === 'error') Sentry.captureMessage(entry.msg, 'error');
     }
-    queueRemoteWrite(entry);
-  }
-
-  // ---- Remote persistence to Firestore (throttled, batched) ----
-  let remoteQueue = [];
-  let flushTimer = null;
-  let droppedSinceFlush = 0;
-  const MAX_QUEUE = 60; // safety cap: avoid flooding Firestore if something logs in a tight loop
-  function queueRemoteWrite(entry) {
-    if (remoteQueue.length >= MAX_QUEUE) { droppedSinceFlush++; return; }
-    remoteQueue.push(entry);
-    if (flushTimer) return;
-    flushTimer = setTimeout(flushRemote, 4000);
-  }
-  async function flushRemote() {
-    flushTimer = null;
-    const batch = remoteQueue.splice(0, remoteQueue.length);
-    if (droppedSinceFlush > 0) {
-      batch.push({ t: new Date().toISOString(), level: 'warn', msg: `[AppLogger] ${droppedSinceFlush} log(s) dropped (rate cap)`, url: location.pathname });
-      droppedSinceFlush = 0;
-    }
-    if (!batch.length) return;
-    try {
-      if (typeof db === 'undefined' || !db) return;
-      const uid = (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser.uid : null;
-      await Promise.all(batch.map(entry => db.collection('app_logs').add({
-        app: APP_NAME,
-        uid,
-        level: entry.level,
-        message: entry.msg.slice(0, 1000),
-        url: entry.url,
-        userAgent: navigator.userAgent,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(()=>{})));
-    } catch(e) { /* never let logging break the app */ }
   }
 
   // ---- Public API: window.AppLogger ----
@@ -6839,16 +6811,6 @@ img, video, iframe { max-width: 100%; }
     track: (event, props) => {
       record('info', ['[EVENT]', event, JSON.stringify(props||{})]);
       if (window.Sentry && SENTRY_DSN) Sentry.addBreadcrumb({ category: 'track', message: event, data: props });
-      if (typeof db !== 'undefined' && db) {
-        db.collection('app_events').add({
-          app: APP_NAME,
-          event,
-          props: props || {},
-          uid: (typeof auth !== 'undefined' && auth && auth.currentUser) ? auth.currentUser.uid : null,
-          url: location.pathname,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(()=>{});
-      }
     },
     getLogs: () => buffer.slice(),
     exportLogs: () => {
