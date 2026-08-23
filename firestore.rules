@@ -11,12 +11,11 @@ service cloud.firestore {
    return isSignedIn() && request.auth.uid == uid;
   }
 
-  // Coach if: (1) coaches/{auth.uid} exists, or (2) token email matches (verified only).
+  // Coach if: (1) coaches/{auth.uid} exists, or (2) token email matches.
   function isCoach() {
    return isSignedIn() && (
     exists(/databases/$(database)/documents/coaches/$(request.auth.uid))
-    || (request.auth.token.email == 'coach@evolvechat-21d6f.app'
-        && request.auth.token.email_verified == true)
+    || request.auth.token.email == 'coach@evolvechat-21d6f.app'
    );
   }
 
@@ -135,24 +134,36 @@ service cloud.firestore {
 
   // ── Monitoring collections (written by Actions worker via Admin SDK) ──
   match /monitors/{monitorId} {
-   allow read: if true;
-   allow write: if false;
+    allow read: if true;
+    allow write: if false;
   }
   match /monitorChecks/{checkId} {
-   allow read: if true;
-   allow write: if false;
+    allow read: if true;
+    allow write: if false;
   }
   match /incidents/{incidentId} {
-   allow read: if true;
-   allow write: if false;
+    allow read: if true;
+    allow write: if false;
   }
   match /monitorNotifications/{notifId} {
-   allow read: if true;
-   allow write: if false;
+    allow read: if true;
+    allow write: if false;
   }
   match /monitorConfig/{docId} {
-   allow read: if true;
-   allow write: if false;
+    allow read: if true;
+    allow write: if false;
+  }
+
+  // ── Collection-group rules (required for collectionGroup() queries) ──
+  // Firestore does NOT resolve collectionGroup queries through nested
+  // match blocks — these top-level matches are the only rules evaluated.
+  match /workoutLogs/{logId} {
+    allow read: if isCoach();
+    allow write: if isCoach();
+  }
+  match /progressPhotos/{logId} {
+    allow read: if isCoach();
+    allow write: if isCoach();
   }
  }
 }

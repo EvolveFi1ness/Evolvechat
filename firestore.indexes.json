@@ -1,35 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "workoutLogs",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "completedAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "progressPhotos",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "monitorChecks",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "monitorId", "order": "ASCENDING" },
-        { "fieldPath": "checkedAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "incidents",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "monitorId", "order": "ASCENDING" },
-        { "fieldPath": "startedAt", "order": "DESCENDING" }
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }

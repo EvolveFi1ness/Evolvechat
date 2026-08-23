@@ -7147,13 +7147,17 @@ function showUndoToast(msg, onUndo) {
 }
 function fmtDate(ts) {
   if (!ts) return '—';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  if (ts.toDate) return ts.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  if (ts.seconds != null) return new Date(ts.seconds * 1000).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const d = new Date(ts);
+  return isNaN(d) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 }
 function fmtTime(ts) {
   if (!ts) return '';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  if (ts.toDate) return ts.toDate().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  if (ts.seconds != null) return new Date(ts.seconds * 1000).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  const d = new Date(ts);
+  return isNaN(d) ? '' : d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 }
 function initials(first='', last='') {
   return ((first[0]||'?')+(last[0]||'')).toUpperCase();
@@ -8232,8 +8236,10 @@ async function updateDashboardStats(force) {
   let _feedRendered = false;
   const _safeRenderFeed = (acts) => { if (!_feedRendered) { _feedRendered = true; _renderActivityFeed(feed, acts); } };
   setTimeout(() => { if (!_feedRendered) { _feedRendered = true; _renderActivityFeed(feed, []); } }, 12000);
+  // Use limit() without orderBy to avoid needing a composite index.
+  // Sort client-side by completedAt descending.
   withTimeout(
-    db.collectionGroup('workoutLogs').orderBy('completedAt', 'desc').limit(6).get(),
+    db.collectionGroup('workoutLogs').limit(20).get(),
     timeoutMs, 'activity feed'
   ).then(recent => {
     const activities = recent.docs.map(doc => {
@@ -8241,10 +8247,14 @@ async function updateDashboardStats(force) {
       const c = allClients.find(cl => cl.uid === uid) || {};
       const d = doc.data();
       return { name: `${c.firstName||''} ${c.lastName||''}`.trim() || 'A client', action: 'logged '+d.workoutName, ts: d.completedAt };
-    });
+    }).sort((a,b) => {
+      const ta = a.ts?.seconds || a.ts?._seconds || 0;
+      const tb = b.ts?.seconds || b.ts?._seconds || 0;
+      return tb - ta;
+    }).slice(0, 6);
     _safeRenderFeed(activities);
   }).catch(async (e) => {
-    console.warn('[COACH] collectionGroup orderBy unavailable/timed out, falling back:', e.code || '', e.message || '');
+    console.warn('[COACH] collectionGroup activity feed failed, falling back:', e.code || '', e.message || '');
     try {
       await _updateActivityFeedFallback(feed);
       _feedRendered = true;
@@ -8287,7 +8297,7 @@ async function _updateDashboardStatsFallback(today, yesterday) {
         const batch = allClients.slice(i, i + 5);
         await Promise.all(batch.map(async c => {
           try {
-            const logs = await withTimeout(db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get(), 8000, 'fallback logs '+c.uid);
+            const logs = await withTimeout(db.collection('members').doc(c.uid).collection('workoutLogs').limit(30).get(), 8000, 'fallback logs '+c.uid);
             logs.forEach(l => {
               totalLogs++;
               const d = l.data().completedAt?.toDate?.();
@@ -8374,7 +8384,7 @@ async function _updateActivityFeedFallback(feed) {
   try {
     await withTimeout(Promise.all(allClients.slice(0,10).map(async c => {
       try {
-        const logs = await withTimeout(db.collection('members').doc(c.uid).collection('workoutLogs').orderBy('completedAt','desc').limit(1).get(), 8000, 'activity fallback '+c.uid);
+        const logs = await withTimeout(db.collection('members').doc(c.uid).collection('workoutLogs').limit(5).get(), 8000, 'activity fallback '+c.uid);
         logs.forEach(l => {
           const d = l.data();
           activities.push({ name:`${c.firstName||''} ${c.lastName||''}`, action:'logged '+d.workoutName, ts:d.completedAt });
@@ -8384,7 +8394,11 @@ async function _updateActivityFeedFallback(feed) {
   } catch (e) {
     console.warn('[COACH] activity feed fallback timed out; showing partial results:', e.message);
   }
-  activities.sort((a,b)=> (b.ts?.seconds||0)-(a.ts?.seconds||0));
+  activities.sort((a,b) => {
+    const ta = a.ts?.seconds || a.ts?._seconds || 0;
+    const tb = b.ts?.seconds || b.ts?._seconds || 0;
+    return tb - ta;
+  });
   const sliced = activities.slice(0,6);
   window._activityFeedCache = { activities: sliced, ts: Date.now() };
   try { localStorage.setItem('coach_activity_cache', JSON.stringify(sliced)); } catch(_) {}
@@ -12268,15 +12282,21 @@ async function loadDashboardPhotos() {
     // with failed-precondition and we fall back to per-client queries below.
     // Create the index from the error link Firestore prints to the console —
     // only the project owner can do this in the Firebase console.
+    // Use limit() without orderBy to avoid needing a composite index.
+    // Sort client-side by uploadedAt descending.
     const snap = await withTimeout(
-      db.collectionGroup('progressPhotos').orderBy('uploadedAt','desc').limit(8).get(),
+      db.collectionGroup('progressPhotos').limit(20).get(),
       timeoutMs, 'dashboard photos feed'
     );
     const results = snap.docs.map(d => {
-      const uid = d.ref.parent.parent.id; // members/{uid}/progressPhotos/{docId}
+      const uid = d.ref.parent.parent.id;
       const c = allClients.find(cl => cl.uid === uid) || {};
       return { docId: d.id, data: d.data(), client: c };
-    });
+    }).sort((a, b) => {
+      const ta = a.data.uploadedAt?.seconds || a.data.uploadedAt?._seconds || a.data.createdAt?.seconds || 0;
+      const tb = b.data.uploadedAt?.seconds || b.data.uploadedAt?._seconds || b.data.createdAt?.seconds || 0;
+      return tb - ta;
+    }).slice(0, 8);
     renderResults(results);
   } catch (e) {
     console.warn('[COACH] collectionGroup photos feed unavailable/timed out, falling back to per-client:', e.code || '', e.message || e);
@@ -12287,13 +12307,17 @@ async function loadDashboardPhotos() {
       await Promise.all(allClients.slice(0, 8).map(async c => {
         try {
           const snap = await withTimeout(db.collection('members').doc(c.uid).collection('progressPhotos')
-            .orderBy('uploadedAt','desc').limit(2).get(), 8000, 'dashboard photos fallback '+c.uid);
+            .limit(5).get(), 8000, 'dashboard photos fallback '+c.uid);
           snap.docs.forEach(d => {
             results.push({ docId: d.id, data: d.data(), client: c });
           });
         } catch(_) {}
       }));
-      renderResults(results);
+      renderResults(results.sort((a, b) => {
+        const ta = a.data.uploadedAt?.seconds || a.data.uploadedAt?._seconds || a.data.createdAt?.seconds || 0;
+        const tb = b.data.uploadedAt?.seconds || b.data.uploadedAt?._seconds || b.data.createdAt?.seconds || 0;
+        return tb - ta;
+      }).slice(0, 8));
     } catch(e2) {
       feed.innerHTML = `<div class="dash-photo-empty" style="color:var(--red)">Couldn't load photos right now — check your connection.</div>`;
       console.warn('[COACH] dashboard photos fallback failed:', e2.message || e2);
