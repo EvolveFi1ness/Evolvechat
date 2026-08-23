@@ -11,11 +11,12 @@ service cloud.firestore {
    return isSignedIn() && request.auth.uid == uid;
   }
 
-  // Coach if: (1) coaches/{auth.uid} exists, or (2) token email matches.
+  // Coach if: (1) coaches/{auth.uid} exists, or (2) token email matches (verified only).
   function isCoach() {
    return isSignedIn() && (
     exists(/databases/$(database)/documents/coaches/$(request.auth.uid))
-    || request.auth.token.email == 'coach@evolvechat-21d6f.app'
+    || (request.auth.token.email == 'coach@evolvechat-21d6f.app'
+        && request.auth.token.email_verified == true)
    );
   }
 
@@ -132,14 +133,10 @@ service cloud.firestore {
    allow read: if isCoach();
   }
 
-  // ── Website monitoring (local monitoring.html + Actions worker) ──
-  // The dashboard lives in monitoring.html which is kept OFF any public
-  // host and runs with no sign-in, so these collections are world-readable
-  // and monitors/config are world-writable. The scheduled worker writes via
-  // the Admin SDK which BYPASSES these rules — checks, incidents and
-  // notification logs stay browser-read-only.
+  // ── Monitoring collections (written by Actions worker via Admin SDK) ──
   match /monitors/{monitorId} {
-   allow read, write: if true;
+   allow read: if true;
+   allow write: if false;
   }
   match /monitorChecks/{checkId} {
    allow read: if true;
@@ -154,7 +151,8 @@ service cloud.firestore {
    allow write: if false;
   }
   match /monitorConfig/{docId} {
-   allow read, write: if true;
+   allow read: if true;
+   allow write: if false;
   }
  }
 }

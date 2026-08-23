@@ -7,8 +7,6 @@
 const dns = require('dns').promises;
 const net = require('net');
 const tls = require('tls');
-const http = require('http');
-const https = require('https');
 
 // ── SSRF protection ─────────────────────────────────────────
 // Only public http(s) targets. Blocks localhost, private ranges,
@@ -56,20 +54,6 @@ async function assertPublicUrl(rawUrl) {
     if (isPrivateIp(address)) throw new Error(`Blocked non-public address ${address}`);
   }
   return u;
-}
-
-// Re-check every redirect hop target before following it further.
-function safeRedirectDispatcher() {
-  const agents = {
-    http: new http.Agent({ keepAlive: false }),
-    https: new https.Agent({ keepAlive: false })
-  };
-  return async (url, opts) => {
-    const u = await assertPublicUrl(url);
-    const mod = u.protocol === 'https:' ? https : http;
-    opts.agent = opts.agent || agents[u.protocol];
-    return mod.request(u, opts);
-  };
 }
 
 // ── SSL certificate inspection ──────────────────────────────
@@ -143,7 +127,11 @@ async function runCheck(monitor) {
 
     let bodySnippet = '';
     if (monitor.expectedText) {
-      try { bodySnippet = (await res.text()).slice(0, 512000); } catch (_) {}
+      try {
+        const bodyPromise = res.text();
+        const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('Body read timeout')), Math.min(timeoutMs, 15000)));
+        bodySnippet = (await Promise.race([bodyPromise, timeoutPromise])).slice(0, 512000);
+      } catch (_) {}
     } else {
       try { await res.arrayBuffer(); } catch (_) {} // drain
     }

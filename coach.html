@@ -19,7 +19,11 @@
         // (evolve_theme) so a theme set in either Evolve app carries over.
         let dark = localStorage.getItem('evolveDarkMode') === '1';
         if (!dark && localStorage.getItem('evolve_theme') === 'dark') dark = true;
-        if (dark) document.documentElement.classList.add('dark-mode');
+        if (dark) {
+          document.documentElement.classList.add('dark-mode');
+          var tm = document.querySelector('meta[name="theme-color"]');
+          if (tm) tm.setAttribute('content', '#0c0c0c');
+        }
         // If a login session already exists, this refresh is just re-verifying
         // it in the background — hold off on showing the login form so the
         // coach doesn't see a flash of "logged out" before we swap back in.
@@ -4323,7 +4327,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="card">
           <div class="card-header"><div class="card-title">Recent Client Activity</div></div>
           <div class="card-body" id="recent-activity-list">
-            <div style="text-align:center;color:var(--muted);padding:1.5rem;font-size:13px">Loading…</div>
           </div>
         </div>
         <div class="card">
@@ -7718,7 +7721,13 @@ function switchClientsTab(tab) {
     archived: { bg: 'rgba(248,113,113,0.15)', color: 'var(--red)', border: 'rgba(248,113,113,0.4)' }
   };
   Object.keys(panels).forEach(key => {
-    panels[key].style.display = (key === tab) ? '' : 'none';
+    if (key === tab) {
+      panels[key].classList.remove('hidden');
+      panels[key].style.display = '';
+    } else {
+      panels[key].classList.add('hidden');
+      panels[key].style.display = 'none';
+    }
     const s = (key === tab) ? styles[key] : { bg: 'transparent', color: 'var(--muted)', border: 'var(--border2)' };
     tabs[key].style.background  = s.bg;
     tabs[key].style.color       = s.color;
@@ -7829,8 +7838,8 @@ function renderPendingGrid() {
           <div class="client-av" style="background:rgba(255,90,43,0.15);color:var(--gold);">${clientAvatarInner(c, ini)}</div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div class="client-name">${name}</div>
-          <div class="client-email">${c.email||''}</div>
+          <div class="client-name">${escapeHtml(name)}</div>
+          <div class="client-email">${escapeHtml(c.email||'')}</div>
           <div style="font-size:10px;color:rgba(255,90,43,0.7);margin-top:3px;letter-spacing:0.3px;">Signed up ${signedUp}${goal ? ' · Goal: '+goal : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -7838,11 +7847,11 @@ function renderPendingGrid() {
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;">
-        <button class="action-btn" onclick="confirmApproveClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);">
+        <button class="action-btn" onclick="confirmApproveClient('${c.uid}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
           Approve
         </button>
-        <button class="action-btn remove-client-btn" onclick="confirmDeclineClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" style="flex:1;">
+        <button class="action-btn remove-client-btn" onclick="confirmDeclineClient('${c.uid}')" style="flex:1;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           Decline
         </button>
@@ -8153,6 +8162,21 @@ async function updateDashboardStats(force) {
   // Instant: total clients is already in memory
   animateStatValue('stat-total-clients', allClients.length);
 
+  // Restore cached stats from localStorage so dashboard doesn't flash "—"
+  // on every page load while Firestore re-fetches in the background.
+  if (!force) {
+    try {
+      const cached = JSON.parse(localStorage.getItem('coach_stats_cache') || 'null');
+      if (cached && cached.totalLogs != null) {
+        animateStatValue('stat-active-today', cached.todayLogs);
+        animateStatValue('stat-workouts-logged', cached.totalLogs);
+        animateStatValue('stat-photos', cached.totalPhotos);
+        _dashYesterdayLogs = cached.yesterdayLogs;
+        renderDashSummary();
+      }
+    } catch(_) {}
+  }
+
   const now = Date.now();
   if (!force && (now - _lastStatsFetch < STATS_REFRESH_MS || _statsFetchInFlight)) return;
   _statsFetchInFlight = true;
@@ -8176,6 +8200,8 @@ async function updateDashboardStats(force) {
       animateStatValue('stat-workouts-logged', totalLogsSnap.data().count);
       animateStatValue('stat-photos', totalPhotosSnap.data().count);
       _dashYesterdayLogs = yesterdayLogsSnap.data().count;
+      window._statsFallbackCache = { totalLogs: totalLogsSnap.data().count, todayLogs: todayLogsSnap.data().count, yesterdayLogs: yesterdayLogsSnap.data().count, totalPhotos: totalPhotosSnap.data().count, ts: Date.now() };
+      try { localStorage.setItem('coach_stats_cache', JSON.stringify(window._statsFallbackCache)); } catch(_) {}
     } catch (e) {
       console.warn('[COACH] collectionGroup count() unavailable/timed out, falling back to per-client scan:', e.code || '', e.message || e);
       await _updateDashboardStatsFallback(today, yesterday);
@@ -8187,8 +8213,25 @@ async function updateDashboardStats(force) {
   }
   renderDashSummary();
 
-  // Activity feed — fire-and-forget, don't block stats rendering
+  // Activity feed — restore cached feed instantly, then refresh in background
   const feed = document.getElementById('recent-activity-list');
+  if (feed && !feed.querySelector('.ract-row')) {
+    let restored = false;
+    try {
+      const cachedFeed = JSON.parse(localStorage.getItem('coach_activity_cache') || 'null');
+      if (cachedFeed && cachedFeed.length) {
+        _activityFeedCache = { activities: cachedFeed, ts: Date.now() };
+        _renderActivityFeed(feed, cachedFeed);
+        restored = true;
+      }
+    } catch(_) {}
+    if (!restored) _renderActivityFeed(feed, []);
+  }
+  // Fire-and-forget, don't block stats rendering
+  // Hard timeout: always replace "Loading..." even if both primary + fallback fail
+  let _feedRendered = false;
+  const _safeRenderFeed = (acts) => { if (!_feedRendered) { _feedRendered = true; _renderActivityFeed(feed, acts); } };
+  setTimeout(() => { if (!_feedRendered) { _feedRendered = true; _renderActivityFeed(feed, []); } }, 12000);
   withTimeout(
     db.collectionGroup('workoutLogs').orderBy('completedAt', 'desc').limit(6).get(),
     timeoutMs, 'activity feed'
@@ -8199,10 +8242,13 @@ async function updateDashboardStats(force) {
       const d = doc.data();
       return { name: `${c.firstName||''} ${c.lastName||''}`.trim() || 'A client', action: 'logged '+d.workoutName, ts: d.completedAt };
     });
-    _renderActivityFeed(feed, activities);
+    _safeRenderFeed(activities);
   }).catch(async (e) => {
-    console.warn('[COACH] collectionGroup orderBy unavailable/timed out, falling back:', e.code || '', e.message || e);
-    await _updateActivityFeedFallback(feed);
+    console.warn('[COACH] collectionGroup orderBy unavailable/timed out, falling back:', e.code || '', e.message || '');
+    try {
+      await _updateActivityFeedFallback(feed);
+      _feedRendered = true;
+    } catch(_) { _safeRenderFeed([]); }
   });
 }
 
@@ -8258,6 +8304,7 @@ async function _updateDashboardStatsFallback(today, yesterday) {
     console.warn('[COACH] stats per-client fallback timed out; using partial counts:', e.message);
   }
   window._statsFallbackCache = { totalLogs, todayLogs, yesterdayLogs, totalPhotos, ts: Date.now() };
+  try { localStorage.setItem('coach_stats_cache', JSON.stringify(window._statsFallbackCache)); } catch(_) {}
   animateStatValue('stat-active-today', todayLogs);
   animateStatValue('stat-workouts-logged', totalLogs);
   animateStatValue('stat-photos', totalPhotos);
@@ -8340,6 +8387,7 @@ async function _updateActivityFeedFallback(feed) {
   activities.sort((a,b)=> (b.ts?.seconds||0)-(a.ts?.seconds||0));
   const sliced = activities.slice(0,6);
   window._activityFeedCache = { activities: sliced, ts: Date.now() };
+  try { localStorage.setItem('coach_activity_cache', JSON.stringify(sliced)); } catch(_) {}
   _renderActivityFeed(feed, sliced);
 }
 
@@ -8717,13 +8765,13 @@ function drawLogChart() {
 
   // Grid lines
   const STEPS = 4;
-  ctx.strokeStyle = 'rgba(var(--line-r),var(--line-g),var(--line-b),0.1)';
+   ctx.strokeStyle = canvasLine(0.1);
   ctx.lineWidth   = 1;
   for (let i = 0; i <= STEPS; i++) {
     const gv  = minV + (maxV - minV) * (i / STEPS);
     const gy  = toY(gv);
     ctx.beginPath(); ctx.moveTo(PAD.left, gy); ctx.lineTo(PAD.left + cW, gy); ctx.stroke();
-    ctx.fillStyle = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.55)';
+    ctx.fillStyle = canvasInk(0.55);
     ctx.font = '10px Inter, sans-serif';
     ctx.textAlign = 'right';
     const lbl = _logMetric === 'volume' ? Math.round(gv) + 'kg' : Math.round(gv) + '';
@@ -8773,7 +8821,7 @@ function drawLogChart() {
 
     // X label
     if (i % step === 0 || i === data.length - 1) {
-      ctx.fillStyle = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.7)';
+      ctx.fillStyle = canvasInk(0.7);
       ctx.font = '10px Inter, sans-serif';
       const labelY = PAD.top + cH + (needsRotation ? 14 : 16);
       if (needsRotation) {
@@ -9830,9 +9878,9 @@ function drawSumWLChart(chartUid) {
   ctx.setLineDash([3,4]);
   for (let i=0; i<=4; i++) {
     const gv=minV+(maxV-minV)*(i/4), gy=toY(gv);
-    ctx.strokeStyle='rgba(var(--line-r),var(--line-g),var(--line-b),0.10)'; ctx.lineWidth=1;
+     ctx.strokeStyle=canvasLine(0.10); ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(PAD.left,gy); ctx.lineTo(PAD.left+cW,gy); ctx.stroke();
-    ctx.fillStyle='rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.5)'; ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
+    ctx.fillStyle=canvasInk(0.5); ctx.font='10px Inter,sans-serif'; ctx.textAlign='right';
     ctx.fillText((metric==='volume'?(gv>=1000?(gv/1000).toFixed(1)+'k':Math.round(gv))+'kg':Math.round(gv)+''), PAD.left-6, gy+3.5);
   }
   ctx.setLineDash([]);
@@ -9860,7 +9908,7 @@ function drawSumWLChart(chartUid) {
     ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fillStyle='#FF5A2B'; ctx.fill();
     ctx.beginPath(); ctx.arc(x,y,2.4,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
     if(i%step===0||i===data.length-1){
-      ctx.fillStyle='rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.65)'; ctx.font='10px Inter,sans-serif';
+      ctx.fillStyle=canvasInk(0.65); ctx.font='10px Inter,sans-serif';
       const labelY = PAD.top + (H - PAD.top - PAD.bottom) + (needsRotation ? 14 : 16);
       if (needsRotation) {
         ctx.save();
@@ -9905,7 +9953,7 @@ window.sumWLMetric=function(chartUid,metric){
   ['volume','reps','sets'].forEach(m=>{
     const b=document.getElementById(chartUid+'_tab_'+m); if(!b)return;
     if(m===metric){b.style.background='#FF5A2B';b.style.color='#0A0A0A';b.style.border='none';}
-    else{b.style.background='rgba(var(--line-r),var(--line-g),var(--line-b),0.05)';b.style.color='rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.55)';b.style.border='1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)';}
+    else{b.style.background='rgba(var(--line-r),var(--line-g),var(--line-b),0.05)';b.style.color=canvasInk(0.55);b.style.border='1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)';}
   });
   drawSumWLChart(chartUid);
 };
@@ -9934,7 +9982,7 @@ window.showExProgress = function(uid, idx) {
     const btn = document.getElementById(uid+'_tab_'+i);
     if (!btn) return;
     if (i === idx) { btn.style.background='#FF5A2B'; btn.style.color='#0A0A0A'; btn.style.border='none'; }
-    else { btn.style.background='rgba(var(--line-r),var(--line-g),var(--line-b),0.05)'; btn.style.color='rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.5)'; btn.style.border='1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)'; }
+    else { btn.style.background='rgba(var(--line-r),var(--line-g),var(--line-b),0.05)'; btn.style.color=canvasInk(0.5); btn.style.border='1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)'; }
   });
 
   const [exName, pts] = entries[idx];
@@ -9971,9 +10019,9 @@ window.showExProgress = function(uid, idx) {
   for (let i = 0; i <= 3; i++) {
     const gv = minV + (maxV - minV) * (i / 3);
     const gy = toY(gv);
-    ctx.strokeStyle = 'rgba(var(--line-r),var(--line-g),var(--line-b),0.07)'; ctx.lineWidth = 1;
+     ctx.strokeStyle = canvasLine(0.07); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(PAD.left, gy); ctx.lineTo(PAD.left + cW, gy); ctx.stroke();
-    ctx.fillStyle = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.45)'; ctx.font = '9px Inter,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillStyle = canvasInk(0.45); ctx.font = '9px Inter,sans-serif'; ctx.textAlign = 'right';
     ctx.fillText(Math.round(gv) + ' kg', PAD.left - 4, gy + 3);
   }
 
@@ -10003,7 +10051,7 @@ window.showExProgress = function(uid, idx) {
     ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fillStyle = lineCol; ctx.fill();
     ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fillStyle = '#161616'; ctx.fill();
     if (i % step === 0 || i === pts.length - 1) {
-      ctx.fillStyle = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.55)'; ctx.font = '9px Inter,sans-serif';
+      ctx.fillStyle = canvasInk(0.55); ctx.font = '9px Inter,sans-serif';
       const labelY = PAD.top + cH + (needsRotation ? 14 : 16);
       if (needsRotation) {
         ctx.save();
@@ -10300,7 +10348,7 @@ window.switchSessionStat = function(chartUid, metric) {
       btn.style.border = '1px solid '+c.color;
       btn.style.background = c.bg;
     } else {
-      btn.style.color = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.65)';
+      btn.style.color = canvasInk(0.65);
       btn.style.border = '1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.2)';
       btn.style.background = 'transparent';
     }
@@ -10320,10 +10368,10 @@ window.setWLView = function(chartUid, view) {
   if (tblBtn && chtBtn) {
     if (view === 'chart') {
       chtBtn.style.background = '#FF5A2B'; chtBtn.style.color = '#0A0A0A';
-      tblBtn.style.background = 'transparent'; tblBtn.style.color = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.45)';
+      tblBtn.style.background = 'transparent'; tblBtn.style.color = canvasInk(0.45);
     } else {
       tblBtn.style.background = '#FF5A2B'; tblBtn.style.color = '#0A0A0A';
-      chtBtn.style.background = 'transparent'; chtBtn.style.color = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.45)';
+      chtBtn.style.background = 'transparent'; chtBtn.style.color = canvasInk(0.45);
     }
   }
 
@@ -13716,6 +13764,20 @@ function escapeHtml(s) {
 function escapeAttr(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
+
+// Resolves CSS custom property colors for Canvas 2D (canvas ignores var()).
+// Caches per theme switch; call _resolveCanvasColors() after toggling dark mode.
+let _canvasColorCache = {};
+function _resolveCanvasColors() {
+  const s = getComputedStyle(document.documentElement);
+  const get = (v) => s.getPropertyValue(v).trim();
+  _canvasColorCache = {
+    ink:  [get('--ink-r')  || '23', get('--ink-g')  || '20', get('--ink-b')  || '15'].join(','),
+    line: [get('--line-r') || '20', get('--line-g') || '18', get('--line-b') || '15'].join(',')
+  };
+}
+function canvasInk(a)  { if (!_canvasColorCache.ink) _resolveCanvasColors(); return `rgba(${_canvasColorCache.ink},${a})`; }
+function canvasLine(a) { if (!_canvasColorCache.line) _resolveCanvasColors(); return `rgba(${_canvasColorCache.line},${a})`; }
 
 // Cleans a raw input/textarea value before it gets saved to Firestore:
 // trims, strips control/zero-width chars, collapses runs of whitespace, caps length.
@@ -17723,7 +17785,7 @@ async function loadClientMealLogs() {
                 ${timeDisplay ? timeDisplay : ''}${serving ? ' · ' + serving : ''}
               </div>
             </div>
-            ${d.photoUrl ? `<img src="${d.photoUrl}" class="meal-log-photo" loading="lazy" decoding="async" onclick="openNutrLightbox('${d.photoUrl}')" alt="Meal photo" />` : ''}
+            ${d.photoUrl ? `<img src="${escapeAttr(d.photoUrl)}" class="meal-log-photo" loading="lazy" decoding="async" onclick="openNutrLightbox('${escapeAttr(d.photoUrl)}')" alt="Meal photo" />` : ''}
           </div>
           <div class="meal-log-macros" style="margin-top:8px;">
             <span class="meal-macro-pill pill-p">P: ${Math.round(protein*10)/10}g</span>
@@ -17731,10 +17793,10 @@ async function loadClientMealLogs() {
             <span class="meal-macro-pill pill-f">F: ${Math.round(fat*10)/10}g</span>
             <span class="meal-macro-pill pill-k">${Math.round(calories)} kcal</span>
           </div>
-          ${d.notes ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;">"${d.notes}"</div>` : ''}
-          ${d.coachComment ? `<div class="coach-comment-exist"> Coach: ${d.coachComment}</div>` : ''}
+          ${d.notes ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;">"${escapeHtml(d.notes)}"</div>` : ''}
+          ${d.coachComment ? `<div class="coach-comment-exist"> Coach: ${escapeHtml(d.coachComment)}</div>` : ''}
           <div class="coach-comment-box">
-            <input class="coach-comment-input" id="cmt-${logId}" placeholder="Add comment or feedback..." value="${d.coachComment||''}" />
+            <input class="coach-comment-input" id="cmt-${logId}" placeholder="Add comment or feedback..." value="${escapeAttr(d.coachComment||'')}" />
             <button class="coach-comment-send" onclick="sendCoachComment('${clientUid}','${logId}')">Send</button>
           </div>
         </div>`;
@@ -17899,7 +17961,7 @@ async function openMonitorClient(el) {
             ${sugar  ? `<span style="font-size:11px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:3px 10px;color:var(--muted);">Sugar: <strong style="color:var(--text);">${Math.round(sugar*10)/10}g</strong></span>` : ''}
             ${sodium ? `<span style="font-size:11px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:3px 10px;color:var(--muted);">Sodium: <strong style="color:var(--text);">${Math.round(sodium)}mg</strong></span>` : ''}
           </div>` : ''}
-          ${l.notes ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;">"${l.notes}"</div>` : ''}
+          ${l.notes ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;">"${escapeHtml(l.notes)}"</div>` : ''}
         </div>`;
     }).join('');
 
@@ -18099,7 +18161,7 @@ function coachMarkAllRead() {
   updateCoachNotifBadge();
   // Also mark read in Firestore
   try {
-    db.collection('coachNotifications').where('read','==',false).get().then(snap => {
+    db.collection('coachNotifications').where('read','==',false).where('coachId','==',COACH_FIXED_UID).get().then(snap => {
       const batch = db.batch();
       snap.docs.forEach(d => batch.update(d.ref, { read: true }));
       batch.commit().catch(() => {});
@@ -18154,7 +18216,8 @@ window.pushCoachNotif = addCoachNotification;
 
 <script>
 // ── SIDEBAR COLLAPSE ──
-let sidebarCollapsed = (localStorage.getItem('sidebarCollapsed') === 'true');
+let sidebarCollapsed = false;
+try { sidebarCollapsed = (localStorage.getItem('sidebarCollapsed') === 'true'); } catch(e) {}
 function applySidebarState() {
   const sidebar = document.getElementById('sidebar');
   if (!sidebar) return;
@@ -18189,7 +18252,7 @@ function applyDarkModeUI(isDark) {
   if (sw) sw.classList.toggle('on', isDark);
   if (icon) icon.textContent = isDark ? '☀️' : '🌙';
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeColorMeta) themeColorMeta.setAttribute('content', isDark ? '#0c0c0c' : 'var(--bg)');
+  if (themeColorMeta) themeColorMeta.setAttribute('content', isDark ? '#0c0c0c' : '#EDE8DC');
 }
 function applyDarkModeState() {
   const isDark = document.documentElement.classList.contains('dark-mode');
@@ -18219,7 +18282,7 @@ setTimeout(applyDarkModeState, 100);
       var day = dt.getDay();
       var diff = dt.getDate() - day + (day === 0 ? -6 : 1);
       var mon = new Date(dt); mon.setDate(diff);
-      var key = mon.toISOString().slice(0,10);
+      var key = mon.getFullYear() + '-' + String(mon.getMonth()+1).padStart(2,'0') + '-' + String(mon.getDate()).padStart(2,'0');
       if (!weeks[key]) weeks[key] = {date:key,cal:0,prot:0,carbs:0,fat:0,n:0};
       weeks[key].cal+=d.cal; weeks[key].prot+=d.prot;
       weeks[key].carbs+=d.carbs; weeks[key].fat+=d.fat; weeks[key].n++;
@@ -18294,7 +18357,7 @@ setTimeout(applyDarkModeState, 100);
     ctx.clearRect(0,0,W,H);
 
     if (!data || !data.length) {
-      ctx.fillStyle='rgba(var(--line-r),var(--line-g),var(--line-b),0.2)'; ctx.font='11px Inter,sans-serif'; ctx.textAlign='center';
+       ctx.fillStyle=canvasLine(0.2); ctx.font='11px Inter,sans-serif'; ctx.textAlign='center';
       ctx.fillText('No data logged yet', W/2, H/2); return;
     }
 
@@ -18315,10 +18378,10 @@ setTimeout(applyDarkModeState, 100);
 
     for(var g=0;g<=4;g++){
       var gy=padT+(g/4)*cH;
-      ctx.strokeStyle='rgba(var(--line-r),var(--line-g),var(--line-b),0.1)'; ctx.lineWidth=1;
+       ctx.strokeStyle=canvasLine(0.1); ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(padL,gy); ctx.lineTo(padL+cW,gy); ctx.stroke();
       var gv=Math.round(maxV-(g/4)*maxV);
-      ctx.fillStyle='rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.6)'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='right';
+      ctx.fillStyle=canvasInk(0.6); ctx.font='9px Inter,sans-serif'; ctx.textAlign='right';
       ctx.fillText(gv>=1000?(gv/1000).toFixed(1)+'k':gv, padL-4, gy+3);
     }
 
@@ -18343,7 +18406,7 @@ setTimeout(applyDarkModeState, 100);
 
     var maxL=Math.min(data.length,7);
     var stepL=Math.max(1,Math.ceil(data.length/maxL));
-    ctx.fillStyle='rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.6)'; ctx.font='9px Inter,sans-serif'; ctx.textAlign='center';
+    ctx.fillStyle=canvasInk(0.6); ctx.font='9px Inter,sans-serif'; ctx.textAlign='center';
     data.forEach(function(d,i){
       if(i%stepL===0||i===data.length-1) ctx.fillText(d.date,xP(i),H-padB+14);
     });
@@ -18357,6 +18420,8 @@ setTimeout(applyDarkModeState, 100);
     var canvas  = document.getElementById(uid+'_canvas');
     var tooltip = document.getElementById(uid+'_tooltip');
     if(!canvas||!tooltip) return;
+    if(canvas._tooltipAttached) return; // prevent duplicate listeners on redraw
+    canvas._tooltipAttached = true;
     function onMove(e){
       var rect=canvas.getBoundingClientRect();
       var mx=(e.clientX||(e.touches&&e.touches[0]?e.touches[0].clientX:0))-rect.left;
@@ -18828,9 +18893,11 @@ async function executeDeleteClient() {
 // the coach explicitly confirms them. This grants that confirmation.
 let _approveClientUid = null;
 
-function confirmApproveClient(uid, name) {
+function confirmApproveClient(uid) {
   _approveClientUid = uid;
-  document.getElementById('approve-client-name').textContent = name.trim() || 'this person';
+  const c = (allClients||[]).find(x=>x.uid===uid);
+  const name = c ? ((c.firstName||'')+' '+(c.lastName||'')).trim() : '';
+  document.getElementById('approve-client-name').textContent = name || 'this person';
   document.getElementById('approve-client-modal').style.display = 'flex';
 }
 
@@ -18882,9 +18949,11 @@ async function executeApproveClient() {
 // them everywhere in coach.html and blocks them from the app entirely.
 let _declineClientUid = null;
 
-function confirmDeclineClient(uid, name) {
+function confirmDeclineClient(uid) {
   _declineClientUid = uid;
-  document.getElementById('decline-client-name').textContent = name.trim() || 'this person';
+  const c = (allClients||[]).find(x=>x.uid===uid);
+  const name = c ? ((c.firstName||'')+' '+(c.lastName||'')).trim() : '';
+  document.getElementById('decline-client-name').textContent = name || 'this person';
   document.getElementById('decline-client-modal').style.display = 'flex';
 }
 

@@ -62,6 +62,10 @@ function fmtDuration(ms) {
 
 function fmtNum(n) { return Number(n || 0).toLocaleString('en-US'); }
 
+function tgEscape(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 async function getSettings() {
   const snap = await retry(() => SETTINGS_DOC.get(), 'load settings');
   const defaults = {
@@ -152,9 +156,9 @@ async function alertDown(monitor, result, settings) {
   const text =
 `🚨 <b>EVOLVECHAT DOWN</b>
 
-<b>Monitor:</b> ${monitor.name}
-<b>URL:</b> ${monitor.url}
-<b>Status:</b> ${result.status || result.error}
+<b>Monitor:</b> ${tgEscape(monitor.name)}
+<b>URL:</b> ${tgEscape(monitor.url)}
+<b>Status:</b> ${tgEscape(result.status || result.error)}
 <b>Response:</b> ${fmtNum(result.responseTime)} ms
 <b>Failures:</b> ${monitor.consecutiveFailures} consecutive
 <b>Time:</b> ${t}`;
@@ -167,7 +171,7 @@ async function alertRecovery(monitor, incident, settings) {
   const text =
 `✅ <b>EVOLVECHAT RECOVERED</b>
 
-<b>Monitor:</b> ${monitor.name}
+<b>Monitor:</b> ${tgEscape(monitor.name)}
 <b>Downtime:</b> ${fmtDuration(down)}
 <b>Response:</b> ${fmtNum(monitor.lastResponseTime)} ms`;
   await Promise.allSettled(alertTargets(settings).map(c => sendTelegram(c, text)));
@@ -178,8 +182,8 @@ async function alertSlow(monitor, result, settings) {
   const text =
 `🐌 <b>EVOLVECHAT SLOW RESPONSE</b>
 
-<b>Monitor:</b> ${monitor.name}
-<b>URL:</b> ${monitor.url}
+<b>Monitor:</b> ${tgEscape(monitor.name)}
+<b>URL:</b> ${tgEscape(monitor.url)}
 <b>Response:</b> ${fmtNum(result.responseTime)} ms (threshold ${fmtNum(settings.slowResponseMs)} ms)`;
   await Promise.allSettled(alertTargets(settings).map(c => sendTelegram(c, text)));
 }
@@ -189,13 +193,21 @@ async function alertSslIfNeeded(monitor, settings) {
   const days = monitor.sslDaysRemaining;
   const levels = (settings.sslAlertDays || [30, 14, 7, 1]).slice().sort((a, b) => b - a);
   const hit = levels.find(l => days <= l);
-  if (!hit || (monitor.lastSslAlertLevel ?? 366) <= hit) return; // already alerted at this level or worse
+  // Reset alert level if cert was renewed (days remaining jumped above the last alerted level)
+  const prevLevel = monitor.lastSslAlertLevel ?? 366;
+  if (!hit || prevLevel <= hit) {
+    // If cert renewed (days > all levels), clear the persisted level so future expiry re-alerts
+    if (days > levels[0] && prevLevel < 366) {
+      await monitor.ref.update({ lastSslAlertLevel: 366 }).catch(() => {});
+    }
+    return;
+  }
   const text =
 `🔒 <b>EVOLVECHAT SSL ALERT</b>
 
-<b>Monitor:</b> ${monitor.name}
+<b>Monitor:</b> ${tgEscape(monitor.name)}
 <b>Certificate expires in ${days} day${days === 1 ? '' : 's'}</b>
-<b>Issuer:</b> ${monitor.sslIssuer || 'Unknown'}
+<b>Issuer:</b> ${tgEscape(monitor.sslIssuer || 'Unknown')}
 <b>Expires:</b> ${monitor.sslValidTo ? new Date(monitor.sslValidTo).toISOString().slice(0, 10) : '?'}`;
   const ok = await Promise.allSettled(alertTargets(settings).map(c => sendTelegram(c, text)));
   if (ok.some(r => r.status === 'fulfilled')) {

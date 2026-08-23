@@ -22,7 +22,11 @@
     if (saved === null || saved === undefined) {
      saved = localStorage.getItem('evolveDarkMode') === '1' ? 'dark' : null;
     }
-    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    if (saved === 'dark') {
+     document.documentElement.setAttribute('data-theme', 'dark');
+     var tm = document.getElementById('theme-color-meta');
+     if (tm) tm.setAttribute('content', '#16140F');
+    }
    } catch (e) {}
   })();
  </script>
@@ -7014,7 +7018,6 @@ let _peCurrentData = {}; // profile edit cache — declared early so loadHomeScr
 // Personal records cache: { "Exercise Name": { weight (kg), reps, achievedAt } }
 // Loaded from the member doc and updated live as sets are marked done.
 let personalRecords = {};
-let selectedPhotoFile = null;
 let explicitAuthInProgress = false;
 
 // ─────────────────────────────────────────
@@ -7916,7 +7919,7 @@ function showCompletedWorkoutView(workout, log) {
       <div class="log-ex-thumb-fallback" style="display:flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(193,68,14,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></div>
      </div>
      <div class="log-ex-info">
-      <div class="log-ex-name">${ex.name}</div>
+      <div class="log-ex-name">${escapeHtml(ex.name)}</div>
       <div class="log-ex-muscles"></div>
       <div class="log-ex-target-badge">${(ex.sets||[]).length} sets logged</div>
      </div>
@@ -8220,17 +8223,17 @@ async function buildWorkoutLogger(workout) {
    <div class="log-ex-header">
     <div class="log-ex-color-bar" style="background:${accentColor};"></div>
     <div class="log-ex-header-inner">
-     <div class="log-ex-thumb-wrap" onclick="clientPreviewVideo('${exName.replace(/'/g,"&#39;")}')">
-      <img id="ex-thumb-${exIdx}" src="" alt="${exName}"
+     <div class="log-ex-thumb-wrap" onclick="clientPreviewVideo('${escapeAttr(exName)}')">
+       <img id="ex-thumb-${exIdx}" src="" alt="${escapeAttr(exName)}"
        style="width:100%;height:100%;object-fit:cover;display:none;"
        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
       <div class="log-ex-thumb-fallback" id="ex-fallback-${exIdx}" style="display:flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(193,68,14,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></div>
       <div class="play-overlay">▶</div>
      </div>
-      <div class="log-ex-info">
-       <div class="log-ex-name">${exName}</div>
-       <div class="log-ex-muscles">${ex.detail || ''}</div>
-       <div class="log-ex-target-badge">${ex.target || ''}</div>
+       <div class="log-ex-info">
+        <div class="log-ex-name">${escapeHtml(exName)}</div>
+        <div class="log-ex-muscles">${escapeHtml(ex.detail || '')}</div>
+        <div class="log-ex-target-badge">${escapeHtml(ex.target || '')}</div>
       </div>
       <div class="ex-edit-controls">
        <button class="ex-move-btn" onclick="moveExercise(${exIdx},-1)" title="Move exercise up">▲</button>
@@ -10432,7 +10435,7 @@ async function loadProgressPhotos() {
       : '';
      cell.className = 'ba-angle-card';
      cell.onclick = () => openLightbox(src, date, photo.d.note, photo.doc.id, angle);
-     cell.innerHTML = `<img src="${src}" alt="${ANGLE_NAMES[angle]}" loading="lazy"><div class="ba-angle-name">${ANGLE_NAMES[angle]}</div>`;
+      cell.innerHTML = `<img src="${escapeAttr(src)}" alt="${escapeAttr(ANGLE_NAMES[angle])}" loading="lazy"><div class="ba-angle-name">${escapeHtml(ANGLE_NAMES[angle])}</div>`;
     } else {
      cell.className = 'ba-angle-empty';
      cell.innerHTML = `<div class="ba-angle-empty-icon">📷</div><div class="ba-angle-empty-lbl">${ANGLE_NAMES[angle]}</div>`;
@@ -10630,8 +10633,8 @@ async function loadHomePhotoStrip() {
     : '';
    const noteEsc = escapeAttr(d.note || '');
    const dateEsc = escapeAttr(date);
-   thumbsHtml += `<div class="home-photo-thumb" onclick="openLightbox('${src.substring(0,20)===src?src:''}','${dateEsc}','${noteEsc}')" data-src="${''}" data-date="${dateEsc}" data-note="${noteEsc}">
-    <img src="${src}" alt="Progress photo" loading="lazy">
+   thumbsHtml += `<div class="home-photo-thumb" onclick="openLightbox('${src.substring(0,20)===src?escapeAttr(src):''}','${dateEsc}','${noteEsc}')" data-src="${''}" data-date="${dateEsc}" data-note="${noteEsc}">
+     <img src="${escapeAttr(src)}" alt="Progress photo" loading="lazy">
     <div class="home-photo-thumb-date">${escapeHtml(date)}</div>
    </div>`;
   });
@@ -11083,17 +11086,17 @@ async function handleLogout() {
  if (btn) { btn.disabled = true; btn.textContent = 'Signing out…'; }
  stopPresenceHeartbeat();
  const _uidAtLogout = currentUid;
- // Sign out FIRST — this must never wait on the network. The old order
- // awaited a Firestore write before calling signOut(), so a slow or dropped
- // connection made the button look completely broken (nothing happened,
- // no error, no feedback). Marking the client offline is best-effort and
- // happens in the background now; it no longer blocks getting the user out.
- try { await auth.signOut(); } catch(e) { console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message); }
+ // Mark the client offline BEFORE signing out — the Firestore rules require
+ // auth (isSelf), so the write must happen while the user is still authenticated.
+ // Use a short timeout so a slow connection doesn't block the UI.
  if (_uidAtLogout) {
-  db.collection('members').doc(_uidAtLogout).set({
+  const offlineWrite = db.collection('members').doc(_uidAtLogout).set({
    isOnline: false, lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).catch(()=>{});
+  }, { merge: true });
+  const timeout = new Promise(r => setTimeout(r, 2000));
+  await Promise.race([offlineWrite, timeout]).catch(() => {});
  }
+ try { await auth.signOut(); } catch(e) { console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message); }
  // Tear down all per-session Firestore listeners. Several of these
  // (cliCalUnsub, cliMyEvUnsub, clientPhotoReqUnsub) guard against duplicate
  // subscriptions by checking "if already set, skip" — leaving them set after
@@ -11109,8 +11112,9 @@ async function handleLogout() {
   if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
   if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
   if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
-  if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
-  currentUid = null; step1Data = {}; todayWorkout = null; _peCurrentData = {};
+   if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
+   if (_wktTimerInterval) { clearInterval(_wktTimerInterval); _wktTimerInterval = null; }
+   currentUid = null; step1Data = {}; todayWorkout = null; _peCurrentData = {};
   _setChatBadge('');
  explicitAuthInProgress = false;
  try { localStorage.removeItem('evolve_profile_cache'); } catch(e) {}
@@ -11122,12 +11126,12 @@ async function handleLogout() {
 async function handleBlockedSignOut() {
  stopPresenceHeartbeat();
  const _uidAtLogout = currentUid;
- try { await auth.signOut(); } catch(e) { console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message); }
  if (_uidAtLogout) {
-  db.collection('members').doc(_uidAtLogout).set({
+  try { await db.collection('members').doc(_uidAtLogout).set({
    isOnline: false, lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).catch(()=>{});
+  }, { merge: true }); } catch(e) {}
  }
+ try { await auth.signOut(); } catch(e) { console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message); }
  if (clientChatUnsub) { clientChatUnsub(); clientChatUnsub = null; }
   if (chatUnreadUnsub) { chatUnreadUnsub(); chatUnreadUnsub = null; }
   if (coachPresenceUnsub) { coachPresenceUnsub(); coachPresenceUnsub = null; }
@@ -11138,11 +11142,12 @@ async function handleBlockedSignOut() {
   if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
   if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
   if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
-  if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
-  currentUid = null;
-  explicitAuthInProgress = false;
-  showScreen('screen-auth');
-  switchTab('login');
+   if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
+   if (_wktTimerInterval) { clearInterval(_wktTimerInterval); _wktTimerInterval = null; }
+   currentUid = null;
+   explicitAuthInProgress = false;
+   showScreen('screen-auth');
+   switchTab('login');
 }
 
 // ─────────────────────────────────────────
@@ -11589,7 +11594,7 @@ clientPhotoReqUnsub = db.collection('photoRequests')
    pendingPhotoReqs.sort((a,b) => (a.dueDate||'').localeCompare(b.dueDate||''));
    renderClientPhotoReqBanner();
    checkHomePhotoRequestAlert(); // Fix: update home screen alert immediately on each change
-  }, () => {});
+  }, (err) => { console.error('[EVOLVE] photo request listener error:', err); });
 }
 
 function renderClientPhotoReqBanner() {
@@ -11631,46 +11636,11 @@ function triggerReqPhotoUpload(reqId) {
  if (input) { input.click(); }
 }
 
-// Override photo select to intercept request fulfillment
-const _origHandlePhotoSelect = typeof handlePhotoSelect === 'function' ? handlePhotoSelect : null;
 
-
-// Patch submitPhoto to also fulfill request if activeReqId is set
-const _origSubmitPhoto = typeof window.submitPhoto === 'function' ? window.submitPhoto : null;
-
-// We'll hook in after upload completes via a Firestore write interception
-// Since submitPhoto is defined in the original script, we wrap it:
-async function submitPhotoAndFulfill() {
- const note = document.getElementById('photo-note')?.value?.trim() || '';
- if (!activeReqId || !selectedPhotoFile) {
-  if (typeof submitPhoto === 'function') submitPhoto();
-  return;
- }
- const reqId = activeReqId;
- activeReqId = null;
- // Call the main submitPhoto which now uploads to Firebase Storage
- if (typeof submitPhoto === 'function') {
-  await submitPhoto();
-  // After upload, find the latest photo and mark request fulfilled
-  setTimeout(async () => {
-   const uid = currentUid || auth.currentUser?.uid;
-   if (!uid) return;
-   try {
-    const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-     .orderBy('uploadedAt','desc').limit(1).get();
-    const photoUrl = snap.empty ? '' : (snap.docs[0].data().url || snap.docs[0].data().base64 || '');
-    await db.collection('photoRequests').doc(reqId).update({
-     fulfilled: true,
-     url: photoUrl,
-     submittedNote: note,
-     fulfilledAt: firebase.firestore.FieldValue.serverTimestamp(),
-     fulfilledBy: uid
-    });
-    showToast('Photo request fulfilled! Coach notified', 'success');
-   } catch(e) { console.error('Failed to mark request fulfilled:', e); }
-  }, 2500);
- }
-}
+// Photo request fulfillment is handled inside submitAnglePhotos() (see above),
+// which captures activeReqId before clearing it and fulfills the request after
+// upload completes. The old submitPhotoAndFulfill wrapper was dead code that
+// referenced an unset selectedPhotoFile and used a naive setTimeout.
 
 // Also show photo request banner on the home screen as a notification
 function checkHomePhotoRequestAlert() {
@@ -12847,7 +12817,7 @@ function renderNutrMealSections(dateKey) {
      return `
      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border);cursor:pointer;" onclick="nutrEditLog('${item.logId}','${meal}')">
       <div style="flex:1;min-width:0;">
-       <div style="font-size:13px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.food_name||item.mealName||'Food'}</div>
+       <div style="font-size:13px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.food_name||item.mealName||'Food')}</div>
       </div>
       <div style="font-size:11px;color:var(--text3);flex-shrink:0;">P${p} C${c} F${fa}</div>
       <button onclick="event.stopPropagation();nutrDeleteLog('${item.logId}','${meal}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 6px;flex-shrink:0;border-radius:6px;transition:color 0.15s,background 0.15s;" title="Remove" onmouseover="this.style.color='#F87171';this.style.background='rgba(248,113,113,0.1)'" onmouseout="this.style.color='var(--text3)';this.style.background='none'"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
@@ -12965,7 +12935,7 @@ function renderNutrAssignedPlan() {
  const planHeader = nutrPlan ? `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;">
    <div style="display:flex;align-items:center;gap:8px;">
-    <span style="font-size:13px;font-weight:700;color:#C1440E;">${nutrPlan.planName||'My Plan'}</span>
+     <span style="font-size:13px;font-weight:700;color:#C1440E;">${escapeHtml(nutrPlan.planName||'My Plan')}</span>
    </div>
    <div style="font-size:11px;color:var(--text2);">P:${nutrPlan.protein||0}g · C:${nutrPlan.carbs||0}g · F:${nutrPlan.fats||0}g · ${nutrPlan.calories||0} kcal</div>
   </div>` : '';
@@ -12995,7 +12965,7 @@ function renderNutrAssignedPlan() {
    <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-top:1px solid var(--bg3);${isDone?'opacity:0.5;':''}">
     <div style="flex:1;min-width:0;">
      <div style="display:flex;align-items:center;gap:6px;">
-      <div style="font-size:13px;color:${isDone?'#555':'#ddd'};font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${isDone?'text-decoration:line-through;':''}">${item.food_name||'Food'}</div>
+      <div style="font-size:13px;color:${isDone?'#555':'#ddd'};font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${isDone?'text-decoration:line-through;':''}">${escapeHtml(item.food_name||'Food')}</div>
       ${isDone ? '<span style="font-size:10px;background:rgba(61,203,114,0.12);color:#3DCB72;border:1px solid rgba(61,203,114,0.25);border-radius:4px;padding:1px 6px;letter-spacing:0.4px;font-weight:700;flex-shrink:0;"> DONE</span>' : ''}
      </div>
      <div style="font-size:11px;color:var(--text2);margin-top:2px;">
@@ -13181,8 +13151,8 @@ function nutrRenderFoodList(items, reset) {
    style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #FFFFFF;cursor:pointer;transition:background .15s;"
    onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
    <div style="flex:1;min-width:0;">
-    <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px;">${f.food_name}${isCustom ? '<span style="font-size:9px;font-weight:700;background:rgba(193,68,14,0.12);color:#C1440E;padding:2px 6px;border-radius:6px;flex-shrink:0;letter-spacing:0.5px;">MY</span>' : ''}</div>
-    <div style="font-size:11px;color:var(--text2);margin-top:1px;">${f.category} · ${f.serving_label||f.serving_size_g+'g'}</div>
+     <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px;">${escapeHtml(f.food_name)}${isCustom ? '<span style="font-size:9px;font-weight:700;background:rgba(193,68,14,0.12);color:#C1440E;padding:2px 6px;border-radius:6px;flex-shrink:0;letter-spacing:0.5px;">MY</span>' : ''}</div>
+     <div style="font-size:11px;color:var(--text2);margin-top:1px;">${escapeHtml(f.category)} · ${escapeHtml(f.serving_label||f.serving_size_g+'g')}</div>
    </div>
    <div style="text-align:right;flex-shrink:0;">
     <div style="font-size:14px;font-weight:700;color:#C1440E;">${Math.round(f.calories)}</div>
@@ -14007,8 +13977,8 @@ function _renderEditModal() {
    <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);">Edit Food</div>
    <button onclick="document.getElementById('nutr-edit-modal').remove();document.getElementById('nutr-edit-backdrop').remove();" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:20px;padding:0;line-height:1;">✕</button>
   </div>
-  <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.food_name}</div>
-  <div style="font-size:11px;color:var(--text2);margin-bottom:16px;">${item.category || ''}</div>
+   <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.food_name)}</div>
+   <div style="font-size:11px;color:var(--text2);margin-bottom:16px;">${escapeHtml(item.category || '')}</div>
 
   <!-- Macro preview -->
   <div style="display:flex;gap:8px;margin-bottom:18px;">
@@ -14741,7 +14711,7 @@ function _setPeAvatarPreview(url, initials) {
  const el = document.getElementById('pe-avatar-preview');
  if (!el) return;
  if (url) {
-  el.innerHTML = '<img src="' + url + '" alt="Profile photo">';
+   el.innerHTML = '<img src="' + escapeAttr(url) + '" alt="Profile photo">';
  } else {
   el.textContent = initials || '?';
  }
@@ -15058,7 +15028,7 @@ function refreshProfileDisplay(data) {
   const e = document.getElementById(id);
   if (!e) return;
   if (data.profilePhotoURL) {
-   e.innerHTML = '<img src="' + data.profilePhotoURL + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;">';
+   e.innerHTML = '<img src="' + escapeAttr(data.profilePhotoURL) + '" alt="" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;">';
   } else {
    e.textContent = initials;
   }
@@ -16139,7 +16109,7 @@ function _renderCwktList() {
     <div class="cwkt-chip-thumb" style="background:${c.bg};border:1px solid ${c.accent}33;">
      ${(()=>{ const _wm2=(typeof getWorkoutMedia!=='undefined')?getWorkoutMedia(ex.name):null; const _thumb=_wm2&&_wm2.thumbnail?_wm2.thumbnail:null; if(_thumb){ return `<img src="${_thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:${c.accent};\'>'+c.icon+'</span>')">`; } return `<span style="display:flex;align-items:center;justify-content:center;color:${c.accent};">${c.icon}</span>`; })()}
     </div>
-    <span class="cwkt-chip-name">${ex.name}</span>
+     <span class="cwkt-chip-name">${escapeHtml(ex.name)}</span>
     <button class="cwkt-ex-remove" onclick="cwktRemoveEx(${i})" title="Remove">
      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>

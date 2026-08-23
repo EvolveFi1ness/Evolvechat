@@ -3,9 +3,6 @@
 *.env
 !/.env.example
 
-# Owner-only dashboard — local machine, never pushed
-monitoring.html
-
 # Dependencies (monitoring worker)
 node_modules/
 scripts/monitor/node_modules/

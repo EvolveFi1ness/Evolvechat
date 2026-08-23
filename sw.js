@@ -4,7 +4,7 @@
    for the CDN libs the apps already depend on. */
 'use strict';
 
-const CACHE = 'evolve-v3';
+const CACHE = 'evolve-v4';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
@@ -24,9 +24,9 @@ const STATIC = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll([...APP_SHELL, ...STATIC]))
-      .then(() => self.skipWaiting())
-      .catch(() => {}) // never block install on a missing file
+    caches.open(CACHE).then((cache) =>
+      Promise.allSettled([...APP_SHELL, ...STATIC].map((url) => cache.add(url).catch(() => {})))
+    ).then(() => self.skipWaiting())
   );
 });
 
