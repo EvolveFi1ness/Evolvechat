@@ -1,9 +1,12 @@
-# EvolveChat — Website Monitoring
+# EvolveChat — Website Monitoring & App Logs
 
 Built-in uptime monitoring for EvolveChat and its endpoints. No n8n, no extra
 services — it reuses the existing **GitHub Actions** deployment infrastructure
-and the existing **Firestore** database, with the dashboard embedded in the
-Coach dashboard (`coach.html → Monitoring`).
+and the existing **Firestore** database. The dashboard lives in a dedicated
+page: **`monitoring.html`**, which is kept **local-only** (never deployed to
+GitHub Pages) and needs **no sign-in**. It also streams live app logs and
+usage events from both apps (client `index.html` + coach `coach.html`) to help
+find bugs.
 
 ---
 
@@ -21,10 +24,13 @@ Coach dashboard (`coach.html → Monitoring`).
 │ monitorConfig · monitorNotifications │ │                              │
 └──────────────────────────────────────┘ └──────────────────────────────┘
                    ▲
-                   │ reads live via coach auth (firestore.rules: coach-only)
+                   │ reads live via Firestore (public read rules)
         ┌──────────┴───────────┐
-        │ coach.html Monitoring│  ← status cards, monitor table,
-        │ page                 │     response chart, incidents, settings
+        │ monitoring.html      │  ← status cards, monitor table, response
+        │  (local only, no     │     chart, incidents, settings + live
+        │   sign-in)           │     app_logs & app_events from both apps
+        │  · Monitoring tab    │
+        │  · Logs / Events tabs│
         └──────────────────────┘
 ```
 
@@ -37,46 +43,55 @@ Coach dashboard (`coach.html → Monitoring`).
 
 ## One-time setup
 
-1. **Deploy rules + UI:** push to `main` (normal deploy). Then publish the
-   updated security rules and query indexes:
+1. **Keep it local:** `monitoring.html` must stay on your machine — do NOT
+   push/deploy it to GitHub Pages or any public host.
+2. **Deploy rules + indexes** so the no-sign-in dashboard can read/write:
    ```
    firebase deploy --only firestore:rules firestore:indexes
    ```
    (Monitor-detail views also work without indexes — they auto-fall back to
    client-side sorting — but deploying them keeps it fast.)
-2. **Create a Firebase service account** (worker identity):
+3. **Create a Firebase service account** (worker identity):
    Firebase Console → Project settings → Service accounts →
    *Generate new private key* → download JSON.
-3. Base64-encode it and add repo secrets (**Settings → Secrets and variables → Actions**):
+4. Base64-encode it and add repo secrets (**Settings → Secrets and variables → Actions**):
    | Secret | Value |
    |---|---|
    | `FIREBASE_SERVICE_ACCOUNT_B64` | base64 of the service-account JSON |
    | `TELEGRAM_BOT_TOKEN` | from @BotFather (optional) |
    | `TELEGRAM_CHAT_ID` | your chat id, comma-separated list allowed (optional) |
-4. Open the **Actions → Website Monitoring** workflow and press **Run workflow**
+5. Open the **Actions → Website Monitoring** workflow and press **Run workflow**
    once for an immediate first check (or wait ≤5 min for cron).
 
 ## Using the dashboard
 
-Coach dashboard → **Monitoring**:
+Open **monitoring.html** locally (double-click, or serve the folder and visit
+`/monitoring.html`) — it opens straight into the console, no password:
 
-- Overview cards: monitors, online/down/degraded, open incidents,
-  avg response (24h) and uptime (24h) — computed from real check data only.
-- Monitor table: status, URL, type, response time, 24h uptime, last check.
+- **Monitoring:** overview cards (monitors, online/down/degraded, open
+  incidents, avg response 24h, uptime 24h) computed from real check data only.
+  Monitor table: status, URL, type, response time, 24h uptime, last check.
   Row actions: **Check now** (queues a run — executes on the next worker pass,
-  never from the browser), **Pause/Resume**, **Edit**, **Delete**.
-- Click a row for details: response-time chart, uptime windows
-  (1h / 24h / 7d / 30d), recent checks, incident history, SSL certificate
-  (issuer, expiry, days remaining).
-- **Settings:** failure threshold, slow-response threshold, Telegram toggles
+  never from the browser), **Pause/Resume**, **Edit**, **Delete**. Click a row
+  for details: response-time chart, uptime windows (1h / 24h / 7d / 30d),
+  recent checks, incident history, SSL certificate.
+  **Settings:** failure threshold, slow-response threshold, Telegram toggles
   (down / recovery / SSL / slow).
+- **Logs:** live stream of `app_logs` written by both apps (`client` =
+  index.html, `coach` = coach.html). Every console message, uncaught error and
+  unhandled rejection lands here within seconds. Filter by app, level
+  (error/warn/info/debug) or free-text search; click a row for full message,
+  user uid, page URL and device info. This is the fastest way to see what
+  broke and where.
+- **Events:** live stream of tracked actions (page views and
+  `AppLogger.track(...)` calls) from both apps.
 
 Default monitors are seeded automatically on the worker's first run using
 real EvolveChat URLs only (homepage, coach dashboard, workouts data file).
 
 ## Adding a monitor
 
-Monitoring → **+ Add Monitor**
+monitoring.html → **Monitoring** → **+ Add Monitor**
 
 | Field | Meaning |
 |---|---|
@@ -116,11 +131,18 @@ Commands (authorized chat IDs only): `/status` `/monitors` `/check` `/incidents`
 
 ## Security
 
-- Dashboard access reuses the existing coach authentication; Firestore rules
-  restrict monitoring collections to coaches.
-- Raw checks / incidents / notification logs are **read-only for clients**
-  (only the Admin SDK worker writes them) — uptime history cannot be forged
-  from the browser.
+- `monitoring.html` has **no sign-in** — it is protected by staying **local
+  only**. Never deploy or commit it to a public host.
+- Because the page runs signed-out, the Firestore rules make the monitoring
+  collections and app logs **publicly readable**, and monitors/config publicly
+  writable, so the local dashboard keeps full functionality (add/edit/pause,
+  settings). Anyone who probes Firebase directly could read uptime history and
+  user logs or edit monitors — if that ever becomes a concern, restore the
+  stricter rules (`allow read/write: if isCoach()`) and sign in instead.
+- Raw checks / incidents / notification logs stay browser-read-only; only the
+  Admin SDK worker writes them.
+- `app_logs` / `app_events` remain append-only from the browser (own entries
+  only) — no updates or deletes.
 - Worker enforces SSRF guards: http/https only, public DNS-resolved IPs only,
   standard ports, redirects re-validated. Tokens live exclusively in GitHub
   secrets — never hardcoded, never in the database.

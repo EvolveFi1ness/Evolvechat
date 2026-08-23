@@ -133,41 +133,47 @@ service cloud.firestore {
   }
 
   // ── App analytics (append-only, size-capped) ─────────────
+  // Anyone may append their own logs/events. Reads are public so the
+  // owner's local-only monitoring.html log viewer works without sign-in.
+  // No updates or deletes from the browser.
   match /app_logs/{logId} {
    allow create: if request.resource.data.size() < 10000
     && (request.auth == null
         ? !('uid' in request.resource.data)
         : request.resource.data.uid == request.auth.uid);
+   allow read: if true;
   }
   match /app_events/{eventId} {
    allow create: if request.resource.data.size() < 10000
     && (request.auth == null
         ? !('uid' in request.resource.data)
         : request.resource.data.uid == request.auth.uid);
+   allow read: if true;
   }
 
-  // ── Website monitoring (coach dashboard + Actions worker) ──
-  // The scheduled worker writes via the Admin SDK which BYPASSES these
-  // rules — so raw checks, incidents and notification logs are read-only
-  // for every client. No one can forge uptime history from the browser.
-  // Monitors + settings are editable by the coach only.
+  // ── Website monitoring (local monitoring.html + Actions worker) ──
+  // The dashboard lives in monitoring.html which is kept OFF any public
+  // host and runs with no sign-in, so these collections are world-readable
+  // and monitors/config are world-writable. The scheduled worker writes via
+  // the Admin SDK which BYPASSES these rules — checks, incidents and
+  // notification logs stay browser-read-only.
   match /monitors/{monitorId} {
-   allow read, write: if isCoach();
+   allow read, write: if true;
   }
   match /monitorChecks/{checkId} {
-   allow read: if isCoach();
+   allow read: if true;
    allow write: if false;
   }
   match /incidents/{incidentId} {
-   allow read: if isCoach();
+   allow read: if true;
    allow write: if false;
   }
   match /monitorNotifications/{notifId} {
-   allow read: if isCoach();
+   allow read: if true;
    allow write: if false;
   }
   match /monitorConfig/{docId} {
-   allow read, write: if isCoach();
+   allow read, write: if true;
   }
  }
 }
