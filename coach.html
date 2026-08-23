@@ -7595,7 +7595,7 @@ function isClientOnline(c) {
 // 300ms after the last snapshot fires, cutting redundant work significantly.
 let _clientsRenderDebounce = null;
 let _lastDashboardPhotosLoad = 0;
-const DASHBOARD_PHOTOS_MIN_MS = 30000; // at most once per 30s
+const DASHBOARD_PHOTOS_MIN_MS = 5000; // at most once per 5s
 function _scheduleClientRender() {
   if (_clientsRenderDebounce) clearTimeout(_clientsRenderDebounce);
   _clientsRenderDebounce = setTimeout(() => {
@@ -12241,19 +12241,17 @@ async function loadCardPhotoStrip(uid, firstName) {
 async function loadDashboardPhotos() {
   const feed = document.getElementById('dash-photo-scroll');
   if (!feed) return;
-  if (!allClients.length) {
-    feed.innerHTML = `<div class="dash-photo-empty">No clients yet — photos will appear here once clients upload them.</div>`;
-    return;
-  }
   const timeoutMs = 10000;
+  const CACHE_KEY = 'coach_photos_cache';
+  const cached = (() => { try { return JSON.parse(localStorage.getItem(CACHE_KEY) || '[]'); } catch { return []; } })();
   const renderResults = (results) => {
     if (!results.length) {
       feed.innerHTML = `<div class="dash-photo-empty">No progress photos yet.<br>Photos will appear here once clients upload them.</div>`;
       return;
     }
     results.sort((a,b) => {
-      const at = a.data.uploadedAt?.seconds || 0;
-      const bt = b.data.uploadedAt?.seconds || 0;
+      const at = a.data.uploadedAt?.seconds || a.data.uploadedAt?._seconds || a.data.createdAt?.seconds || 0;
+      const bt = b.data.uploadedAt?.seconds || b.data.uploadedAt?._seconds || b.data.createdAt?.seconds || 0;
       return bt - at;
     });
     window._photoCache = window._photoCache || {};
@@ -12275,15 +12273,12 @@ async function loadDashboardPhotos() {
       tile.onclick = () => openLightboxById(docId, date, note);
     });
   };
+  if (cached.length) renderResults(cached);
+  if (!allClients.length) {
+    if (!cached.length) feed.innerHTML = `<div class="dash-photo-empty">Loading photos…</div>`;
+    return;
+  }
   try {
-    // Primary: ONE collectionGroup query across all clients (lightweight —
-    // replaces the old 8 per-client queries). Requires a collection-group
-    // scoped index on progressPhotos.uploadedAt; if it's missing this rejects
-    // with failed-precondition and we fall back to per-client queries below.
-    // Create the index from the error link Firestore prints to the console —
-    // only the project owner can do this in the Firebase console.
-    // Use limit() without orderBy to avoid needing a composite index.
-    // Sort client-side by uploadedAt descending.
     const snap = await withTimeout(
       db.collectionGroup('progressPhotos').limit(20).get(),
       timeoutMs, 'dashboard photos feed'
@@ -12298,10 +12293,9 @@ async function loadDashboardPhotos() {
       return tb - ta;
     }).slice(0, 8);
     renderResults(results);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(results.map(r => ({docId:r.docId,data:r.data,client:r.client})))); } catch {}
   } catch (e) {
-    console.warn('[COACH] collectionGroup photos feed unavailable/timed out, falling back to per-client:', e.code || '', e.message || e);
-    // Fallback: parallel per-client queries, each with its own deadline so a
-    // single wedged request can't hold the whole feed hostage.
+    console.warn('[COACH] collectionGroup photos feed unavailable, falling back to per-client:', e.code || '', e.message || e);
     try {
       const results = [];
       await Promise.all(allClients.slice(0, 8).map(async c => {
@@ -12318,8 +12312,9 @@ async function loadDashboardPhotos() {
         const tb = b.data.uploadedAt?.seconds || b.data.uploadedAt?._seconds || b.data.createdAt?.seconds || 0;
         return tb - ta;
       }).slice(0, 8));
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify(results.map(r => ({docId:r.docId,data:r.data,client:r.client})))); } catch {}
     } catch(e2) {
-      feed.innerHTML = `<div class="dash-photo-empty" style="color:var(--red)">Couldn't load photos right now — check your connection.</div>`;
+      if (!cached.length) feed.innerHTML = `<div class="dash-photo-empty" style="color:var(--red)">Couldn't load photos right now — check your connection.</div>`;
       console.warn('[COACH] dashboard photos fallback failed:', e2.message || e2);
     }
   }
