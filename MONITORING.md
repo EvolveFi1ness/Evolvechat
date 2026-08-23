@@ -1,12 +1,14 @@
-# EvolveChat — Website Monitoring & App Logs
+# EvolveChat — Website Monitoring
 
 Built-in uptime monitoring for EvolveChat and its endpoints. No n8n, no extra
 services — it reuses the existing **GitHub Actions** deployment infrastructure
 and the existing **Firestore** database. The dashboard lives in a dedicated
 page: **`monitoring.html`**, which is kept **local-only** (never deployed to
-GitHub Pages) and needs **no sign-in**. It also streams live app logs and
-usage events from both apps (client `index.html` + coach `coach.html`) to help
-find bugs.
+GitHub Pages) and needs **no sign-in**.
+
+Bug & log monitoring is handled separately by **Sentry**: both apps
+(`index.html`, `coach.html`) auto-load the Sentry SDK once you paste a DSN
+into `SENTRY_DSN` (search each file for "paste your Sentry DSN here").
 
 ---
 
@@ -27,11 +29,11 @@ find bugs.
                    │ reads live via Firestore (public read rules)
         ┌──────────┴───────────┐
         │ monitoring.html      │  ← status cards, monitor table, response
-        │  (local only, no     │     chart, incidents, settings + live
-        │   sign-in)           │     app_logs & app_events from both apps
-        │  · Monitoring tab    │
-        │  · Logs / Events tabs│
+        │  (local only, no     │     chart, incidents, settings
+        │   sign-in)           │
         └──────────────────────┘
+
+Bugs & logs: Sentry (sentry.io) — paste a DSN into SENTRY_DSN in both apps.
 ```
 
 - **Statuses:** `UP`, `DOWN` (after N consecutive failures, default 3),
@@ -77,14 +79,12 @@ Open **monitoring.html** locally (double-click, or serve the folder and visit
   recent checks, incident history, SSL certificate.
   **Settings:** failure threshold, slow-response threshold, Telegram toggles
   (down / recovery / SSL / slow).
-- **Logs:** live stream of `app_logs` written by both apps (`client` =
-  index.html, `coach` = coach.html). Every console message, uncaught error and
-  unhandled rejection lands here within seconds. Filter by app, level
-  (error/warn/info/debug) or free-text search; click a row for full message,
-  user uid, page URL and device info. This is the fastest way to see what
-  broke and where.
-- **Events:** live stream of tracked actions (page views and
-  `AppLogger.track(...)` calls) from both apps.
+
+Bug & log monitoring moved to **Sentry**: create a project at sentry.io
+(Platform: JavaScript), then paste the DSN into `SENTRY_DSN` in both
+`index.html` and `coach.html`. Every console error, uncaught exception and
+unhandled rejection then reports automatically with stack traces, breadcrumbs
+(the recent console log trail) and device info.
 
 Default monitors are seeded automatically on the worker's first run using
 real EvolveChat URLs only (homepage, coach dashboard, workouts data file).
@@ -134,15 +134,15 @@ Commands (authorized chat IDs only): `/status` `/monitors` `/check` `/incidents`
 - `monitoring.html` has **no sign-in** — it is protected by staying **local
   only**. Never deploy or commit it to a public host.
 - Because the page runs signed-out, the Firestore rules make the monitoring
-  collections and app logs **publicly readable**, and monitors/config publicly
-  writable, so the local dashboard keeps full functionality (add/edit/pause,
-  settings). Anyone who probes Firebase directly could read uptime history and
-  user logs or edit monitors — if that ever becomes a concern, restore the
-  stricter rules (`allow read/write: if isCoach()`) and sign in instead.
+  collections **publicly readable**, and monitors/config publicly writable,
+  so the local dashboard keeps full functionality (add/edit/pause, settings).
+  Anyone who probes Firebase directly could read uptime history or edit
+  monitors — if that ever becomes a concern, restore the stricter rules
+  (`allow read/write: if isCoach()`) and sign in instead.
 - Raw checks / incidents / notification logs stay browser-read-only; only the
   Admin SDK worker writes them.
-- `app_logs` / `app_events` remain append-only from the browser (own entries
-  only) — no updates or deletes.
+- Error/log monitoring happens in Sentry — no app logs are stored in
+  Firestore anymore.
 - Worker enforces SSRF guards: http/https only, public DNS-resolved IPs only,
   standard ports, redirects re-validated. Tokens live exclusively in GitHub
   secrets — never hardcoded, never in the database.

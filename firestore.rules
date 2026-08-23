@@ -132,25 +132,6 @@ service cloud.firestore {
    allow read: if isCoach();
   }
 
-  // ── App analytics (append-only, size-capped) ─────────────
-  // Anyone may append their own logs/events. Reads are public so the
-  // owner's local-only monitoring.html log viewer works without sign-in.
-  // No updates or deletes from the browser.
-  match /app_logs/{logId} {
-   allow create: if request.resource.data.size() < 10000
-    && (request.auth == null
-        ? !('uid' in request.resource.data)
-        : request.resource.data.uid == request.auth.uid);
-   allow read: if true;
-  }
-  match /app_events/{eventId} {
-   allow create: if request.resource.data.size() < 10000
-    && (request.auth == null
-        ? !('uid' in request.resource.data)
-        : request.resource.data.uid == request.auth.uid);
-   allow read: if true;
-  }
-
   // ── Website monitoring (local monitoring.html + Actions worker) ──
   // The dashboard lives in monitoring.html which is kept OFF any public
   // host and runs with no sign-in, so these collections are world-readable
