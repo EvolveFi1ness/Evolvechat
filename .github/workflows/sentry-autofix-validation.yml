@@ -1,0 +1,89 @@
+name: Sentry Autofix Validation
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Detect project type
+        id: detect
+        run: |
+          echo "has_pkg=$([ -f package.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies (only if package.json exists)
+        if: steps.detect.outputs.has_pkg == 'true'
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            corepack enable && pnpm install --frozen-lockfile
+          elif [ -f yarn.lock ]; then
+            corepack enable && yarn --frozen-lockfile
+          elif [ -f bun.lockb ] || [ -f bun.lock ]; then
+            npm i -g bun && bun install --frozen-lockfile
+          elif [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Syntax-check changed JS files
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          files=$(git diff --name-only "$base"...HEAD -- '*.js' '*.mjs' '*.cjs')
+          fail=0
+          if [ -z "$files" ]; then
+            echo "No JS files changed."
+          fi
+          for f in $files; do
+            if [ -f "$f" ]; then
+              echo "node --check $f"
+              node --check "$f" || fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Validate changed JSON files
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          files=$(git diff --name-only "$base"...HEAD -- '*.json')
+          fail=0
+          for f in $files; do
+            if [ -f "$f" ]; then
+              echo "JSON.parse $f"
+              node -e "JSON.parse(require('fs').readFileSync('$f','utf8'))" || fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Run test / lint / build scripts (only those that exist)
+        if: steps.detect.outputs.has_pkg == 'true'
+        run: |
+          if [ -f pnpm-lock.yaml ]; then PM="pnpm"; RUN="pnpm run";
+          elif [ -f yarn.lock ]; then PM="yarn"; RUN="yarn run";
+          elif [ -f bun.lockb ] || [ -f bun.lock ]; then PM="bun"; RUN="bun run";
+          else PM="npm"; RUN="npm run"; fi
+
+          for script in test lint build; do
+            value=$(node -p "require('./package.json').scripts && require('./package.json').scripts['$script'] || ''")
+            if [ -n "$value" ]; then
+              echo "::group::$RUN $script ($PM)"
+              $RUN "$script" || exit 1
+              echo "::endgroup::"
+            else
+              echo "No '$script' script defined - skipping."
+            fi
+          done
