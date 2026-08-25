@@ -8264,15 +8264,25 @@ async function updateDashboardStats(force) {
 
 const _ractDotColors = ['#16A34A', '#FF5A2B', '#2563EB'];
 function _renderActivityFeed(feed, activities) {
-  if (!activities.length) {
+  // Defensive: tolerate missing container or undefined input arrays
+  if (!feed) return;
+  const acts = Array.isArray(activities) ? activities : [];
+  if (!acts.length) {
     feed.innerHTML = `<div class="empty-state" style="padding:1.5rem"><div class="empty-sub">No workout logs yet</div></div>`;
   } else {
-    feed.innerHTML = activities.map((a,i)=>`
+    feed.innerHTML = acts.map((a,i)=>`
       <div class="ract-row">
         <div class="ract-text"><span class="ract-dot" style="background:${_ractDotColors[i%_ractDotColors.length]}"></span><b>${a.name}</b> ${a.action}</div>
         <div class="ract-time">${fmtDate(a.ts)}</div>
       </div>`).join('');
   }
+}
+
+// Back-compat alias: some callers (older code/tests) invoke renderActivityFeed(items)
+// Ensure it does not throw if items is undefined/null.
+function renderActivityFeed(items) {
+  const feedEl = document.getElementById('recent-activity-list');
+  _renderActivityFeed(feedEl, Array.isArray(items) ? items : []);
 }
 
 // Fallbacks preserve old behavior exactly, only used if collection-group
