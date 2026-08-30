@@ -7091,6 +7091,32 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth  = firebase.auth();
 const db   = firebase.firestore();
 const storage = firebase.storage();
+
+// ── Firestore .get() retry for iOS IndexedDB failures ──────────────
+// FIX (JAVASCRIPT-K4-T, JAVASCRIPT-K4-S): On iOS Safari 17.x,
+// backgrounded tabs can corrupt IndexedDB state, causing Firestore's
+// internal transaction layer to throw "Attempt to get records from
+// database without an in-progress transaction". There is no code-level
+// prevention — it's an SDK/browser race. Retry once after a short delay;
+// the second attempt usually succeeds because IndexedDB reinitialises.
+(function _patchFirestoreGet() {
+  const Ref = firebase.firestore.DocumentReference.prototype;
+  const Query = firebase.firestore.Query.prototype;
+  const origGet = Ref.get;
+  const IS_TX_ERR = /without an in-progress transaction/;
+  function retryGet() {
+    return origGet.apply(this, arguments).catch(err => {
+      if (IS_TX_ERR.test(err?.message || '')) {
+        console.warn('[Firestore] retrying .get() after transient error');
+        return new Promise(r => setTimeout(r, 500)).then(() => origGet.apply(this, arguments));
+      }
+      throw err;
+    });
+  }
+  Ref.get = retryGet;
+  Query.get = retryGet;
+})();
+
 // ── Offline persistence: chat messages, workout/meal logs and other
 // writes queue locally when the device is offline and sync automatically
 // when the connection returns. Best-effort — if it fails (unsupported
