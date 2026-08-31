@@ -4,7 +4,7 @@
    for the CDN libs the apps already depend on. */
 'use strict';
 
-const CACHE = 'evolve-v6';
+const CACHE = 'evolve-v7';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',

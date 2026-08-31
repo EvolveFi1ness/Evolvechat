@@ -10814,7 +10814,7 @@ async function exportClientDocx() {
       db.collection('members').doc(uid).collection('mealLogs').orderBy('date','desc').limit(60).get(),
       db.collection('members').doc(uid).collection('checkIns').orderBy('date','desc').limit(60).get(),
       db.collection('members').doc(uid).collection('nutritionPlans').orderBy('assignedAt','desc').limit(10).get(),
-      db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','asc').limit(60).get(),
+      db.collection('members').doc(uid).collection('progressPhotos').limit(80).get(),
     ]);
 
     // ══════════════════════════════════════════
@@ -10990,7 +10990,7 @@ async function exportClientDocx() {
     const mDocs  = mSnap.docs.map(d=>d.data());
     const cDocs  = cSnap.docs.map(d=>d.data());
     const nDocs  = nSnap.docs.map(d=>d.data());
-    const pDocs  = pSnap.docs.map(d=>d.data());
+    const pDocs  = pSnap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data())).map(d=>d.data());
 
     // workout stats
     const totalSets = wDocs.reduce((s,r)=>s+(r.totalSets||0),0);
@@ -11728,6 +11728,18 @@ async function exportClientDocx() {
 
 window._clientPhotosCache = window._clientPhotosCache || {};
 
+// Safe timestamp extraction for photo docs (handles Timestamp, custom objects, plain dates, numbers)
+function _photoTs(d) {
+  const u = d.uploadedAt || d.createdAt;
+  if (!u) return 0;
+  if (typeof u === 'number') return u;
+  if (u instanceof Date) return u.getTime();
+  if (typeof u.toMillis === 'function') return u.toMillis();
+  if (typeof u.seconds === 'number') return u.seconds * 1000;
+  if (typeof u._seconds === 'number') return u._seconds * 1000;
+  try { return new Date(u).getTime() || 0; } catch(_) { return 0; }
+}
+
 async function loadClientPhotos(uid, forceRefresh) {
   const grid = document.getElementById('m-photo-grid');
 
@@ -11771,9 +11783,10 @@ async function loadClientPhotos(uid, forceRefresh) {
     if (forceRefresh) return;
     try {
       const cacheSnap = await db.collection('members').doc(uid).collection('progressPhotos')
-        .orderBy('uploadedAt','desc').limit(12).get({ source: 'cache' });
+        .limit(20).get({ source: 'cache' });
       if (!cacheSnap.empty && !cacheResolved) {
         window._photoCache = window._photoCache || {};
+        cacheSnap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
         cacheSnap.docs.forEach(d => { window._photoCache[d.id] = d.data(); });
         renderQuickThumbs(cacheSnap.docs);
         cacheResolved = true;
@@ -11783,7 +11796,7 @@ async function loadClientPhotos(uid, forceRefresh) {
 
   try {
     // Single network fetch — skip the intermediate 12-photo batch
-    const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(60).get();
+    const snap = await db.collection('members').doc(uid).collection('progressPhotos').limit(80).get();
     cacheResolved = true;
     const currentGrid = document.getElementById('m-photo-grid');
     if (!currentGrid || currentGrid !== grid) return;
@@ -11794,6 +11807,8 @@ async function loadClientPhotos(uid, forceRefresh) {
       return;
     }
 
+    // Client-side sort since orderBy removed (Firestore Timestamp type mismatch fix)
+    snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
     const photoCacheEntries = {};
     snap.docs.forEach(d => { photoCacheEntries[d.id] = d.data(); window._photoCache[d.id] = d.data(); });
 
@@ -12205,7 +12220,9 @@ async function loadCardPhotoStrip(uid, firstName) {
   window._photoStripLoaded[uid] = true;
   try {
     const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-      .orderBy('uploadedAt','desc').limit(3).get();
+      .limit(5).get();
+    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+    snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
     const currentStrip = document.getElementById('cc-photos-' + uid);
     if (!currentStrip) return;
     if (snap.empty) {
