@@ -10766,7 +10766,7 @@ async function loadHomePhotoStrip() {
    const snap = await db.collection('members').doc(uid).collection('progressPhotos')
     .limit(10).get();
   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-  snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
+  snap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
   // Always keep the add slot at the front
   const addSlot = `<div class="home-photo-add-slot" onclick="setTab('progress')">
    <div class="home-photo-add-slot-icon">+</div>
