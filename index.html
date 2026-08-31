@@ -9362,10 +9362,28 @@ async function loadPastLogs() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid) return;
  const container = document.getElementById('past-logs-container');
- try {
-  const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-   .orderBy('completedAt', 'desc').limit(30).get();
-  if (snap.empty) {
+  try {
+   let snap;
+   try {
+    snap = await db.collection('members').doc(uid).collection('workoutLogs')
+     .orderBy('completedAt', 'desc').limit(30).get();
+   } catch (orderErr) {
+    // FIX (JAVASCRIPT-K4-W): older logs may have completedAt as a plain
+    // number/Date instead of a Firestore Timestamp, causing invalid-argument.
+    // Retry without orderBy and sort client-side.
+    if (orderErr.code === 'invalid-argument' || /invalid-argument/.test(orderErr.code)) {
+     const unsorted = await db.collection('members').doc(uid).collection('workoutLogs').limit(30).get();
+     unsorted.docs.sort((a, b) => {
+      const av = a.data().completedAt;
+      const bv = b.data().completedAt;
+      const aMs = av?.toMillis?.() ?? av ?? 0;
+      const bMs = bv?.toMillis?.() ?? bv ?? 0;
+      return bMs - aMs;
+     });
+     snap = unsorted;
+    } else { throw orderErr; }
+   }
+   if (snap.empty) {
    container.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No logs yet</div><div class="empty-sub">Complete a workout to see your history</div></div>`;
    _pastLogsData = [];
    renderWeekStrip();
@@ -10510,13 +10528,13 @@ async function loadProgressPhotos() {
  const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
  const ANGLES = ['front', 'back', 'left', 'right'];
 
- try {
-   const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-    .limit(80).get();
-  // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-  snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
+  try {
+    const snap = await db.collection('members').doc(uid).collection('progressPhotos')
+     .limit(80).get();
+   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+   snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
 
-  // Show empty state in both views if no data
+   // Show empty state in both views if no data
   if (snap.empty) {
    document.getElementById('ba-no-compare').style.display = '';
    document.getElementById('ba-content').style.display = 'none';
@@ -16378,11 +16396,31 @@ async function renderHomeTemplates(force) {
  const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
  if (!uid) { box.innerHTML = ''; return; }
 
- if (!_cwktTemplates || force) {
-  try {
-   const snap = await db.collection('members').doc(uid).collection('workoutTemplates')
-    .orderBy('savedAt', 'desc').limit(30).get();
-   _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (!_cwktTemplates || force) {
+   try {
+    let snap;
+    try {
+     snap = await db.collection('members').doc(uid).collection('workoutTemplates')
+      .orderBy('savedAt', 'desc').limit(30).get();
+    } catch (orderErr) {
+     // FIX (JAVASCRIPT-K4-V): older templates may have savedAt as a plain
+     // number (Date.now()) instead of a Firestore Timestamp, causing
+     // invalid-argument on orderBy. Retry without orderBy and sort client-side.
+     if (orderErr.code === 'invalid-argument' || /invalid-argument/.test(orderErr.code)) {
+      const unsorted = await db.collection('members').doc(uid).collection('workoutTemplates').limit(30).get();
+      unsorted.docs.sort((a, b) => {
+       const av = a.data().savedAt;
+       const bv = b.data().savedAt;
+       const aMs = av?.toMillis?.() ?? av ?? 0;
+       const bMs = bv?.toMillis?.() ?? bv ?? 0;
+       return bMs - aMs;
+      });
+      snap = unsorted;
+     } else {
+      throw orderErr;
+     }
+    }
+    _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch(e) {
    console.error('renderHomeTemplates failed:', e.code, e.message);
    // Permission-denied usually means the Firestore rule for this

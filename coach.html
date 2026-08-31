@@ -13270,7 +13270,27 @@ function cacheTemplatesLocally(arr) {
 // Pulls the latest templates from Firestore (call on load / page switch).
 async function loadTemplatesFromFirestore() {
   try {
-    const snap = await templatesCollection().orderBy('savedAt', 'desc').limit(100).get();
+    let snap;
+    try {
+      snap = await templatesCollection().orderBy('savedAt', 'desc').limit(100).get();
+    } catch (orderErr) {
+      // FIX (JAVASCRIPT-K4-12): older templates may have savedAt as a plain
+      // number (Date.now()) instead of a Firestore Timestamp, causing
+      // invalid-argument on orderBy. Retry without orderBy and sort client-side.
+      if (orderErr.code === 'invalid-argument' || /invalid-argument/.test(orderErr.code)) {
+        const unsorted = await templatesCollection().limit(100).get();
+        unsorted.docs.sort((a, b) => {
+          const av = a.data().savedAt;
+          const bv = b.data().savedAt;
+          const aMs = av?.toMillis?.() ?? av ?? 0;
+          const bMs = bv?.toMillis?.() ?? bv ?? 0;
+          return bMs - aMs;
+        });
+        snap = unsorted;
+      } else {
+        throw orderErr;
+      }
+    }
     const templates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     cacheTemplatesLocally(templates);
     renderTemplateList();
@@ -13349,7 +13369,7 @@ async function confirmSaveTemplate() {
     // Only the currently selected day's exercises are saved — not the whole week.
     const exercisesSnapshot = dayData.exercises.map(ex => ({...ex}));
 
-    const newTpl = stripUndefined({ name, day: currentDay, exercises: exercisesSnapshot, savedAt: Date.now() });
+    const newTpl = stripUndefined({ name, day: currentDay, exercises: exercisesSnapshot, savedAt: firebase.firestore.FieldValue.serverTimestamp() });
     const docRef = await templatesCollection().add(newTpl);
 
     const templates = getTemplates();
