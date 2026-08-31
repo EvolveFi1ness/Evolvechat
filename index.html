@@ -7949,8 +7949,10 @@ async function checkAnyCompletionToday() {
  if (!uid) return null;
  const todayFormatted = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
  try {
-  const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-   .orderBy('completedAt', 'desc').limit(5).get();
+   const snap = await db.collection('members').doc(uid).collection('workoutLogs')
+    .limit(30).get();
+   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+   snap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
   let todayLog = null;
   snap.forEach(doc => {
    if (todayLog) return;
@@ -8128,8 +8130,10 @@ async function _refreshPrevSetMap(workout, myToken) {
   // the logger built — fine for a new client, but it grows unbounded and got
   // slower every week as history piled up. 150 most-recent sessions is more
   // than enough to find each exercise's latest set, and keeps this fast forever.
-  const _prevSnap = await db.collection('members').doc(_uid).collection('workoutLogs')
-   .orderBy('completedAt', 'desc').limit(150).get();
+   const _prevSnap = await db.collection('members').doc(_uid).collection('workoutLogs')
+    .limit(200).get();
+   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+   _prevSnap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
 
   // A newer buildWorkoutLogger call has since started (e.g. the client
   // switched workouts again while this was in flight) — its own refresh
@@ -9363,26 +9367,10 @@ async function loadPastLogs() {
  if (!uid) return;
  const container = document.getElementById('past-logs-container');
   try {
-   let snap;
-   try {
-    snap = await db.collection('members').doc(uid).collection('workoutLogs')
-     .orderBy('completedAt', 'desc').limit(30).get();
-   } catch (orderErr) {
-    // FIX (JAVASCRIPT-K4-W): older logs may have completedAt as a plain
-    // number/Date instead of a Firestore Timestamp, causing invalid-argument.
-    // Retry without orderBy and sort client-side.
-    if (orderErr.code === 'invalid-argument' || /invalid-argument/.test(orderErr.code)) {
-     const unsorted = await db.collection('members').doc(uid).collection('workoutLogs').limit(30).get();
-     unsorted.docs.sort((a, b) => {
-      const av = a.data().completedAt;
-      const bv = b.data().completedAt;
-      const aMs = av?.toMillis?.() ?? av ?? 0;
-      const bMs = bv?.toMillis?.() ?? bv ?? 0;
-      return bMs - aMs;
-     });
-     snap = unsorted;
-    } else { throw orderErr; }
-   }
+   const snap = await db.collection('members').doc(uid).collection('workoutLogs')
+    .limit(40).get();
+   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+   snap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
    if (snap.empty) {
    container.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No logs yet</div><div class="empty-sub">Complete a workout to see your history</div></div>`;
    _pastLogsData = [];
@@ -10509,16 +10497,16 @@ function setGalleryView(view) {
 let _baSessions = [];
 let _baCurrentAngle = null;
 
-// Safe timestamp extraction for photo docs (handles Timestamp, custom objects, plain dates, numbers)
-function _photoTs(d) {
-  const u = d.uploadedAt || d.createdAt;
-  if (!u) return 0;
-  if (typeof u === 'number') return u;
-  if (u instanceof Date) return u.getTime();
-  if (typeof u.toMillis === 'function') return u.toMillis();
-  if (typeof u.seconds === 'number') return u.seconds * 1000;
-  if (typeof u._seconds === 'number') return u._seconds * 1000;
-  try { return new Date(u).getTime() || 0; } catch(_) { return 0; }
+// Safe timestamp extraction from any Firestore field (Timestamp, custom object, plain Date, number)
+function _ts(d, field) {
+  const v = d[field];
+  if (!v) return 0;
+  if (typeof v === 'number') return v;
+  if (v instanceof Date) return v.getTime();
+  if (typeof v.toMillis === 'function') return v.toMillis();
+  if (typeof v.seconds === 'number') return v.seconds * 1000;
+  if (typeof v._seconds === 'number') return v._seconds * 1000;
+  try { return new Date(v).getTime() || 0; } catch(_) { return 0; }
 }
 
 async function loadProgressPhotos() {
@@ -10532,7 +10520,7 @@ async function loadProgressPhotos() {
     const snap = await db.collection('members').doc(uid).collection('progressPhotos')
      .limit(80).get();
    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-   snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
+   snap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
 
    // Show empty state in both views if no data
   if (snap.empty) {
@@ -11157,22 +11145,23 @@ function subscribeClientChat(uid, coachUid) {
  if (clientChatUnsub) clientChatUnsub();
  const chatId = [uid, coachUid].sort().join('_');
  const syncEl = document.getElementById('client-chat-sync-status');
- clientChatUnsub = db.collection('chats').doc(chatId).collection('messages')
-  .orderBy('createdAt','desc').limit(100)
-  .onSnapshot(snap => {
-   // "Syncing…" chip while locally-queued writes are still going up
-   if (syncEl) syncEl.style.display = snap.metadata.hasPendingWrites ? '' : 'none';
-   const area = document.getElementById('client-chat-messages');
-   if (!area) return;
-   if (snap.empty) {
-    area.innerHTML = `<div style="text-align:center;color:var(--text2);padding:2rem;font-size:13px">Say hi to your coach...</div>`;
-    _setChatBadge('');
-    return;
-   }
-   area.innerHTML = '';
-   // Query is newest-first (so the 100-doc cap keeps the latest messages,
-   // not the oldest); reverse here so the thread still renders oldest→newest.
-   const docsAsc = [...snap.docs].reverse();
+  clientChatUnsub = db.collection('chats').doc(chatId).collection('messages')
+   .limit(150)
+   .onSnapshot(snap => {
+    // "Syncing…" chip while locally-queued writes are still going up
+    if (syncEl) syncEl.style.display = snap.metadata.hasPendingWrites ? '' : 'none';
+    const area = document.getElementById('client-chat-messages');
+    if (!area) return;
+    if (snap.empty) {
+     area.innerHTML = `<div style="text-align:center;color:var(--text2);padding:2rem;font-size:13px">Say hi to your coach...</div>`;
+     _setChatBadge('');
+     return;
+    }
+    area.innerHTML = '';
+    // Client-side sort: orderBy removed (Timestamp type mismatch fix)
+    const sorted = [...snap.docs].sort((a,b) => _ts(b.data(), 'createdAt') - _ts(a.data(), 'createdAt')).slice(0, 100);
+    // newest-first then reverse so the thread renders oldest→newest.
+    const docsAsc = sorted.reverse();
    let unread = 0;
    docsAsc.forEach(doc => {
     const m = doc.data();
@@ -16398,29 +16387,11 @@ async function renderHomeTemplates(force) {
 
   if (!_cwktTemplates || force) {
    try {
-    let snap;
-    try {
-     snap = await db.collection('members').doc(uid).collection('workoutTemplates')
-      .orderBy('savedAt', 'desc').limit(30).get();
-    } catch (orderErr) {
-     // FIX (JAVASCRIPT-K4-V): older templates may have savedAt as a plain
-     // number (Date.now()) instead of a Firestore Timestamp, causing
-     // invalid-argument on orderBy. Retry without orderBy and sort client-side.
-     if (orderErr.code === 'invalid-argument' || /invalid-argument/.test(orderErr.code)) {
-      const unsorted = await db.collection('members').doc(uid).collection('workoutTemplates').limit(30).get();
-      unsorted.docs.sort((a, b) => {
-       const av = a.data().savedAt;
-       const bv = b.data().savedAt;
-       const aMs = av?.toMillis?.() ?? av ?? 0;
-       const bMs = bv?.toMillis?.() ?? bv ?? 0;
-       return bMs - aMs;
-      });
-      snap = unsorted;
-     } else {
-      throw orderErr;
-     }
-    }
-    _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+     const snap = await db.collection('members').doc(uid).collection('workoutTemplates')
+      .limit(40).get();
+     // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+     snap.docs.sort((a,b) => _ts(b.data(), 'savedAt') - _ts(a.data(), 'savedAt'));
+     _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch(e) {
    console.error('renderHomeTemplates failed:', e.code, e.message);
    // Permission-denied usually means the Firestore rule for this
@@ -16534,7 +16505,9 @@ async function _renderLogTemplatePicker(force) {
   list.innerHTML = '<div class="wkt-loading-block" style="padding:20px;"><div class="wkt-spinner" style="width:24px;height:24px;margin-bottom:8px;"></div><div class="wkt-loading-label">Loading templates…</div></div>';
   try {
    const snap = await db.collection('members').doc(uid).collection('workoutTemplates')
-    .orderBy('savedAt', 'desc').limit(30).get();
+     .limit(40).get();
+   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+   snap.docs.sort((a,b) => _ts(b.data(), 'savedAt') - _ts(a.data(), 'savedAt'));
    _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch(e) {
    console.error('_renderLogTemplatePicker failed:', e.code, e.message);
