@@ -4,7 +4,7 @@
    for the CDN libs the apps already depend on. */
 'use strict';
 
-const CACHE = 'evolve-v8';
+const CACHE = 'evolve-v9';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
@@ -35,6 +35,10 @@ self.addEventListener('activate', (event) => {
     caches.keys()
       .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
+      .then(() => self.clients.matchAll())
+      .then((clients) => {
+        clients.forEach((client) => client.postMessage({ type: 'FORCE_RELOAD' }));
+      })
   );
 });
 

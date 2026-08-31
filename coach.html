@@ -19751,6 +19751,10 @@ textarea:focus-visible, select:focus-visible,
      if (b) b.classList.add('show');
     });
    }
+   // ── Auto-reload when new SW forces it (fixes stale cache for real users)
+   navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'FORCE_RELOAD') location.reload();
+   });
   }
  </script>
 
