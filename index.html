@@ -10491,6 +10491,18 @@ function setGalleryView(view) {
 let _baSessions = [];
 let _baCurrentAngle = null;
 
+// Safe timestamp extraction for photo docs (handles Timestamp, custom objects, plain dates, numbers)
+function _photoTs(d) {
+  const u = d.uploadedAt || d.createdAt;
+  if (!u) return 0;
+  if (typeof u === 'number') return u;
+  if (u instanceof Date) return u.getTime();
+  if (typeof u.toMillis === 'function') return u.toMillis();
+  if (typeof u.seconds === 'number') return u.seconds * 1000;
+  if (typeof u._seconds === 'number') return u._seconds * 1000;
+  try { return new Date(u).getTime() || 0; } catch(_) { return 0; }
+}
+
 async function loadProgressPhotos() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid) return;
@@ -10499,8 +10511,10 @@ async function loadProgressPhotos() {
  const ANGLES = ['front', 'back', 'left', 'right'];
 
  try {
-  const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-   .orderBy('uploadedAt', 'desc').limit(60).get();
+   const snap = await db.collection('members').doc(uid).collection('progressPhotos')
+    .limit(80).get();
+  // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+  snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
 
   // Show empty state in both views if no data
   if (snap.empty) {
@@ -10743,8 +10757,10 @@ async function loadHomePhotoStrip() {
  const scroll = document.getElementById('home-photo-scroll');
  if (!uid || !scroll) return;
  try {
-  const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-   .orderBy('uploadedAt', 'desc').limit(6).get();
+   const snap = await db.collection('members').doc(uid).collection('progressPhotos')
+    .limit(10).get();
+  // Client-side sort (orderBy removed — Timestamp type mismatch fix)
+  snap.docs.sort((a,b) => _photoTs(b.data()) - _photoTs(a.data()));
   // Always keep the add slot at the front
   const addSlot = `<div class="home-photo-add-slot" onclick="setTab('progress')">
    <div class="home-photo-add-slot-icon">+</div>
