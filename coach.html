@@ -7353,13 +7353,23 @@ async function handleLogout() {
 // Auto-login if Firebase Auth session is still active
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    // FIX: Verify the Firebase Auth user is actually the coach — if a client
+    // logged into index.html on the same browser, auth.currentUser would be
+    // the client's UID, and Firestore would deny the coach's collection reads.
+    const isCoachUser = (u) => u && u.email === COACH_AUTH_EMAIL;
     if (auth.currentUser) {
       const session = sessionStorage.getItem('coachAuth');
-      if (session) { bootApp(); return; }
+      if (session && isCoachUser(auth.currentUser)) { bootApp(); return; }
+      // Wrong user — sign out so the coach can re-authenticate
+      if (session && !isCoachUser(auth.currentUser)) {
+        console.warn('[AutoLogin] auth.currentUser is not the coach, signing out');
+        sessionStorage.removeItem('coachAuth');
+        await auth.signOut().catch(()=>{});
+      }
     }
     const unsubscribe = auth.onAuthStateChanged(user => {
       unsubscribe();
-      if (user) {
+      if (user && isCoachUser(user)) {
         const session = sessionStorage.getItem('coachAuth');
         if (session) { bootApp(); }
       } else {
@@ -7368,7 +7378,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
     setTimeout(() => {
-      if (!auth.currentUser) {
+      if (!auth.currentUser || !isCoachUser(auth.currentUser)) {
         sessionStorage.removeItem('coachAuth');
         document.documentElement.classList.remove('auth-pending');
       }
@@ -7674,6 +7684,7 @@ function loadAllClients() {
     _scheduleClientRender();
     }, e => {
       console.error('[COACH] members onSnapshot FAILED:', e.code, e.message);
+      console.error('[COACH] Auth state:', auth.currentUser?.uid, auth.currentUser?.email);
       document.getElementById('client-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">️</div><div class="empty-text">Could not load clients</div><div class="empty-sub">${e.message}</div></div>`;
     });
   startPresenceWatchdog();
