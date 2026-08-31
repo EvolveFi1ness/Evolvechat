@@ -10573,11 +10573,14 @@ async function loadProgressPhotos() {
   renderBeforeAfter(sorted);
 
  } catch(e) {
-  console.error('loadProgressPhotos error', e);
+  console.error('loadProgressPhotos error', e.code || '', e.message || e);
+  const errMsg = (e.code === 'permission-denied' || /insufficient permissions/i.test(e.message))
+    ? 'Unable to load photos — check your connection and try again.'
+    : 'Could not load progress photos.';
   document.getElementById('photo-grid').innerHTML = `
    <div style="text-align:center;padding:2rem;color:var(--text3)">
-    <div style="font-size:13px;margin-bottom:4px">Storage not configured</div>
-    <div style="font-size:11px">Enable Firebase Storage rules to display photos.</div>
+    <div style="font-size:13px;margin-bottom:4px">${errMsg}</div>
+    <div style="font-size:11px">${e.message || ''}</div>
    </div>`;
  }
 }
