@@ -12767,11 +12767,15 @@ async function nutrLoadDayLogs(uid, dateKey) {
   NUTR_MEALS.forEach(m => nutrFoodLogs[dateKey][m] = []);
 
   // Query 1: logs for this specific date (client-logged meals)
-  const snapDay = await db.collection('members').doc(uid).collection('mealLogs').where('date','==',dateKey).get();
+  // No where filter — date type may be string or Timestamp across docs.
+  // Filter client-side to avoid type mismatch.
+  const snapDay = await db.collection('members').doc(uid).collection('mealLogs').limit(500).get();
   snapDay.docs.forEach(doc => {
    const d = doc.data();
+   // Match date client-side (handles both string "YYYY-MM-DD" and Timestamp)
+   const docDate = typeof d.date === 'string' ? d.date : (d.date?.toDate?.() ? d.date.toDate().toISOString().slice(0,10) : '');
+   if (docDate !== dateKey) return;
    if (d.assignedByCoach) {
-    // These live in the Assigned Plan section only, not in meal slots
     if (!nutrFoodLogs[dateKey].__assigned__) nutrFoodLogs[dateKey].__assigned__ = [];
     nutrFoodLogs[dateKey].__assigned__.push({...d, logId: doc.id});
     return;
@@ -13872,17 +13876,15 @@ async function nutrConfirmAdd() {
    if (!uid) return;
    try {
     let docs = [];
-    try {
-     const snap = await db.collection('members').doc(uid).collection('customFoods')
-      .orderBy('food_name').limit(300).get();
-     docs = snap.docs;
-    } catch (orderErr) {
-     // Fallback if food_name index/field missing on older docs
-     const snap = await db.collection('members').doc(uid).collection('customFoods').limit(300).get();
-     docs = snap.docs;
-    }
-    _customFoodsCache = docs.map(d => _normalizeCustomFood(d.id, d.data(), uid)).filter(Boolean);
-    _mergeCustomFoodsIntoCatalog(_customFoodsCache);
+     try {
+      const snap = await db.collection('members').doc(uid).collection('customFoods').limit(300).get();
+      docs = snap.docs;
+     } catch (orderErr) {
+      docs = [];
+     }
+     _customFoodsCache = docs.map(d => _normalizeCustomFood(d.id, d.data(), uid)).filter(Boolean);
+     _customFoodsCache.sort((a, b) => (a.food_name || '').localeCompare(b.food_name || ''));
+     _mergeCustomFoodsIntoCatalog(_customFoodsCache);
     _customFoodsLoaded = true;
    } catch(e) {
     console.warn('[CustomFood] Failed to load members/.../customFoods:', e.message);

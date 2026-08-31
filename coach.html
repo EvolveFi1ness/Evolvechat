@@ -17503,7 +17503,7 @@ async function loadNutritionSimpleView() {
     try {
       const [planSnap, logSnap] = await Promise.all([
         db.collection('members').doc(c.uid).collection('nutritionPlans').limit(5).get(),
-        db.collection('members').doc(c.uid).collection('mealLogs').where('date','>=',weekAgo).where('date','<=',today).limit(100).get()
+        db.collection('members').doc(c.uid).collection('mealLogs').limit(100).get()
       ]);
       // Client-side sort (orderBy removed — Timestamp type mismatch fix)
       planSnap.docs.sort((a,b) => _ts(b.data(), 'assignedAt') - _ts(a.data(), 'assignedAt'));
@@ -17512,6 +17512,9 @@ async function loadNutritionSimpleView() {
       const logsByDate = {};
       logSnap.docs.forEach(d => {
         const l = d.data();
+        // Filter client-side to handle mixed date types (string vs Timestamp)
+        const docDate = typeof l.date === 'string' ? l.date : (l.date?.toDate?.() ? l.date.toDate().toISOString().slice(0,10) : '');
+        if (docDate < weekAgo || docDate > today) return;
         const date = l.date;
         if (!date) return;
         if (!logsByDate[date]) logsByDate[date] = {calories:0, protein:0, carbs:0, fats:0};
@@ -17802,9 +17805,18 @@ function _dateKey(offsetDays) {
 // as a visible, retryable error instead of hanging the UI indefinitely.
 // Single-field range on 'date' — no composite index required.
 async function fetchMealLogsRange(clientUid, startKey, endKey, maxDocs) {
+  // No where filter — date type may be string or Timestamp across docs.
+  // Filter client-side to avoid type mismatch.
   const req = db.collection('members').doc(clientUid).collection('mealLogs')
-    .where('date', '>=', startKey).where('date', '<=', endKey)
-    .limit(maxDocs || 100).get();
+    .limit(maxDocs || 500).get()
+    .then(snap => {
+      const filtered = snap.docs.filter(d => {
+        const l = d.data();
+        const docDate = typeof l.date === 'string' ? l.date : (l.date?.toDate?.() ? l.date.toDate().toISOString().slice(0,10) : '');
+        return docDate >= startKey && docDate <= endKey;
+      });
+      return { docs: filtered, size: filtered.length };
+    });
   const guard = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Timed out waiting for Firestore (20s). Check the network and hit Retry.')), 20000)
   );
