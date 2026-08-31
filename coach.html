@@ -6656,31 +6656,6 @@ document.addEventListener('DOMContentLoaded', () => {
     db      = firebase.firestore();
     storage = firebase.storage();
 
-    // ── Firestore .get() retry for iOS IndexedDB failures ────────────
-    // FIX (JAVASCRIPT-K4-T, JAVASCRIPT-K4-S): On iOS Safari 17.x,
-    // backgrounded tabs can corrupt IndexedDB state, causing Firestore's
-    // internal transaction layer to throw "Attempt to get records from
-    // database without an in-progress transaction". There is no code-level
-    // prevention — it's an SDK/browser race. Retry once after a short delay;
-    // the second attempt usually succeeds because IndexedDB reinitialises.
-    (function _patchFirestoreGet() {
-      const Ref = firebase.firestore.DocumentReference.prototype;
-      const Query = firebase.firestore.Query.prototype;
-      const origGet = Ref.get;
-      const IS_TX_ERR = /without an in-progress transaction/;
-      function retryGet() {
-        return origGet.apply(this, arguments).catch(err => {
-          if (IS_TX_ERR.test(err?.message || '')) {
-            console.warn('[Firestore] retrying .get() after transient error');
-            return new Promise(r => setTimeout(r, 500)).then(() => origGet.apply(this, arguments));
-          }
-          throw err;
-        });
-      }
-      Ref.get = retryGet;
-      Query.get = retryGet;
-    })();
-
     // ── Connectivity watchdog (was: offline persistence block) ────────
     // FIX (gh-pages-clients-nutrition): the old db.enablePersistence()
     // + CACHE_SIZE_UNLIMITED block was REMOVED. On the deployed GitHub Pages
@@ -6931,9 +6906,7 @@ async function wkFetchLastLogged(uid) {
   _wkLastLoggedLoading.add(uid);
   try {
     const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-      .limit(5).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
+      .orderBy('completedAt','desc').limit(1).get();
     const doc = snap.docs[0];
     const ts = doc && doc.data().completedAt;
     _wkLastLogged[uid] = (ts && ts.toDate) ? ts.toDate() : null;
@@ -7355,23 +7328,13 @@ async function handleLogout() {
 // Auto-login if Firebase Auth session is still active
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    // FIX: Verify the Firebase Auth user is actually the coach — if a client
-    // logged into index.html on the same browser, auth.currentUser would be
-    // the client's UID, and Firestore would deny the coach's collection reads.
-    const isCoachUser = (u) => u && u.email === COACH_AUTH_EMAIL;
     if (auth.currentUser) {
       const session = sessionStorage.getItem('coachAuth');
-      if (session && isCoachUser(auth.currentUser)) { bootApp(); return; }
-      // Wrong user — sign out so the coach can re-authenticate
-      if (session && !isCoachUser(auth.currentUser)) {
-        console.warn('[AutoLogin] auth.currentUser is not the coach, signing out');
-        sessionStorage.removeItem('coachAuth');
-        await auth.signOut().catch(()=>{});
-      }
+      if (session) { bootApp(); return; }
     }
     const unsubscribe = auth.onAuthStateChanged(user => {
       unsubscribe();
-      if (user && isCoachUser(user)) {
+      if (user) {
         const session = sessionStorage.getItem('coachAuth');
         if (session) { bootApp(); }
       } else {
@@ -7380,7 +7343,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
     setTimeout(() => {
-      if (!auth.currentUser || !isCoachUser(auth.currentUser)) {
+      if (!auth.currentUser) {
         sessionStorage.removeItem('coachAuth');
         document.documentElement.classList.remove('auth-pending');
       }
@@ -7440,10 +7403,9 @@ function startCoachNotifListener() {
   if (_coachNotifUnsub) _coachNotifUnsub();
   _lastNotifTimestamp = new Date();
   _coachNotifUnsub = db.collection('coachNotifications')
-    .limit(50)
+    .orderBy('createdAt', 'desc')
+    .limit(30)
     .onSnapshot(snap => {
-      // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-      snap.docs.sort((a,b) => _ts(b.data(), 'createdAt') - _ts(a.data(), 'createdAt'));
       snap.docChanges().forEach(change => {
         if (change.type === 'added') {
           const d = change.doc.data();
@@ -7687,7 +7649,6 @@ function loadAllClients() {
     _scheduleClientRender();
     }, e => {
       console.error('[COACH] members onSnapshot FAILED:', e.code, e.message);
-      console.error('[COACH] Auth state:', auth.currentUser?.uid, auth.currentUser?.email);
       document.getElementById('client-grid').innerHTML = `<div class="empty-state"><div class="empty-icon">️</div><div class="empty-text">Could not load clients</div><div class="empty-sub">${e.message}</div></div>`;
     });
   startPresenceWatchdog();
@@ -8546,9 +8507,7 @@ async function loadClientLogs(uid) {
     else              { b.style.background = 'transparent'; b.style.color = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)'; }
   });
   try {
-    const snap = await db.collection('members').doc(uid).collection('workoutLogs').limit(40).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
+    const snap = await db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get();
     renderModalStreak(snap.docs.map(d => d.data()));
     // Cache for loadClientCheckins to reuse
     window._checkinWlCache = window._checkinWlCache || {};
@@ -8941,9 +8900,7 @@ async function loadClientFoodLogs(uid) {
   container.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
   try {
     const snap = await db.collection('members').doc(uid).collection('mealLogs')
-      .limit(150).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
+      .orderBy('date','desc').limit(100).get();
     // Cache for loadClientCheckins to reuse
     window._checkinMlCache = window._checkinMlCache || {};
     window._checkinMlCache[uid] = snap.docs.map(d => d.data());
@@ -9321,9 +9278,7 @@ async function loadClientCheckins(uid) {
   try {
     // Only fetch checkIns — workoutLogs and mealLogs are already loaded
     // by loadClientLogs and loadClientFoodLogs which run in parallel at modal open
-    const ciSnap = await db.collection('members').doc(uid).collection('checkIns').limit(60).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    ciSnap.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
+    const ciSnap = await db.collection('members').doc(uid).collection('checkIns').orderBy('date','desc').limit(50).get();
     // Reuse cached data from other tabs to avoid redundant Firestore reads
     const wlSnap = window._checkinWlCache?.[uid] || null;
     const mlSnap = window._checkinMlCache?.[uid] || null;
@@ -9334,12 +9289,9 @@ async function loadClientCheckins(uid) {
       mlDocs = mlSnap;
     } else {
       const [wlFresh, mlFresh] = await Promise.all([
-        db.collection('members').doc(uid).collection('workoutLogs').limit(40).get(),
-        db.collection('members').doc(uid).collection('mealLogs').limit(40).get(),
+        db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get(),
+        db.collection('members').doc(uid).collection('mealLogs').orderBy('date','desc').limit(30).get(),
       ]);
-      // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-      wlFresh.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
-      mlFresh.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
       wlDocs = wlFresh.docs.map(d => d.data());
       mlDocs = mlFresh.docs.map(d => d.data());
     }
@@ -10822,18 +10774,12 @@ async function exportClientDocx() {
 
     // ── Fetch all data ──
     const [wSnap, mSnap, cSnap, nSnap, pSnap] = await Promise.all([
-      db.collection('members').doc(uid).collection('workoutLogs').limit(80).get(),
-      db.collection('members').doc(uid).collection('mealLogs').limit(80).get(),
-      db.collection('members').doc(uid).collection('checkIns').limit(80).get(),
-      db.collection('members').doc(uid).collection('nutritionPlans').limit(15).get(),
-      db.collection('members').doc(uid).collection('progressPhotos').limit(80).get(),
+      db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(60).get(),
+      db.collection('members').doc(uid).collection('mealLogs').orderBy('date','desc').limit(60).get(),
+      db.collection('members').doc(uid).collection('checkIns').orderBy('date','desc').limit(60).get(),
+      db.collection('members').doc(uid).collection('nutritionPlans').orderBy('assignedAt','desc').limit(10).get(),
+      db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','asc').limit(60).get(),
     ]);
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    wSnap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
-    mSnap.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
-    cSnap.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
-    nSnap.docs.sort((a,b) => _ts(b.data(), 'assignedAt') - _ts(a.data(), 'assignedAt'));
-    pSnap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
 
     // ══════════════════════════════════════════
     //  DESIGN SYSTEM
@@ -11008,7 +10954,7 @@ async function exportClientDocx() {
     const mDocs  = mSnap.docs.map(d=>d.data());
     const cDocs  = cSnap.docs.map(d=>d.data());
     const nDocs  = nSnap.docs.map(d=>d.data());
-    const pDocs  = pSnap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt')).map(d=>d.data());
+    const pDocs  = pSnap.docs.map(d=>d.data());
 
     // workout stats
     const totalSets = wDocs.reduce((s,r)=>s+(r.totalSets||0),0);
@@ -11746,18 +11692,6 @@ async function exportClientDocx() {
 
 window._clientPhotosCache = window._clientPhotosCache || {};
 
-// Safe timestamp extraction from any Firestore field (Timestamp, custom object, plain Date, number)
-function _ts(d, field) {
-  const v = d[field];
-  if (!v) return 0;
-  if (typeof v === 'number') return v;
-  if (v instanceof Date) return v.getTime();
-  if (typeof v.toMillis === 'function') return v.toMillis();
-  if (typeof v.seconds === 'number') return v.seconds * 1000;
-  if (typeof v._seconds === 'number') return v._seconds * 1000;
-  try { return new Date(v).getTime() || 0; } catch(_) { return 0; }
-}
-
 async function loadClientPhotos(uid, forceRefresh) {
   const grid = document.getElementById('m-photo-grid');
 
@@ -11801,10 +11735,9 @@ async function loadClientPhotos(uid, forceRefresh) {
     if (forceRefresh) return;
     try {
       const cacheSnap = await db.collection('members').doc(uid).collection('progressPhotos')
-        .limit(20).get({ source: 'cache' });
+        .orderBy('uploadedAt','desc').limit(12).get({ source: 'cache' });
       if (!cacheSnap.empty && !cacheResolved) {
         window._photoCache = window._photoCache || {};
-        cacheSnap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
         cacheSnap.docs.forEach(d => { window._photoCache[d.id] = d.data(); });
         renderQuickThumbs(cacheSnap.docs);
         cacheResolved = true;
@@ -11814,7 +11747,7 @@ async function loadClientPhotos(uid, forceRefresh) {
 
   try {
     // Single network fetch — skip the intermediate 12-photo batch
-    const snap = await db.collection('members').doc(uid).collection('progressPhotos').limit(80).get();
+    const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(60).get();
     cacheResolved = true;
     const currentGrid = document.getElementById('m-photo-grid');
     if (!currentGrid || currentGrid !== grid) return;
@@ -11825,8 +11758,6 @@ async function loadClientPhotos(uid, forceRefresh) {
       return;
     }
 
-    // Client-side sort since orderBy removed (Firestore Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
     const photoCacheEntries = {};
     snap.docs.forEach(d => { photoCacheEntries[d.id] = d.data(); window._photoCache[d.id] = d.data(); });
 
@@ -12192,9 +12123,7 @@ async function loadCardStreak(uid) {
   window._streakLoaded[uid] = true;
   try {
     const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-      .limit(80).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
+      .orderBy('completedAt','desc').limit(60).get();
     const badge = document.getElementById('cc-streak-' + uid);
     if (!badge) return;
     if (snap.empty) { window._streakCache[uid] = { html: '', isHot: false }; badge.style.display = 'none'; return; }
@@ -12240,9 +12169,7 @@ async function loadCardPhotoStrip(uid, firstName) {
   window._photoStripLoaded[uid] = true;
   try {
     const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-      .limit(5).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
+      .orderBy('uploadedAt','desc').limit(3).get();
     const currentStrip = document.getElementById('cc-photos-' + uid);
     if (!currentStrip) return;
     if (snap.empty) {
@@ -12863,9 +12790,7 @@ async function flushClientNotification() {
     // "Assign Plan" button, or a debounce that fired moments ago) already
     // notified the client, so skip re-adding an identical bubble.
     const lastSnap = await db.collection('chats').doc(chatId).collection('messages')
-      .limit(5).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    lastSnap.docs.sort((a,b) => _ts(b.data(), 'createdAt') - _ts(a.data(), 'createdAt'));
+      .orderBy('createdAt', 'desc').limit(1).get();
     if (!lastSnap.empty && lastSnap.docs[0].data().text === text) return;
     await db.collection('chats').doc(chatId).collection('messages').add({
       text,
@@ -13148,9 +13073,7 @@ async function assignWorkoutToClient(evt) {
       const chatId = [coachUid, clientUid].sort().join('_');
       const text = `Workout plan updated. Open your app to see this week's schedule (${Object.keys(p).join(', ')}).`;
       const lastSnap = await db.collection('chats').doc(chatId).collection('messages')
-        .limit(5).get();
-      // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-      lastSnap.docs.sort((a,b) => _ts(b.data(), 'createdAt') - _ts(a.data(), 'createdAt'));
+        .orderBy('createdAt', 'desc').limit(1).get();
       const alreadySent = !lastSnap.empty && lastSnap.docs[0].data().text === text;
       if (!alreadySent) {
         await db.collection('chats').doc(chatId).collection('messages').add({
@@ -13294,9 +13217,7 @@ function cacheTemplatesLocally(arr) {
 // Pulls the latest templates from Firestore (call on load / page switch).
 async function loadTemplatesFromFirestore() {
   try {
-    const snap = await templatesCollection().limit(150).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'savedAt') - _ts(a.data(), 'savedAt'));
+    const snap = await templatesCollection().orderBy('savedAt', 'desc').limit(100).get();
     const templates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     cacheTemplatesLocally(templates);
     renderTemplateList();
@@ -13375,7 +13296,7 @@ async function confirmSaveTemplate() {
     // Only the currently selected day's exercises are saved — not the whole week.
     const exercisesSnapshot = dayData.exercises.map(ex => ({...ex}));
 
-    const newTpl = stripUndefined({ name, day: currentDay, exercises: exercisesSnapshot, savedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    const newTpl = stripUndefined({ name, day: currentDay, exercises: exercisesSnapshot, savedAt: Date.now() });
     const docRef = await templatesCollection().add(newTpl);
 
     const templates = getTemplates();
@@ -13590,14 +13511,12 @@ async function loadLastMessage(clientUid) {
     }, () => { /* silent — previews are non-critical */ });
 
     entry.preview = db.collection('chats').doc(chatId).collection('messages')
-      .limit(5)
+      .orderBy('createdAt','desc').limit(1)
       .onSnapshot(snap => {
-        // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-        const sorted = snap.docs.sort((a,b) => _ts(b.data(), 'createdAt') - _ts(a.data(), 'createdAt'));
         const el = document.getElementById('cci-preview-'+clientUid);
         const timeEl = document.getElementById('cci-time-'+clientUid);
-        if (sorted.length) {
-          const d = sorted[0].data();
+        if (!snap.empty) {
+          const d = snap.docs[0].data();
           if (el) {
             const isCoachMsg = d.senderId===coachUid || d.senderRole==='coach';
             const prefix = isCoachMsg ? 'You: ' : '';
@@ -13690,7 +13609,7 @@ function openChatWith(clientUid) {
   if (chatUnsub) chatUnsub();
   const chatId = [coachUid, clientUid].sort().join('_');
   chatUnsub = db.collection('chats').doc(chatId).collection('messages')
-    .limit(150)
+    .orderBy('createdAt','desc').limit(100)
     .onSnapshot(snap=>{
       const area = document.getElementById('chat-messages-area');
       if (!area) return;
@@ -13700,15 +13619,14 @@ function openChatWith(clientUid) {
         area.scrollTop = area.scrollHeight;
         return;
       }
-      // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-      const sorted = [...snap.docs].sort((a,b) => _ts(b.data(), 'createdAt') - _ts(a.data(), 'createdAt')).slice(0, 100);
       // Collapse consecutive "Workout plan updated…" bubbles with identical
       // text down to just the last occurrence — older duplicate history
       // (from before duplicate-sends were guarded against) shouldn't clutter
       // the thread with repeats of the same notification.
-      // Sorted newest-first then reverse so everything below can keep working
+      // Query is newest-first (so the 100-doc cap keeps the latest messages,
+      // not the oldest); reverse here so everything below can keep working
       // in chronological order like before.
-      const rawDocs = sorted.reverse();
+      const rawDocs = [...snap.docs].reverse();
       const docs = rawDocs.filter((doc, i) => {
         if (i === rawDocs.length - 1) return true;
         const cur = doc.data(), next = rawDocs[i+1].data();
@@ -14056,9 +13974,7 @@ function renderPtClientList() {
 
 async function loadPtClientSummary(uid) {
   try {
-    const snap = await db.collection('members').doc(uid).collection('checkIns').limit(10).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
+    const snap = await db.collection('members').doc(uid).collection('checkIns').orderBy('date','desc').limit(1).get();
     const el = document.getElementById('pt-ci-sub-'+uid);
     if (!el) return;
     if (snap.empty) { el.textContent = 'No check-ins yet'; return; }
@@ -14082,18 +13998,15 @@ function selectPtClient(uid) {
   renderPtMain(uid);
   // Subscribe to check-ins
   ptCheckinUnsub = db.collection('members').doc(uid).collection('checkIns')
-    .limit(80)
+    .orderBy('date','desc').limit(50)
     .onSnapshot(snap => {
-      // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-      snap.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
       ptCheckins = snap.docs.map(d => ({ id:d.id, ...d.data() }));
       renderCheckinTable();
       renderPtChart();
       loadPtClientSummary(uid);
     }, () => {
-      db.collection('members').doc(uid).collection('checkIns').limit(80).get().then(snap => {
-        snap.docs.sort((a,b) => _ts(b.data(), 'date') - _ts(a.data(), 'date'));
-        ptCheckins = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      db.collection('members').doc(uid).collection('checkIns').orderBy('date','desc').limit(50).get().then(snap => {
+        ptCheckins = snap.docs.map(d => ({ id:d.id, ...d.data() })).sort((a,b)=>b.date.localeCompare(a.date));
         renderCheckinTable();
         renderPtChart();
       }).catch(e => {
@@ -16685,9 +16598,7 @@ async function loadClientMacroTargetCard() {
   if (note) note.innerHTML = '<div class="loading-dots" style="padding:0.25rem 0;justify-content:flex-start;"><span></span><span></span><span></span></div>';
   try {
     const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans')
-      .limit(15).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'assignedAt') - _ts(a.data(), 'assignedAt'));
+      .orderBy('assignedAt','desc').limit(10).get();
 
     // Filter to macro-only plans (empty meals array)
     const macroDocs = snap.docs.filter(d => {
@@ -17421,9 +17332,7 @@ async function loadClientAssignedPlans(clientUid) {
   const list = document.getElementById('nutr-plans-list');
   list.innerHTML = '<div style="color:var(--muted);font-size:13px;">Loading...</div>';
   try {
-    const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans').limit(15).get();
-    // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-    snap.docs.sort((a,b) => _ts(b.data(), 'assignedAt') - _ts(a.data(), 'assignedAt'));
+    const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans').orderBy('assignedAt','desc').limit(10).get();
     if (snap.empty) { list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">No plans assigned yet.</div>'; return; }
     // Update summary from latest active plan
     const latest = snap.docs[0].data();
@@ -17502,19 +17411,14 @@ async function loadNutritionSimpleView() {
     const name = ((c.firstName||'')+' '+(c.lastName||'')).trim() || c.email || 'Client';
     try {
       const [planSnap, logSnap] = await Promise.all([
-        db.collection('members').doc(c.uid).collection('nutritionPlans').limit(5).get(),
-        db.collection('members').doc(c.uid).collection('mealLogs').limit(100).get()
+        db.collection('members').doc(c.uid).collection('nutritionPlans').orderBy('assignedAt','desc').limit(1).get(),
+        db.collection('members').doc(c.uid).collection('mealLogs').where('date','>=',weekAgo).where('date','<=',today).limit(100).get()
       ]);
-      // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-      planSnap.docs.sort((a,b) => _ts(b.data(), 'assignedAt') - _ts(a.data(), 'assignedAt'));
       const plan = planSnap.docs[0] ? planSnap.docs[0].data() : null;
       const planDocId = planSnap.docs[0] ? planSnap.docs[0].id : null;
       const logsByDate = {};
       logSnap.docs.forEach(d => {
         const l = d.data();
-        // Filter client-side to handle mixed date types (string vs Timestamp)
-        const docDate = typeof l.date === 'string' ? l.date : (l.date?.toDate?.() ? l.date.toDate().toISOString().slice(0,10) : '');
-        if (docDate < weekAgo || docDate > today) return;
         const date = l.date;
         if (!date) return;
         if (!logsByDate[date]) logsByDate[date] = {calories:0, protein:0, carbs:0, fats:0};
@@ -17805,18 +17709,9 @@ function _dateKey(offsetDays) {
 // as a visible, retryable error instead of hanging the UI indefinitely.
 // Single-field range on 'date' — no composite index required.
 async function fetchMealLogsRange(clientUid, startKey, endKey, maxDocs) {
-  // No where filter — date type may be string or Timestamp across docs.
-  // Filter client-side to avoid type mismatch.
   const req = db.collection('members').doc(clientUid).collection('mealLogs')
-    .limit(maxDocs || 500).get()
-    .then(snap => {
-      const filtered = snap.docs.filter(d => {
-        const l = d.data();
-        const docDate = typeof l.date === 'string' ? l.date : (l.date?.toDate?.() ? l.date.toDate().toISOString().slice(0,10) : '');
-        return docDate >= startKey && docDate <= endKey;
-      });
-      return { docs: filtered, size: filtered.length };
-    });
+    .where('date', '>=', startKey).where('date', '<=', endKey)
+    .limit(maxDocs || 100).get();
   const guard = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Timed out waiting for Firestore (20s). Check the network and hit Retry.')), 20000)
   );
@@ -19763,10 +19658,6 @@ textarea:focus-visible, select:focus-visible,
      if (b) b.classList.add('show');
     });
    }
-   // ── Auto-reload when new SW forces it (fixes stale cache for real users)
-   navigator.serviceWorker.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'FORCE_RELOAD') location.reload();
-   });
   }
  </script>
 

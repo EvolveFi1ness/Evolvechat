@@ -154,12 +154,6 @@ service cloud.firestore {
     allow write: if false;
   }
 
-  // ── Coach notifications ─────────────────────────────────
-  match /coachNotifications/{notifId} {
-    allow read: if isCoach();
-    allow write: if isCoach();
-  }
-
   // ── Collection-group rules (required for collectionGroup() queries) ──
   // Firestore does NOT resolve collectionGroup queries through nested
   // match blocks — these top-level matches are the only rules evaluated.

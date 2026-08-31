@@ -7091,32 +7091,6 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth  = firebase.auth();
 const db   = firebase.firestore();
 const storage = firebase.storage();
-
-// ── Firestore .get() retry for iOS IndexedDB failures ──────────────
-// FIX (JAVASCRIPT-K4-T, JAVASCRIPT-K4-S): On iOS Safari 17.x,
-// backgrounded tabs can corrupt IndexedDB state, causing Firestore's
-// internal transaction layer to throw "Attempt to get records from
-// database without an in-progress transaction". There is no code-level
-// prevention — it's an SDK/browser race. Retry once after a short delay;
-// the second attempt usually succeeds because IndexedDB reinitialises.
-(function _patchFirestoreGet() {
-  const Ref = firebase.firestore.DocumentReference.prototype;
-  const Query = firebase.firestore.Query.prototype;
-  const origGet = Ref.get;
-  const IS_TX_ERR = /without an in-progress transaction/;
-  function retryGet() {
-    return origGet.apply(this, arguments).catch(err => {
-      if (IS_TX_ERR.test(err?.message || '')) {
-        console.warn('[Firestore] retrying .get() after transient error');
-        return new Promise(r => setTimeout(r, 500)).then(() => origGet.apply(this, arguments));
-      }
-      throw err;
-    });
-  }
-  Ref.get = retryGet;
-  Query.get = retryGet;
-})();
-
 // ── Offline persistence: chat messages, workout/meal logs and other
 // writes queue locally when the device is offline and sync automatically
 // when the connection returns. Best-effort — if it fails (unsupported
@@ -7949,10 +7923,8 @@ async function checkAnyCompletionToday() {
  if (!uid) return null;
  const todayFormatted = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
  try {
-   const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-    .limit(30).get();
-   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-   snap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
+  const snap = await db.collection('members').doc(uid).collection('workoutLogs')
+   .orderBy('completedAt', 'desc').limit(5).get();
   let todayLog = null;
   snap.forEach(doc => {
    if (todayLog) return;
@@ -8130,10 +8102,8 @@ async function _refreshPrevSetMap(workout, myToken) {
   // the logger built — fine for a new client, but it grows unbounded and got
   // slower every week as history piled up. 150 most-recent sessions is more
   // than enough to find each exercise's latest set, and keeps this fast forever.
-   const _prevSnap = await db.collection('members').doc(_uid).collection('workoutLogs')
-    .limit(200).get();
-   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-   _prevSnap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
+  const _prevSnap = await db.collection('members').doc(_uid).collection('workoutLogs')
+   .orderBy('completedAt', 'desc').limit(150).get();
 
   // A newer buildWorkoutLogger call has since started (e.g. the client
   // switched workouts again while this was in flight) — its own refresh
@@ -9366,12 +9336,10 @@ async function loadPastLogs() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid) return;
  const container = document.getElementById('past-logs-container');
-  try {
-   const snap = await db.collection('members').doc(uid).collection('workoutLogs')
-    .limit(40).get();
-   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-   snap.docs.sort((a,b) => _ts(b.data(), 'completedAt') - _ts(a.data(), 'completedAt'));
-   if (snap.empty) {
+ try {
+  const snap = await db.collection('members').doc(uid).collection('workoutLogs')
+   .orderBy('completedAt', 'desc').limit(30).get();
+  if (snap.empty) {
    container.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-title">No logs yet</div><div class="empty-sub">Complete a workout to see your history</div></div>`;
    _pastLogsData = [];
    renderWeekStrip();
@@ -10497,18 +10465,6 @@ function setGalleryView(view) {
 let _baSessions = [];
 let _baCurrentAngle = null;
 
-// Safe timestamp extraction from any Firestore field (Timestamp, custom object, plain Date, number)
-function _ts(d, field) {
-  const v = d[field];
-  if (!v) return 0;
-  if (typeof v === 'number') return v;
-  if (v instanceof Date) return v.getTime();
-  if (typeof v.toMillis === 'function') return v.toMillis();
-  if (typeof v.seconds === 'number') return v.seconds * 1000;
-  if (typeof v._seconds === 'number') return v._seconds * 1000;
-  try { return new Date(v).getTime() || 0; } catch(_) { return 0; }
-}
-
 async function loadProgressPhotos() {
  const uid = currentUid || auth.currentUser?.uid;
  if (!uid) return;
@@ -10516,13 +10472,11 @@ async function loadProgressPhotos() {
  const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
  const ANGLES = ['front', 'back', 'left', 'right'];
 
-  try {
-    const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-     .limit(80).get();
-   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-   snap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
+ try {
+  const snap = await db.collection('members').doc(uid).collection('progressPhotos')
+   .orderBy('uploadedAt', 'desc').limit(60).get();
 
-   // Show empty state in both views if no data
+  // Show empty state in both views if no data
   if (snap.empty) {
    document.getElementById('ba-no-compare').style.display = '';
    document.getElementById('ba-content').style.display = 'none';
@@ -10557,14 +10511,11 @@ async function loadProgressPhotos() {
   renderBeforeAfter(sorted);
 
  } catch(e) {
-  console.error('loadProgressPhotos error', e.code || '', e.message || e);
-  const errMsg = (e.code === 'permission-denied' || /insufficient permissions/i.test(e.message))
-    ? 'Unable to load photos — check your connection and try again.'
-    : 'Could not load progress photos.';
+  console.error('loadProgressPhotos error', e);
   document.getElementById('photo-grid').innerHTML = `
    <div style="text-align:center;padding:2rem;color:var(--text3)">
-    <div style="font-size:13px;margin-bottom:4px">${errMsg}</div>
-    <div style="font-size:11px">${e.message || ''}</div>
+    <div style="font-size:13px;margin-bottom:4px">Storage not configured</div>
+    <div style="font-size:11px">Enable Firebase Storage rules to display photos.</div>
    </div>`;
  }
 }
@@ -10763,10 +10714,8 @@ async function loadHomePhotoStrip() {
  const scroll = document.getElementById('home-photo-scroll');
  if (!uid || !scroll) return;
  try {
-   const snap = await db.collection('members').doc(uid).collection('progressPhotos')
-    .limit(10).get();
-  // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-  snap.docs.sort((a,b) => _ts(b.data(), 'uploadedAt') - _ts(a.data(), 'uploadedAt'));
+  const snap = await db.collection('members').doc(uid).collection('progressPhotos')
+   .orderBy('uploadedAt', 'desc').limit(6).get();
   // Always keep the add slot at the front
   const addSlot = `<div class="home-photo-add-slot" onclick="setTab('progress')">
    <div class="home-photo-add-slot-icon">+</div>
@@ -11145,23 +11094,22 @@ function subscribeClientChat(uid, coachUid) {
  if (clientChatUnsub) clientChatUnsub();
  const chatId = [uid, coachUid].sort().join('_');
  const syncEl = document.getElementById('client-chat-sync-status');
-  clientChatUnsub = db.collection('chats').doc(chatId).collection('messages')
-   .limit(150)
-   .onSnapshot(snap => {
-    // "Syncing…" chip while locally-queued writes are still going up
-    if (syncEl) syncEl.style.display = snap.metadata.hasPendingWrites ? '' : 'none';
-    const area = document.getElementById('client-chat-messages');
-    if (!area) return;
-    if (snap.empty) {
-     area.innerHTML = `<div style="text-align:center;color:var(--text2);padding:2rem;font-size:13px">Say hi to your coach...</div>`;
-     _setChatBadge('');
-     return;
-    }
-    area.innerHTML = '';
-    // Client-side sort: orderBy removed (Timestamp type mismatch fix)
-    const sorted = [...snap.docs].sort((a,b) => _ts(b.data(), 'createdAt') - _ts(a.data(), 'createdAt')).slice(0, 100);
-    // newest-first then reverse so the thread renders oldest→newest.
-    const docsAsc = sorted.reverse();
+ clientChatUnsub = db.collection('chats').doc(chatId).collection('messages')
+  .orderBy('createdAt','desc').limit(100)
+  .onSnapshot(snap => {
+   // "Syncing…" chip while locally-queued writes are still going up
+   if (syncEl) syncEl.style.display = snap.metadata.hasPendingWrites ? '' : 'none';
+   const area = document.getElementById('client-chat-messages');
+   if (!area) return;
+   if (snap.empty) {
+    area.innerHTML = `<div style="text-align:center;color:var(--text2);padding:2rem;font-size:13px">Say hi to your coach...</div>`;
+    _setChatBadge('');
+    return;
+   }
+   area.innerHTML = '';
+   // Query is newest-first (so the 100-doc cap keeps the latest messages,
+   // not the oldest); reverse here so the thread still renders oldest→newest.
+   const docsAsc = [...snap.docs].reverse();
    let unread = 0;
    docsAsc.forEach(doc => {
     const m = doc.data();
@@ -12767,15 +12715,11 @@ async function nutrLoadDayLogs(uid, dateKey) {
   NUTR_MEALS.forEach(m => nutrFoodLogs[dateKey][m] = []);
 
   // Query 1: logs for this specific date (client-logged meals)
-  // No where filter — date type may be string or Timestamp across docs.
-  // Filter client-side to avoid type mismatch.
-  const snapDay = await db.collection('members').doc(uid).collection('mealLogs').limit(500).get();
+  const snapDay = await db.collection('members').doc(uid).collection('mealLogs').where('date','==',dateKey).get();
   snapDay.docs.forEach(doc => {
    const d = doc.data();
-   // Match date client-side (handles both string "YYYY-MM-DD" and Timestamp)
-   const docDate = typeof d.date === 'string' ? d.date : (d.date?.toDate?.() ? d.date.toDate().toISOString().slice(0,10) : '');
-   if (docDate !== dateKey) return;
    if (d.assignedByCoach) {
+    // These live in the Assigned Plan section only, not in meal slots
     if (!nutrFoodLogs[dateKey].__assigned__) nutrFoodLogs[dateKey].__assigned__ = [];
     nutrFoodLogs[dateKey].__assigned__.push({...d, logId: doc.id});
     return;
@@ -13876,15 +13820,17 @@ async function nutrConfirmAdd() {
    if (!uid) return;
    try {
     let docs = [];
-     try {
-      const snap = await db.collection('members').doc(uid).collection('customFoods').limit(300).get();
-      docs = snap.docs;
-     } catch (orderErr) {
-      docs = [];
-     }
-     _customFoodsCache = docs.map(d => _normalizeCustomFood(d.id, d.data(), uid)).filter(Boolean);
-     _customFoodsCache.sort((a, b) => (a.food_name || '').localeCompare(b.food_name || ''));
-     _mergeCustomFoodsIntoCatalog(_customFoodsCache);
+    try {
+     const snap = await db.collection('members').doc(uid).collection('customFoods')
+      .orderBy('food_name').limit(300).get();
+     docs = snap.docs;
+    } catch (orderErr) {
+     // Fallback if food_name index/field missing on older docs
+     const snap = await db.collection('members').doc(uid).collection('customFoods').limit(300).get();
+     docs = snap.docs;
+    }
+    _customFoodsCache = docs.map(d => _normalizeCustomFood(d.id, d.data(), uid)).filter(Boolean);
+    _mergeCustomFoodsIntoCatalog(_customFoodsCache);
     _customFoodsLoaded = true;
    } catch(e) {
     console.warn('[CustomFood] Failed to load members/.../customFoods:', e.message);
@@ -16387,13 +16333,11 @@ async function renderHomeTemplates(force) {
  const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
  if (!uid) { box.innerHTML = ''; return; }
 
-  if (!_cwktTemplates || force) {
-   try {
-     const snap = await db.collection('members').doc(uid).collection('workoutTemplates')
-      .limit(40).get();
-     // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-     snap.docs.sort((a,b) => _ts(b.data(), 'savedAt') - _ts(a.data(), 'savedAt'));
-     _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+ if (!_cwktTemplates || force) {
+  try {
+   const snap = await db.collection('members').doc(uid).collection('workoutTemplates')
+    .orderBy('savedAt', 'desc').limit(30).get();
+   _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch(e) {
    console.error('renderHomeTemplates failed:', e.code, e.message);
    // Permission-denied usually means the Firestore rule for this
@@ -16507,9 +16451,7 @@ async function _renderLogTemplatePicker(force) {
   list.innerHTML = '<div class="wkt-loading-block" style="padding:20px;"><div class="wkt-spinner" style="width:24px;height:24px;margin-bottom:8px;"></div><div class="wkt-loading-label">Loading templates…</div></div>';
   try {
    const snap = await db.collection('members').doc(uid).collection('workoutTemplates')
-     .limit(40).get();
-   // Client-side sort (orderBy removed — Timestamp type mismatch fix)
-   snap.docs.sort((a,b) => _ts(b.data(), 'savedAt') - _ts(a.data(), 'savedAt'));
+    .orderBy('savedAt', 'desc').limit(30).get();
    _cwktTemplates = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch(e) {
    console.error('_renderLogTemplatePicker failed:', e.code, e.message);
@@ -17105,10 +17047,6 @@ document.addEventListener('DOMContentLoaded', syncEvolveThemeUI);
      if (b) b.classList.add('show');
     });
    }
-   // ── Auto-reload when new SW forces it (fixes stale cache for real users)
-   navigator.serviceWorker.addEventListener('message', function(e) {
-    if (e.data && e.data.type === 'FORCE_RELOAD') location.reload();
-   });
   }
  </script>
  <style id="sw-update-styles">
