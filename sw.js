@@ -1,14 +1,16 @@
 /* Evolve PWA service worker — offline support + fast repeat loads.
    Strategy: network-first for the HTML app shell (always fresh when online),
-   cache-first for static assets (icons, manifests, fonts), stale-while-revalidate
+   cache-first for static assets (icons, manifests, fonts, CSS), stale-while-revalidate
    for the CDN libs the apps already depend on. */
 'use strict';
 
-const CACHE = 'evolve-v4';
+const CACHE = 'evolve-v5';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
   './manifest-coach.json',
+  './design-tokens.css',
+  './shared.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -60,7 +62,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: cache-first.
+  // Static assets: cache-first with stale-while-revalidate for CSS/JS.
   if (STATIC.some((s) => url.pathname.endsWith(s))) {
     event.respondWith(
       caches.match(event.request).then((hit) => {
@@ -72,5 +74,21 @@ self.addEventListener('fetch', (event) => {
         return hit || fallback;
       })
     );
+    return;
+  }
+
+  // Google Fonts: cache-first with long TTL
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    event.respondWith(
+      caches.match(event.request).then((hit) => {
+        if (hit) return hit;
+        return fetch(event.request).then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
+          return res;
+        });
+      })
+    );
+    return;
   }
 });

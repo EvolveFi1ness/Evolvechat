@@ -13,7 +13,6 @@
       "node_modules/**",
       ".env*",
       ".git/**",
-      "sw.js",
       "auto-push.ps1"
     ],
     "rewrites": [],
@@ -28,6 +27,24 @@
         "source": "**/*.js",
         "headers": [
           { "key": "Cache-Control", "value": "public, max-age=3600" }
+        ]
+      },
+      {
+        "source": "**/*.css",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=3600" }
+        ]
+      },
+      {
+        "source": "**/*.json",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=86400" }
+        ]
+      },
+      {
+        "source": "icons/**",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=604800" }
         ]
       }
     ]

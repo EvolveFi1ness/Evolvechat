@@ -11,6 +11,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
+  <script src="shared.js"></script>
   <script>
     // Apply saved theme before first paint to avoid a light-mode flash.
     (function(){
@@ -44,6 +45,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://browser.sentry-cdn.com">
+  <link rel="stylesheet" href="design-tokens.css">
 
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -51,30 +53,54 @@
   .hidden { display: none; }
 
   :root {
-    --gold: #FF5A2B;
-    --gold-2: #FF8A5C;
-    --gold-dim: rgba(255,90,43,0.14);
-    --gold-glow: rgba(255,90,43,0.07);
-    --bg: #040404;
-    --bg2: #0A0A0A;
-    --bg3: #101010;
-    --bg4: #161616;
-    --border: rgba(var(--line-r),var(--line-g),var(--line-b),0.06);
+    /* Brand — mapped to design tokens */
+    --gold: var(--evolve-orange);
+    --gold-2: var(--evolve-orange-light);
+    --gold-3: #F7E4A8;
+    --gold-dim: var(--evolve-orange-dim);
+    --gold-glow: var(--evolve-orange-glow);
+    --gold-shimmer: rgba(237,208,122,0.18);
+
+    /* Backgrounds — dark by default, overridden by light retheme */
+    --bg: #050407;
+    --bg2: #09080D;
+    --bg3: #0F0D14;
+    --bg4: #151220;
+
+    /* Borders — use line-channel variables */
+    --border: rgba(var(--line-r),var(--line-g),var(--line-b),0.055);
     --border2: rgba(var(--line-r),var(--line-g),var(--line-b),0.1);
-    --text: var(--text);
-    --muted: var(--muted);
-    --muted2: var(--muted2);
-    --green: #4ADE80;
-    --red: #F87171;
-    --blue: #60A5FA;
-    --sidebar-w: 240px;
+    --border-gold: rgba(255,90,43,0.22);
+
+    /* Text */
+    --text: #EDE9E1;
+    --muted: #635F5A;
+    --muted2: #2A2830;
+
+    /* Semantic colors */
+    --green: #3DCB72;
+    --red: #E8605A;
+    --blue: #5A9FEF;
+
+    /* Layout */
+    --sidebar-w: 248px;
+    --sidebar-collapsed-w: 60px;
+
+    /* Border radius — mapped to design tokens */
+    --radius-xs: 6px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-2xl: 24px;
+    --radius-pill: 9999px;
   }
 
   html, body {
     min-height: 100vh;
-    background: var(--bg);
-    font-family: 'Inter', sans-serif;
-    color: var(--text);
+    background: var(--evolve-bg);
+    font-family: var(--font-body);
+    color: var(--evolve-text-primary);
     -webkit-font-smoothing: antialiased;
   }
 
@@ -133,7 +159,6 @@
   #app.visible { display: flex; }
 
   /* ── SIDEBAR ── */
-  :root { --sidebar-collapsed-w: 60px; }
   .sidebar {
     width: var(--sidebar-w); background: var(--bg2);
     border-right: 1px solid var(--border);
@@ -306,11 +331,6 @@
   }
   /* Reduce paint on cards — isolate stacking contexts */
   .client-card { contain: layout style; }
-  /* pulse animation stays GPU ──────────── */
-  @keyframes pulse-dot { 
-    0%,100%{opacity:1;transform:scale(1) translateZ(0)} 
-    50%{opacity:.5;transform:scale(.8) translateZ(0)} 
-  }
 
   .page-header { margin-bottom: 2rem; }
   .page-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 32px; color: var(--text); letter-spacing: -1px; }
@@ -1361,33 +1381,6 @@
   .csi-status-late { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--red); font-weight: 600; margin-top: 4px; }
   .csi-right { text-align: right; }
   .csi-right .csi-val { color: var(--text); }
-
-  /* ════════════════════════════════════
-     PREMIUM OVERRIDES — EVOLVE COACH
-  ════════════════════════════════════ */
-
-  :root {
-    --gold: #FF5A2B;
-    --gold-2: #FFB088;
-    --gold-3: #F7E4A8;
-    --gold-dim: rgba(255,90,43,0.13);
-    --gold-glow: rgba(255,90,43,0.06);
-    --gold-shimmer: rgba(237,208,122,0.18);
-    --bg: #050407;
-    --bg2: #09080D;
-    --bg3: #0F0D14;
-    --bg4: #151220;
-    --border: rgba(var(--line-r),var(--line-g),var(--line-b),0.055);
-    --border2: rgba(var(--line-r),var(--line-g),var(--line-b),0.1);
-    --border-gold: rgba(255,90,43,0.22);
-    --text: #EDE9E1;
-    --muted: #635F5A;
-    --muted2: #2A2830;
-    --green: #3DCB72;
-    --red: #E8605A;
-    --blue: #5A9FEF;
-    --sidebar-w: 248px;
-  }
 
   /* Background: deep dark with subtle purple-black gradient */
   html, body {
@@ -3274,6 +3267,336 @@ img, video, iframe { max-width: 100%; }
     font-size: 9px !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM COACH DASHBOARD REDESIGN
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Dashboard Hero ── */
+.dash-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+.dash-hero-greeting {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--evolve-text-primary, var(--text));
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+}
+.dash-hero-greeting .accent {
+  color: var(--evolve-orange, var(--gold));
+}
+.dash-hero-sub {
+  font-size: var(--text-base);
+  color: var(--evolve-text-secondary, var(--muted));
+  margin-top: var(--space-2);
+}
+.dash-hero-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.dash-hero-btn {
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  border: 1px solid var(--evolve-border, var(--border));
+  border-radius: var(--radius-md);
+  background: var(--evolve-bg-raised, var(--bg2));
+  color: var(--evolve-text-primary, var(--text));
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  min-height: 44px;
+}
+.dash-hero-btn:hover {
+  border-color: var(--evolve-orange, var(--gold));
+  color: var(--evolve-orange, var(--gold));
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.dash-hero-btn:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: var(--duration-fast);
+}
+.dash-hero-btn.primary {
+  background: var(--evolve-orange, var(--gold));
+  border-color: var(--evolve-orange, var(--gold));
+  color: var(--evolve-text-inverse, #fff);
+  box-shadow: var(--shadow-orange);
+}
+.dash-hero-btn.primary:hover {
+  background: var(--evolve-orange-light, var(--gold-2));
+  color: var(--evolve-text-inverse, #fff);
+}
+
+/* ── Stat Grid ── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+.stat-card {
+  background: var(--evolve-bg-raised, var(--bg2));
+  border: 1px solid var(--evolve-border, var(--border));
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: all var(--duration-normal) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--evolve-orange, var(--gold)), transparent);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-out);
+}
+.stat-card:hover {
+  border-color: var(--evolve-border-strong, var(--border2));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.stat-card:hover::after {
+  opacity: 1;
+}
+.stat-val {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--evolve-text-primary, var(--text));
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+}
+.stat-lbl {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--evolve-text-tertiary, var(--muted));
+  margin-top: var(--space-2);
+}
+.stat-delta {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  margin-top: var(--space-1);
+}
+.stat-delta.positive { color: var(--evolve-success, var(--green)); }
+.stat-delta.negative { color: var(--evolve-error, var(--red)); }
+
+/* ── Card ── */
+.card {
+  background: var(--evolve-bg-raised, var(--bg2));
+  border: 1px solid var(--evolve-border, var(--border));
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.card-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--evolve-border, var(--border));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-title {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--evolve-text-primary, var(--text));
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+.card-body {
+  padding: var(--space-4) var(--space-5);
+}
+
+/* ── Client Cards ── */
+.client-card {
+  background: var(--evolve-bg-raised, var(--bg2));
+  border: 1px solid var(--evolve-border, var(--border));
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+}
+.client-card:hover {
+  border-color: var(--evolve-border-strong, var(--border2));
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.client-card:active {
+  transform: translateY(0);
+  transition-duration: var(--duration-fast);
+}
+
+/* ═══════════════════════════════════════════════════════
+   COACH ACCESSIBILITY & POLISH LAYER
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Focus visible ring for all interactive elements ── */
+*:focus-visible {
+ outline: 2px solid var(--gold, #FF5A2B);
+ outline-offset: 2px;
+ border-radius: 4px;
+}
+button:focus-visible, .nav-item:focus-visible, .cmt-tab:focus-visible {
+ outline: 2px solid var(--gold, #FF5A2B);
+ outline-offset: 2px;
+}
+
+/* ── Loading states ── */
+.ev-spinner {
+ width: 28px; height: 28px;
+ border: 3px solid rgba(255,255,255,0.1);
+ border-top-color: var(--gold, #FF5A2B);
+ border-radius: 50%;
+ animation: ev-spin 0.7s linear infinite;
+ display: inline-block;
+}
+@keyframes ev-spin { to { transform: rotate(360deg); } }
+
+.ev-loading {
+ display: flex; align-items: center; justify-content: center;
+ flex-direction: column; gap: 12px; padding: 2.5rem;
+ color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 500;
+}
+.ev-loading-text {
+ font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase;
+ font-weight: 600; opacity: 0.6;
+}
+
+/* ── Empty states ── */
+.ev-empty {
+ display: flex; flex-direction: column; align-items: center;
+ justify-content: center; padding: 3rem 1.5rem; text-align: center;
+ min-height: 160px;
+}
+.ev-empty-icon {
+ width: 52px; height: 52px; border-radius: 14px;
+ background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+ display: flex; align-items: center; justify-content: center;
+ margin-bottom: 14px; opacity: 0.7;
+}
+.ev-empty-title {
+ font-family: 'DM Serif Display', serif;
+ font-size: 16px; color: rgba(255,255,255,0.75);
+ margin-bottom: 6px; font-weight: 400;
+}
+.ev-empty-desc {
+ font-size: 12px; color: rgba(255,255,255,0.4);
+ max-width: 260px; line-height: 1.5;
+}
+
+/* ── Button loading state ── */
+button.loading { position: relative; pointer-events: none; }
+button.loading::after {
+ content: ''; position: absolute; inset: 0;
+ border-radius: inherit; background: rgba(0,0,0,0.3);
+}
+button.loading::before {
+ content: ''; position: absolute;
+ top: 50%; left: 50%; width: 16px; height: 16px;
+ margin: -8px 0 0 -8px;
+ border: 2px solid rgba(255,255,255,0.2);
+ border-top-color: #fff;
+ border-radius: 50%;
+ animation: ev-spin 0.7s linear infinite;
+ z-index: 1;
+}
+
+/* ── Card hover lift ── */
+.stat-card {
+ transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.stat-card:hover {
+ transform: translateY(-2px);
+ box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+.card {
+ transition: box-shadow 0.18s ease;
+}
+.card:hover {
+ box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+/* ── Utility classes ── */
+.ev-flex { display: flex; }
+.ev-flex-col { display: flex; flex-direction: column; }
+.ev-flex-center { display: flex; align-items: center; justify-content: center; }
+.ev-flex-between { display: flex; align-items: center; justify-content: space-between; }
+.ev-gap-sm { gap: 8px; }
+.ev-gap-md { gap: 12px; }
+.ev-gap-lg { gap: 16px; }
+.ev-mb-sm { margin-bottom: 8px; }
+.ev-mb-md { margin-bottom: 12px; }
+.ev-mb-lg { margin-bottom: 16px; }
+.ev-mt-sm { margin-top: 8px; }
+.ev-mt-md { margin-top: 12px; }
+.ev-text-xs { font-size: 11px; }
+.ev-text-sm { font-size: 13px; }
+.ev-text-md { font-size: 15px; }
+.ev-sr-only {
+ position: absolute; width: 1px; height: 1px;
+ padding: 0; margin: -1px; overflow: hidden;
+ clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ── Skeleton loading placeholders ── */
+.ev-skeleton {
+ background: linear-gradient(90deg,
+  rgba(255,255,255,0.04) 25%,
+  rgba(255,255,255,0.08) 50%,
+  rgba(255,255,255,0.04) 75%
+ );
+ background-size: 200% 100%;
+ animation: ev-shimmer 1.5s ease-in-out infinite;
+ border-radius: 8px;
+ min-height: 16px;
+}
+@keyframes ev-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+ *, *::before, *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+ }
+}
+
+/* ── Sidebar accessibility ── */
+.nav-item svg { pointer-events: none; }
+.nav-badge {
+ position: absolute; top: 8px; right: 12px;
+ min-width: 18px; height: 18px; padding: 0 5px;
+ border-radius: 100px;
+ font-size: 10px; font-weight: 700;
+ display: flex; align-items: center; justify-content: center;
+ background: var(--gold, #FF5A2B); color: #0A0A0A;
+}
+
+/* ── Coach mobile tabs touch targets ── */
+@media (hover: none) and (pointer: coarse) {
+ .cmt-tab { min-width: 56px; min-height: 48px; padding: 8px 14px; }
+ .nav-item { min-height: 44px; padding: 12px 1.4rem; }
+ button { min-height: 44px; }
+ .modal-close { width: 44px !important; height: 44px !important; }
+}
+
+/* ── Coarse pointer touch targets for all interactive elements ── */
+@media (pointer: coarse) {
+ .dash-hero-btn { min-height: 48px; padding: 12px 20px; }
+ .card-header { min-height: 44px; }
+}
 </style>
 
 <!-- docx.js + chart.js are lazy-loaded on first use (see ensureLibsLoaded) -->
@@ -3295,31 +3618,39 @@ img, video, iframe { max-width: 100%; }
    wins the cascade at every breakpoint.
    ══════════════════════════════════════════════════════════ */
  :root {
-  --gold: #FF5A2B;
-  --gold-2: #FF7A4D;
-  --gold-dim: rgba(255,90,43,0.12);
-  --gold-glow: rgba(255,90,43,0.07);
-  --bg: #EDEAE2;
-  --bg2: #FFFFFF;
-  --bg3: #F5F3EC;
+  /* Brand — mapped to design tokens */
+  --gold: var(--evolve-orange);
+  --gold-2: var(--evolve-orange-light);
+  --gold-dim: var(--evolve-orange-dim);
+  --gold-glow: var(--evolve-orange-glow);
+
+  /* Backgrounds — mapped to design tokens */
+  --bg: var(--evolve-bg);
+  --bg2: var(--evolve-bg-raised);
+  --bg3: var(--evolve-bg-sunken);
   --bg4: #EFECE3;
-  --border: rgba(20,18,15,0.08);
-  --border2: rgba(20,18,15,0.14);
-  --text: #17140F;
-  --text2: #8A8171;
-  --text3: #A39C8C;
-  --muted: #78766F;
-  --muted2: #C9C5BA;
-  --green: #16A34A;
-  --red: #DC2626;
-  --blue: #2563EB;
-  /* Channel variables for JS inline colors: --ink for text-level
-     alphas (>= 0.3), --line for borders/shadows (< 0.3). Dark mode
-     overrides these channels instead of inverting the page. */
+
+  /* Borders — mapped to design tokens */
+  --border: var(--evolve-border);
+  --border2: var(--evolve-border-strong);
+
+  /* Text — mapped to design tokens */
+  --text: var(--evolve-text-primary);
+  --text2: var(--evolve-text-secondary);
+  --text3: var(--evolve-text-tertiary);
+  --muted: var(--evolve-text-secondary);
+  --muted2: var(--evolve-bg-sunken);
+
+  /* Semantic colors — mapped to design tokens */
+  --green: var(--evolve-success);
+  --red: var(--evolve-error);
+  --blue: var(--evolve-info);
+
+  /* Channel variables for JS inline colors */
   --ink-r: 23; --ink-g: 20; --ink-b: 15;
   --line-r: 20; --line-g: 18; --line-b: 15;
  }
-html, body { background: var(--bg) !important; color: var(--text) !important; color-scheme: light; }
+html, body { background: var(--evolve-bg) !important; color: var(--evolve-text-primary) !important; color-scheme: light; }
 #auth-screen { background: radial-gradient(ellipse 60% 50% at 50% -5%, rgba(255,90,43,0.10) 0%, transparent 55%), var(--bg) !important; }
 .auth-logo {
   font-family: 'Outfit', sans-serif !important;
@@ -4056,57 +4387,57 @@ html.dark-mode .wk-modal-pill.active {
 
 
 <!-- ── MOBILE TOPBAR ── -->
-<div id="mobile-topbar">
-  <button id="mob-hamburger" onclick="toggleMobileSidebar()" aria-label="Menu">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+<header id="mobile-topbar" role="banner">
+  <button id="mob-hamburger" onclick="toggleMobileSidebar()" aria-label="Open navigation menu">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
 </button>
-  <div class="mob-brand">EVOLVE</div>
-  <div style="width:40px"></div>
-</div>
+  <div class="mob-brand" aria-label="Evolve Coach Dashboard">EVOLVE</div>
+  <div style="width:40px" aria-hidden="true"></div>
+</header>
 
 <!-- ── SIDEBAR OVERLAY (tap to close) ── -->
-<div id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
+<div id="sidebar-overlay" onclick="closeMobileSidebar()" role="presentation" aria-hidden="true"></div>
 
 <!-- ── MOBILE BOTTOM TAB BAR ── -->
-<div id="coach-mobile-tabs" class="no-invert">
-  <button class="cmt-tab active" id="cmt-dashboard" onclick="showPage('dashboard');setActiveTab('dashboard')">
-    <span class="cmt-icon">
+<nav id="coach-mobile-tabs" class="no-invert" role="navigation" aria-label="Mobile navigation">
+  <button class="cmt-tab active" id="cmt-dashboard" onclick="showPage('dashboard');setActiveTab('dashboard')" role="button" aria-label="Dashboard" aria-current="page">
+    <span class="cmt-icon" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     </span>
     Dashboard
   </button>
-  <button class="cmt-tab" id="cmt-clients" onclick="showPage('clients');setActiveTab('clients')">
-    <span class="cmt-icon">
+  <button class="cmt-tab" id="cmt-clients" onclick="showPage('clients');setActiveTab('clients')" role="button" aria-label="Clients">
+    <span class="cmt-icon" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </span>
     Clients
   </button>
-  <button class="cmt-tab" id="cmt-workouts" onclick="showPage('workouts');setActiveTab('workouts')">
-    <span class="cmt-icon">
+  <button class="cmt-tab" id="cmt-workouts" onclick="showPage('workouts');setActiveTab('workouts')" role="button" aria-label="Workouts">
+    <span class="cmt-icon" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11"/><path d="M6.5 17.5h11"/><path d="M3 9.5h1.5"/><path d="M19.5 9.5H21"/><path d="M3 14.5h1.5"/><path d="M19.5 14.5H21"/><rect x="4.5" y="8" width="15" height="8" rx="2"/></svg>
     </span>
     Workouts
   </button>
-  <button class="cmt-tab" id="cmt-nutrition" onclick="showPage('nutrition');setActiveTab('nutrition')">
-    <span class="cmt-icon">
+  <button class="cmt-tab" id="cmt-nutrition" onclick="showPage('nutrition');setActiveTab('nutrition')" role="button" aria-label="Nutrition">
+    <span class="cmt-icon" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
     </span>
     Nutrition
   </button>
-  <button class="cmt-tab" id="cmt-chat" onclick="showPage('chat');setActiveTab('chat')">
-    <span class="cmt-icon" style="position:relative">
+  <button class="cmt-tab" id="cmt-chat" onclick="showPage('chat');setActiveTab('chat')" role="button" aria-label="Messages">
+    <span class="cmt-icon" style="position:relative" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span class="cmt-badge hidden" id="cmt-chat-badge" ></span>
+      <span class="cmt-badge hidden" id="cmt-chat-badge" aria-label="unread messages"></span>
     </span>
     Messages
   </button>
-  <button class="cmt-tab" id="cmt-account" onclick="showPage('settings');setActiveTab('settings')" title="Settings">
-    <span class="cmt-icon">
+  <button class="cmt-tab" id="cmt-account" onclick="showPage('settings');setActiveTab('settings')" title="Settings" role="button" aria-label="Settings">
+    <span class="cmt-icon" aria-hidden="true">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </span>
     Settings
   </button>
-</div>
+</nav>
 
 <script>
 function toggleMobileSidebar() {
@@ -4227,43 +4558,43 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="brand-logo">EVOLVE</div>
         <div class="brand-role">Coach Dashboard</div>
       </div>
-      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar" aria-label="Toggle sidebar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard" data-label="Dashboard">
-        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+    <nav class="sidebar-nav" role="navigation" aria-label="Coach navigation">
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard" data-label="Dashboard" role="button" tabindex="0" aria-current="page">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
         <span class="nav-label">Dashboard</span>
       </div>
-      <div class="nav-item" onclick="showPage('clients')" id="nav-clients" data-label="Clients">
-        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <div class="nav-item" onclick="showPage('clients')" id="nav-clients" data-label="Clients" role="button" tabindex="0">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
         <span class="nav-label">Clients</span>
-        <span class="nav-badge hidden" id="clients-pending-badge" >0</span>
+        <span class="nav-badge hidden" id="clients-pending-badge" aria-label="Pending clients">0</span>
       </div>
-      <div class="nav-item" onclick="showPage('workouts')" id="nav-workouts" data-label="Workouts">
-        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></span>
+      <div class="nav-item" onclick="showPage('workouts')" id="nav-workouts" data-label="Workouts" role="button" tabindex="0">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></span>
         <span class="nav-label">Workouts</span>
       </div>
-      <div class="nav-item" onclick="showPage('nutrition')" id="nav-nutrition" data-label="Nutrition">
-        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
+      <div class="nav-item" onclick="showPage('nutrition')" id="nav-nutrition" data-label="Nutrition" role="button" tabindex="0">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></span>
         <span class="nav-label">Nutrition</span>
       </div>
-      <div class="nav-item" onclick="showPage('chat')" id="nav-chat" data-label="Messages">
-        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+      <div class="nav-item" onclick="showPage('chat')" id="nav-chat" data-label="Messages" role="button" tabindex="0">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
         <span class="nav-label">Messages</span>
-        <span class="nav-badge hidden" id="chat-badge" >0</span>
+        <span class="nav-badge hidden" id="chat-badge" aria-label="Unread messages">0</span>
       </div>
 
     </nav>
     <div class="sidebar-footer">
       <div class="sidebar-footer-btns">
-        <div class="nav-item" onclick="showPage('settings')" id="nav-settings" data-label="Settings">
-          <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+        <div class="nav-item" onclick="showPage('settings')" id="nav-settings" data-label="Settings" role="button" tabindex="0">
+          <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
           <span class="nav-label">Settings</span>
         </div>
-        <div class="nav-item" onclick="handleLogout()" id="nav-logout" data-label="Sign Out">
-          <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+        <div class="nav-item" onclick="handleLogout()" id="nav-logout" data-label="Sign Out" role="button" tabindex="0">
+          <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
           <span class="nav-label">Sign Out</span>
         </div>
       </div>
@@ -4271,14 +4602,14 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 
   <!-- NOTIFICATION PANEL (Coach) -->
-  <div class="notif-panel" id="coach-notif-panel">
+  <div class="notif-panel" id="coach-notif-panel" role="region" aria-label="Notifications">
     <div class="notif-header">
       <div class="notif-header-title">Notifications</div>
-      <button class="notif-mark-all" onclick="coachMarkAllRead()">Mark all read</button>
+      <button class="notif-mark-all" onclick="coachMarkAllRead()" aria-label="Mark all notifications as read">Mark all read</button>
     </div>
-    <div class="notif-list" id="coach-notif-list">
+    <div class="notif-list" id="coach-notif-list" role="list" aria-label="Notification list">
       <div class="notif-empty">
-        <div class="notif-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.4"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <div class="notif-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.4" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
         No notifications yet
       </div>
     </div>
@@ -4288,60 +4619,61 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="main">
 
     <!-- ═══ DASHBOARD ═══ -->
-    <div class="page active" id="page-dashboard">
-      <div class="dash-hero">
+    <div class="page active" id="page-dashboard" role="region" aria-label="Coach dashboard">
+      <div class="dash-hero" role="banner">
         <div>
           <div class="dash-hero-greeting" id="dash-greeting">Good Morning, <span class="accent" id="dash-coach-firstname">Coach</span>.</div>
           <div class="dash-hero-sub" id="dash-summary"></div>
         </div>
-        <div class="dash-hero-actions">
-          <button class="dash-hero-btn" onclick="showPage('clients')">View Clients</button>
-          <button class="dash-hero-btn" onclick="showPage('chat')">Open Messages</button>
-          <button class="dash-hero-btn primary" onclick="showPage('workouts')">+ New Program</button>
+        <div class="dash-hero-actions" role="group" aria-label="Quick actions">
+          <button class="dash-hero-btn" onclick="showPage('clients')" aria-label="View clients">View Clients</button>
+          <button class="dash-hero-btn" onclick="showPage('chat')" aria-label="Open messages">Open Messages</button>
+          <button class="dash-hero-btn primary" onclick="showPage('workouts')" aria-label="Create new program">+ New Program</button>
         </div>
       </div>
-      <div class="stat-grid">
-        <div class="stat-card dark no-invert">
-          <div class="stat-val" id="stat-total-clients">—</div>
+      <div class="stat-grid" role="group" aria-label="Dashboard statistics">
+        <div class="stat-card dark no-invert" role="status">
+          <div class="stat-val" id="stat-total-clients" aria-label="Total clients">—</div>
           <div class="stat-lbl">Total Clients</div>
           <div class="stat-delta" id="stat-total-clients-delta"></div>
         </div>
-        <div class="stat-card" style="cursor:pointer" onclick="showPage('clients')">
+        <div class="stat-card" style="cursor:pointer" onclick="showPage('clients')" role="status" aria-label="Online now">
           <div class="stat-val" id="stat-online-now" style="color:#16A34A">0</div>
           <div class="stat-lbl">Online Now</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-val" id="stat-active-today">—</div>
+        <div class="stat-card" role="status">
+          <div class="stat-val" id="stat-active-today" aria-label="Active today">—</div>
           <div class="stat-lbl">Active Today</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-val" id="stat-workouts-logged">—</div>
+        <div class="stat-card" role="status">
+          <div class="stat-val" id="stat-workouts-logged" aria-label="Workouts logged">—</div>
           <div class="stat-lbl">Workouts Logged</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-val" id="stat-photos">—</div>
+        <div class="stat-card" role="status">
+          <div class="stat-val" id="stat-photos" aria-label="Progress photos">—</div>
           <div class="stat-lbl">Progress Photos</div>
         </div>
-      </div>
-      <div class="dash-two-col" style="display:grid;grid-template-columns:1.15fr 1fr;gap:1.5rem">
+       </div>
+
+       <div class="dash-two-col" style="display:grid;grid-template-columns:1.15fr 1fr;gap:1.5rem">
         <div class="card">
           <div class="card-header"><div class="card-title">Recent Client Activity</div></div>
-          <div class="card-body" id="recent-activity-list">
+          <div class="card-body" id="recent-activity-list" role="feed" aria-label="Recent client activity">
           </div>
         </div>
         <div class="card">
           <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
             <div class="card-title">Today's Sessions</div>
-            <span style="font-size:11.5px;font-weight:700;color:var(--gold);cursor:pointer" onclick="showPage('clients')">Calendar &rarr;</span>
+            <span style="font-size:11.5px;font-weight:700;color:var(--gold);cursor:pointer" onclick="showPage('clients')" role="button" tabindex="0">Calendar &rarr;</span>
           </div>
-          <div class="card-body" id="todays-sessions-list">
+          <div class="card-body" id="todays-sessions-list" role="list" aria-label="Today's sessions">
             <div style="text-align:center;color:var(--muted);padding:1.5rem;font-size:13px">Loading…</div>
           </div>
         </div>
       </div>
 
       <!-- Recent Progress Photos feed -->
-      <div class="dash-photo-feed">
+      <div class="dash-photo-feed" role="region" aria-label="Recent progress photos">
         <div class="dash-photo-feed-header">
           <div class="card-title">Recent Progress Photos</div>
           <span style="font-size:11px;color:var(--muted)"></span>
@@ -4363,44 +4695,44 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <!-- ═══ CLIENTS ═══ -->
-    <div class="page" id="page-clients">
+    <div class="page" id="page-clients" role="region" aria-label="Client management">
       <div class="page-header">
         <div class="page-title">Clients</div>
-        <div class="page-sub" id="clients-count">Loading…</div>
+        <div class="page-sub" id="clients-count" aria-live="polite">Loading…</div>
       </div>
       <!-- Tab switcher: Active / Pending / Archived -->
-      <div style="display:flex;gap:8px;padding:0 0 18px 0;">
-        <button id="clients-tab-active" onclick="switchClientsTab('active')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--gold);background:var(--gold);color:#0a0a0a;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Active</button>
-        <button id="clients-tab-pending" onclick="switchClientsTab('pending')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Pending Requests <span id="pending-count-badge" style="display:none;background:rgba(255,90,43,0.25);color:var(--gold);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;">0</span></button>
-        <button id="clients-tab-archived" onclick="switchClientsTab('archived')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Archived <span id="archived-count-badge" style="display:none;background:rgba(248,113,113,0.2);color:var(--red);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;">0</span></button>
+      <div role="tablist" aria-label="Client list filter" style="display:flex;gap:8px;padding:0 0 18px 0;">
+        <button role="tab" id="clients-tab-active" aria-selected="true" aria-controls="clients-active-panel" onclick="switchClientsTab('active')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--gold);background:var(--gold);color:#0a0a0a;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Active</button>
+        <button role="tab" id="clients-tab-pending" aria-selected="false" aria-controls="clients-pending-panel" onclick="switchClientsTab('pending')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Pending Requests <span id="pending-count-badge" style="display:none;background:rgba(255,90,43,0.25);color:var(--gold);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;" aria-label="pending count">0</span></button>
+        <button role="tab" id="clients-tab-archived" aria-selected="false" aria-controls="clients-archived-panel" onclick="switchClientsTab('archived')" style="padding:8px 20px;border-radius:100px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-size:12px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all 0.2s;">Archived <span id="archived-count-badge" style="display:none;background:rgba(248,113,113,0.2);color:var(--red);border-radius:100px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;" aria-label="archived count">0</span></button>
       </div>
       <!-- Active clients -->
-      <div id="clients-active-panel">
+      <div id="clients-active-panel" role="tabpanel" aria-label="Active clients">
         <div class="online-strip" id="online-strip">
           <div class="online-strip-label"> Online Now</div>
-          <div class="online-avatar-row" id="online-avatar-row"></div>
+          <div class="online-avatar-row" id="online-avatar-row" role="list" aria-label="Online clients"></div>
         </div>
-        <div class="client-grid" id="client-grid">
+        <div class="client-grid" id="client-grid" role="list" aria-label="Client list">
           <div class="loading-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
       <!-- Pending signup requests, awaiting coach confirmation -->
-      <div class="hidden" id="clients-pending-panel" >
+      <div class="hidden" id="clients-pending-panel" role="tabpanel" aria-label="Pending signup requests">
         <div style="background:rgba(255,90,43,0.06);border:1px solid rgba(255,90,43,0.18);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5A2B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5A2B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span style="font-size:12px;color:rgba(255,90,43,0.9);line-height:1.5;">These people signed up but haven't been confirmed as real clients yet. Approve to grant site access, or decline to remove them completely — declined accounts disappear from your roster and can't access the site.</span>
         </div>
-        <div class="client-grid" id="pending-client-grid">
+        <div class="client-grid" id="pending-client-grid" role="list" aria-label="Pending clients">
           <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No pending signup requests</div>
         </div>
       </div>
       <!-- Archived clients -->
-      <div class="hidden" id="clients-archived-panel" >
+      <div class="hidden" id="clients-archived-panel" role="tabpanel" aria-label="Archived clients">
         <div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
           <span style="font-size:12px;color:rgba(248,113,113,0.85);line-height:1.5;">Archived clients cannot access the app. Their data is fully preserved — restore them anytime to re-enable access.</span>
         </div>
-        <div class="client-grid" id="archived-client-grid">
+        <div class="client-grid" id="archived-client-grid" role="list" aria-label="Archived clients">
           <div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No archived clients</div>
         </div>
       </div>
@@ -4618,7 +4950,7 @@ document.addEventListener('DOMContentLoaded', () => {
     #wk-builder-view .builder-footer { padding: 18px 22px; }
     </style>
 
-    <div class="page" id="page-workouts">
+    <div class="page" id="page-workouts" role="region" aria-label="Workout programs">
 
       <!-- ═══ LIST VIEW — assigned programs across the roster ═══ -->
       <div id="wk-list-view">
@@ -4627,14 +4959,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="page-title">Workouts<span style="color:var(--gold)">.</span></div>
             <div class="page-sub">Assigned programs across your active roster</div>
           </div>
-          <button class="wk-new-btn" type="button" onclick="wkOpenNewProgramModal()">+ New Program</button>
+          <button class="wk-new-btn" type="button" onclick="wkOpenNewProgramModal()" aria-label="Create new program">+ New Program</button>
         </div>
 
-        <div class="wk-filter-row" id="wk-filter-row"></div>
+        <div class="wk-filter-row" id="wk-filter-row" role="group" aria-label="Filter programs"></div>
 
         <div class="wk-section-label">Assigned Programs</div>
 
-        <div id="wk-programs-list"></div>
+        <div id="wk-programs-list" role="list" aria-label="Program list"></div>
       </div>
 
       <!-- ═══ BUILDER VIEW — full plan editor (opened via Edit Plan / Custom) ═══ -->
@@ -4755,23 +5087,23 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
 
     <!-- ═══ CHAT ═══ -->
-    <div class="page" id="page-chat" style="padding:1rem 1.25rem;">
+    <div class="page" id="page-chat" style="padding:1rem 1.25rem;" role="region" aria-label="Client messages">
       <div class="chat-layout">
         <div class="chat-list">
           <div class="chat-list-header">
             <div class="chat-list-header-title">Messages</div>
             <div class="chat-search-wrap">
-              <svg class="chat-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input class="chat-search-input" type="text" placeholder="Search…" oninput="filterChatList(this.value)" id="chat-search-input">
+              <svg class="chat-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="chat-search-input" type="text" placeholder="Search…" oninput="filterChatList(this.value)" id="chat-search-input" aria-label="Search messages">
             </div>
           </div>
-          <div class="chat-list-items" id="chat-list-items">
+          <div class="chat-list-items" id="chat-list-items" role="list" aria-label="Conversations">
             <div class="loading-dots"><span></span><span></span><span></span></div>
           </div>
         </div>
-        <div class="chat-window" id="chat-window">
+        <div class="chat-window" id="chat-window" role="log" aria-label="Chat messages">
           <div class="chat-no-select">
-            <div class="chat-no-select-icon">💬</div>
+            <div class="chat-no-select-icon" aria-hidden="true">💬</div>
             <div class="chat-no-select-text">Your Messages</div>
             <div class="chat-no-select-sub">Select a client to start chatting</div>
           </div>
@@ -4781,7 +5113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     <!-- ═══ NUTRITION ═══ -->
-    <div class="page" id="page-nutrition">
+    <div class="page" id="page-nutrition" role="region" aria-label="Nutrition management">
 
       <!-- ═══ SIMPLE OVERVIEW (default landing view) ═══ -->
       <div id="nutr-simple-view">
@@ -4792,17 +5124,17 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="page-sub">Macro targets and daily adherence across clients</div>
             </div>
           </div>
-          <button type="button" class="nutr-simple-open-btn" onclick="openNutritionTools()">Manage Plans &amp; Logs →</button>
+          <button type="button" class="nutr-simple-open-btn" onclick="openNutritionTools()" aria-label="Manage nutrition plans and logs">Manage Plans &amp; Logs →</button>
         </div>
 
         <div class="nutr-simple-grid">
           <div class="nutr-simple-card">
             <div class="nutr-simple-card-title">Client Targets</div>
-            <div id="nutr-simple-list">
+            <div id="nutr-simple-list" role="list" aria-label="Client nutrition targets">
               <div style="padding:30px 0;text-align:center;color:var(--muted);font-size:12px;">Loading…</div>
             </div>
           </div>
-          <div class="nutr-simple-card" id="nutr-simple-detail">
+          <div class="nutr-simple-card" id="nutr-simple-detail" aria-live="polite">
             <div style="padding:30px 0;text-align:center;color:var(--muted);font-size:12px;">Select a client to see today's progress</div>
           </div>
         </div>
@@ -4860,17 +5192,17 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div class="nt-blurb">For clients who already know what to eat — set daily targets and they'll see progress rings and bars on their end.</div>
 
-              <div class="nt-row3">
-                <div class="nt-field"><label>Plan Name</label><input type="text" id="mt-plan-name" placeholder="Cut phase macros" /></div>
-                <div class="nt-field"><label>Day Type</label>
-                  <select id="mt-day-type">
-                    <option value="">All days</option>
-                    <option value="Training Day">Training day</option>
-                    <option value="Rest Day">Rest day</option>
-                  </select>
-                </div>
-                <div class="nt-field"><label>Daily Steps <span class="nt-optional">— optional</span></label><input type="number" id="mt-step-goal" placeholder="8,000" min="0" step="500" inputmode="numeric" /></div>
-              </div>
+               <div class="nt-row3">
+                 <div class="nt-field"><label>Plan Name</label><input type="text" id="mt-plan-name" placeholder="Cut phase macros" /></div>
+                 <div class="nt-field"><label>Day Type</label>
+                   <select id="mt-day-type" onchange="onDayTypeChange()">
+                     <option value="">All days</option>
+                     <option value="Training Day">Training day</option>
+                     <option value="Rest Day">Rest day</option>
+                   </select>
+                 </div>
+                 <div class="nt-field"><label>Daily Steps <span class="nt-optional">— optional</span></label><input type="number" id="mt-step-goal" placeholder="8,000" min="0" step="500" inputmode="numeric" /></div>
+               </div>
 
               <div class="nt-divider thick"></div>
 
@@ -5120,7 +5452,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     <!-- ═══ SETTINGS ═══ -->
 
-    <div class="page" id="page-settings">
+    <div class="page" id="page-settings" role="region" aria-label="Settings">
       <div class="settings-wrap">
         <div class="page-header">
           <div class="page-title">Settings</div>
@@ -5129,15 +5461,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="settings-card settings-profile-card">
           <div class="coach-info">
-            <div class="coach-av" id="coach-av">C</div>
+            <div class="coach-av" id="coach-av" aria-hidden="true">C</div>
             <div class="coach-text">
               <div class="coach-name" id="coach-name">Coach</div>
               <div class="coach-email" id="coach-email"></div>
             </div>
             <div class="notif-btn-wrap">
-              <button class="notif-btn" id="coach-notif-btn" onclick="toggleCoachNotifPanel()" title="Notifications">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                <span class="notif-badge" id="coach-notif-badge">0</span>
+              <button class="notif-btn" id="coach-notif-btn" onclick="toggleCoachNotifPanel()" title="Notifications" aria-label="Notifications">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notif-badge" id="coach-notif-badge" aria-label="unread notifications">0</span>
               </button>
             </div>
           </div>
@@ -5145,7 +5477,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="settings-section-title">Preferences</div>
         <div class="settings-card">
-          <div class="theme-toggle-row" onclick="toggleDarkMode()" title="Toggle dark mode">
+          <div class="theme-toggle-row" onclick="toggleDarkMode()" title="Toggle dark mode" role="switch" tabindex="0" aria-label="Toggle dark mode">
             <span class="theme-toggle-label"><span class="theme-toggle-icon" id="theme-toggle-icon">🌙</span> Dark Mode</span>
             <span class="theme-switch" id="theme-switch"><span class="theme-switch-knob"></span></span>
           </div>
@@ -5270,11 +5602,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Side-by-side photos -->
             <div id="coach-ba-slider-wrap">
               <div class="coach-ba-photo-col">
-                <img id="coach-ba-img-before" src="" alt="Before">
+                <img id="coach-ba-img-before" src="" alt="Before" loading="lazy" decoding="async">
                 <div class="coach-ba-img-label before-side">Before</div>
               </div>
               <div class="coach-ba-photo-col">
-                <img id="coach-ba-img-after" src="" alt="After">
+                <img id="coach-ba-img-after" src="" alt="After" loading="lazy" decoding="async">
                 <div class="coach-ba-img-label after-side">After</div>
               </div>
             </div>
@@ -5366,7 +5698,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <div class="lb-inner" onclick="event.stopPropagation()">
-    <img class="lb-img" id="lb-img" src="" alt="">
+    <img class="lb-img" id="lb-img" src="" alt="" loading="lazy" decoding="async">
     <div class="lb-meta">
       <div class="lb-date" id="lb-date"></div>
       <div class="lb-note" id="lb-note"></div>
@@ -5388,7 +5720,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </button>
     </div>
     <div class="pvi-body">
-      <img class="pvi-img" id="pvi-img" src="" alt="Progress photo">
+      <img class="pvi-img" id="pvi-img" src="" alt="Progress photo" loading="lazy" decoding="async">
       <div class="pvi-meta" id="pvi-meta"></div>
     </div>
   </div>
@@ -5399,7 +5731,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- Photo lightbox -->
 <div class="nutr-lightbox" id="nutr-lightbox" onclick="closeNutrLightbox()">
   <span class="nutr-lightbox-close"></span>
-  <img id="nutr-lightbox-img" src="" alt="Meal photo">
+  <img id="nutr-lightbox-img" src="" alt="Meal photo" loading="lazy" decoding="async">
 </div>
 
 <!-- Monitor Client Detail Panel -->
@@ -6874,11 +7206,6 @@ const WK_TEMPLATES = {
 };
 
 const WK_AVATAR_PALETTE = ['#FF5A2B', '#2D9E6B', '#8B5CF6', '#2563EB', '#C2410C', '#0891B2'];
-function wkAvatarColor(uid) {
-  let h = 0;
-  for (let i=0;i<(uid||'').length;i++) h = (h*31 + uid.charCodeAt(i)) >>> 0;
-  return WK_AVATAR_PALETTE[h % WK_AVATAR_PALETTE.length];
-}
 
 let _wkFilterUid = 'all';
 let _wkModalClientUid = '';
@@ -7777,7 +8104,7 @@ function renderArchivedGrid() {
   const grid = document.getElementById('archived-client-grid');
   if (!grid) return;
   if (!archivedClients.length) {
-    grid.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No archived clients</div>`;
+    grid.innerHTML = `<div class="ev-empty"><div class="ev-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg></div><div class="ev-empty-title">No archived clients</div><div class="ev-empty-desc">Archived clients will appear here</div></div>`;
     return;
   }
   grid.innerHTML = archivedClients.map(c => {
@@ -7785,10 +8112,10 @@ function renderArchivedGrid() {
     const ini  = initials(c.firstName, c.lastName);
     const archivedDate = c.archivedAt ? new Date(c.archivedAt.toDate ? c.archivedAt.toDate() : c.archivedAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'Unknown date';
     return `
-    <div class="client-card" style="opacity:0.75;border-color:rgba(248,113,113,0.2);">
+    <div class="client-card" style="opacity:0.75;border-color:rgba(248,113,113,0.2);" role="listitem" tabindex="0" aria-label="${name}, archived">
       <div class="client-card-top">
         <div class="client-av-wrap">
-          <div class="client-av" style="background:rgba(248,113,113,0.15);color:var(--red);">${clientAvatarInner(c, ini)}</div>
+          <div class="client-av" style="background:rgba(248,113,113,0.15);color:var(--red);" aria-hidden="true">${clientAvatarInner(c, ini)}</div>
         </div>
         <div style="flex:1;min-width:0;">
           <div class="client-name">${name}</div>
@@ -7796,16 +8123,16 @@ function renderArchivedGrid() {
           <div style="font-size:10px;color:rgba(248,113,113,0.6);margin-top:3px;letter-spacing:0.3px;">Archived ${archivedDate}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.25);border-radius:100px;padding:3px 10px;font-weight:700;">Archived</span>
+          <span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.25);border-radius:100px;padding:3px 10px;font-weight:700;" aria-label="Status: Archived">Archived</span>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px;">
-        <button class="action-btn" onclick="confirmRestoreClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      <div style="display:flex;gap:8px;margin-top:14px;" role="group" aria-label="Archived client actions">
+        <button class="action-btn" onclick="confirmRestoreClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);" aria-label="Restore access for ${name}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           Restore Access
         </button>
-        <button onclick="confirmDeleteClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" title="Delete Permanently" style="flex-shrink:0;width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(220,50,50,0.18);border-radius:8px;color:rgba(255,107,107,0.45);cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.background='rgba(220,50,50,0.12)';this.style.color='#ff6b6b';this.style.borderColor='rgba(220,50,50,0.4)';" onmouseleave="this.style.background='transparent';this.style.color='rgba(255,107,107,0.45)';this.style.borderColor='rgba(220,50,50,0.18)';">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        <button onclick="confirmDeleteClient('${c.uid}','${(name).replace(/'/g,'&#39;')}')" title="Delete Permanently" style="flex-shrink:0;width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(220,50,50,0.18);border-radius:8px;color:rgba(255,107,107,0.45);cursor:pointer;transition:all 0.2s;" onmouseenter="this.style.background='rgba(220,50,50,0.12)';this.style.color='#ff6b6b';this.style.borderColor='rgba(220,50,50,0.4)';" onmouseleave="this.style.background='transparent';this.style.color='rgba(255,107,107,0.45)';this.style.borderColor='rgba(220,50,50,0.18)';" aria-label="Delete ${name} permanently">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
         </button>
       </div>
     </div>`;
@@ -7821,7 +8148,7 @@ function renderPendingGrid() {
   const grid = document.getElementById('pending-client-grid');
   if (!grid) return;
   if (!pendingClients.length) {
-    grid.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No pending signup requests</div>`;
+    grid.innerHTML = `<div class="ev-empty"><div class="ev-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="ev-empty-title">No pending signup requests</div><div class="ev-empty-desc">New signups will appear here for your approval</div></div>`;
     return;
   }
   // Newest requests first
@@ -7836,10 +8163,10 @@ function renderPendingGrid() {
     const signedUp = c.memberSince ? fmtDate(c.memberSince) : 'Just now';
     const goal = _goalLabel(c.goal);
     return `
-    <div class="client-card" style="border-color:rgba(255,90,43,0.25);">
+    <div class="client-card" style="border-color:rgba(255,90,43,0.25);" role="listitem" tabindex="0" aria-label="${escapeHtml(name)}, pending approval">
       <div class="client-card-top">
         <div class="client-av-wrap">
-          <div class="client-av" style="background:rgba(255,90,43,0.15);color:var(--gold);">${clientAvatarInner(c, ini)}</div>
+          <div class="client-av" style="background:rgba(255,90,43,0.15);color:var(--gold);" aria-hidden="true">${clientAvatarInner(c, ini)}</div>
         </div>
         <div style="flex:1;min-width:0;">
           <div class="client-name">${escapeHtml(name)}</div>
@@ -7847,16 +8174,16 @@ function renderPendingGrid() {
           <div style="font-size:10px;color:rgba(255,90,43,0.7);margin-top:3px;letter-spacing:0.3px;">Signed up ${signedUp}${goal ? ' · Goal: '+goal : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(255,90,43,0.12);color:var(--gold);border:1px solid rgba(255,90,43,0.3);border-radius:100px;padding:3px 10px;font-weight:700;">Pending</span>
+          <span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;background:rgba(255,90,43,0.12);color:var(--gold);border:1px solid rgba(255,90,43,0.3);border-radius:100px;padding:3px 10px;font-weight:700;" aria-label="Status: Pending">Pending</span>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px;">
-        <button class="action-btn" onclick="confirmApproveClient('${c.uid}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+      <div style="display:flex;gap:8px;margin-top:14px;" role="group" aria-label="Pending client actions">
+        <button class="action-btn" onclick="confirmApproveClient('${c.uid}')" style="flex:1;background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.25);color:var(--green);" aria-label="Approve ${escapeHtml(name)}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
           Approve
         </button>
-        <button class="action-btn remove-client-btn" onclick="confirmDeclineClient('${c.uid}')" style="flex:1;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <button class="action-btn remove-client-btn" onclick="confirmDeclineClient('${c.uid}')" style="flex:1;" aria-label="Decline ${escapeHtml(name)}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           Decline
         </button>
       </div>
@@ -7917,31 +8244,31 @@ function _clientCardSignature(c, online, lastSeen, lastLogin) {
 
 function _clientCardHTML(c, online, lastSeen, lastLogin) {
   return `
-    <div class="client-card ${online?'is-online':''}" id="client-card-${c.uid}" style="view-transition-name:client-card-${c.uid}" onclick="openClientModal('${c.uid}')">
+    <div class="client-card ${online?'is-online':''}" id="client-card-${c.uid}" style="view-transition-name:client-card-${c.uid}" onclick="openClientModal('${c.uid}')" role="listitem" tabindex="0" aria-label="${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')}, ${online ? 'online' : 'offline'}">
       <div class="client-card-top">
         <div class="client-av-wrap">
-          <div class="client-av">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
-          <div class="online-dot"></div>
+          <div class="client-av" aria-hidden="true">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
+          ${online ? '<div class="online-dot" aria-hidden="true"></div>' : ''}
         </div>
         <div style="flex:1;min-width:0">
           <div class="client-name">${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')}</div>
           <div class="client-email">${escapeHtml(c.email||'')}</div>
           ${online
-            ? `<div class="online-badge">Online now</div>`
+            ? `<div class="online-badge" role="status">Online now</div>`
             : (lastSeen ? `<div style="font-size:10px;color:var(--muted);margin-top:3px">Last seen ${lastSeen}</div>` :
                `<div style="font-size:10px;color:var(--muted);margin-top:3px">Last login: ${lastLogin}</div>`)
           }
         </div>
         <div class="client-badge-col">
-          <div class="client-plan plan-${(c.plan||'free').toLowerCase()}">${(c.plan||'free').toUpperCase()}</div>
+          <div class="client-plan plan-${(c.plan||'free').toLowerCase()}" aria-label="Plan: ${(c.plan||'free')}">${(c.plan||'free').toUpperCase()}</div>
           <div class="cc-streak hidden" id="cc-streak-${c.uid}" ></div>
         </div>
       </div>
-      <div class="client-stats">
-        <div class="cs-item"><div class="cs-val">${c.attendanceCount||0}</div><div class="cs-lbl">Sessions</div></div>
-        <div class="cs-item"><div class="cs-val">${c.age||'—'}</div><div class="cs-lbl">Age</div></div>
-        <div class="cs-item"><div class="cs-val">${c.weightKg||'—'}</div><div class="cs-lbl before">Before</div></div>
-        <div class="cs-item"><div class="cs-val ${(() => {
+      <div class="client-stats" role="group" aria-label="Client stats">
+        <div class="cs-item" role="status"><div class="cs-val">${c.attendanceCount||0}</div><div class="cs-lbl">Sessions</div></div>
+        <div class="cs-item" role="status"><div class="cs-val">${c.age||'—'}</div><div class="cs-lbl">Age</div></div>
+        <div class="cs-item" role="status"><div class="cs-val">${c.weightKg||'—'}</div><div class="cs-lbl before">Before</div></div>
+        <div class="cs-item" role="status"><div class="cs-val ${(() => {
           const cur = c.currentWeightKg;
           const orig = c.weightKg;
           if (cur && orig && cur < orig) return 'current-weight';
@@ -7954,12 +8281,12 @@ function _clientCardHTML(c, online, lastSeen, lastLogin) {
           return '';
         })()}">Current</div></div>
       </div>
-      <div class="client-actions">
-        <button class="action-btn" onclick="event.stopPropagation();openChatWith('${c.uid}')">Chat</button>
-        <button class="action-btn primary" onclick="event.stopPropagation();openAssignFor('${c.uid}')">Assign Plan</button>
-        <button class="action-btn remove-client-btn" onclick="event.stopPropagation();confirmRemoveClient('${c.uid}','${jsAttrSafe(((c.firstName||'')+' '+(c.lastName||'')).trim())}')" title="Remove client">Remove</button>
+      <div class="client-actions" role="group" aria-label="Client actions">
+        <button class="action-btn" onclick="event.stopPropagation();openChatWith('${c.uid}')" aria-label="Chat with ${escapeHtml(c.firstName||'client')}">Chat</button>
+        <button class="action-btn primary" onclick="event.stopPropagation();openAssignFor('${c.uid}')" aria-label="Assign plan to ${escapeHtml(c.firstName||'client')}">Assign Plan</button>
+        <button class="action-btn remove-client-btn" onclick="event.stopPropagation();confirmRemoveClient('${c.uid}','${jsAttrSafe(((c.firstName||'')+' '+(c.lastName||'')).trim())}')" title="Remove client" aria-label="Remove ${escapeHtml(c.firstName||'client')}">Remove</button>
       </div>
-      <div class="cc-photo-strip" id="cc-photos-${c.uid}">
+      <div class="cc-photo-strip" id="cc-photos-${c.uid}" aria-label="Progress photos">
         <div class="cc-photo-none" data-loading="1">Loading photos…</div>
       </div>
     </div>`;
@@ -7969,7 +8296,7 @@ function _renderClientGridInner() {
   const grid = document.getElementById('client-grid');
   document.getElementById('clients-count').textContent = allClients.length + ' clients registered';
   if (!allClients.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><div class="empty-text">No clients yet</div><div class="empty-sub">Clients appear here once they register</div></div>`;
+    grid.innerHTML = `<div class="ev-empty"><div class="ev-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="ev-empty-title">No clients yet</div><div class="ev-empty-desc">Clients appear here once they register</div></div>`;
     return;
   }
   // Sort: online first, then alphabetically by name, then by uid as a final
@@ -8353,7 +8680,7 @@ function _sessAvatarColor(uid) {
 function renderTodaysSessions() {
   const list = document.getElementById('todays-sessions-list');
   if (!list) return;
-  const todayIso = new Date().toISOString().split('T')[0];
+  const todayIso = manilaToday();
   const due = allClients.filter(c => c.nextPhotoDue === todayIso);
   if (!due.length) {
     list.innerHTML = `<div class="empty-state" style="padding:1.5rem"><div class="empty-sub">No check-ins scheduled for today</div></div>`;
@@ -11986,6 +12313,14 @@ function coachShowBaAngle(angle, oldest, newest) {
   }
 }
 
+// ── Timezone-safe date helper ──────────────────────────────────
+// Returns today's date as YYYY-MM-DD in Asia/Manila, avoiding UTC
+// offset issues that cause incorrect "missed update" calculations
+// around Philippine midnight (UTC+8).
+function manilaToday() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+}
+
 const _COACH_DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 async function loadClientScheduleInfo(uid) {
@@ -12005,7 +12340,7 @@ async function loadClientScheduleInfo(uid) {
     dayEl.textContent  = `Every other ${_COACH_DAY_NAMES[day]}`;
     const nextDate = new Date(nextDue + 'T00:00:00');
     nextEl.textContent = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const todayIso = new Date().toISOString().split('T')[0];
+    const todayIso = manilaToday();
     if (nextDue < todayIso) {
       statEl.className = 'csi-status-late';
       const daysLate = Math.round((new Date(todayIso) - new Date(nextDue + 'T00:00:00')) / 86400000);
@@ -12018,8 +12353,12 @@ async function loadClientScheduleInfo(uid) {
 }
 
 function loadMissedUpdates() {
-  const todayIso = new Date().toISOString().split('T')[0];
-  const missed = allClients.filter(c => c.nextPhotoDue && c.nextPhotoDue < todayIso);
+  const todayIso = manilaToday();
+  const missed = allClients.filter(c => {
+    if (!c.photoUpdateDay && c.photoUpdateDay !== 0) return false;
+    if (!c.nextPhotoDue) return false;
+    return c.nextPhotoDue < todayIso;
+  });
   const panel = document.getElementById('missed-updates-panel');
   const list  = document.getElementById('missed-updates-list');
   const count = document.getElementById('missed-updates-count');
@@ -12620,11 +12959,6 @@ function renderExerciseList() {
   }
   updateDayCounts();
   updateBuilderSummary();
-}
-
-function saveExerciseField(i, field, val) {
-  if (!val) return;
-  workoutPlan[currentDay].exercises[i][field] = val;
 }
 
 function editExerciseTarget(pill, i) {
@@ -13697,38 +14031,6 @@ function autoResizeChatInput(el) {
 // single-quoted JS string which itself sits inside a double-quoted HTML attribute.
 // Order matters: JS-escape backslash/quote first, then HTML-escape the attribute delimiters.
 // ─────────────────────────────────────────
-// RATE LIMITING
-// ─────────────────────────────────────────
-// Simple client-side cooldown: returns true if the action is allowed to proceed,
-// false (and shows a toast) if it's being called too soon after the last call.
-// Not a security boundary (a determined attacker can bypass client JS and hit
-// Firestore directly — that needs Firestore Security Rules) but it stops
-// accidental double-submits and casual spam through the normal UI.
-const _rateLimitState = {};
-function rateLimited(key, minIntervalMs, message) {
-  const now = Date.now();
-  const last = _rateLimitState[key] || 0;
-  if (now - last < minIntervalMs) {
-    if (message && typeof showToast === 'function') showToast(message, 'error');
-    return true; // is rate limited -> caller should stop
-  }
-  _rateLimitState[key] = now;
-  return false; // not rate limited -> caller should proceed
-}
-
-// Wraps localStorage.setItem — private browsing, Safari's ITP, and quota limits
-// can all make this throw. Returns true/false instead of letting it crash the caller.
-function safeLocalStorageSet(key, value) {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch(e) {
-    console.warn('localStorage.setItem failed for "' + key + '":', e.message);
-    return false;
-  }
-}
-
-// ─────────────────────────────────────────
 // GLOBAL ERROR SAFETY NET
 // ─────────────────────────────────────────
 // Catches anything that slips past local try/catch blocks so it's logged and
@@ -13775,13 +14077,9 @@ function jsAttrSafe(s) {
   return jsEscaped.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function escapeHtml(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
-}
-
-// Escapes for use inside an HTML attribute (value="...") — no <br> conversion.
-function escapeAttr(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+function jsAttrSafe(s) {
+  const jsEscaped = String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  return jsEscaped.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // Resolves CSS custom property colors for Canvas 2D (canvas ignores var()).
@@ -13798,23 +14096,6 @@ function _resolveCanvasColors() {
 function canvasInk(a)  { if (!_canvasColorCache.ink) _resolveCanvasColors(); return `rgba(${_canvasColorCache.ink},${a})`; }
 function canvasLine(a) { if (!_canvasColorCache.line) _resolveCanvasColors(); return `rgba(${_canvasColorCache.line},${a})`; }
 
-// Cleans a raw input/textarea value before it gets saved to Firestore:
-// trims, strips control/zero-width chars, collapses runs of whitespace, caps length.
-function sanitizeInput(raw, maxLen) {
-  let s = String(raw ?? '');
-  s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, '');
-  s = s.trim();
-  if (maxLen) s = s.slice(0, maxLen);
-  return s;
-}
-
-// Convenience: read + sanitize a field's value in one call.
-function getSanitizedValue(id, maxLen) {
-  const el = document.getElementById(id);
-  return el ? sanitizeInput(el.value, maxLen) : '';
-}
-
-// Strips undefined/null values from an object so Firestore doesn't reject the write.
 // Firestore compat SDK throws "INTERNAL ASSERTION FAILED: Unexpected state" on undefined values.
 function stripUndefined(obj) {
   if (Array.isArray(obj)) return obj.map(stripUndefined);
@@ -13845,17 +14126,6 @@ function fmtDateLabel(ts) {
     if (diff === 1) return 'Yesterday';
     return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year: diff>300?'numeric':undefined });
   } catch(_) { return 'Today'; }
-}
-
-function insertEmoji() {
-  const inp = document.getElementById('chat-input');
-  if (!inp) return;
-  const emojis = ['😊','💪','👍','🔥','✅','🎯'];
-  const e = emojis[Math.floor(Math.random()*emojis.length)];
-  const pos = inp.selectionStart;
-  inp.value = inp.value.slice(0,pos) + e + inp.value.slice(pos);
-  inp.focus();
-  inp.selectionStart = inp.selectionEnd = pos + e.length;
 }
 
 function closeMobileChat() {
@@ -13950,10 +14220,6 @@ let ptChartMetric  = 'weight';
 let ptEnergyRating = 0;
 let ptSleepRating  = 0;
 let ptNutritionRating = 0;
-
-function initProgress() {
-  renderPtClientList();
-}
 
 function renderPtClientList() {
   const list = document.getElementById('pt-client-list-items');
@@ -14101,20 +14367,6 @@ function renderPtMain(uid) {
     </div>`;
   // Reset ratings state
   ptEnergyRating=0; ptSleepRating=0; ptNutritionRating=0;
-}
-
-function setPtRating(type, val) {
-  if (type==='energy') ptEnergyRating=val;
-  else if (type==='nutrition') ptNutritionRating=val;
-  else if (type==='workout') ptSleepRating=val;
-  const rowId = `pt-${type}-row`;
-  document.querySelectorAll(`#${rowId} .pt-rating-btn`).forEach(btn => {
-    btn.classList.toggle('on', parseInt(btn.dataset.val) <= val);
-  });
-}
-
-function setPtChartMetric(metric, btn) {
-  // Legacy — no-op since charts are now always-visible
 }
 
 function renderPtChart() {
@@ -14684,8 +14936,6 @@ function setLibraryFilter(muscle, btn) {
 
 let cloudinaryMap = {};  // normalisedName → public_id
 
-function exSlug(name) { return name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
-
 // Normalise a Cloudinary public_id filename to plain words
 // e.g. "workout-videos/94901201-Step-Up-on-Box_Thighs__jgp1wh" → "step up on box"
 function normalisePid(pid) {
@@ -15252,47 +15502,6 @@ async function exportCheckinDoc() {
   }
 }
 
-async function savePtCheckin() {
-  if (!ptSelectedUid) { showToast('Select a client first'); return; }
-  const btn = document.getElementById('pt-save-btn');
-  btn.disabled=true; btn.textContent='Saving…';
-  const val = (id) => { const v = document.getElementById(id)?.value; return v ? parseFloat(v) || v : null; };
-  const entry = {
-    date:        document.getElementById('pt-date').value || new Date().toISOString().split('T')[0],
-    weight:      val('pt-weight'),
-    bodyFat:     val('pt-bf'),
-    waist:       val('pt-waist'),
-    chest:       val('pt-chest'),
-    hips:        val('pt-hips'),
-    armLeft:     val('pt-arm-l'),
-    armRight:    val('pt-arm-r'),
-    thigh:       val('pt-thigh'),
-    sleep:       val('pt-sleep'),
-    energy:      ptEnergyRating||null,
-    nutrition:   ptNutritionRating||null,
-    workout:     ptSleepRating||null,   // ptSleepRating holds workout rating (legacy naming)
-    coachNotes:  getSanitizedValue('pt-notes', 500)||null,
-    notes:       getSanitizedValue('pt-notes', 500)||null,
-    source:      'coach',
-    loggedBy:    coachUid,
-    createdAt:   firebase.firestore.FieldValue.serverTimestamp()
-  };
-  // Remove null fields
-  Object.keys(entry).forEach(k => entry[k]===null && delete entry[k]);
-  try {
-    await db.collection('members').doc(ptSelectedUid).collection('checkIns').add(entry);
-    // Invalidate checkins cache
-    if (window._clientCheckinLoadedFor === ptSelectedUid) window._clientCheckinLoadedFor = null;
-    showToast('Check-in saved! ', 'success');
-    // Reset inputs
-    ['pt-weight','pt-bf','pt-waist','pt-chest','pt-hips','pt-arm-l','pt-arm-r','pt-thigh','pt-sleep','pt-notes']
-      .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
-    ptEnergyRating=0; ptNutritionRating=0; ptSleepRating=0;
-    document.querySelectorAll('.pt-rating-btn').forEach(b=>b.classList.remove('on'));
-  } catch(e) { showToast('Error: '+e.message); }
-  finally { btn.disabled=false; btn.textContent='Save Check-in'; }
-}
-
 function exportCheckinsCsv() {
   if (!ptCheckins.length) { showToast('No data to export'); return; }
   const client = allClients.find(c=>c.uid===ptSelectedUid)||{};
@@ -15406,7 +15615,7 @@ function exportCheckinsCsv() {
 
 
 
-<script src="data/workouts.js"></script>
+<script defer src="data/workouts.js"></script>
 
 <script>
 let _workoutsCache = null;
@@ -15562,7 +15771,7 @@ function initNutritionPage() {
   populateNutrAssignClientSelect();
   populateNutrLogClientSelect();
   loadNutritionMonitor();
-  loadFoodDatabase();
+  loadFoodDbPanel();
   loadNutritionSimpleView();
 }
 
@@ -15772,15 +15981,6 @@ function recalcMealCals(idx) {
   updateBuilderTotal();
 }
 
-function autoCalcCals() {
-  const p = parseFloat(document.getElementById('nb-protein').value) || 0;
-  const c = parseFloat(document.getElementById('nb-carbs').value) || 0;
-  const f = parseFloat(document.getElementById('nb-fats').value) || 0;
-  const cals = Math.round(p*4 + c*4 + f*9);
-  if (cals > 0) document.getElementById('nb-calories').value = cals;
-  updateBuilderTotal();
-}
-
 function updateBuilderTotal() {
   const p = parseFloat(document.getElementById('nb-protein').value) || 0;
   const c = parseFloat(document.getElementById('nb-carbs').value) || 0;
@@ -15802,7 +16002,7 @@ function setFoodDbTarget(mealIdx) {
 }
 
 // ── FOOD DATABASE ──
-async function loadFoodDatabase() {
+async function loadFoodDbPanel() {
   // Step 1: Show built-in foods instantly (zero wait)
   if (!foodDbAll.length) {
     // .filter(Boolean) guards against stray empty slots from data-entry slips
@@ -15836,12 +16036,10 @@ async function loadFoodDatabase() {
 <script>
 let _builtinFoodsCache = null;
 let _builtinFoodsPromise = null;
-function getBuiltinFoods() {
+async function getBuiltinFoods() {
   if (_builtinFoodsCache) return _builtinFoodsCache;
   if (!_builtinFoodsPromise) {
-    _builtinFoodsPromise = fetch('data/foods.json')
-      .then(r => (r.ok ? r.json() : []))
-      .catch(() => [])
+    _builtinFoodsPromise = loadFoodDatabase('data/foods.json', '_FOODS_EMBEDDED')
       .then(d => { _builtinFoodsCache = d || []; return _builtinFoodsCache; });
   }
   return _builtinFoodsPromise;
@@ -16564,6 +16762,53 @@ function clearMacroTargetForm() {
   exitMacroEditMode();
 }
 
+// Find the first macro plan for a given day type (exact match first, then fallback)
+function _findMacroPlanByDayType(dayType) {
+  const plans = Object.entries(_macroPlanMap);
+  if (!plans.length) return null;
+  // Exact match first
+  const exact = plans.find(([,p]) => (p.dayType || '') === dayType);
+  if (exact) return { docId: exact[0], data: exact[1] };
+  // Fallback to 'All Days' if looking for a specific type
+  if (dayType) {
+    const fallback = plans.find(([,p]) => !p.dayType || p.dayType === '');
+    if (fallback) return { docId: fallback[0], data: fallback[1] };
+  }
+  return null;
+}
+
+// When the coach changes the Day Type selector, load the matching plan or show empty state
+function onDayTypeChange() {
+  // If currently editing a plan, confirm before switching
+  if (_editingMacroPlanId) {
+    if (!confirm('You are editing a plan. Switch day type will discard unsaved changes. Continue?')) {
+      // Revert the selector to the previous value
+      const prev = _macroPlanMap[_editingMacroPlanId]?.dayType || '';
+      const sel = document.getElementById('mt-day-type');
+      if (sel) sel.value = prev;
+      return;
+    }
+    exitMacroEditMode();
+  }
+
+  const selectedDayType = document.getElementById('mt-day-type')?.value || '';
+  const match = _findMacroPlanByDayType(selectedDayType);
+  const note = document.getElementById('mt-current-note');
+
+  if (match) {
+    // Load the matched plan into the form
+    editMacroPlan(match.docId);
+    if (note) note.innerHTML = '';
+  } else {
+    // No plan for this day type — show empty form with message
+    clearMacroTargetForm();
+    // Re-set the day type to the selected value since clearMacroTargetForm resets it
+    const sel = document.getElementById('mt-day-type');
+    if (sel) sel.value = selectedDayType;
+    if (note) note.innerHTML = '<span style="color:var(--muted);font-style:italic;">No nutrition plan assigned for this day type. Enter values to create one.</span>';
+  }
+}
+
 // Reset the form/buttons back to "create new" mode without touching saved plans
 function exitMacroEditMode() {
   _editingMacroPlanId = null;
@@ -16702,12 +16947,6 @@ async function removeMacroPlanById(docId) {
   }
 }
 
-// Keep old function name referenced in other parts of codebase
-async function removeClientMacroTarget() {
-  const firstId = Object.keys(_macroPlanMap)[0];
-  if (firstId) await removeMacroPlanById(firstId);
-}
-
 // Populate the form with an existing plan's data so the coach can edit it in place
 function editMacroPlan(docId) {
   const d = _macroPlanMap[docId];
@@ -16777,33 +17016,57 @@ async function assignMacroTargetOnly() {
       };
       if (!(stepGoal > 0)) delete _macroPlanMap[editingId].stepGoal;
 
-      const dayLabel = dayType === 'Training Day' ? 'Training Day'
-                     : dayType === 'Rest Day'     ? 'Rest Day'
-                     : 'All Days';
+      const dayLabel = dayTypeLabel(dayType);
       showToast(` Macro target updated → ${dayLabel}`);
       renderMacroPlanCards();
       clearMacroTargetForm();
       const note = document.getElementById('mt-current-note');
       if (note) note.innerHTML = '';
     } else {
-      // Always create a new plan — never replace by dayType so multiple plans can coexist
-      const ref = await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
-        planName, protein, carbs, fats, calories, dayType, notes,
-        ...(stepGoal > 0 ? { stepGoal } : {}),
-        meals: [], coachUid,
-        assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        active: true
-      });
-      _macroPlanMap[ref.id] = { planName, protein, carbs, fats, calories, dayType, notes, ...(stepGoal > 0 ? { stepGoal } : {}), meals: [], coachUid, active: true };
-      const dayLabel = dayType === 'Training Day' ? 'Training Day'
-                     : dayType === 'Rest Day'     ? 'Rest Day'
-                     : 'All Days';
-      const stepMsg = stepGoal > 0 ? ` + ${stepGoal.toLocaleString()} steps` : '';
-      showToast(` Macro target assigned → ${dayLabel}${stepMsg}`);
-      renderMacroPlanCards();
-      clearMacroTargetForm();
-      const note = document.getElementById('mt-current-note');
-      if (note) note.innerHTML = '';
+      // Safe upsert: check if a plan already exists for this client + dayType
+      const existingMatch = _findMacroPlanByDayType(dayType);
+      if (existingMatch) {
+        // Update the existing plan instead of creating a duplicate
+        const existing = existingMatch.data;
+        const updates = {
+          planName, protein, carbs, fats, calories, notes,
+          stepGoal: stepGoal > 0 ? stepGoal : firebase.firestore.FieldValue.delete()
+        };
+        // Only update dayType if it actually changed (shouldn't happen, but be safe)
+        if ((existing.dayType || '') !== dayType) {
+          updates.dayType = dayType;
+        }
+        await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(existingMatch.docId).update(updates);
+        _macroPlanMap[existingMatch.docId] = {
+          ...existing, planName, protein, carbs, fats, calories, dayType, notes,
+          ...(stepGoal > 0 ? { stepGoal } : {})
+        };
+        if (!(stepGoal > 0)) delete _macroPlanMap[existingMatch.docId].stepGoal;
+
+        const dayLabel = dayTypeLabel(dayType);
+        showToast(` Macro target updated for ${dayLabel} (existing plan)`);
+        renderMacroPlanCards();
+        clearMacroTargetForm();
+        const note = document.getElementById('mt-current-note');
+        if (note) note.innerHTML = '';
+      } else {
+        // No existing plan for this day type — create a new one
+        const ref = await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
+          planName, protein, carbs, fats, calories, dayType, notes,
+          ...(stepGoal > 0 ? { stepGoal } : {}),
+          meals: [], coachUid,
+          assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          active: true
+        });
+        _macroPlanMap[ref.id] = { planName, protein, carbs, fats, calories, dayType, notes, ...(stepGoal > 0 ? { stepGoal } : {}), meals: [], coachUid, active: true };
+        const dayLabel = dayTypeLabel(dayType);
+        const stepMsg = stepGoal > 0 ? ` + ${stepGoal.toLocaleString()} steps` : '';
+        showToast(` Macro target assigned → ${dayLabel}${stepMsg}`);
+        renderMacroPlanCards();
+        clearMacroTargetForm();
+        const note = document.getElementById('mt-current-note');
+        if (note) note.innerHTML = '';
+      }
     }
   } catch(e) {
     showToast('Error: ' + e.message);
@@ -17238,9 +17501,6 @@ async function coachUpdateAssignedFoodGrams(clientUid, logId, baseSizeG) {
   }
 }
 
-// Stub kept for backwards compat (meal builder removed)
-function addFoodToMeal() { assignFoodToClient(); }
-
 function clearNutrBuilder() {
   document.getElementById('nb-plan-name').value = '';
   document.getElementById('nb-protein').value = '';
@@ -17252,70 +17512,6 @@ function clearNutrBuilder() {
   nutrMealCount = 0;
   addNutrMeal();
   updateBuilderTotal();
-}
-
-async function saveNutritionPlan() {
-  const clientUid = document.getElementById('nutr-assign-client').value;
-  if (!clientUid) { showToast('Select a client first'); return; }
-  const planName = getSanitizedValue('nb-plan-name', 80);
-  if (!planName) { showToast('Enter a plan name'); return; }
-  if (rateLimited('save-nutrition-plan', 3000, 'Please wait before saving again.')) return;
-
-  // Gather meals
-  const mealDivs = document.querySelectorAll('[id^="nutr-meal-"]');
-  const meals = [];
-  mealDivs.forEach(div => {
-    const idx = div.id.replace('nutr-meal-','');
-    const nameEl = div.querySelector('.nm-name-' + idx);
-    const timeEl = div.querySelector('.nm-time-' + idx);
-    const pEl    = div.querySelector('.nm-p-' + idx);
-    const cEl    = div.querySelector('.nm-c-' + idx);
-    const fEl    = div.querySelector('.nm-f-' + idx);
-    const kEl    = div.querySelector('.nm-k-' + idx);
-    const notesEl= div.querySelector('.nm-notes-' + idx);
-    // Foods
-    const foodRows = div.querySelectorAll('.nm-foods-' + idx + ' .food-row');
-    const foods = [];
-    foodRows.forEach(r => {
-      const inputs = r.querySelectorAll('input');
-      const foodName = sanitizeInput(inputs[0]?.value, 100);
-      if (foodName) {
-        foods.push({ name: foodName, qty: sanitizeInput(inputs[1]?.value, 30), protein: parseFloat(inputs[2]?.value)||0, carbs: parseFloat(inputs[3]?.value)||0, fats: parseFloat(inputs[4]?.value)||0 });
-      }
-    });
-    meals.push({
-      name: sanitizeInput(nameEl?.value, 60) || 'Meal',
-      time: timeEl?.value || '',
-      protein: parseFloat(pEl?.value)||0,
-      carbs: parseFloat(cEl?.value)||0,
-      fats: parseFloat(fEl?.value)||0,
-      calories: parseFloat(kEl?.value)||0,
-      notes: sanitizeInput(notesEl?.value, 500),
-      foods
-    });
-  });
-
-  const protein   = parseFloat(document.getElementById('nb-protein').value) || 0;
-  const carbs     = parseFloat(document.getElementById('nb-carbs').value) || 0;
-  const fats      = parseFloat(document.getElementById('nb-fats').value) || 0;
-  const calories  = parseFloat(document.getElementById('nb-calories').value) || Math.round(protein*4+carbs*4+fats*9);
-  const dayType   = document.getElementById('nb-day-type').value;
-  const notes     = sanitizeInput(document.getElementById('nb-notes').value, 1000);
-  const coachUid  = COACH_FIXED_UID; // always the shared coach doc — never the per-device anonymous auth uid
-
-  try {
-    await db.collection('members').doc(clientUid).collection('nutritionPlans').add({
-      planName, protein, carbs, fats, calories, dayType, notes, meals, coachUid,
-      assignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      active: true
-    });
-    showToast(' Nutrition plan assigned!');
-    clearNutrBuilder();
-    loadClientNutritionSummary();
-    loadClientAssignedPlans(clientUid);
-  } catch(e) {
-    showToast('Error: ' + e.message);
-  }
 }
 
 async function loadClientNutritionSummary() {
@@ -18214,20 +18410,7 @@ function getTimeAgo(date) {
 }
 
 // Hook into existing message/online listeners to generate notifications
-const _origShowToast = window.showToast;
 window._coachNotifHooked = true;
-
-// Patch showToast to also create notifications for important events
-const _originalShowToast = typeof showToast === 'function' ? showToast : null;
-function showToastAndNotify(msg, type) {
-  if (_originalShowToast) _originalShowToast(msg, type);
-  // Generate notification for certain events
-  if (msg && msg.length > 0 && !msg.includes('Saving') && !msg.includes('Loading')) {
-    const icon = type === 'error' ? '!' : (msg.includes('message') || msg.includes('Message') ? 'msg' : 'notif');
-    const notifType = type === 'error' ? 'alert' : 'message';
-    addCoachNotification(msg, notifType, icon);
-  }
-}
 
 // Function to manually push a notification (callable from other parts of code)
 window.pushCoachNotif = addCoachNotification;
@@ -19676,9 +19859,10 @@ textarea:focus-visible, select:focus-visible,
    padding: 7px 14px; border-radius: 9px; cursor: pointer; font-family: inherit;
   }
  </style>
- <div id="sw-update-banner">
-  <div>New version available</div>
-  <button onclick="location.reload()">Reload</button>
- </div>
- </body>
- </html>
+  <div id="sw-update-banner">
+   <div>New version available</div>
+   <button onclick="location.reload()">Reload</button>
+  </div>
+  </div>
+  </body>
+  </html>
