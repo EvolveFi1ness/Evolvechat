@@ -534,6 +534,57 @@
     backdrop-filter: blur(4px);
     pointer-events: none;
   }
+  /* Skeleton photo cards */
+  .photo-thumb-skeleton {
+    aspect-ratio: 3/4; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--bg3); position: relative; overflow: hidden;
+  }
+  .photo-thumb-skeleton::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+    animation: photoShimmer 1.6s ease-in-out infinite;
+  }
+  @keyframes photoShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+  /* Per-image skeleton wrapper */
+  .photo-thumb { position: relative; }
+  .photo-thumb .photo-img-skeleton {
+    position: absolute; inset: 0; border-radius: 12px;
+    background: var(--bg3); z-index: 1; transition: opacity 0.3s ease;
+  }
+  .photo-thumb .photo-img-skeleton::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+    animation: photoShimmer 1.6s ease-in-out infinite;
+  }
+  .photo-thumb .photo-img-skeleton.loaded { opacity: 0; pointer-events: none; }
+  .photo-thumb .photo-img-fallback {
+    position: absolute; inset: 0; border-radius: 12px; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg3); color: var(--muted); font-size: 10px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+  }
+  .photo-thumb .photo-img-fallback.show { opacity: 1; }
+  /* Load-more button */
+  .photo-load-more {
+    grid-column: 1/-1; display: flex; justify-content: center; padding: 12px 0;
+  }
+  .photo-load-more button {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 24px; font-size: 12px; font-weight: 700; color: var(--muted);
+    cursor: pointer; letter-spacing: 0.3px; transition: all 0.2s;
+  }
+  .photo-load-more button:hover { border-color: var(--gold); color: var(--gold); }
+  .photo-load-more button:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Photo status bar */
+  .photo-status-bar {
+    grid-column: 1/-1; text-align: center; padding: 16px 0 8px;
+    font-size: 12px; color: var(--muted); font-weight: 500;
+  }
+  .photo-status-bar .photo-retry-btn {
+    display: inline-block; margin-top: 8px;
+    background: var(--gold); color: #0A0A0A; border: none; border-radius: 8px;
+    padding: 8px 18px; font-size: 12px; font-weight: 700; cursor: pointer;
+  }
 
   /* ══════════════════════════════════════
      COACH BEFORE / AFTER — REDESIGN
@@ -8736,6 +8787,7 @@ async function _updateActivityFeedFallback(feed) {
 //  CLIENT MODAL
 // ─────────────────────────────────────────
 let currentModalUid = null;
+let _modalPhotoView = 'grid';
 async function openClientModal(uid) {
   currentModalUid = uid;
   const client = allClients.find(c=>c.uid===uid) || {};
@@ -8743,7 +8795,6 @@ async function openClientModal(uid) {
   document.getElementById('m-name').textContent  = `${client.firstName||''} ${client.lastName||''}`;
   document.getElementById('m-email').textContent = client.email||'';
 
-  // Profile
   const bmi = (client.heightCm&&client.weightKg) ? Math.round(client.weightKg/Math.pow(client.heightCm/100,2)*10)/10 : '—';
   document.getElementById('m-info-grid').innerHTML = [
     ['Name', `${escapeHtml(client.firstName||'')} ${escapeHtml(client.lastName||'')}`],
@@ -8774,17 +8825,15 @@ async function openClientModal(uid) {
   setCoachPhotoView('grid');
   loadClientPhotos(uid);
   loadClientScheduleInfo(uid);
-  // Pre-fetch all other tabs in parallel so switching is instant
-  window._clientLogsLoadedFor = uid;
-  window._clientFoodLoadedFor = uid;
-  window._clientCheckinLoadedFor = uid;
-  loadClientLogs(uid);
-  loadClientFoodLogs(uid);
-  loadClientCheckins(uid);
+
+  window._clientLogsLoadedFor = null;
+  window._clientFoodLoadedFor = null;
+  window._clientCheckinLoadedFor = null;
 }
 
 function closeModal() {
   document.getElementById('client-modal').classList.remove('open');
+  window._photoGen++;
   currentModalUid = null;
 }
 
@@ -11827,7 +11876,7 @@ async function exportClientDocx() {
           mainChildren.push(new Table({
             width:{size:CONTENT_W,type:WidthType.DXA}, columnWidths:imgCols.map(()=>iw),
             rows:[new TableRow({children:imgCols.map(p=>{
-              const src = p.base64||p.url||'';
+              const src = p.previewUrl || p.base64||p.url||'';
               const imgData = src.startsWith('data:') ? b64ToArr(src) : null;
               return new TableCell({
                 borders:noB(), width:{size:iw,type:WidthType.DXA},
@@ -11878,8 +11927,8 @@ async function exportClientDocx() {
           para((ANGLE_MAP[angle]||angle).toUpperCase()+' VIEW', {size:18, color:C.SLATE, bold:true, before:240, after:120})
         );
 
-        const makePhotoCell = (photo, label, dateLabel, weightKg, wUnit='kg') => {
-          const src = photo ? (photo.base64||photo.url||'') : '';
+         const makePhotoCell = (photo, label, dateLabel, weightKg, wUnit='kg') => {
+          const src = photo ? (photo.previewUrl || photo.base64||photo.url||'') : '';
           const imgData = (src && src.startsWith('data:')) ? (() => { try { return b64ToArr(src); } catch(e){ return null; } })() : null;
           return new TableCell({
             borders: allB(C.BORDER_MID, 4),
@@ -12018,130 +12067,208 @@ async function exportClientDocx() {
 }
 
 window._clientPhotosCache = window._clientPhotosCache || {};
+window._photoGen = window._photoGen || 0;
+
+function _renderPhotoSkeleton(count) {
+  let html = '';
+  for (let i = 0; i < count; i++) html += '<div class="photo-thumb-skeleton"></div>';
+  return html;
+}
+
+let _photoCellIdx = 0;
+function _createPhotoCell(doc, eager) {
+  const d = doc.data();
+  const src = d.thumbUrl || d.base64 || d.url || '';
+  const angleMap = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
+  const cell = document.createElement('div');
+  cell.className = 'photo-thumb';
+  const angBadge = d.angle ? `<div class="photo-angle-badge">${angleMap[d.angle]||d.angle}</div>` : '';
+  const loadAttr = eager ? 'eager' : 'lazy';
+  const fetchAttr = eager ? ' fetchpriority="high"' : '';
+  cell.innerHTML = `<div class="photo-img-skeleton"></div><div class="photo-img-fallback">Failed</div><img src="${src}" alt="Progress photo" loading="${loadAttr}" decoding="async"${fetchAttr} style="width:100%;height:100%;object-fit:cover;display:block">${angBadge}`;
+  const img = cell.querySelector('img');
+  const skeleton = cell.querySelector('.photo-img-skeleton');
+  const fallback = cell.querySelector('.photo-img-fallback');
+  const hideSkeleton = () => { skeleton.classList.add('loaded'); };
+  img.onload = hideSkeleton;
+  img.onerror = () => { skeleton.classList.add('loaded'); fallback.classList.add('show'); };
+  if (!src || (src.startsWith('data:') && src.length < 100)) { fallback.classList.add('show'); skeleton.classList.add('loaded'); }
+  else if (img.complete) hideSkeleton();
+  cell.onclick = () => openLightboxById(doc.id, fmtDate(d.uploadedAt), d.note||'');
+  return cell;
+}
+
+function _groupPhotosBySession(docs) {
+  const sessions = {};
+  docs.forEach(doc => {
+    const d = doc.data();
+    const dt = d.uploadedAt?.toDate ? d.uploadedAt.toDate() : new Date();
+    const dateKey = dt.toLocaleDateString('en-US', { year:'numeric', month:'2-digit', day:'2-digit' });
+    const dateLabel = dt.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+    if (!sessions[dateKey]) sessions[dateKey] = { dateKey, dateLabel, ts: dt.getTime(), photos: [] };
+    sessions[dateKey].photos.push({ doc, d });
+  });
+  return Object.values(sessions).sort((a,b) => b.ts - a.ts);
+}
+
+function _renderSessionGrid(grid, sorted, append) {
+  const total = sorted.length;
+  if (!append) grid.innerHTML = '';
+  sorted.forEach((session, idx) => {
+    let sessionLabel, labelBg, labelColor;
+    if (total === 1) { sessionLabel = 'Before'; labelBg = 'rgba(90,159,239,0.15)'; labelColor = 'var(--blue)'; }
+    else if (idx === 0) { sessionLabel = 'After — Current'; labelBg = 'rgba(61,203,114,0.12)'; labelColor = 'var(--green)'; }
+    else if (idx === 1) { sessionLabel = 'Before'; labelBg = 'rgba(90,159,239,0.15)'; labelColor = 'var(--blue)'; }
+    else { sessionLabel = `Check-in ${total - 1 - idx}`; labelBg = 'var(--gold-dim)'; labelColor = 'var(--gold)'; }
+
+    const header = document.createElement('div');
+    header.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:12px 0 8px;margin-top:' + (idx?'10px':'0');
+    const w = session.photos[0]?.d?.weight;
+    const wu = session.photos[0]?.d?.weightUnit || 'kg';
+    header.innerHTML = `
+      <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:${labelColor};background:${labelBg};border:1px solid ${labelColor.replace('var(--','rgba(').replace(')',',0.25)')};border-radius:6px;padding:4px 10px">${sessionLabel}</span>
+      ${w ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--gold);font-weight:700;background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:100px;padding:3px 10px">️ ${w} ${wu}</span>` : ''}
+      <span style="font-size:11px;color:var(--muted)">${session.dateLabel}</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>`;
+    grid.appendChild(header);
+    session.photos.forEach(({ doc }) => {
+      const eager = _photoCellIdx < 4;
+      _photoCellIdx++;
+      grid.appendChild(_createPhotoCell(doc, eager));
+    });
+  });
+}
 
 async function loadClientPhotos(uid, forceRefresh) {
   const grid = document.getElementById('m-photo-grid');
+  if (!grid) return;
 
-  // Serve from cache on a normal reopen — only refetch when explicitly told to
-  // (after a delete, or via the manual refresh button) or when we've never loaded this client.
+  const gen = ++window._photoGen;
+  _photoCellIdx = 0;
+  const refreshBtn = document.querySelector('.cpvt-btn[title="Refresh photos"]');
+  if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.style.opacity = '0.4'; }
+
   const cached = window._clientPhotosCache[uid];
   if (!forceRefresh && cached) {
     grid.innerHTML = cached.html;
     window._photoCache = window._photoCache || {};
     Object.assign(window._photoCache, cached.photoCacheEntries);
-    coachRenderBeforeAfter(cached.sorted);
+    if (_modalPhotoView === 'compare') coachRenderBeforeAfter(cached.sorted);
+    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.style.opacity = ''; }
     return;
   }
 
-  // Starting a fresh fetch: drop any sessions from a previously viewed client so the
-  // compare view never shows stale data while this fetch is in flight. It re-renders
-  // with this client's real sessions once the network/cache resolves below.
   _coachBaSessions = [];
 
-  grid.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+  if (!cached) grid.innerHTML = _renderPhotoSkeleton(8);
 
-  // Fire IndexedDB cache and network fetch in parallel — cache paints instantly,
-  // network replaces with full session-grouped view when ready.
-  const renderQuickThumbs = (docs) => {
-    grid.innerHTML = '';
-    docs.forEach(doc => {
-      const d = doc.data();
-      const src = d.base64 || d.url || '';
-      const angleMap = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
-      const cell = document.createElement('div');
-      cell.className = 'photo-thumb';
-      const angBadge = d.angle ? `<div class="photo-angle-badge">${angleMap[d.angle]||d.angle}</div>` : '';
-      cell.innerHTML = `<img src="${src}" alt="Progress photo" loading="lazy">${angBadge}`;
-      cell.onclick = () => openLightboxById(doc.id, fmtDate(d.uploadedAt), d.note||'');
-      grid.appendChild(cell);
-    });
+  const PAGE_SIZE = 20;
+  let allDocs = [];
+  let lastDoc = null;
+  let hasMore = false;
+  let rendered = false;
+
+  const TIMEOUT_MS = 15000;
+  const timeoutId = setTimeout(() => {
+    if (!rendered && gen === window._photoGen) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text" style="color:var(--red)">Photos are taking too long to load</div><button onclick="loadClientPhotos('${uid}', true)" class="photo-retry-btn">Retry</button></div>`;
+      if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.style.opacity = ''; }
+    }
+  }, TIMEOUT_MS);
+
+  const renderFromDocs = (docs, isNetwork) => {
+    if (gen !== window._photoGen) return;
+    allDocs = docs;
+    lastDoc = docs[docs.length - 1];
+    hasMore = docs.length >= PAGE_SIZE;
+    docs.forEach(d => { window._photoCache = window._photoCache || {}; window._photoCache[d.id] = d.data(); });
+    const sorted = _groupPhotosBySession(docs);
+    _renderSessionGrid(grid, sorted);
+    if (_modalPhotoView === 'compare') coachRenderBeforeAfter(sorted);
+    if (hasMore) {
+      const loadMoreWrap = document.createElement('div');
+      loadMoreWrap.className = 'photo-load-more';
+      loadMoreWrap.innerHTML = `<button id="photo-load-more-btn">Load more photos</button>`;
+      grid.appendChild(loadMoreWrap);
+      document.getElementById('photo-load-more-btn').onclick = () => _loadMorePhotos(uid, gen, docs, lastDoc, grid);
+    }
+    if (isNetwork) {
+      rendered = true;
+      clearTimeout(timeoutId);
+      window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, photoCacheEntries: (() => { const e = {}; docs.forEach(d => { e[d.id] = d.data(); }); return e; })() };
+    }
   };
 
-  let cacheResolved = false;
-  const cachePromise = (async () => {
-    if (forceRefresh) return;
+  const cacheDone = (async () => {
+    if (forceRefresh || cached) return;
     try {
       const cacheSnap = await db.collection('members').doc(uid).collection('progressPhotos')
-        .orderBy('uploadedAt','desc').limit(12).get({ source: 'cache' });
-      if (!cacheSnap.empty && !cacheResolved) {
+        .orderBy('uploadedAt','desc').limit(PAGE_SIZE).get({ source: 'cache' });
+      if (gen !== window._photoGen) return;
+      if (!cacheSnap.empty && !rendered) {
         window._photoCache = window._photoCache || {};
         cacheSnap.docs.forEach(d => { window._photoCache[d.id] = d.data(); });
-        renderQuickThumbs(cacheSnap.docs);
-        cacheResolved = true;
+        renderFromDocs(cacheSnap.docs, false);
       }
-    } catch (e) { /* nothing cached locally yet — normal */ }
+    } catch (e) { /* nothing cached — normal */ }
   })();
 
   try {
-    // Single network fetch — skip the intermediate 12-photo batch
-    const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(60).get();
-    cacheResolved = true;
-    const currentGrid = document.getElementById('m-photo-grid');
-    if (!currentGrid || currentGrid !== grid) return;
+    const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(PAGE_SIZE).get();
+    await cacheDone;
+    if (gen !== window._photoGen) return;
 
     if (snap.empty) {
+      clearTimeout(timeoutId);
+      rendered = true;
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">️</div><div class="empty-text">No photos yet</div></div>`;
-      coachRenderBeforeAfter([]);
+      window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted: [], photoCacheEntries: {} };
+      if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.style.opacity = ''; }
       return;
     }
 
-    const photoCacheEntries = {};
-    snap.docs.forEach(d => { photoCacheEntries[d.id] = d.data(); window._photoCache[d.id] = d.data(); });
-
-    // Group by session date
-    const sessions = {};
-    snap.forEach(doc => {
-      const d = doc.data();
-      const dt = d.uploadedAt?.toDate ? d.uploadedAt.toDate() : new Date();
-      const dateKey = dt.toLocaleDateString('en-US', { year:'numeric', month:'2-digit', day:'2-digit' });
-      const dateLabel = dt.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-      if (!sessions[dateKey]) sessions[dateKey] = { dateKey, dateLabel, ts: dt.getTime(), photos: [] };
-      sessions[dateKey].photos.push({ doc, d });
-    });
-    const sorted = Object.values(sessions).sort((a,b) => b.ts - a.ts);
-    const total = sorted.length;
-
-    grid.innerHTML = '';
-    sorted.forEach((session, idx) => {
-      let sessionLabel, labelBg, labelColor;
-      if (total === 1) { sessionLabel = 'Before'; labelBg = 'rgba(90,159,239,0.15)'; labelColor = 'var(--blue)'; }
-      else if (idx === 0) { sessionLabel = 'After — Current'; labelBg = 'rgba(61,203,114,0.12)'; labelColor = 'var(--green)'; }
-      else if (idx === 1) { sessionLabel = 'Before'; labelBg = 'rgba(90,159,239,0.15)'; labelColor = 'var(--blue)'; }
-      else { sessionLabel = `Check-in ${total - 1 - idx}`; labelBg = 'var(--gold-dim)'; labelColor = 'var(--gold)'; }
-
-      const header = document.createElement('div');
-      header.style.cssText = 'grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:12px 0 8px;margin-top:' + (idx?'10px':'0');
-      const w = session.photos[0]?.d?.weight;
-      const wu = session.photos[0]?.d?.weightUnit || 'kg';
-      header.innerHTML = `
-        <span style="font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:${labelColor};background:${labelBg};border:1px solid ${labelColor.replace('var(--','rgba(').replace(')',',0.25)')};border-radius:6px;padding:4px 10px">${sessionLabel}</span>
-        ${w ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--gold);font-weight:700;background:var(--gold-dim);border:1px solid var(--border-gold);border-radius:100px;padding:3px 10px">️ ${w} ${wu}</span>` : ''}
-        <span style="font-size:11px;color:var(--muted)">${session.dateLabel}</span>
-        <div style="flex:1;height:1px;background:var(--border)"></div>`;
-      grid.appendChild(header);
-
-      session.photos.forEach(({ doc: docc, d }) => {
-        const src = d.base64 || d.url || '';
-        const angleMap = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
-        const cell = document.createElement('div');
-        cell.className = 'photo-thumb';
-        const angBadge = d.angle ? `<div class="photo-angle-badge">${angleMap[d.angle]||d.angle}</div>` : '';
-        cell.innerHTML = `<img src="${src}" alt="Progress photo" loading="lazy">${angBadge}`;
-        cell.onclick = () => openLightboxById(docc.id, fmtDate(d.uploadedAt), d.note||'');
-        grid.appendChild(cell);
-      });
-    });
-
-    coachRenderBeforeAfter(sorted);
-
-    // Cache the finished render so reopening this client's Photos tab is instant next time.
-    window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, photoCacheEntries };
+    renderFromDocs(snap.docs, true);
   } catch(e) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text" style="color:var(--red)">Couldn't load photos${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}</div><button onclick="loadClientPhotos('${uid}', true)" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
+    if (gen !== window._photoGen) return;
+    clearTimeout(timeoutId);
+    rendered = true;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-text" style="color:var(--red)">Couldn't load photos${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}</div><button onclick="loadClientPhotos('${uid}', true)" class="photo-retry-btn">Retry</button></div>`;
+  } finally {
+    clearTimeout(timeoutId);
+    if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.style.opacity = ''; }
+  }
+}
+
+async function _loadMorePhotos(uid, gen, prevDocs, lastDoc, grid) {
+  const btn = document.getElementById('photo-load-more-btn');
+  if (btn) { btn.textContent = 'Loading…'; btn.disabled = true; }
+  try {
+    const snap = await db.collection('members').doc(uid).collection('progressPhotos')
+      .orderBy('uploadedAt','desc').startAfter(lastDoc).limit(20).get();
+    if (gen !== window._photoGen) return;
+    if (snap.empty || !snap.docs.length) { if (btn) btn.parentElement.remove(); return; }
+    const newDocs = [...prevDocs, ...snap.docs];
+    lastDoc = snap.docs[snap.docs.length - 1];
+    const hasMore = snap.docs.length >= 20;
+    snap.docs.forEach(d => { window._photoCache = window._photoCache || {}; window._photoCache[d.id] = d.data(); });
+    const sorted = _groupPhotosBySession(newDocs);
+    _renderSessionGrid(grid, sorted);
+    if (_modalPhotoView === 'compare') coachRenderBeforeAfter(sorted);
+    if (hasMore) {
+      const loadMoreWrap = document.createElement('div');
+      loadMoreWrap.className = 'photo-load-more';
+      loadMoreWrap.innerHTML = `<button id="photo-load-more-btn">Load more photos</button>`;
+      grid.appendChild(loadMoreWrap);
+      document.getElementById('photo-load-more-btn').onclick = () => _loadMorePhotos(uid, gen, newDocs, lastDoc, grid);
+    }
+    window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, photoCacheEntries: (() => { const e = {}; newDocs.forEach(d => { e[d.id] = d.data(); }); return e; })() };
+  } catch(e) {
+    if (btn) { btn.textContent = 'Retry'; btn.disabled = false; btn.onclick = () => _loadMorePhotos(uid, gen, prevDocs, lastDoc, grid); }
   }
 }
 
 function setCoachPhotoView(view) {
+  _modalPhotoView = view;
   const grid = document.getElementById('m-photo-grid');
   const ba   = document.getElementById('coach-ba-view');
   const btnG = document.getElementById('coach-pvt-grid');
@@ -12156,7 +12283,7 @@ function setCoachPhotoView(view) {
     ba.classList.remove('hidden');
     btnG.classList.remove('active');
     btnC.classList.add('active');
-    coachRenderBeforeAfter(_coachBaSessions);
+    if (_coachBaSessions.length >= 2) coachRenderBeforeAfter(_coachBaSessions);
   }
 }
 
@@ -12557,7 +12684,7 @@ async function loadCardPhotoStrip(uid, firstName) {
 
     const html = snap.docs.map((d) => {
       const p = d.data();
-      const src = p.base64 || p.url || '';
+      const src = p.thumbUrl || p.base64 || p.url || '';
       return `<div class="cc-photo-item"><img src="${src}" alt="" loading="lazy"></div>`;
     }).join('');
     currentStrip.innerHTML = html;
@@ -12597,7 +12724,7 @@ async function loadDashboardPhotos() {
     results.forEach(r => { window._photoCache[r.docId] = r.data; });
     feed.innerHTML = results.map(r => {
       const p = r.data;
-      const src = p.base64 || p.url || '';
+      const src = p.thumbUrl || p.base64 || p.url || '';
       const name = ((r.client.firstName||'') + ' ' + (r.client.lastName||'')).trim() || 'Client';
       const date = p.uploadedAt?.toDate ? p.uploadedAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
       return `<div class="dash-photo-tile" data-doc="${r.docId}" data-date="${fmtDate(p.uploadedAt)}" data-note="${(p.note||'').replace(/"/g,'&quot;')}">
@@ -12661,7 +12788,7 @@ async function loadDashboardPhotos() {
 // Used by progress photo grid when photos are stored as base64 (too large for onclick attr)
 function openLightboxById(docId,date,note) {
   const p = (window._photoCache||{})[docId];
-  const src = p ? (p.base64 || p.url || '') : '';
+  const src = p ? (p.previewUrl || p.base64 || p.url || '') : '';
   window._currentLbDocId = docId;
   openLightbox(src, date, note);
 }

@@ -10871,21 +10871,29 @@ async function submitAnglePhotos() {
    const compressed = compressedMap[angle];
    let photoUrl = null;
    let photoBase64 = null;
+   let thumbUrl = null;
+   let previewUrl = null;
    try {
-    photoUrl = await uploadPhotoToStorage(uid, compressed, angle);
+    const [url, thumb, preview] = await uploadPhotoVariants(uid, compressed, angle);
+    photoUrl = url;
+    thumbUrl = thumb;
+    previewUrl = preview;
    } catch (storageErr) {
     console.warn('Storage upload failed, falling back to base64 in Firestore:', storageErr.message);
     photoBase64 = compressed;
    }
-   await db.collection('members').doc(uid).collection('progressPhotos').add({
+   const docData = {
     ...(photoUrl ? { url: photoUrl } : { base64: photoBase64 }),
+    ...(thumbUrl ? { thumbUrl } : {}),
+    ...(previewUrl ? { previewUrl } : {}),
     angle: angle,
     note: note || null,
     fileName: file.name,
     weight: isNaN(_uploadWt) ? null : _uploadWt,
     weightUnit: isNaN(_uploadWt) ? null : _uploadWtUnit,
     uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
-   });
+   };
+   await db.collection('members').doc(uid).collection('progressPhotos').add(docData);
    _stepDone(`Saving…`);
   }));
   try {
@@ -10993,6 +11001,55 @@ function compressImageBase64(dataUrl, maxWidth, quality) {
   img.onerror = () => resolve(dataUrl); // fallback: use original
   img.src = dataUrl;
  });
+}
+
+function generatePhotoVariants(dataUrl) {
+ return new Promise((resolve) => {
+  const img = new Image();
+  img.onload = () => {
+   try {
+    const makeVariant = (maxW, mimeType, qual) => {
+     const scale = img.width > maxW ? maxW / img.width : 1;
+     const c = document.createElement('canvas');
+     c.width = Math.round(img.width * scale);
+     c.height = Math.round(img.height * scale);
+     const ctx = c.getContext('2d');
+     ctx.drawImage(img, 0, 0, c.width, c.height);
+     const result = c.toDataURL(mimeType, qual);
+     return (result && result.length > 500) ? result : null;
+    };
+    resolve({
+     thumb: makeVariant(320, 'image/webp', 0.80),
+     preview: makeVariant(800, 'image/jpeg', 0.75)
+    });
+   } catch (e) {
+    resolve({ thumb: null, preview: null });
+   }
+  };
+  img.onerror = () => resolve({ thumb: null, preview: null });
+  img.src = dataUrl;
+ });
+}
+
+function uploadPhotoVariants(uid, base64DataUrl, angle) {
+ const blob = dataURLtoBlob(base64DataUrl);
+ const ext = 'jpg';
+ const baseName = `${Date.now()}_${angle}`;
+ const ref = storage.ref(`progressPhotos/${uid}/${baseName}.${ext}`);
+ const thumbRef = storage.ref(`progressPhotos/${uid}/${baseName}_thumb.webp`);
+ const previewRef = storage.ref(`progressPhotos/${uid}/${baseName}_preview.jpg`);
+ const uploadMain = ref.put(blob, { contentType: 'image/jpeg' }).then(s => s.ref.getDownloadURL());
+ const uploadThumb = generatePhotoVariants(base64DataUrl).then(variants => {
+  if (!variants.thumb) return null;
+  const thumbBlob = dataURLtoBlob(variants.thumb);
+  return thumbRef.put(thumbBlob, { contentType: 'image/webp' }).then(s => s.ref.getDownloadURL());
+ });
+ const uploadPreview = generatePhotoVariants(base64DataUrl).then(variants => {
+  if (!variants.preview) return null;
+  const previewBlob = dataURLtoBlob(variants.preview);
+  return previewRef.put(previewBlob, { contentType: 'image/jpeg' }).then(s => s.ref.getDownloadURL());
+ });
+ return Promise.all([uploadMain, uploadThumb, uploadPreview]);
 }
 
 // ─────────────────────────────────────────
@@ -11125,13 +11182,14 @@ function renderBeforeAfter(sorted) {
     const photo = session.photos.find(p => (p.d.angle || 'front') === angle) || null;
     const cell  = document.createElement('div');
     if (photo) {
-     const src  = photo.d.base64 || photo.d.url || '';
+     const thumbSrc = photo.d.thumbUrl || photo.d.base64 || photo.d.url || '';
+     const previewSrc = photo.d.previewUrl || photo.d.base64 || photo.d.url || '';
      const date = photo.d.uploadedAt?.toDate
       ? photo.d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone:'Asia/Manila', month:'short', day:'numeric', year:'numeric' })
       : '';
      cell.className = 'ba-angle-card';
-     cell.onclick = () => openLightbox(src, date, photo.d.note, photo.doc.id, angle);
-     cell.innerHTML = `<img src="${escapeAttr(src)}" alt="${escapeAttr(ANGLE_NAMES[angle])}" loading="lazy"><div class="ba-angle-name">${escapeHtml(ANGLE_NAMES[angle])}</div>`;
+     cell.onclick = () => openLightbox(previewSrc, date, photo.d.note, photo.doc.id, angle);
+     cell.innerHTML = `<img src="${escapeAttr(thumbSrc)}" alt="${escapeAttr(ANGLE_NAMES[angle])}" loading="lazy"><div class="ba-angle-name">${escapeHtml(ANGLE_NAMES[angle])}</div>`;
     } else {
      cell.className = 'ba-angle-empty';
      cell.innerHTML = `<div class="ba-angle-empty-icon">📷</div><div class="ba-angle-empty-lbl">${ANGLE_NAMES[angle]}</div>`;
@@ -11205,8 +11263,8 @@ function showBaAngle(angle, oldest, newest) {
  const afterItem  = findPhoto(newest, angle);
  if (!beforeItem || !afterItem) return;
 
- const beforeSrc = beforeItem.d.base64 || beforeItem.d.url || '';
- const afterSrc  = afterItem.d.base64  || afterItem.d.url  || '';
+ const beforeSrc = beforeItem.d.thumbUrl || beforeItem.d.base64 || beforeItem.d.url || '';
+ const afterSrc  = afterItem.d.thumbUrl || afterItem.d.base64  || afterItem.d.url  || '';
 
  const imgBefore = document.getElementById('ba-img-before');
  const imgAfter  = document.getElementById('ba-img-after');
@@ -11275,26 +11333,26 @@ async function loadHomePhotoStrip() {
    return;
   }
   let thumbsHtml = '';
-  snap.forEach(doc => {
-   const d = doc.data();
-   const src = d.base64 || d.url || '';
-   const date = d.uploadedAt?.toDate
-    ? d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })
-    : '';
-   const noteEsc = escapeAttr(d.note || '');
-   const dateEsc = escapeAttr(date);
-   thumbsHtml += `<div class="home-photo-thumb" onclick="openLightbox('${src.substring(0,20)===src?escapeAttr(src):''}','${dateEsc}','${noteEsc}')" data-src="${''}" data-date="${dateEsc}" data-note="${noteEsc}">
-     <img src="${escapeAttr(src)}" alt="Progress photo" loading="lazy">
-    <div class="home-photo-thumb-date">${escapeHtml(date)}</div>
-   </div>`;
-  });
-  scroll.innerHTML = addSlot + thumbsHtml;
-  // Fix onclick for base64 (too large for inline attr) — use event delegation
-  const thumbs = scroll.querySelectorAll('.home-photo-thumb');
-  snap.docs.forEach((doc, i) => {
-   const d = doc.data();
-   const src = d.base64 || d.url || '';
-   const date = d.uploadedAt?.toDate
+   snap.forEach(doc => {
+    const d = doc.data();
+    const src = d.thumbUrl || d.base64 || d.url || '';
+    const date = d.uploadedAt?.toDate
+     ? d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })
+     : '';
+    const noteEsc = escapeAttr(d.note || '');
+    const dateEsc = escapeAttr(date);
+    thumbsHtml += `<div class="home-photo-thumb" onclick="openLightbox('${src.substring(0,20)===src?escapeAttr(src):''}','${dateEsc}','${noteEsc}')" data-src="${''}" data-date="${dateEsc}" data-note="${noteEsc}">
+      <img src="${escapeAttr(src)}" alt="Progress photo" loading="lazy">
+     <div class="home-photo-thumb-date">${escapeHtml(date)}</div>
+    </div>`;
+   });
+   scroll.innerHTML = addSlot + thumbsHtml;
+   // Fix onclick for base64 (too large for inline attr) — use event delegation
+   const thumbs = scroll.querySelectorAll('.home-photo-thumb');
+   snap.docs.forEach((doc, i) => {
+    const d = doc.data();
+    const src = d.thumbUrl || d.base64 || d.url || '';
+    const date = d.uploadedAt?.toDate
     ? d.uploadedAt.toDate().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' })
     : '';
    if (thumbs[i]) {
