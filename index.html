@@ -7603,10 +7603,10 @@ img, video, iframe { max-width: 100%; }
 })();
 </script>
 
-<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-<script defer crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
 
 <script>
 // ─────────────────────────────────────────
@@ -7637,10 +7637,15 @@ const firebaseConfig = {
  messagingSenderId: "229550101540",
  appId: "1:229550101540:web:2d671f6b3a2809570674b1"
 };
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth  = firebase.auth();
-const db   = firebase.firestore();
-const storage = firebase.storage();
+if (typeof firebase === 'undefined') {
+ console.error('[Firebase] Firebase SDK failed to load. Authentication and data features will not work.');
+}
+if (typeof firebase !== 'undefined') {
+ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+}
+const auth  = typeof firebase !== 'undefined' ? firebase.auth() : null;
+const db   = typeof firebase !== 'undefined' ? firebase.firestore() : null;
+const storage = typeof firebase !== 'undefined' ? firebase.storage() : null;
 // ── Offline persistence: chat messages, workout/meal logs and other
 // writes queue locally when the device is offline and sync automatically
 // when the connection returns. Best-effort — if it fails (unsupported
@@ -7681,19 +7686,12 @@ let explicitAuthInProgress = false;
 // ─────────────────────────────────────────
 
 // ── MEDIA SYSTEM — bridged to unified getWorkoutMedia lookup ─────────────────
-function _exSlug(n) { return n.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
-
 function getExMedia(name) {
- // Try unified lookup first, fall back to slug-based Cloudinary path
+ // Only return confirmed media from the loaded workout map.
+ // Never fabricate Cloudinary URLs from exercise slugs.
  const wm = (typeof getWorkoutMedia !== 'undefined') ? getWorkoutMedia(name) : null;
  if (wm) return { videoUrl: wm.video, thumbUrl: wm.thumbnail };
- const slug = _exSlug(name);
- const cdn = 'https://res.cloudinary.com/dljglhspo';
- const f  = 'workout-videos';
- return {
-  videoUrl : `${cdn}/video/upload/${f}/${slug}.mp4`,
-  thumbUrl : `${cdn}/video/upload/w_52,h_52,c_fill,q_auto,f_jpg/${f}/${slug}.jpg`
- };
+ return { videoUrl: null, thumbUrl: null };
 }
 
 function openWorkoutVidModal(name, detail) {
@@ -8154,9 +8152,9 @@ async function loadHomeScreen(data) {
   document.getElementById('exercise-list-preview').innerHTML = w.exercises.map((ex,i) => {
    const _m2 = (typeof getWorkoutMedia!=='undefined')?getWorkoutMedia(ex.name):null;
    const _e2 = s=>(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-   const _vEl = _m2&&_m2.thumbnail
-    ? `<img class="exrow-vid-thumb" src="${_m2.thumbnail}" onclick="openWorkoutVidModal('${_e2(ex.name)}')" alt="" loading="lazy" decoding="async">`
-    : `<div class="exrow-vid-btn" onclick="openWorkoutVidModal('${_e2(ex.name)}')">&#x25B6;</div>`;
+   const _hasThumb = _m2 && _m2.thumbnail;
+   const _vEl = `<img class="exrow-vid-thumb" data-ex-name="${_e2(ex.name)}" src="${_hasThumb ? _m2.thumbnail : ''}" onclick="openWorkoutVidModal('${_e2(ex.name)}')" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';var _b=this.nextElementSibling;if(_b)_b.style.display='flex';"${_hasThumb ? '' : ' style="display:none;"'}>` +
+    `<div class="exrow-vid-btn" onclick="openWorkoutVidModal('${_e2(ex.name)}')'" + ${_hasThumb ? ' style="display:none;"' : ''}>&#x25B6;</div>`;
    return `<div class="exercise-row-preview" style="display:flex;align-items:center;gap:10px;padding:6px 0;">
     ${_vEl}
     <div class="ex-left" style="flex:1;min-width:0;"><div class="ex-num">${i+1}</div><div><div class="ex-name">${ex.name}</div><div class="ex-detail">${ex.detail||''}</div></div></div>
@@ -8886,6 +8884,7 @@ async function buildWorkoutLogger(workout) {
     <div class="log-ex-header-inner">
      <div class="log-ex-thumb-wrap" onclick="clientPreviewVideo('${escapeAttr(exName)}')">
        <img id="ex-thumb-${exIdx}" src="" alt="${escapeAttr(exName)}" loading="lazy" decoding="async"
+       data-ex-name="${escapeAttr(exName)}"
        style="width:100%;height:100%;object-fit:cover;display:none;"
        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
       <div class="log-ex-thumb-fallback" id="ex-fallback-${exIdx}" style="display:flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(193,68,14,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></div>
@@ -12375,19 +12374,54 @@ function checkHomePhotoRequestAlert() {
 </div>
 
 
-<script defer src="data/workouts.js"></script>
 <script>
 // ====== WORKOUT MEDIA LOOKUP (full 364 exercises) ======
-// Workout media map is big (~185 KB); fetched once into memory at startup and
-// kept as a plain object. The accessor stays synchronous — every call site
-// renders user-driven views, so the fetch (started at parse time) has normally
-// completed long before first use; _evolveDataReady re-renders the active
-// panel once if it ever raced the load.
+// Primary source: workouts.json via fetch (cached by service worker).
+// Fallback: workouts.js loaded on-demand only if fetch fails (offline).
 let _WORKOUTS_RAW = null;
 function _getWorkoutsRaw() { return _WORKOUTS_RAW || {}; }
+function _loadWorkoutsEmbeddedFallback() {
+ return new Promise((resolve) => {
+  if (window._WORKOUTS_EMBEDDED) { resolve(window._WORKOUTS_EMBEDDED); return; }
+  const s = document.createElement('script');
+  s.src = 'data/workouts.js';
+  s.onload = () => resolve(window._WORKOUTS_EMBEDDED || {});
+  s.onerror = () => resolve({});
+  document.head.appendChild(s);
+ });
+}
 window._evolveWorkoutsLoad = fetch('data/workouts.json')
  .then(r => (r.ok ? r.json() : null)).catch(() => (null))
- .then(d => { _WORKOUTS_RAW = d || window._WORKOUTS_EMBEDDED || {}; });
+ .then(d => {
+  if (d) { _WORKOUTS_RAW = d; return; }
+  return _loadWorkoutsEmbeddedFallback().then(e => { _WORKOUTS_RAW = e; });
+ })
+ .then(() => { try { _refreshExerciseThumbnails(); } catch(_e) {} });
+
+// Refresh visible exercise thumbnails after the media map loads.
+// Matches elements by data-ex-name attribute. Does NOT rebuild logger cards
+// or wipe entered set/rep values.
+function _refreshExerciseThumbnails() {
+ if (!_WORKOUTS_RAW) return;
+ document.querySelectorAll('[data-ex-name]').forEach(el => {
+  const name = el.getAttribute('data-ex-name');
+  if (!name) return;
+  const wm = getWorkoutMedia(name);
+  if (!wm || !wm.thumbnail) return;
+  // Skip if already showing the correct src
+  if (el.tagName === 'IMG' && el.src === wm.thumbnail) return;
+  if (el.tagName === 'IMG') {
+   el.src = wm.thumbnail;
+   el.style.display = '';
+   el.removeAttribute('hidden');
+   // Hide sibling fallback if present
+   const fb = el.nextElementSibling;
+   if (fb && (fb.classList.contains('log-ex-thumb-fallback') || fb.style.display === 'flex')) {
+    fb.style.display = 'none';
+   }
+  }
+ });
+}
 
 function _normalizeExName(name) {
  return (name || '')
