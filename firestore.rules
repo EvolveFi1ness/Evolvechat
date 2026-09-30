@@ -73,21 +73,25 @@ service cloud.firestore {
    allow create: if isCoach()
     || (isParticipant(chatId)
         && request.auth.uid in request.resource.data.participants);
-   allow update: if isCoach()
-    || (isParticipant(chatId)
-        && request.auth.uid in resource.data.participants
-        && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['participants','lastMessage','lastAt','lastSenderRole',
-                      'clientLastReadAt']));
+    allow update: if isCoach()
+     || (isParticipant(chatId)
+         && request.auth.uid in resource.data.participants
+         && request.auth.uid in request.resource.data.participants
+         && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['participants','lastMessage','lastAt','lastSenderRole',
+                       'clientLastReadAt']));
    allow delete: if isCoach();
 
-   match /messages/{msgId} {
-    allow read: if isCoach() || isParticipant(chatId);
-    allow create: if (isCoach() || isParticipant(chatId))
-     && (request.resource.data.senderId == request.auth.uid
-         || (isCoach() && request.resource.data.senderId == 'evolve_coach_001'));
-    allow update, delete: if isCoach();
-   }
+    match /messages/{msgId} {
+     allow read: if isCoach() || isParticipant(chatId);
+     allow create: if (isCoach() || isParticipant(chatId))
+      && (request.resource.data.senderId == request.auth.uid
+          || (isCoach() && request.resource.data.senderId == 'evolve_coach_001'))
+      // senderRole is rendered as identity in the apps — only the coach may
+      // claim it; clients are always 'client'.
+      && (isCoach() || request.resource.data.get('senderRole', 'client') == 'client');
+     allow update, delete: if isCoach();
+    }
   }
 
   // ── FCM tokens ───────────────────────────────────────────
@@ -132,27 +136,41 @@ service cloud.firestore {
    allow read: if isCoach();
   }
 
-  // ── Monitoring collections (written by Actions worker via Admin SDK) ──
-  match /monitors/{monitorId} {
-    allow read: if true;
-    allow write: if false;
-  }
-  match /monitorChecks/{checkId} {
-    allow read: if true;
-    allow write: if false;
-  }
-  match /incidents/{incidentId} {
-    allow read: if true;
-    allow write: if false;
-  }
-  match /monitorNotifications/{notifId} {
-    allow read: if true;
-    allow write: if false;
-  }
-  match /monitorConfig/{docId} {
-    allow read: if true;
-    allow write: if false;
-  }
+   // ── Coach private config + notifications ─────────────────────
+   // coachConfig/auth holds the coach password hash (read by change-password,
+   // written on password change). coachNotifications are written by the
+   // monitoring worker (Admin SDK) and read/marked-read by the coach.
+   match /coachConfig/{docId} {
+    allow read, write: if isCoach();
+   }
+   match /coachNotifications/{notifId} {
+    allow read: if isCoach();
+    allow update: if isCoach()
+     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+    allow create, delete: if false;
+   }
+
+   // ── Monitoring collections (written by Actions worker via Admin SDK) ──
+   match /monitors/{monitorId} {
+     allow read: if true;
+     allow write: if false;
+   }
+   match /monitorChecks/{checkId} {
+     allow read: if true;
+     allow write: if false;
+   }
+   match /incidents/{incidentId} {
+     allow read: if isCoach();
+     allow write: if false;
+   }
+   match /monitorNotifications/{notifId} {
+     allow read: if isCoach();
+     allow write: if false;
+   }
+   match /monitorConfig/{docId} {
+     allow read: if isCoach();
+     allow write: if false;
+   }
 
   // ── Collection-group rules (required for collectionGroup() queries) ──
   // Firestore does NOT resolve collectionGroup queries through nested

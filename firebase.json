@@ -9,11 +9,16 @@
       "firebase.json",
       "firestore.rules",
       "firestore.indexes.json",
+      ".firebaserc",
+      "deploy.yml",
+      "AGENTS.md",
+      ".github/**",
+      ".opencode/**",
+      ".codegraph/**",
       "scripts/**",
       "node_modules/**",
       ".env*",
-      ".git/**",
-      "auto-push.ps1"
+      ".git/**"
     ],
     "rewrites": [],
     "headers": [

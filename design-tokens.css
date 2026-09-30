@@ -6,9 +6,11 @@
 /* ── TYPOGRAPHY ── */
 /* Display: DM Serif Display — elegant, premium headings
    Interface: Inter — clean, legible UI text
-   One display font + one interface font maximum */
+   One display font + one interface font maximum
+   NOTE: fonts load via <link> in index.html / coach.html. No @import here —
+   @import is render-blocking and serial (blocks on this CSS first), and would
+   fetch the same families a second time. */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap');
 
 /* ── DESIGN TOKENS ── */
 :root {

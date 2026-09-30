@@ -1226,12 +1226,17 @@
  .log-ex-info { flex: 1; min-width: 0; }
  .log-ex-name { font-size: 14px; font-weight: 700; color: var(--text); font-family:'Outfit',sans-serif; line-height: 1.2; }
  .log-ex-muscles { font-size: 11px; color: var(--text2); margin-top: 2px; font-family:'Outfit',sans-serif; }
- .log-ex-target-badge {
-  display: inline-flex; align-items: center;
-  margin-top: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
-  font-family:'Outfit',sans-serif; padding: 2px 7px; border-radius: 5px;
-  background: rgba(193,68,14,0.14); color: var(--gold-2); border: 1px solid rgba(193,68,14,0.3);
- }
+  .log-ex-target-badge {
+   display: inline-flex; align-items: center;
+   margin-top: 5px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+   font-family:'Outfit',sans-serif; padding: 2px 7px; border-radius: 5px;
+   background: rgba(193,68,14,0.14); color: var(--gold-2); border: 1px solid rgba(193,68,14,0.3);
+  }
+  .log-ex-coach-note {
+   margin-top: 5px; font-size: 11px; line-height: 1.5;
+   font-family:'Outfit',sans-serif; color: var(--text2);
+   border-left: 2px solid rgba(193,68,14,0.4); padding-left: 8px;
+  }
  .log-ex-pr-badge {
   display: inline-flex; align-items: center; gap: 4px;
   margin-top: 5px; margin-left: 6px; font-size: 10px; font-weight: 800; letter-spacing: 0.3px;
@@ -7798,19 +7803,32 @@ async function handlePasswordReset() {
  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
   showStatus('auth-status','Enter a valid email address.','error'); return;
  }
+ if (!auth) {
+  showStatus('auth-status','Cannot reach the sign-in service. Check your connection and try again.','error'); return;
+ }
  const btn = document.getElementById('reset-btn');
  btn.disabled = true; btn.textContent = 'Sending…'; clearStatus('auth-status');
  try {
   await auth.sendPasswordResetEmail(email);
+  showStatus('auth-status', 'If that email has an account, a reset link is on its way. Check spam/promotions too — it sends from a Firebase address.', 'success');
  } catch(e) {
-  // Swallow user-not-found silently — same message either way, so an
-  // attacker probing emails via this form learns nothing either way.
-  if (e && e.code !== 'auth/user-not-found') {
-   console.warn('[EVOLVE] password reset error:', e.code, e.message);
+  const code = (e && e.code) || '';
+  if (code === 'auth/user-not-found') {
+   // Same message as success — don't reveal which emails have accounts.
+   showStatus('auth-status', 'If that email has an account, a reset link is on its way. Check spam/promotions too.', 'success');
+  } else if (code === 'auth/too-many-requests') {
+   showStatus('auth-status', 'Too many reset attempts. Wait a few minutes, then try again.', 'error');
+  } else if (code === 'auth/network-request-failed') {
+   showStatus('auth-status', 'Network error — the reset email was not sent. Reconnect and try again.', 'error');
+  } else if (code === 'auth/invalid-email') {
+   showStatus('auth-status', 'Enter a valid email address.', 'error');
+  } else {
+   console.warn('[EVOLVE] password reset error:', code, e && e.message);
+   const detail = code ? code.replace('auth/', '').replace(/-/g, ' ') : 'unknown error';
+   showStatus('auth-status', 'Could not send the reset email (' + detail + '). Try again, or ask your coach for help.', 'error');
   }
  } finally {
   btn.disabled = false; btn.textContent = 'Send Reset Link';
-  showStatus('auth-status', 'If that email has an account, a reset link is on its way.', 'success');
  }
 }
 
@@ -8048,7 +8066,7 @@ async function handleFinish() {
  const btn = document.getElementById('finish-btn');
  btn.disabled=true; btn.textContent='Saving profile…'; clearStatus('step2-status');
  try {
-  const uid = currentUid||auth.currentUser?.uid;
+  const uid = currentUid||auth?.currentUser?.uid;
   if (!uid) throw new Error('Session expired. Please sign in again.');
   const healthData = {
    ...step1Data,
@@ -8076,23 +8094,11 @@ async function handleFinish() {
 // ─────────────────────────────────────────
 async function loadHomeScreen(data) {
  window._lastHomeData = data || null;
- // Real-time listener: if coach archives or deletes this client mid-session, redirect immediately
- const _uid = currentUid || auth.currentUser?.uid;
- if (_uid && !window._accessWatcher) {
-  window._accessWatcher = db.collection('members').doc(_uid).onSnapshot(snap => {
-   // FIX (flicker): the presence heartbeat writes isOnline/lastSeenAt to this
-   // SAME doc every 25s. Each write fires this listener twice — once
-   // instantly with our own local/optimistic copy (hasPendingWrites: true),
-   // once again when the server confirms. Skip the local echo so this only
-   // reacts to real, server-confirmed changes (e.g. the coach archiving you).
-   if (snap.metadata.hasPendingWrites) return;
-   if (snap.exists && (snap.data().status === 'archived' || snap.data().status === 'deleted')) {
-    showScreen('screen-blocked');
-   }
-  });
- }
+ // NOTE: the archived/deleted mid-session check that used to live here in its
+ // own listener now runs inside the workout-plan listener below — same doc, so
+ // one listener instead of two halves the reads billed per presence heartbeat.
 
- const _dn = (typeof auth !== 'undefined' && auth.currentUser?.displayName) || '';
+ const _dn = (auth?.currentUser?.displayName) || '';
  const _dnParts = _dn.trim().split(' ');
  const first  = data.firstName || _dnParts[0] || 'Athlete';
  const last   = data.lastName  || (data.firstName ? '' : _dnParts.slice(1).join(' ')) || '';
@@ -8322,7 +8328,7 @@ async function loadHomeScreen(data) {
   });
   // Always persist email from Auth so the cache guard passes on reload
   if (!_cacheData.email) {
-   const _aEmail = (typeof auth !== 'undefined' && auth.currentUser?.email)
+   const _aEmail = (auth?.currentUser?.email)
     || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.email);
    if (_aEmail) _cacheData.email = _aEmail;
   }
@@ -8333,7 +8339,7 @@ async function loadHomeScreen(data) {
  try {
   const _set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
   _set('pp-name',       (first + ' ' + last).trim() || 'Athlete');
-  _set('pp-email',      data.email || (typeof auth !== 'undefined' && auth.currentUser?.email) || '');
+  _set('pp-email',      data.email || (auth?.currentUser?.email) || '');
   _set('pp-age',        (data.age > 0)       ? data.age : '—');
   _set('pp-height',     (data.heightCm > 0)  ? data.heightCm + ' cm'  : '—');
   _set('pp-weight',     (data.weightKg > 0)  ? (data.weightDisplay || data.weightKg + ' kg') : '—');
@@ -8356,7 +8362,7 @@ async function loadHomeScreen(data) {
  await loadPastLogs();
  loadProgressPhotos();
  // Start realtime listener for workout plan changes from coach
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  // Order-independent stringify — Firestore can redeliver a document after a
  // reconnect with the same values but different key ordering (e.g. cached
  // copy vs a fresh server round-trip), which would otherwise make a plain
@@ -8375,11 +8381,16 @@ async function loadHomeScreen(data) {
   window._lastAssignedPlanJSON = _stableStringify(data.assignedWorkoutPlan || {});
   window._workoutPlanListener = db.collection('members').doc(uid).onSnapshot(snap => {
    if (!snap.exists) return;
-   // FIX (flicker): same reasoning as accessWatcher above — the presence
-   // heartbeat (every 25s) writes to this doc and would otherwise cause this
-   // listener to re-run its full diff/compare logic twice per heartbeat for
-   // no reason. Only process snapshots the server has actually confirmed.
+   // FIX (flicker): the presence heartbeat (every 2 min) writes
+   // isOnline/lastSeenAt to this doc and would otherwise cause this listener
+   // to re-run its full diff/compare logic twice per heartbeat for no reason.
+   // Only process snapshots the server has actually confirmed.
    if (snap.metadata.hasPendingWrites) return;
+   // Merged access check (formerly a second listener on this same doc — one
+   // listener halves the reads billed per presence heartbeat): if the coach
+   // archives or deletes this client mid-session, redirect immediately.
+   const _st = snap.data().status;
+   if (_st === 'archived' || _st === 'deleted') { showScreen('screen-blocked'); return; }
    const updated = snap.data();
    const newPlan = updated.assignedWorkoutPlan || {};
    const planJSON = _stableStringify(newPlan);
@@ -8470,7 +8481,7 @@ const WKT_ACCENT_COLORS = [
 // complete ANY session today, under any plan?" so a finished workout never
 // silently disappears just because the coach's plan changed afterward.
 async function checkAnyCompletionToday() {
- const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const uid = currentUid || (auth?.currentUser?.uid);
  if (!uid) return null;
  const todayFormatted = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
  try {
@@ -8498,7 +8509,7 @@ async function checkTodayCompletion(workout) {
  if (window._editingLogId) return false;
  // Returns true if the workout was completed today AND the coach hasn't reassigned
  // the plan after the completion (in which case the new workout takes priority).
- const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const uid = currentUid || (auth?.currentUser?.uid);
  if (!uid || !workout) return false;
  const todayFormatted = new Date().toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' });
  try {
@@ -8645,7 +8656,7 @@ window._prevSetMapLookup = _prevSetLookup;
 // whichever rows are already on screen (see _patchPrevSetColumns).
 async function _refreshPrevSetMap(workout, myToken) {
  try {
-  const _uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+  const _uid = currentUid || (auth?.currentUser?.uid);
   if (!_uid) return;
 
   // Fetch only the most recent logs (single-field orderBy needs no composite
@@ -8874,9 +8885,11 @@ async function buildWorkoutLogger(workout) {
   const exName = ex && ex.name ? ex.name : 'Exercise';
   const _exPrevSets = _prevSetLookup(exName);
 
-  const match = (ex.target || '').match(/(\d+)[×x](\d+)/);
-  const defaultSets = match ? parseInt(match[1], 10) : 3;
-  const defaultReps = match ? parseInt(match[2], 10) : 10;
+   const match = (ex.target || '').match(/(\d+)[×x](\d+)/);
+   // Structured fields first (new prescriptions), legacy string parse second.
+   const _np = (typeof normalizeExercisePrescription === 'function') ? normalizeExercisePrescription(ex) : null;
+   const defaultSets = (ex.sets > 0) ? ex.sets : (_np ? _np.sets : (match ? parseInt(match[1], 10) : 3));
+   const defaultReps = (ex.minReps > 0) ? ex.minReps : (_np ? _np.minReps : (match ? parseInt(match[2], 10) : 10));
 
   card.innerHTML = `
    <div class="log-ex-header">
@@ -8890,11 +8903,12 @@ async function buildWorkoutLogger(workout) {
       <div class="log-ex-thumb-fallback" id="ex-fallback-${exIdx}" style="display:flex;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(193,68,14,0.6)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5h11M6.5 17.5h11M2 12h4M18 12h4M6 9v6M18 9v6"/></svg></div>
       <div class="play-overlay">▶</div>
      </div>
-       <div class="log-ex-info">
-        <div class="log-ex-name">${escapeHtml(exName)}</div>
-        <div class="log-ex-muscles">${escapeHtml(ex.detail || '')}</div>
-        <div class="log-ex-target-badge">${escapeHtml(ex.target || '')}</div>
-      </div>
+        <div class="log-ex-info">
+         <div class="log-ex-name">${escapeHtml(exName)}</div>
+         <div class="log-ex-muscles">${escapeHtml(ex.detail || '')}</div>
+         <div class="log-ex-target-badge">${escapeHtml(ex.target || '')}</div>
+         ${ex.note ? `<div class="log-ex-coach-note">📝 ${escapeHtml(ex.note)}</div>` : ''}
+        </div>
       <div class="ex-edit-controls">
        <button class="ex-move-btn" onclick="moveExercise(${exIdx},-1)" title="Move exercise up">▲</button>
        <button class="ex-move-btn" onclick="moveExercise(${exIdx},1)" title="Move exercise down">▼</button>
@@ -9479,8 +9493,9 @@ function restoreLoggerState() {
    _applyExerciseUnit(exIdx, savedUnit);
    // Wipe the default sets, then restore exactly what was saved
    container.innerHTML = '';
-   const tgtMatch = (todayWorkout?.exercises?.[exIdx]?.target || '').match(/(\d+)[×x](\d+)/);
-   const tgtReps = tgtMatch ? tgtMatch[2] : '';
+    const tgtMatch = (todayWorkout?.exercises?.[exIdx]?.target || '').match(/(\d+)[×x](\d+)/);
+    const _tgtEx = todayWorkout?.exercises?.[exIdx] || {};
+    const tgtReps = (_tgtEx.minReps > 0) ? _tgtEx.minReps : (tgtMatch ? tgtMatch[2] : '');
    const _exPrev = (window._prevSetMapLookup ? window._prevSetMapLookup(curName) : (window._prevSetMap && window._prevSetMap[curName])) || [];
    exData.sets.forEach((s, sIdx) => {
     const _prevTxt = _exPrev[sIdx] || (_exPrev.length > 0 ? _exPrev[_exPrev.length - 1] : '');
@@ -9627,7 +9642,7 @@ function lockLoggerCards() {
 // COMPLETE WORKOUT → SAVE TO FIRESTORE
 // ─────────────────────────────────────────
 async function completeWorkout() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) { showToast('Not logged in.', ''); return; }
 
  // Block finish if any set row has empty weight or reps
@@ -9885,7 +9900,7 @@ function startNewWorkoutSession() {
 let _pastLogsData = []; // cache for drawer
 
 async function loadPastLogs() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
  const container = document.getElementById('past-logs-container');
  try {
@@ -10543,7 +10558,7 @@ async function cancelEditWorkout() {
 }
 
 function doCancelEdit() {
- const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const uid = currentUid || (auth?.currentUser?.uid);
  exitEditMode();
  stopWktTimer();
  showToast('Edit cancelled — no changes saved', 'info');
@@ -10707,7 +10722,7 @@ function triggerAngleInput(angle) {
    document.head.appendChild(s);
    try { await done; } catch(e) { showToast('HEIC converter not loaded. Please refresh and try again.', 'error'); return; }
   }
-  heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 })
+   heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 })
    .then(blob => {
     const converted = new File(
      [blob],
@@ -10802,7 +10817,7 @@ async function uploadPhotoToStorage(uid, base64DataUrl, angle) {
 }
 
 async function submitAnglePhotos() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
  const angles = Object.keys(_angleFiles);
  if (!angles.length) { showToast('Please select at least one photo.', 'error'); return; }
@@ -10817,7 +10832,7 @@ async function submitAnglePhotos() {
  const btn = document.getElementById('angle-submit-btn');
  const cancelBtn = document.getElementById('angle-cancel-btn');
  const _uploadWt  = parseFloat(document.getElementById('upload-weight-input')?.value);
- const _uploadWtUnit = (document.getElementById('upload-wt-lbs')?.style.background?.includes('201') ? 'lbs' : 'kg');
+  const _uploadWtUnit = (typeof _uploadWtUnitSel !== 'undefined' ? _uploadWtUnitSel : 'kg');
 
  // Progress UI helpers
  const _totalSteps = angles.length * 2; // compress + upload per angle
@@ -10845,9 +10860,15 @@ async function submitAnglePhotos() {
  const _beforeUnloadHandler = e => { e.preventDefault(); e.returnValue = 'Your photo upload is in progress. Are you sure you want to leave?'; return e.returnValue; };
  window.addEventListener('beforeunload', _beforeUnloadHandler);
 
- const reqId = activeReqId;
- activeReqId = null;
- try {
+  const reqId = activeReqId;
+  activeReqId = null;
+  // Prefetch the member doc NOW — it runs concurrent with compress+upload
+  // below instead of costing a sequential round trip afterwards.
+  const _memberGet = db.collection('members').doc(uid).get().catch(() => null);
+  // Keep each angle's uploaded URL so request fulfillment can reuse it
+  // instead of compressing + uploading the same photo a second time.
+  const _uploadedUrls = {};
+  try {
   // Step 1: Compress all photos first (CPU-only, fast)
   _setProgress(0, 'Compressing photos…');
   const compressedMap = {};
@@ -10868,23 +10889,32 @@ async function submitAnglePhotos() {
   await Promise.all(angles.map(async angle => {
    const file = _angleFiles[angle];
    const compressed = compressedMap[angle];
-   let photoUrl = null;
-   let photoBase64 = null;
-   let thumbUrl = null;
-   let previewUrl = null;
-   try {
-    const [url, thumb, preview] = await uploadPhotoVariants(uid, compressed, angle);
-    photoUrl = url;
-    thumbUrl = thumb;
-    previewUrl = preview;
-   } catch (storageErr) {
-    console.warn('Storage upload failed, falling back to base64 in Firestore:', storageErr.message);
-    photoBase64 = compressed;
-   }
-   const docData = {
-    ...(photoUrl ? { url: photoUrl } : { base64: photoBase64 }),
-    ...(thumbUrl ? { thumbUrl } : {}),
-    ...(previewUrl ? { previewUrl } : {}),
+    let photoUrl = null;
+    let photoBase64 = null;
+    let thumbUrl = null;
+    let previewUrl = null;
+    let storagePath = null;
+    let thumbStoragePath = null;
+    try {
+     const res = await uploadPhotoVariants(uid, compressed, angle);
+     photoUrl = res[0];
+     thumbUrl = res[1];
+     previewUrl = res[2];
+     storagePath = res[3] || null;
+     thumbStoragePath = res[4] || null;
+    } catch (storageErr) {
+     console.warn('Storage upload failed, falling back to base64 in Firestore:', storageErr.message);
+     // Firestore docs cap at 1 MiB — a base64 fallback larger than that can
+     // never save. Fail loudly instead of a doomed write + mystery error.
+     if (compressed && compressed.length > 700000) throw storageErr;
+     photoBase64 = compressed;
+    }
+    const docData = {
+     ...(photoUrl ? { url: photoUrl } : { base64: photoBase64 }),
+     ...(thumbUrl ? { thumbUrl } : {}),
+     ...(previewUrl ? { previewUrl } : {}),
+     ...(storagePath ? { storagePath } : {}),
+     ...(thumbStoragePath ? { thumbStoragePath } : {}),
     angle: angle,
     note: note || null,
     fileName: file.name,
@@ -10892,12 +10922,13 @@ async function submitAnglePhotos() {
     weightUnit: isNaN(_uploadWt) ? null : _uploadWtUnit,
     uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
    };
-   await db.collection('members').doc(uid).collection('progressPhotos').add(docData);
-   _stepDone(`Saving…`);
+    await db.collection('members').doc(uid).collection('progressPhotos').add(docData);
+    if (photoUrl) _uploadedUrls[angle] = photoUrl;
+    _stepDone(`Saving…`);
   }));
-  try {
-   const memberDoc = await db.collection('members').doc(uid).get();
-   const mData = memberDoc.data() || {};
+   try {
+    const memberDoc = await _memberGet;
+    const mData = (memberDoc && memberDoc.exists ? memberDoc.data() : null) || {};
    if (mData.photoUpdateStartDate) {
     const today = phNow(); today.setHours(0,0,0,0);
     let next = new Date((mData.nextPhotoDue || mData.photoUpdateStartDate) + 'T00:00:00');
@@ -10908,12 +10939,15 @@ async function submitAnglePhotos() {
     });
    }
   } catch(e) { console.warn('Photo schedule update failed:', e); }
-  if (reqId) {
-   // Upload the front photo (or first available) to Storage for the request doc
-   const reqBase64raw = _anglePreviews['front'] || Object.values(_anglePreviews)[0];
-   const reqCompressed = await compressImageBase64(reqBase64raw, 900, 0.72);
-   const reqUrl = await uploadPhotoToStorage(uid, reqCompressed, 'req_front');
-   await db.collection('photoRequests').doc(reqId).update({
+   if (reqId) {
+    // Reuse the already-uploaded front photo URL — the legacy path below
+    // re-compresses + re-uploads the same bytes (a full extra PUT).
+    const reqUrl = _uploadedUrls['front'] || Object.values(_uploadedUrls).find(Boolean) || await (async () => {
+     const reqBase64raw = _anglePreviews['front'] || Object.values(_anglePreviews)[0];
+     const reqCompressed = await compressImageBase64(reqBase64raw, 900, 0.72);
+     return uploadPhotoToStorage(uid, reqCompressed, 'req_front');
+    })();
+    await db.collection('photoRequests').doc(reqId).update({
     fulfilled: true,
     url: reqUrl,
     submittedNote: note,
@@ -10924,28 +10958,27 @@ async function submitAnglePhotos() {
   } else {
    showToast(angles.length + ' photo' + (angles.length > 1 ? 's' : '') + ' uploaded', 'success');
   }
-  // Also log weight to weightLogs collection for tracker
-  const _wv = parseFloat(document.getElementById('upload-weight-input')?.value);
-  if (!isNaN(_wv) && _wv > 0) {
-   const _wu = (document.getElementById('upload-wt-lbs')?.style.background?.includes('201') ? 'lbs' : 'kg');
-   try {
-    await db.collection('members').doc(uid).collection('weightLogs').add({
-     value: _wv, unit: _wu,
-     date: new Date().toISOString().slice(0,10),
-     source: 'photo_upload',
-     loggedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    } catch(e) { console.warn('Weight log failed:', e); }
-   // Update current weight on member doc so coach card shows latest
-   try {
+   // Also log weight to weightLogs collection for tracker, and update the
+   // member's current weight — independent writes, fired together.
+   const _wv = parseFloat(document.getElementById('upload-weight-input')?.value);
+   if (!isNaN(_wv) && _wv > 0) {
+    const _wu = (typeof _uploadWtUnitSel !== 'undefined' ? _uploadWtUnitSel : 'kg');
     const _cwKg = _wu === 'lbs' ? Math.round(_wv * 0.453592 * 10) / 10 : _wv;
-    await db.collection('members').doc(uid).update({
-     currentWeightKg: _cwKg,
-     currentWeightDisplay: _wv + ' ' + _wu,
-     currentWeightDate: new Date().toISOString().slice(0,10)
-    });
-   } catch(e) { console.warn('Current weight update failed:', e); }
-  }
+    const _today = new Date().toISOString().slice(0,10);
+    await Promise.all([
+     db.collection('members').doc(uid).collection('weightLogs').add({
+      value: _wv, unit: _wu,
+      date: _today,
+      source: 'photo_upload',
+      loggedAt: firebase.firestore.FieldValue.serverTimestamp()
+     }).catch(e => console.warn('Weight log failed:', e)),
+     db.collection('members').doc(uid).update({
+      currentWeightKg: _cwKg,
+      currentWeightDisplay: _wv + ' ' + _wu,
+      currentWeightDate: _today
+     }).catch(e => console.warn('Current weight update failed:', e))
+    ]);
+   }
   // All done — fill to 100%, remove tab-close guard, then clean up
   _setProgress(100, '✓ Upload complete!');
   window.removeEventListener('beforeunload', _beforeUnloadHandler);
@@ -11034,21 +11067,31 @@ function uploadPhotoVariants(uid, base64DataUrl, angle) {
  const blob = dataURLtoBlob(base64DataUrl);
  const ext = 'jpg';
  const baseName = `${Date.now()}_${angle}`;
- const ref = storage.ref(`progressPhotos/${uid}/${baseName}.${ext}`);
- const thumbRef = storage.ref(`progressPhotos/${uid}/${baseName}_thumb.webp`);
- const previewRef = storage.ref(`progressPhotos/${uid}/${baseName}_preview.jpg`);
- const uploadMain = ref.put(blob, { contentType: 'image/jpeg' }).then(s => s.ref.getDownloadURL());
- const uploadThumb = generatePhotoVariants(base64DataUrl).then(variants => {
-  if (!variants.thumb) return null;
-  const thumbBlob = dataURLtoBlob(variants.thumb);
-  return thumbRef.put(thumbBlob, { contentType: 'image/webp' }).then(s => s.ref.getDownloadURL());
- });
- const uploadPreview = generatePhotoVariants(base64DataUrl).then(variants => {
-  if (!variants.preview) return null;
-  const previewBlob = dataURLtoBlob(variants.preview);
-  return previewRef.put(previewBlob, { contentType: 'image/jpeg' }).then(s => s.ref.getDownloadURL());
- });
- return Promise.all([uploadMain, uploadThumb, uploadPreview]);
+ const mainPath = `progressPhotos/${uid}/${baseName}.${ext}`;
+ const thumbPath = `progressPhotos/${uid}/${baseName}_thumb.webp`;
+ const ref = storage.ref(mainPath);
+ const thumbRef = storage.ref(thumbPath);
+ const withTimeout = (promise, ms, label) => Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error(label + ' timed out. Check your connection.')), ms))
+ ]);
+ // Main (900px JPEG) doubles as the preview: it is larger than the old 800px
+ // preview variant, so lightbox/coach readers that prefer previewUrl lose no
+ // quality while we skip a third Storage PUT per photo.
+ const uploadMain = withTimeout(
+  ref.put(blob, { contentType: 'image/jpeg' }).then(s => s.ref.getDownloadURL()),
+  30000, 'Photo upload'
+ );
+ // Single decode: generate variants once, upload thumb only.
+ const uploadThumb = withTimeout(
+  generatePhotoVariants(base64DataUrl).then(variants => {
+   if (!variants.thumb) return null;
+   const thumbBlob = dataURLtoBlob(variants.thumb);
+   return thumbRef.put(thumbBlob, { contentType: 'image/webp' }).then(s => s.ref.getDownloadURL());
+  }),
+  30000, 'Thumbnail upload'
+ );
+ return Promise.all([uploadMain, uploadThumb]).then(([url, thumb]) => [url, thumb, url, mainPath, thumbPath]);
 }
 
 // ─────────────────────────────────────────
@@ -11071,7 +11114,7 @@ let _baSessions = [];
 let _baCurrentAngle = null;
 
 async function loadProgressPhotos() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
 
  const ANGLE_NAMES = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
@@ -11316,7 +11359,7 @@ function initBaSlider()    { /* no-op */ }
 // Keep compat
 
 async function loadHomePhotoStrip() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  const scroll = document.getElementById('home-photo-scroll');
  if (!uid || !scroll) return;
  try {
@@ -11379,11 +11422,19 @@ function closeLightbox() {
 
 async function deleteProgressPhoto() {
  const docId = window._currentLbDocId;
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!docId || !uid) return;
- if (!confirm('Delete this photo? This cannot be undone.')) return;
- try {
-  await db.collection('members').doc(uid).collection('progressPhotos').doc(docId).delete();
+  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  try {
+   const docRef = db.collection('members').doc(uid).collection('progressPhotos').doc(docId);
+   let old = null;
+   try { const s = await docRef.get(); if (s.exists) old = s.data(); } catch(_) {}
+   // Best-effort Storage cleanup first so deleted photos leave no orphans.
+   // Missing paths (legacy docs) or failures fall through to the doc delete.
+   for (const p of [old && old.storagePath, old && old.thumbStoragePath]) {
+    if (p && storage) { try { await storage.ref(p).delete(); } catch(_) {} }
+   }
+   await docRef.delete();
   closeLightbox();
   loadProgressPhotos();
   loadHomePhotoStrip();
@@ -11432,7 +11483,7 @@ function initPhotoSchedule() {
  });
 
  // Load saved preference
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
  db.collection('members').doc(uid).get().then(doc => {
   const data = doc.data() || {};
@@ -11450,7 +11501,7 @@ function initPhotoSchedule() {
 
 async function savePhotoSchedule() {
  if (_selectedScheduleDay === null) return;
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
  const nextDue = _computeNextDue(_selectedScheduleDay);
  const btn = document.getElementById('psc-save-btn');
@@ -11550,14 +11601,14 @@ async function _refreshProfileTab() {
  }
  // 2. Always fetch fresh from Firestore — ensures nulled/cleared fields are shown correctly
  const uid = currentUid
-  || (typeof auth !== 'undefined' && auth.currentUser?.uid)
+  || (auth?.currentUser?.uid)
   || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
  if (!uid) return;
  try {
   const doc = await db.collection('members').doc(uid).get();
   if (doc.exists) {
    const fresh = doc.data();
-   const _au = (typeof auth !== 'undefined' && auth.currentUser)
+   const _au = ((auth && auth.currentUser) || null)
     || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
    if (_au) {
     if (!fresh.email && _au.email) fresh.email = _au.email;
@@ -11603,7 +11654,7 @@ function _updateCoachStatus() {
  const el = document.getElementById('client-chat-coach-status');
  if (!el) return;
  const wasOnline = el.dataset.online === '1';
- const offline = el.dataset.lastSeen && (Date.now() - Number(el.dataset.lastSeen) > 75000);
+ const offline = el.dataset.lastSeen && (Date.now() - Number(el.dataset.lastSeen) > 360000); // 6 min = ~3 missed coach heartbeats
  if (offline && wasOnline) { el.dataset.online = '0'; el.textContent = '● Offline'; el.style.color = 'var(--text3)'; }
 }
 
@@ -11620,8 +11671,8 @@ function subscribeCoachPresence() {
     const ts = last && last.toMillis ? last.toMillis() : 0;
    el.dataset.online = '1';
    el.dataset.lastSeen = String(ts);
-   el.textContent = (Date.now() - ts < 75000) ? '● Online' : '● Away';
-   el.style.color = (Date.now() - ts < 75000) ? '#4ade80' : 'var(--text2)';
+   el.textContent = (Date.now() - ts < 360000) ? '● Online' : '● Away';
+   el.style.color = (Date.now() - ts < 360000) ? '#4ade80' : 'var(--text2)';
   }, () => {});
  } catch(e) {}
 }
@@ -11688,7 +11739,7 @@ window.addEventListener('offline', _updateOfflineUI);
 _updateOfflineUI();
 
 async function initClientChat() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
  // Always use the fixed coach UID — no lookup needed
  coachUidForChat = COACH_FIXED_UID;
@@ -11752,7 +11803,7 @@ function clientChatKeydown(e) {
 }
 
 async function clientSendMessage() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  const input = document.getElementById('client-chat-input');
  if (!input||!uid) return;
  const text = sanitizeInput(input.value, 2000);
@@ -11895,7 +11946,7 @@ function listenPendingApproval(uid) {
 // It is set to true by handleLogin/handleSignup so onAuthStateChanged
 // does not interfere with explicit auth flows — it only handles page-refresh auto-login.
 
-auth.onAuthStateChanged(async user => {
+if (auth) auth.onAuthStateChanged(async user => {
  if (explicitAuthInProgress) return;
  if (user) {
   currentUid = user.uid;
@@ -12002,7 +12053,7 @@ auth.onAuthStateChanged(async user => {
 // Mark offline when tab closes (best-effort — not reliable on its own, see heartbeat below)
 window.addEventListener('beforeunload', () => {
  stopPresenceHeartbeat();
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (uid) {
   db.collection('members').doc(uid).set({
    isOnline: false,
@@ -12023,13 +12074,13 @@ function recordLoginEvent(uid, email, type, explicitName) {
  if (!uid || typeof db === 'undefined' || !db) return;
  const _first = (_peCurrentData && _peCurrentData.firstName) || '';
  const _last  = (_peCurrentData && _peCurrentData.lastName) || '';
- const _dn    = (auth.currentUser && auth.currentUser.displayName) || '';
+ const _dn    = (auth?.currentUser && auth?.currentUser.displayName) || '';
  const name = explicitName || ((_first || _last) ? (_first + ' ' + _last).trim() : (_dn || email || 'Client'));
  db.collection('logins').add({
   app: 'client',
   uid,
   name,
-  email: email || (auth.currentUser && auth.currentUser.email) || '',
+  email: email || (auth?.currentUser && auth?.currentUser.email) || '',
   type: type || 'login', // 'login' or 'signup'
   userAgent: navigator.userAgent,
   createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -12047,11 +12098,11 @@ function recordLoginEvent(uid, email, type, explicitName) {
 // as online only while isOnline is true AND lastSeenAt is recent — so a
 // stale flag self-corrects within one missed heartbeat, with no extra
 // action required from the client.
-const HEARTBEAT_MS = 25000; // keep well under the coach's staleness window
+const HEARTBEAT_MS = 120000; // 2 min — keep well under the coach's staleness window (PRESENCE_STALE_MS in coach.html)
 let _heartbeatTimer = null;
 
 function _sendHeartbeat() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid || document.visibilityState !== 'visible') return;
  db.collection('members').doc(uid).set({
   isOnline: true,
@@ -12061,8 +12112,8 @@ function _sendHeartbeat() {
  // "Online Now" tab actually listens to (separate from the members doc above).
  const _first = (_peCurrentData && _peCurrentData.firstName) || '';
  const _last  = (_peCurrentData && _peCurrentData.lastName) || '';
- const _dn    = (auth.currentUser && auth.currentUser.displayName) || '';
- const _email = (auth.currentUser && auth.currentUser.email) || '';
+ const _dn    = (auth?.currentUser && auth?.currentUser.displayName) || '';
+ const _email = (auth?.currentUser && auth?.currentUser.email) || '';
  const name = (_first || _last) ? (_first + ' ' + _last).trim() : (_dn || _email || 'Client');
  db.collection('presence').doc(uid).set({
   app: 'client',
@@ -12213,7 +12264,7 @@ function openAddEventModal(dateStr) {
 }
 
 async function deleteClientEvent(evId) {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
  if (!confirm('Delete this event?')) return;
  try {
@@ -12223,7 +12274,7 @@ async function deleteClientEvent(evId) {
 }
 
 function listenMyEvents() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid || cliMyEvUnsub) return;
  cliMyEvUnsub = db.collection('members').doc(uid).collection('myEvents')
   .orderBy('date','asc')
@@ -12251,7 +12302,7 @@ let pendingPhotoReqs  = [];
 let activeReqId     = null; // which request the next upload should fulfill
 
 function listenClientPhotoRequests() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid || clientPhotoReqUnsub) return;
  const COACH_UID = 'evolve_coach_001';
 clientPhotoReqUnsub = db.collection('photoRequests')
@@ -12316,7 +12367,7 @@ function triggerReqPhotoUpload(reqId) {
 
 // Also show photo request banner on the home screen as a notification
 function checkHomePhotoRequestAlert() {
- const uid = currentUid || auth.currentUser?.uid;
+ const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
  const todayStr = phIsoDate();
  const overdue = pendingPhotoReqs.filter(r => r.dueDate <= todayStr);
@@ -13160,7 +13211,7 @@ function nutrCheckDateRollover() {
  const yesterday = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return nutrDateKey(d); })();
  if (nutrDateKey(nutrCurrentDate) === yesterday) {
   nutrCurrentDate = new Date(); // snap to real today
-  const uid = (typeof auth !== 'undefined') && auth.currentUser?.uid;
+  const uid = (typeof auth !== 'undefined') && auth?.currentUser?.uid;
   if (uid) {
    nutrLoadDayLogs(uid, realToday).then(() => renderNutritionTab());
   } else {
@@ -13206,7 +13257,7 @@ function nutrFormatDate(d) {
  let _nutrInitialized = false;
  async function initClientNutrition() {
   await _ensureNutrFoodsLoaded();
-  const uid = auth.currentUser?.uid;
+  const uid = auth?.currentUser?.uid;
   if (_nutrInitialized) { renderNutritionTab(); return; }
   _nutrInitialized = true;
   renderNutritionTab();
@@ -14308,7 +14359,7 @@ let _nutrConfirmInFlight = false;
 async function nutrConfirmAdd() {
  _ensureNutrFoodsLoaded();
  if (_nutrConfirmInFlight) return;
- const uid = auth.currentUser?.uid;
+ const uid = auth?.currentUser?.uid;
  if (!uid || !nutrDetailFood) return;
 
  // Day type is required
@@ -14425,7 +14476,7 @@ async function nutrConfirmAdd() {
 
   async function nutrLoadCustomFoods() {
    if (_customFoodsLoaded) return;
-   const uid = auth.currentUser?.uid;
+   const uid = auth?.currentUser?.uid;
    if (!uid) return;
    try {
     let docs = [];
@@ -14491,7 +14542,7 @@ async function nutrConfirmAdd() {
   async function saveCustomFood() {
    _ensureNutrFoodsLoaded();
    if (_customFoodSaving) return;
-   const uid = auth.currentUser?.uid;
+   const uid = auth?.currentUser?.uid;
    if (!uid) { showClientToast('Please log in first'); return; }
 
    const name = (document.getElementById('cf-name')?.value || '').trim();
@@ -14585,7 +14636,7 @@ async function nutrConfirmAdd() {
   }
 
 async function nutrDeleteLog(logId, meal) {
- const uid = auth.currentUser?.uid;
+ const uid = auth?.currentUser?.uid;
  if (!uid) return;
  const dateKey = nutrDateKey(nutrCurrentDate);
  try {
@@ -14842,7 +14893,7 @@ function nutrEditSlider(val) {
 }
 
 async function nutrEditSave() {
- const uid = auth.currentUser?.uid;
+ const uid = auth?.currentUser?.uid;
  if (!uid || !_editLogId) return;
 
  // Day type required — shake row if missing
@@ -14913,7 +14964,7 @@ async function nutrEditSave() {
 function nutrPrevDay() {
  nutrCurrentDate = new Date(nutrCurrentDate);
  nutrCurrentDate.setDate(nutrCurrentDate.getDate() - 1);
- const uid = auth.currentUser?.uid;
+ const uid = auth?.currentUser?.uid;
  if (uid) nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate)).then(() => renderNutritionTab());
  else renderNutritionTab();
 }
@@ -14922,7 +14973,7 @@ function nutrNextDay() {
  next.setDate(next.getDate() + 1);
  if (next > new Date()) return; // don't go into future
  nutrCurrentDate = next;
- const uid = auth.currentUser?.uid;
+ const uid = auth?.currentUser?.uid;
  if (uid) nutrLoadDayLogs(uid, nutrDateKey(nutrCurrentDate)).then(() => renderNutritionTab());
  else renderNutritionTab();
 }
@@ -14942,8 +14993,13 @@ function showClientToast(msg) {
 
 
 <script>
+// Tracks the photo-upload weight unit explicitly (var: no TDZ — readable from
+// any script block even if this one parses last). Never sniff it back out of
+// element styles; browser style serialization made the old check always 'kg'.
+var _uploadWtUnitSel = 'kg';
 function uploadWtSetUnit(u) {
- const kg = document.getElementById('upload-wt-kg');
+ _uploadWtUnitSel = u;
+  const kg = document.getElementById('upload-wt-kg');
  const lbs = document.getElementById('upload-wt-lbs');
  if (!kg || !lbs) return;
  kg.style.background = u==='kg' ? 'rgba(193,68,14,0.2)' : 'transparent';
@@ -15508,12 +15564,12 @@ async function openProfileEdit() {
  _peRemovePhoto = false;
 
  const uid = currentUid
-  || (typeof auth !== 'undefined' && auth.currentUser?.uid)
+  || (auth?.currentUser?.uid)
   || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
 
  // Seed _peCurrentData with Firebase Auth info as fallback (name + email)
  // so the modal always has something to show even if Firestore hasn't loaded
- const _authUser = (typeof auth !== 'undefined' && auth.currentUser)
+ const _authUser = ((auth && auth.currentUser) || null)
   || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
  if (_authUser) {
   if (!_peCurrentData.email && _authUser.email) _peCurrentData.email = _authUser.email;
@@ -15590,7 +15646,7 @@ function showPeToast(msg, isError) {
 
 async function saveProfileEdit() {
  const uid = currentUid
-  || (typeof auth !== 'undefined' && auth.currentUser?.uid)
+  || (auth?.currentUser?.uid)
   || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.uid);
 
  if (!uid) { showPeToast('Not signed in — please refresh', true); return; }
@@ -15613,7 +15669,7 @@ async function saveProfileEdit() {
  const medicalConditions = getSanitizedValue('pe-conditions', 300).split(',').map(s=>sanitizeInput(s)).filter(Boolean);
 
  // Resolve name: use field value, fall back to Auth displayName, fall back to existing cache
- const _authUser2 = (typeof auth !== 'undefined' && auth.currentUser)
+ const _authUser2 = ((auth && auth.currentUser) || null)
   || (typeof firebase !== 'undefined' && firebase.auth().currentUser);
  const _authParts = (_authUser2 && _authUser2.displayName) ? _authUser2.displayName.trim().split(' ') : [];
  const resolvedFirst = firstName || _peCurrentData.firstName || _authParts[0] || '';
@@ -15708,7 +15764,7 @@ function refreshProfileDisplay(data) {
 
  // Name + avatars
  set('pp-name',  fullName || 'Athlete');
- set('pp-email', data.email || (typeof auth !== 'undefined' && auth.currentUser?.email) || '');
+ set('pp-email', data.email || (auth?.currentUser?.email) || '');
  const initials = ((first[0]||'') + (last[0]||'')).toUpperCase() || fullName[0]?.toUpperCase() || '?';
  ['home-avatar','pp-avatar','sidebar-avatar'].forEach(id => {
   const e = document.getElementById(id);
@@ -16084,14 +16140,15 @@ function renderAssignedPlanModal() {
    const safeExName = escapeHtml(ex.name || '');
    const safeDetail = escapeHtml(ex.detail || '');
    const safeTarget = escapeHtml(ex.target || '');
-   return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;${i > 0 ? 'border-top:1px solid rgba(255,255,255,0.05);' : ''}">
-    <div style="width:20px;height:20px;flex-shrink:0;border-radius:6px;background:rgba(255,255,255,0.06);color:#888;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;">${i+1}</div>
-    <div style="flex:1;min-width:0;">
-     <div style="font-size:12.5px;font-weight:600;color:#ddd;font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeExName}</div>
-     ${safeDetail ? `<div style="font-size:11px;color:var(--text2);font-family:'Outfit',sans-serif;">${safeDetail}</div>` : ''}
-    </div>
-    <div style="font-size:11.5px;color:var(--text2);font-family:'Outfit',sans-serif;flex-shrink:0;">${safeTarget}</div>
-   </div>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;${i > 0 ? 'border-top:1px solid rgba(255,255,255,0.05);' : ''}">
+     <div style="width:20px;height:20px;flex-shrink:0;border-radius:6px;background:rgba(255,255,255,0.06);color:#888;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;">${i+1}</div>
+     <div style="flex:1;min-width:0;">
+      <div style="font-size:12.5px;font-weight:600;color:#ddd;font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeExName}</div>
+      ${safeDetail ? `<div style="font-size:11px;color:var(--text2);font-family:'Outfit',sans-serif;">${safeDetail}</div>` : ''}
+      ${ex.note ? `<div style="font-size:11px;color:var(--text2);font-family:'Outfit',sans-serif;margin-top:2px;">📝 ${escapeHtml(ex.note)}</div>` : ''}
+     </div>
+     <div style="font-size:11.5px;color:var(--text2);font-family:'Outfit',sans-serif;flex-shrink:0;">${safeTarget}</div>
+    </div>`;
   }).join('');
 
   return `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:8px;overflow:hidden;${isToday ? 'border-color:rgba(193,68,14,0.35);' : ''}${doneToday ? 'border-color:rgba(61,203,114,0.3);' : ''}">
@@ -16915,7 +16972,7 @@ let _cwktTemplates = null; // cache once loaded per session
 async function renderHomeTemplates(force) {
  const box = document.getElementById('cwkt-home-templates');
  if (!box) return;
- const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const uid = currentUid || (auth?.currentUser?.uid);
  if (!uid) { box.innerHTML = ''; return; }
 
  if (!_cwktTemplates || force) {
@@ -16993,7 +17050,7 @@ async function deleteHomeTemplate(id) {
  const tpl = (_cwktTemplates || []).find(t => t.id === id);
  if (!tpl) return;
  if (!confirm(`Delete template "${tpl.name}"?`)) return;
- const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const uid = currentUid || (auth?.currentUser?.uid);
  if (!uid) return;
  try {
   await db.collection('members').doc(uid).collection('workoutTemplates').doc(id).delete();
@@ -17029,7 +17086,7 @@ function closeLogTemplatePicker() {
 async function _renderLogTemplatePicker(force) {
  const list = document.getElementById('log-tpl-picker-list');
  if (!list) return;
- const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const uid = currentUid || (auth?.currentUser?.uid);
  if (!uid) { list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2);font-size:12px;font-family:\'Outfit\',sans-serif;">Sign in to use templates</div>'; return; }
 
  if (!_cwktTemplates || force) {
@@ -17121,7 +17178,7 @@ async function addTemplateToActiveWorkout(id, btnEl) {
 
 async function saveCwktAsTemplate() {
  if (!_cwktExercises.length) return;
- const uid = currentUid || (typeof auth !== 'undefined' && auth.currentUser?.uid);
+ const uid = currentUid || (auth?.currentUser?.uid);
  if (!uid) { showToast('Please sign in to save templates'); return; }
  if (typeof rateLimited === 'function' && rateLimited('save-cwkt-template', 3000, 'Please wait before saving again.')) return;
 

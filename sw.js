@@ -4,7 +4,7 @@
    for the CDN libs the apps already depend on. */
 'use strict';
 
-const CACHE = 'evolve-v5';
+const CACHE = 'evolve-v6';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
@@ -63,7 +63,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Static assets: cache-first with stale-while-revalidate for CSS/JS.
-  if (STATIC.some((s) => url.pathname.endsWith(s))) {
+  // NOTE: STATIC entries are './'-prefixed, pathnames are '/'-prefixed —
+  // normalize before comparing or this branch never matches (it didn't).
+  const _norm = (s) => s.replace(/^\.\//, '/');
+  if (STATIC.some((s) => url.pathname.endsWith(_norm(s)))) {
     event.respondWith(
       caches.match(event.request).then((hit) => {
         const fallback = fetch(event.request).then((res) => {

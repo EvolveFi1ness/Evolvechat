@@ -79,6 +79,70 @@ function a2hsCloseIosSheet() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// EXERCISE PRESCRIPTION HELPERS
+// Shared by the coach builder (coach.html) and the client logger
+// (index.html). Prescriptions are stored as structured fields plus a
+// human display string:
+//
+//   { sets:2, minReps:12, maxReps:15, rir:3, note:'…',
+//     target:'2 × 12–15 · RIR 3' }
+//
+// `target` is what every display renders verbatim, so old and new docs
+// look identical everywhere. Structured fields drive logger prefill.
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Parse a legacy prescription string ('4x8', '4×8', '2x12-15', '3×12/leg').
+ * Returns { sets, minReps, maxReps } or null when unparseable.
+ */
+function parsePrescriptionTarget(str) {
+  if (!str) return null;
+  const m = String(str).match(/(\d+)\s*[×x]\s*(\d+)(?:\s*[–—-]\s*(\d+))?/);
+  if (!m) return null;
+  const sets = parseInt(m[1], 10);
+  const minReps = parseInt(m[2], 10);
+  let maxReps = m[3] ? parseInt(m[3], 10) : minReps;
+  if (!(sets > 0) || !(minReps > 0)) return null;
+  if (!(maxReps >= minReps)) maxReps = minReps;
+  return { sets, minReps, maxReps };
+}
+
+/**
+ * Format a prescription display string: '2 × 12–15 · RIR 3', '3 × 10'.
+ */
+function formatPrescription(p) {
+  p = p || {};
+  const sets = Math.min(99, Math.max(1, parseInt(p.sets, 10) || 3));
+  const min = Math.min(999, Math.max(1, parseInt(p.minReps, 10) || parseInt(p.reps, 10) || 10));
+  let max = parseInt(p.maxReps, 10);
+  if (!(max >= min)) max = min;
+  max = Math.min(999, max);
+  let s = sets + ' × ' + min + (max > min ? '–' + max : '');
+  const rir = parseInt(p.rir, 10) || 0;
+  if (rir > 0) s += ' · RIR ' + Math.min(10, rir);
+  return s;
+}
+
+/**
+ * Normalize any exercise (new or legacy) to structured prescription
+ * values, falling back to parsing `target`, then to defaults.
+ * Never throws; always returns { sets, minReps, maxReps, rir, note }.
+ */
+function normalizeExercisePrescription(ex) {
+  ex = ex || {};
+  let parsed = null;
+  try { parsed = parsePrescriptionTarget(ex.target); } catch (e) { parsed = null; }
+  const sets = (ex.sets > 0) ? Math.min(99, ex.sets)
+    : (parsed ? parsed.sets : 3);
+  const minReps = (ex.minReps > 0) ? Math.min(999, ex.minReps)
+    : (parsed ? parsed.minReps : 10);
+  const maxReps = (ex.maxReps >= minReps) ? Math.min(999, ex.maxReps)
+    : (parsed && parsed.maxReps >= minReps ? parsed.maxReps : minReps);
+  const rir = (ex.rir > 0) ? Math.min(10, ex.rir) : 0;
+  return { sets, minReps, maxReps, rir, note: ex.note || '' };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SHARED FOOD DATABASE LOADER
 // Single point of entry for loading food data. Prevents duplicate
 // fetches and provides retry capability.

@@ -13,13 +13,17 @@
 </script>
   <script src="shared.js"></script>
   <script>
-    // Apply saved theme before first paint to avoid a light-mode flash.
+    // Apply theme before first paint to avoid a flash. Dark is the default:
+    // only an explicit stored light choice opts out. Accepts BOTH the coach
+    // key (evolveDarkMode) and the client key (evolve_theme) so a theme set
+    // in either Evolve app carries over.
     (function(){
       try {
-        // Accept BOTH the coach key (evolveDarkMode) and the client key
-        // (evolve_theme) so a theme set in either Evolve app carries over.
-        let dark = localStorage.getItem('evolveDarkMode') === '1';
-        if (!dark && localStorage.getItem('evolve_theme') === 'dark') dark = true;
+        var dm = localStorage.getItem('evolveDarkMode');
+        var dark;
+        if (dm === '0') dark = false;
+        else if (dm === '1') dark = true;
+        else dark = localStorage.getItem('evolve_theme') !== 'light';
         if (dark) {
           document.documentElement.classList.add('dark-mode');
           var tm = document.querySelector('meta[name="theme-color"]');
@@ -850,23 +854,28 @@
   .ccs-info { display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
   .ccs-name { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ccs-email { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .day-picker { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .day-picker { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
   .day-btn {
-    padding: 14px 4px 12px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--border);
+    padding: 13px 4px 12px; border-radius: 14px; background: var(--bg2); border: 1px solid var(--border2);
     color: var(--muted); font-size: 12px; font-family: 'Inter', sans-serif;
     cursor: pointer; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-    font-weight: 500; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    font-weight: 500; position: relative; overflow: hidden;
     box-shadow: 0 1px 2px rgba(var(--line-r),var(--line-g),var(--line-b),0.03), 0 8px 24px rgba(var(--line-r),var(--line-g),var(--line-b),0.04);
   }
-  .day-btn:hover { border-color: rgba(255,90,43,0.3); color: var(--text); }
-  .day-abbr { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
-  .day-ex-count { font-size: 18px; font-weight: 800; font-family: 'Inter', sans-serif; color: var(--text); }
-  .day-btn.active { background: #17140f; border-color: #17140f; color: rgba(255,255,255,0.6); }
-  .day-btn.active .day-ex-count { color: #fff; }
+  .day-btn:hover { border-color: rgba(255,90,43,0.4); color: var(--text); }
+  .day-abbr { font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 700; }
+  .day-ex-count { font-size: 21px; line-height: 1; font-weight: 800; font-family: 'Inter', sans-serif; color: var(--text); }
+  /* Active day: orange hairline border + tinted plate, count stays high-contrast. */
+  .day-btn.active {
+    background: rgba(255,90,43,0.12); border-color: var(--gold); color: var(--gold);
+    box-shadow: 0 0 0 1px rgba(255,90,43,0.22), 0 12px 28px rgba(255,90,43,0.14);
+  }
+  .day-btn.active .day-abbr { color: var(--gold); }
+  .day-btn.active .day-ex-count { color: var(--text); }
   .day-btn.active::after {
-    content: ''; position: absolute; left: 16%; right: 16%; bottom: -5px; height: 3px;
-    border-radius: 3px; background: var(--gold);
+    content: ''; position: absolute; left: 24%; right: 24%; bottom: 0; height: 3px;
+    border-radius: 3px 3px 0 0; background: var(--gold);
   }
   .builder-main { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
   .bm-header { padding: 16px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
@@ -879,14 +888,80 @@
     font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
   }
   .bm-workout-name-row input:focus { border-color: var(--gold); }
-  .bm-workout-name-row input::placeholder { color: var(--muted); font-weight: 500; }
+  /* ── Assign header (mockup chrome: back + title/meta + Save + kebab).
+     Replaces the old back button, page header, day-card title row and
+     workout-name row inside the builder — those are hidden below. ── */
+  #wk-builder-view > .wk-back-btn, #wk-builder-view > .page-header { display: none; }
+  .bm-assign-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .bm-back {
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .bm-back:hover { border-color: var(--gold); color: var(--gold); }
+  .bm-back svg { width: 17px; height: 17px; }
+  .bm-title-wrap { flex: 1; min-width: 0; }
+  .bm-wkt-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .bm-wkt-title { font-family: 'Syne',sans-serif; font-weight: 800; font-size: 24px; letter-spacing: -0.5px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bm-rename-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 6px; display: flex; flex-shrink: 0; }
+  .bm-rename-btn:hover { color: var(--gold); }
+  .bm-rename-btn svg { width: 15px; height: 15px; }
+  #workout-name-input.bm-title-edit {
+    font-family: 'Syne',sans-serif; font-weight: 800; font-size: 24px; letter-spacing: -0.5px;
+    color: var(--text); background: transparent; border: none; outline: none; width: 100%;
+    border-bottom: 2px solid var(--gold); padding: 0 0 2px;
+  }
+  #workout-name-input::placeholder { color: var(--muted); font-weight: 500; }
+  .bm-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; font-size: 12.5px; color: var(--muted); margin-top: 5px; }
+  .bm-meta-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .bm-meta-item svg { width: 13px; height: 13px; flex-shrink: 0; opacity: 0.75; }
+  .bm-meta-sep { opacity: 0.5; }
+  .bm-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: auto; }
+  .bm-save {
+    background: var(--gold); border: none; color: #fff; border-radius: 11px;
+    padding: 12px 26px; font-size: 13.5px; font-weight: 800; font-family: 'Inter',sans-serif;
+    letter-spacing: 0.2px; cursor: pointer; box-shadow: 0 8px 22px rgba(255,90,43,0.32);
+    transition: transform 0.15s, filter 0.15s, box-shadow 0.15s;
+  }
+  .bm-save:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .bm-save:active { transform: translateY(0) scale(0.98); }
+  .bm-kebab { position: relative; }
+  .bm-kebab > summary {
+    list-style: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+    background: var(--bg2); border: 1px solid var(--border); color: var(--text);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bm-kebab > summary::-webkit-details-marker { display: none; }
+  .bm-kebab > summary:hover { border-color: var(--gold); color: var(--gold); }
+  .bm-kebab-menu {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 200; min-width: 190px;
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.35); padding: 6px;
+  }
+  .bm-kebab-menu button {
+    display: block; width: 100%; text-align: left; background: none; border: none;
+    color: var(--text); font-size: 13px; font-weight: 600; font-family: 'Inter',sans-serif;
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  }
+  .bm-kebab-menu button:hover { background: var(--gold-dim); color: var(--gold); }
+  .bm-kebab-menu button.danger:hover { background: rgba(248,113,113,0.1); color: var(--red); }
   .ex-builder-list { padding: 12px; min-height: 200px; }
   .ex-builder-item {
-    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 14px; margin-bottom: 8px;
-    display: grid; grid-template-columns: auto auto auto 1fr auto auto; gap: 10px; align-items: center;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 16px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 16px;
     transition: border-color 0.2s, opacity 0.2s, transform 0.15s, box-shadow 0.2s;
   }
+  /* Three columns: [handle + thumb + name] [prescription + note] [actions].
+     overflow:hidden on the text column keeps long names off the pills. */
+  .ebi-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 12px; }
+  .ebi-text { flex: 1; min-width: 0; overflow: hidden; }
+  .ebi-presc {
+    flex: 0 1 auto; min-width: 0; display: flex; flex-direction: column;
+    align-items: flex-start; gap: 8px;
+  }
+  .ebi-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ebi-actions { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
   .ex-builder-item:hover { border-color: var(--border2); }
   .ex-builder-item.dragging { opacity: 0.4; }
   .ex-builder-item.drag-over-top { box-shadow: inset 0 2px 0 0 var(--gold); }
@@ -897,10 +972,6 @@
   }
   .ebi-handle:active { cursor: grabbing; }
   .ebi-handle svg { width: 14px; height: 18px; pointer-events: none; }
-  .ebi-num {
-    font-size: 13px; font-weight: 700; color: var(--muted2); width: 18px;
-    text-align: center; flex-shrink: 0;
-  }
   .ebi-reorder { display: none; }
   .ebi-move-btn {
     width: 22px; height: 18px; border-radius: 5px; background: transparent;
@@ -910,57 +981,163 @@
   }
   .ebi-move-btn:hover:not(:disabled) { border-color: rgba(255,90,43,0.4); color: var(--gold); background: rgba(255,90,43,0.06); }
   .ebi-move-btn:disabled { opacity: 0.3; cursor: default; }
-  .ebi-name { font-size: 14px; font-weight: 600; }
-  .ebi-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .ebi-name { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -0.1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ebi-unnamed { color: var(--muted); font-style: italic; font-weight: 500; }
+  .ebi-detail { font-size: 12.5px; color: var(--muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ebi-note { font-size: 12.5px; color: var(--muted); line-height: 1.5; display: flex; gap: 7px; align-items: flex-start; max-width: 46ch; }
+  .ebi-note svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 3px; opacity: 0.7; }
+  /* Prescription pill (sets × reps) — click to edit inline. */
   .ebi-target {
-    font-size: 12px; color: var(--gold); background: var(--gold-dim);
-    border: 1px solid rgba(255,90,43,0.2); padding: 4px 12px; border-radius: 100px;
-    white-space: nowrap; font-weight: 700; cursor: pointer; user-select: none; transition: background 0.15s;
+    font-size: 13px; color: #FF9E57; background: rgba(255,140,50,0.14);
+    border: 1px solid rgba(255,140,50,0.3); padding: 6px 13px; border-radius: 9px;
+    white-space: nowrap; font-weight: 800; letter-spacing: 0.2px; cursor: pointer; user-select: none; transition: background 0.15s, border-color 0.15s;
+    font-variant-numeric: tabular-nums;
   }
   .ebi-target:hover { background: rgba(255,90,43,0.22); border-color: rgba(255,90,43,0.45); }
+  /* RIR pill — read-only chip, opens the exercise editor where RIR is set. */
+  .ebi-rir {
+    font-size: 13px; color: #FF9E57; background: rgba(255,140,50,0.14);
+    border: 1px solid rgba(255,140,50,0.3); padding: 6px 13px; border-radius: 9px;
+    white-space: nowrap; font-weight: 800; letter-spacing: 0.2px; cursor: pointer; user-select: none;
+    transition: background 0.15s, border-color 0.15s; font-variant-numeric: tabular-nums;
+  }
+  .ebi-rir:hover { background: rgba(255,90,43,0.22); border-color: rgba(255,90,43,0.45); }
   .ebi-target-input {
     font-size: 12px; font-weight: 700; color: var(--gold);
     background: rgba(255,90,43,0.12); border: 1px solid var(--gold);
     border-radius: 100px; padding: 4px 10px; outline: none;
-    width: 80px; text-align: center; font-family: inherit;
+    width: 96px; text-align: center; font-family: inherit;
     box-shadow: 0 0 0 3px rgba(255,90,43,0.12);
   }
   .ebi-del {
-    width: 28px; height: 28px; border-radius: 50%; background: transparent;
+    width: 36px; height: 36px; border-radius: 50%; background: transparent;
     border: 1px solid var(--border); color: var(--muted); font-size: 14px;
     cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
   }
   .ebi-del:hover { border-color: rgba(248,113,113,0.4); color: var(--red); background: rgba(248,113,113,0.06); }
-  .add-exercise-toggle {
-    display: flex; align-items: center; gap: 10px; cursor: pointer;
-    padding: 14px 18px; border-top: 1px solid var(--border);
-    color: var(--gold); font-size: 13px; font-weight: 700; font-family: 'Inter', sans-serif;
-    transition: background-color 0.15s;
+  .ebi-edit {
+    width: 36px; height: 36px; border-radius: 50%; background: transparent;
+    border: 1px solid var(--border); color: var(--muted);
+    cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, opacity 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s; flex-shrink: 0;
   }
-  .add-exercise-toggle:hover { background: var(--gold-dim); }
-  .aet-plus {
-    width: 24px; height: 24px; border-radius: 50%; background: var(--gold-dim);
-    color: var(--gold); display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; flex-shrink: 0;
+  .ebi-edit:hover { border-color: rgba(255,90,43,0.4); color: var(--gold); background: var(--gold-dim); }
+  .ebi-edit svg, .ebi-del svg { width: 15px; height: 15px; pointer-events: none; }
+  html:not(.dark-mode) .ebi-target,
+  html:not(.dark-mode) .ebi-rir { color: #C1440E; }
+  /* ── Builder day grid: exercise list + Add Exercise side panel ── */
+  .builder-day-grid { display: grid; grid-template-columns: minmax(0,1fr) 380px; gap: 20px; align-items: start; }
+  .add-exercise-panel {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px; position: sticky; top: 12px;
   }
-  .add-exercise-form {
-    padding: 14px; border-top: 1px solid var(--border); background: var(--bg3);
-    display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: flex-end;
+  .axp-head { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 800; font-family: 'Syne',sans-serif; color: var(--text); margin-bottom: 12px; }
+  .axp-close {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--bg3);
+    border: 1px solid var(--border); color: var(--muted); font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .aef-field input {
-    width: 100%; background: var(--bg2); border: 1px solid var(--border);
-    border-radius: 8px; padding: 9px 10px; color: var(--text);
-    font-size: 13px; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
+  .axp-search, .axp-text {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 11px; padding: 13px 13px 13px 36px; color: var(--text);
+    font-size: 14px; font-family: 'Inter',sans-serif; outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%23A29C8E' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M21 21l-4.3-4.3'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 13px center;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .aef-field input:focus { border-color: var(--gold); }
-  .aef-field input::placeholder { color: var(--muted2); }
-  .aef-label { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
-  .aef-add {
-    background: var(--gold); border: none; color: #0A0A0A; padding: 9px 16px;
-    border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
-    cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
+  .axp-search::placeholder, .axp-text::placeholder { color: var(--muted); opacity: 0.7; }
+  .axp-search:focus, .axp-text:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,90,43,0.12); }
+  .axp-results { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; max-height: 210px; overflow-y: auto; }
+  .axp-result { display: flex; gap: 10px; align-items: center; padding: 7px 8px; border-radius: 10px; border: 1px solid transparent; cursor: pointer; }
+  .axp-result:hover { background: var(--bg3); border-color: var(--border); }
+  .axp-result img, .axp-result .axp-noimg { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+  .axp-result .axp-noimg { background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--gold); font-family: 'Syne',sans-serif; }
+  .axp-result .n { font-size: 13px; font-weight: 700; color: var(--text); }
+  .axp-result .m { font-size: 11px; color: var(--muted); }
+  .axp-field { margin-top: 16px; }
+  .axp-label { font-size: 13px; color: var(--text); opacity: 0.72; font-weight: 600; margin-bottom: 8px; letter-spacing: 0.1px; }
+  .axp-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .axp-select, .axp-notes {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 11px; padding: 13px 13px; color: var(--text);
+    font-size: 14px; font-family: 'Inter',sans-serif; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-  .aef-add:hover { opacity: 0.9; }
+  .axp-select {
+    appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 32px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A29C8E' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  .axp-select option { background: var(--bg2); color: var(--text); }
+  .axp-select:focus, .axp-notes:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,90,43,0.12); }
+  .axp-notes { min-height: 84px; resize: vertical; line-height: 1.55; }
+  .axp-count { text-align: right; font-size: 11px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .axp-add {
+    width: 100%; margin-top: 18px; background: var(--gold); border: none; color: #fff;
+    border-radius: 12px; padding: 16px; font-size: 14.5px; font-weight: 800;
+    font-family: 'Inter',sans-serif; cursor: pointer; box-shadow: 0 8px 22px rgba(255,90,43,0.3);
+    transition: transform 0.15s, filter 0.15s, box-shadow 0.15s;
+  }
+  .axp-add:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .axp-add:active { transform: translateY(0) scale(0.99); }
+  #axp-reopen {
+    display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    margin-top: 12px; padding: 13px; border-radius: 12px; cursor: pointer;
+    background: var(--gold-dim); border: 1px dashed rgba(255,90,43,0.4);
+    color: var(--gold); font-size: 13px; font-weight: 700; font-family: 'Inter',sans-serif;
+  }
+  #axp-reopen.hidden { display: none; }
+  .axp-invalid { border-color: var(--red) !important; animation: axpShake 0.3s; }
+  @keyframes axpShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+  @media (max-width: 980px) {
+    .builder-day-grid { grid-template-columns: 1fr; }
+    .add-exercise-panel { position: static; }
+  }
+  @media (max-width: 760px) {
+    .ex-builder-item { flex-wrap: wrap; row-gap: 12px; }
+    .ebi-main { flex: 1 1 100%; }
+    .ebi-presc { flex: 1 1 auto; }
+    .ebi-actions { margin-left: auto; }
+    .day-picker { gap: 6px; }
+    .day-abbr { font-size: 9.5px; letter-spacing: 0.6px; }
+    .day-ex-count { font-size: 17px; }
+    .bm-wkt-title { font-size: 18px; }
+    .bm-save { padding: 11px 18px; font-size: 12.5px; }
+    .bm-assign-header { flex-wrap: wrap; row-gap: 10px; }
+    .bm-back { order: 1; }
+    .bm-actions { order: 2; }
+    .bm-title-wrap { order: 3; flex: 1 1 100%; }
+  }
+  /* ── Edit Exercise modal (mirrors the sets-modal pattern) ── */
+  #exedit-overlay { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px; }
+  #exedit-overlay.open { display: flex; }
+  #exedit-box { width: 100%; max-width: 420px; max-height: 92vh; overflow-y: auto; background: var(--bg2); border: 1px solid var(--border2); border-radius: 18px; padding: 22px 20px 20px; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+  .exedit-head { display: flex; align-items: center; justify-content: space-between; font-size: 16px; font-weight: 800; font-family: 'Syne',sans-serif; color: var(--text); margin-bottom: 12px; }
+  .exedit-sub { display: flex; gap: 12px; align-items: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 10px; margin-bottom: 14px; }
+  .exedit-sub img, .exedit-sub .axp-noimg { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
+  .exedit-sub .axp-noimg { background: var(--bg2); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: var(--gold); font-family: 'Syne',sans-serif; }
+  .exedit-sub .n { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .exedit-sub .m { font-size: 11px; color: var(--muted); }
+  #exedit-note { width: 100%; min-height: 76px; resize: vertical; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 13px; font-family: 'Inter',sans-serif; outline: none; line-height: 1.5; }
+  #exedit-note:focus { border-color: var(--gold); }
+  /* ── Repair modal ── */
+  #repair-overlay { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px; }
+  #repair-overlay.open { display: flex; }
+  #repair-box { width: 100%; max-width: 460px; max-height: 88vh; overflow-y: auto; background: var(--bg2); border: 1px solid var(--border2); border-radius: 18px; padding: 22px 20px 20px; box-shadow: 0 30px 80px rgba(0,0,0,0.5); }
+  .repair-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .repair-row:last-child { border-bottom: none; }
+  .repair-tag { font-size: 10px; font-weight: 800; letter-spacing: 0.5px; color: var(--muted); text-transform: uppercase; flex-shrink: 0; width: 86px; }
+  .repair-target { font-size: 11px; font-weight: 700; color: var(--gold); flex-shrink: 0; }
+  .repair-row input {
+    flex: 1; min-width: 0; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 8px 10px; color: var(--text);
+    font-size: 13px; font-family: 'Inter',sans-serif; outline: none;
+  }
+  .repair-row input:focus { border-color: var(--gold); }
+  .repair-empty { text-align: center; padding: 26px 10px; color: var(--muted); font-size: 13px; }
 
   /* ── EXERCISE LIBRARY BUTTON ── */
   .browse-library-btn {
@@ -2027,10 +2204,18 @@
   }
 
   /* Builder and form elements */
-  .aef-field input, #aef-name, #aef-detail, #aef-target{
+  .aef-field input, #aef-name, #aef-detail, #aef-sets, #aef-min, #aef-max, #aef-rir, #aef-note {
     font-family: 'Outfit', sans-serif;
     background: rgba(var(--line-r),var(--line-g),var(--line-b),0.03);
     border-color: rgba(var(--line-r),var(--line-g),var(--line-b),0.07);
+  }
+  /* Re-assert the dropdown chevron: the background shorthand above wipes the
+     background-image set on .axp-select (ID specificity wins either way). */
+  #aef-sets.axp-select, #aef-min.axp-select, #aef-max.axp-select, #aef-rir.axp-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23A29C8E' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
   }
 
   /* Calendar form inputs — dark theme (uses CSS variables) */
@@ -3993,6 +4178,42 @@ html.dark-mode {
   --line-r: 255; --line-g: 255; --line-b: 255;
   background: var(--bg);
 }
+/* Page canvas: the light retheme pins html/body background+color with
+   !important, which beats the plain var() above — re-pin them here or dark
+   mode renders light text on the cream page (invisible headings, labels,
+   lists). Higher specificity + !important wins the cascade. */
+html.dark-mode, html.dark-mode body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  color-scheme: dark;
+}
+/* Client modal: the base theme re-scopes LOCAL light tokens inside .modal,
+   so the modal stays white in dark mode. Re-scope them to dark values here
+   (higher specificity wins over the light block regardless of order), then
+   fix the handful of hardcoded light colors inside it. */
+html.dark-mode .modal {
+  --bg: #17151B;
+  --bg2: #17151B;
+  --bg3: #121116;
+  --bg4: #1D1A23;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #EDE9E1;
+  --muted: #9A968D;
+  --muted2: #5C594F;
+  background: var(--bg2) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 4px 20px rgba(0,0,0,0.35) !important;
+}
+html.dark-mode .modal-close { color: rgba(237,233,225,0.6) !important; }
+html.dark-mode .modal-close:hover { background: rgba(255,255,255,0.08) !important; }
+html.dark-mode .cpvt-btn { color: rgba(245,240,232,0.6) !important; }
+html.dark-mode .cpvt-btn:hover:not(.active) { color: #EDE9E1 !important; }
+html.dark-mode .coach-ba-chip { color: rgba(245,240,232,0.6) !important; }
+html.dark-mode .coach-ba-stat-lbl,
+html.dark-mode .coach-ba-stat-sub { color: rgba(237,233,225,0.5) !important; }
+html.dark-mode .coach-ba-stat-val.c-neutral { color: rgba(237,233,225,0.75) !important; }
+html.dark-mode .coach-ba-empty p { color: rgba(237,233,225,0.6) !important; }
 /* Images, video and canvas render naturally — no counter-inversion
    needed now that the page-wide filter is gone. */
 /* Scrollbars don't inherit filter automatically in all browsers — restyle directly */
@@ -4943,7 +5164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /* ═══ WORKOUT BUILDER — VISUAL POLISH ═══ */
-    #wk-builder-view .builder-layout { gap: 16px; max-width: 640px; margin: 0 auto; }
+    #wk-builder-view .builder-layout { gap: 20px; max-width: 1400px; margin: 0 auto; }
     #wk-builder-view .client-select-card,
     #wk-builder-view .template-card {
       border-radius: 18px; padding: 18px;
@@ -4986,11 +5207,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     #wk-builder-view .empty-icon { font-size: 26px !important; margin-bottom: 6px !important; }
     #wk-builder-view .empty-sub { font-size: 11px !important; }
-    #wk-builder-view .ex-builder-item { border-radius: 12px; padding: 14px 16px; }
+    #wk-builder-view .ex-builder-item { border-radius: 14px; padding: 15px 18px; }
 
-    #wk-builder-view .add-exercise-form { padding: 16px 22px; gap: 14px; }
-    #wk-builder-view .aef-field input { border-radius: 10px; padding: 10px 12px; }
-    #wk-builder-view .aef-add { border-radius: 10px; padding: 10px 18px; }
+    #wk-builder-view .builder-day-grid { gap: 20px; }
+    #wk-builder-view .add-exercise-panel { padding: 22px; }
 
     #wk-builder-view .browse-library-btn {
       background: none !important; border: none !important; padding: 0 !important;
@@ -5063,6 +5283,32 @@ document.addEventListener('DOMContentLoaded', () => {
           <button id="clear-plan-btn" onclick="clearClientWorkoutPlan()">Remove plan</button>
         </div>
 
+        <!-- ── ASSIGN HEADER (mockup chrome) ── -->
+        <div class="bm-assign-header">
+          <button class="bm-back" onclick="wkShowList()" title="Back to Workouts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg></button>
+          <div class="bm-title-wrap">
+            <div class="bm-wkt-line">
+              <span class="bm-wkt-title" id="bm-wkt-title">Monday</span>
+              <button class="bm-rename-btn" onclick="bmRename()" title="Rename workout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
+            </div>
+            <input type="text" id="workout-name-input" class="hidden" maxlength="80" placeholder="Workout name (e.g. Push Day)">
+            <div class="bm-meta" id="bm-wkt-meta">0 exercises · Day 1 of 7</div>
+          </div>
+          <div class="bm-actions">
+            <button class="bm-save" type="button" onclick="assignWorkoutToClient(event)">Save</button>
+            <details class="bm-kebab">
+              <summary title="More actions"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg></summary>
+              <div class="bm-kebab-menu">
+                <button onclick="bmRename();this.closest('details').removeAttribute('open')">Rename workout</button>
+                <button onclick="openRepairModal();this.closest('details').removeAttribute('open')">Repair untitled exercises</button>
+                <button onclick="openSaveTemplateModal();this.closest('details').removeAttribute('open')">Save as template</button>
+                <button onclick="importFromCloudinary();this.closest('details').removeAttribute('open')">Import videos</button>
+                <button class="danger" onclick="clearClientWorkoutPlan();this.closest('details').removeAttribute('open')">Remove plan</button>
+              </div>
+            </details>
+          </div>
+        </div>
+
         <!-- ── DAY TABS ── -->
         <div class="day-picker" id="day-picker">
           <button class="day-btn active" data-day="Monday" onclick="selectDay('Monday')"><span class="day-abbr">Mon</span><span class="day-ex-count" id="cnt-Monday">0</span></button>
@@ -5074,42 +5320,15 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="day-btn" data-day="Sunday" onclick="selectDay('Sunday')"><span class="day-abbr">Sun</span><span class="day-ex-count" id="cnt-Sunday">0</span></button>
         </div>
 
-        <!-- ── MAIN DAY CARD ── -->
+        <!-- ── MAIN DAY CARD + ADD PANEL ── -->
+        <div class="builder-day-grid">
         <div class="builder-main">
-          <div class="bm-header">
-            <div>
-              <div class="bm-title" id="builder-day-title">Monday</div>
-              <div class="bm-daynum" id="builder-day-sub">Day 1 of 7</div>
-            </div>
-            <button class="cloudinary-import-btn" onclick="importFromCloudinary()">⬇ Import</button>
-          </div>
-          <div class="bm-workout-name-row">
-            <input type="text" id="workout-name-input" placeholder="Workout name (e.g. Push Day)">
-          </div>
           <div class="ex-builder-list" id="ex-builder-list">
             <div class="empty-state" style="padding:2rem">
               <div class="empty-icon"></div>
               <div class="empty-text">No exercises yet</div>
               <div class="empty-sub">Add exercises below</div>
             </div>
-          </div>
-          <div class="add-exercise-toggle" id="add-exercise-toggle" onclick="toggleAddExerciseForm()">
-            <span class="aet-plus">+</span> Add an exercise
-          </div>
-          <div class="add-exercise-form hidden" id="add-exercise-form" >
-            <div class="aef-field">
-              <div class="aef-label">Exercise Name</div>
-              <input type="text" id="aef-name" placeholder="e.g. Bench Press">
-            </div>
-            <div class="aef-field">
-              <div class="aef-label">Muscle / Detail</div>
-              <input type="text" id="aef-detail" placeholder="e.g. Chest · Compound">
-            </div>
-            <div class="aef-field">
-              <div class="aef-label">Sets × Reps</div>
-              <input type="text" id="aef-target" placeholder="e.g. 4×8">
-            </div>
-            <button class="aef-add" type="button" onclick="addExerciseToPlan()">+ Add</button>
           </div>
           <div style="padding:10px 22px 4px;display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:11px;color:var(--muted)">Or pick from the exercise library</span>
@@ -5120,6 +5339,49 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="assign-btn" type="button" onclick="assignWorkoutToClient(event)" id="assign-btn">Assign Plan →</button>
           </div>
         </div>
+        <aside class="add-exercise-panel" id="add-exercise-panel">
+          <div class="axp-head"><span>Add Exercise</span><button class="axp-close" onclick="toggleAxpPanel(false)" title="Collapse panel">×</button></div>
+          <input class="axp-search" id="axp-search" type="text" placeholder="Search exercise…" oninput="axpSearch(this.value)" autocomplete="off">
+          <div id="axp-results"></div>
+          <div class="axp-field" style="margin-top:12px;">
+            <div class="axp-label">Exercise Name</div>
+            <input type="text" id="aef-name" class="axp-text" style="padding-left:12px;background-image:none;" maxlength="80" placeholder="e.g. Barbell Squat">
+          </div>
+          <div class="axp-field">
+            <div class="axp-label">Muscle / Detail</div>
+            <input type="text" id="aef-detail" class="axp-text" style="padding-left:12px;background-image:none;" maxlength="100" placeholder="e.g. Legs - Compound">
+          </div>
+          <div class="axp-grid3" style="margin-top:12px;">
+            <div><div class="axp-label">Sets</div><select id="aef-sets" class="axp-select"></select></div>
+            <div><div class="axp-label">Min Reps</div><select id="aef-min" class="axp-select"></select></div>
+            <div><div class="axp-label">Max Reps</div><select id="aef-max" class="axp-select"><option value="">—</option></select></div>
+          </div>
+          <div class="axp-field">
+            <div class="axp-label">RIR</div>
+            <select id="aef-rir" class="axp-select">
+              <option value="">—</option>
+              <option value="0">0 — to failure</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+          <div class="axp-field">
+            <div class="axp-label">Notes (optional)</div>
+            <textarea id="aef-note" class="axp-notes" maxlength="200" placeholder="Controlled descent and full range of motion." oninput="document.getElementById('aef-note-count').textContent=this.value.length+'/200'"></textarea>
+            <div class="axp-count" id="aef-note-count">0/200</div>
+          </div>
+          <button class="axp-add" type="button" onclick="addExerciseToPlan()">＋ Add Exercise</button>
+        </aside>
+        </div><!-- /builder-day-grid -->
+        <button id="axp-reopen" class="hidden" onclick="toggleAxpPanel(true)">＋ Add Exercise</button>
 
         <!-- ── SAVED TEMPLATES ── -->
         <div class="template-card">
@@ -7546,7 +7808,7 @@ function initials(first='', last='') {
 // apply, this just fills it with a real photo when one exists.
 function clientAvatarInner(c, fallback) {
   return (c && c.profilePhotoURL)
-    ? `<img src="${c.profilePhotoURL}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;">`
+    ? `<img src="${escapeAttr(c.profilePhotoURL)}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;">`
     : fallback;
 }
 
@@ -7604,11 +7866,13 @@ async function handleCoachLogin() {
     try {
       userCredential = await auth.signInWithEmailAndPassword(COACH_AUTH_EMAIL, pass);
     } catch(signInErr) {
-      if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential' || signInErr.code === 'auth/wrong-password' || signInErr.code === 'auth/invalid-login-credentials') {
-        userCredential = await auth.createUserWithEmailAndPassword(COACH_AUTH_EMAIL, pass);
-      } else {
-        throw signInErr;
+      // Never auto-register here: the coach account must be created once by
+      // an admin in Firebase Console. Self-registration would let any visitor
+      // claim the coach identity and read all client data.
+      if (signInErr.code === 'auth/user-not-found') {
+        throw new Error('No coach account exists yet. Ask your admin to create it in Firebase Console → Authentication, then sign in.');
       }
+      throw signInErr;
     }
     if (!userCredential || !userCredential.user) throw new Error('Sign-in failed. Please try again.');
     const entered = await sha256(pass);
@@ -7646,7 +7910,7 @@ async function handleCoachLogin() {
 // admin.html's "Online Now" tab listens to. Mirrors index_3.html's
 // client-side heartbeat so both apps show up there.
 // ─────────────────────────────────────────
-const COACH_HEARTBEAT_MS = 25000;
+const COACH_HEARTBEAT_MS = 120000; // 2 min — matches client HEARTBEAT_MS (index.html) to cut presence writes
 let _coachHeartbeatTimer = null;
 
 function _sendCoachHeartbeat() {
@@ -7739,11 +8003,37 @@ function scheduleIdle(fn, fallbackMs) {
   }
 }
 
+// Auth watchdog: index.html (same origin + project) shares this Firebase Auth
+// session and calls auth.signOut() on several paths (logout, rejected signup,
+// unknown user on refresh). The boot auto-login listener above unsubscribes
+// after its first event, so a mid-session sign-out used to leave the dashboard
+// running against a dead session: members onSnapshot dies with permission-
+// denied while allClients/the assign select stay populated, and the next plan
+// save fails with a raw "Missing or insufficient permissions" toast. One
+// persistent listener for the life of the page: when the session ends or
+// changes identity while the dashboard is open, tear back to the login screen.
+// Inert while the auth screen is showing (app-ready absent), so handleLogout's
+// own signOut cannot re-enter this path.
+let _authWatchdogUnsub = null;
+function startAuthWatchdog() {
+  if (_authWatchdogUnsub) return;
+  _authWatchdogUnsub = auth.onAuthStateChanged(user => {
+    if (!document.body.classList.contains('app-ready')) return;
+    if (user && user.email === COACH_AUTH_EMAIL) return;
+    console.warn('[COACH] Auth session lost or changed while dashboard open - returning to login');
+    handleLogout();
+    const status = document.getElementById('auth-status');
+    status.textContent = 'Session expired. Please sign in again.';
+    status.className = 'auth-status error';
+  });
+}
+
 function bootApp() {
   document.documentElement.classList.remove('auth-pending');
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').classList.add('visible');
   document.body.classList.add('app-ready');
+  startAuthWatchdog();
   document.getElementById('coach-name').textContent = 'Coach';
   document.getElementById('coach-email').textContent = 'coach@evolvechat-21d6f.app';
   document.getElementById('coach-av').textContent = 'C';
@@ -7954,12 +8244,12 @@ let pendingClients = [];
 let _currentClientsTab = 'active';
 
 // ── PRESENCE: treat "online" as a live signal, not a sticky flag ──
-// The client app sends a heartbeat (lastSeenAt) roughly every 25s while
+// The client app sends a heartbeat (lastSeenAt) roughly every 2 min while
 // open and visible. If a heartbeat hasn't landed within this window, the
 // client is no longer really "online" even if isOnline is still true in
 // Firestore (e.g. they force-quit the app, lost network, or the OS killed
 // the tab — none of which reliably fire a "going offline" write).
-const PRESENCE_STALE_MS = 75000; // ~3 missed heartbeats before flipping to offline
+const PRESENCE_STALE_MS = 360000; // ~3 missed heartbeats before flipping to offline
 
 function isClientOnline(c) {
   if (!c || !c.isOnline) return false;
@@ -8669,10 +8959,13 @@ async function _updateDashboardStatsFallback(today, yesterday) {
   // Batch in groups of 5 to avoid saturating Firestore connections.
   // The whole batch is deadline-wrapped: a wedged channel yields partial
   // counts (rendered immediately) instead of hanging the cards forever.
+  // Cap the scan: fallback counts are estimates anyway, and an unbounded
+  // per-client fan-out bills 2 reads per client on every dashboard load.
+  const _scanClients = allClients.slice(0, 40);
   try {
     await withTimeout((async () => {
-      for (let i = 0; i < allClients.length; i += 5) {
-        const batch = allClients.slice(i, i + 5);
+      for (let i = 0; i < _scanClients.length; i += 5) {
+        const batch = _scanClients.slice(i, i + 5);
         await Promise.all(batch.map(async c => {
           try {
             const logs = await withTimeout(db.collection('members').doc(c.uid).collection('workoutLogs').limit(30).get(), 8000, 'fallback logs '+c.uid);
@@ -12082,10 +12375,10 @@ function _createPhotoCell(doc, eager) {
   const angleMap = { front:'Front', back:'Back', left:'Left Side', right:'Right Side' };
   const cell = document.createElement('div');
   cell.className = 'photo-thumb';
-  const angBadge = d.angle ? `<div class="photo-angle-badge">${angleMap[d.angle]||d.angle}</div>` : '';
+  const angBadge = d.angle ? `<div class="photo-angle-badge">${escapeHtml(angleMap[d.angle]||d.angle)}</div>` : '';
   const loadAttr = eager ? 'eager' : 'lazy';
   const fetchAttr = eager ? ' fetchpriority="high"' : '';
-  cell.innerHTML = `<div class="photo-img-skeleton"></div><div class="photo-img-fallback">Failed</div><img src="${src}" alt="Progress photo" loading="${loadAttr}" decoding="async"${fetchAttr} style="width:100%;height:100%;object-fit:cover;display:block">${angBadge}`;
+  cell.innerHTML = `<div class="photo-img-skeleton"></div><div class="photo-img-fallback">Failed</div><img src="${escapeAttr(src)}" alt="Progress photo" loading="${loadAttr}" decoding="async"${fetchAttr} style="width:100%;height:100%;object-fit:cover;display:block">${angBadge}`;
   const img = cell.querySelector('img');
   const skeleton = cell.querySelector('.photo-img-skeleton');
   const fallback = cell.querySelector('.photo-img-fallback');
@@ -12283,7 +12576,15 @@ function setCoachPhotoView(view) {
     ba.classList.remove('hidden');
     btnG.classList.remove('active');
     btnC.classList.add('active');
-    if (_coachBaSessions.length >= 2) coachRenderBeforeAfter(_coachBaSessions);
+    // _coachBaSessions is only populated while this view is active — photos
+    // usually load in grid mode, so fall back to the cached sessions for the
+    // open client. Without this both panels stay hidden (blank view).
+    const _cached = (typeof currentModalUid !== 'undefined' && window._clientPhotosCache)
+      ? window._clientPhotosCache[currentModalUid] : null;
+    const _sorted = (_coachBaSessions.length >= 2)
+      ? _coachBaSessions
+      : ((_cached && _cached.sorted) || []);
+    coachRenderBeforeAfter(_sorted);
   }
 }
 
@@ -12685,7 +12986,7 @@ async function loadCardPhotoStrip(uid, firstName) {
     const html = snap.docs.map((d) => {
       const p = d.data();
       const src = p.thumbUrl || p.base64 || p.url || '';
-      return `<div class="cc-photo-item"><img src="${src}" alt="" loading="lazy"></div>`;
+      return `<div class="cc-photo-item"><img src="${escapeAttr(src)}" alt="" loading="lazy"></div>`;
     }).join('');
     currentStrip.innerHTML = html;
     const docRefs = snap.docs.map(d => {
@@ -12727,9 +13028,9 @@ async function loadDashboardPhotos() {
       const src = p.thumbUrl || p.base64 || p.url || '';
       const name = ((r.client.firstName||'') + ' ' + (r.client.lastName||'')).trim() || 'Client';
       const date = p.uploadedAt?.toDate ? p.uploadedAt.toDate().toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
-      return `<div class="dash-photo-tile" data-doc="${r.docId}" data-date="${fmtDate(p.uploadedAt)}" data-note="${(p.note||'').replace(/"/g,'&quot;')}">
-        <img src="${src}" alt="" loading="lazy">
-        <div class="dash-photo-tile-label">${name}${date ? ' · '+date : ''}</div>
+      return `<div class="dash-photo-tile" data-doc="${r.docId}" data-date="${escapeAttr(fmtDate(p.uploadedAt))}" data-note="${escapeAttr(p.note||'')}">
+        <img src="${escapeAttr(src)}" alt="" loading="lazy">
+        <div class="dash-photo-tile-label">${escapeHtml(name)}${date ? ' · '+escapeHtml(date) : ''}</div>
       </div>`;
     }).join('');
     feed.querySelectorAll('.dash-photo-tile').forEach(tile => {
@@ -12803,7 +13104,15 @@ async function deleteProgressPhoto() {
   if (!docId || !uid) return;
   if (!confirm('Delete this photo? This cannot be undone.')) return;
   try {
-    await db.collection('members').doc(uid).collection('progressPhotos').doc(docId).delete();
+    const docRef = db.collection('members').doc(uid).collection('progressPhotos').doc(docId);
+    let old = null;
+    try { const s = await docRef.get(); if (s.exists) old = s.data(); } catch(_) {}
+    // Best-effort Storage cleanup first so deleted photos leave no orphans.
+    const _st = (typeof storage !== 'undefined' && storage) || null;
+    for (const p of [old && old.storagePath, old && old.thumbStoragePath]) {
+      if (p && _st) { try { await _st.ref(p).delete(); } catch(_) {} }
+    }
+    await docRef.delete();
     if (window._photoCache) delete window._photoCache[docId];
     if (window._clientPhotosCache) delete window._clientPhotosCache[uid];
     if (window._photoStripCache) delete window._photoStripCache[uid];
@@ -12996,27 +13305,222 @@ function selectDay(day) {
   document.querySelectorAll('.day-btn').forEach(b=>{
     b.classList.toggle('active', b.dataset.day===day);
   });
-  document.getElementById('builder-day-title').textContent = day;
-  const daySub = document.getElementById('builder-day-sub');
-  if (daySub) {
-    const idx = WEEK_DAY_ORDER.indexOf(day);
-    daySub.textContent = `Day ${idx+1} of ${WEEK_DAY_ORDER.length}`;
-  }
   document.getElementById('workout-name-input').value = workoutPlan[day].name;
+  bmRefreshHeader();
   renderExerciseList();
 }
 
-function toggleAddExerciseForm() {
-  const form = document.getElementById('add-exercise-form');
-  const toggle = document.getElementById('add-exercise-toggle');
-  if (!form) return;
-  const open = form.style.display !== 'none';
-  form.style.display = open ? 'none' : 'grid';
-  if (toggle) toggle.style.display = open ? 'flex' : 'none';
-  if (!open) {
-    const nameInput = document.getElementById('aef-name');
-    if (nameInput) nameInput.focus();
+// Keeps the assign header (title + meta) in sync with the current day.
+function bmRefreshHeader() {
+  const titleEl = document.getElementById('bm-wkt-title');
+  const metaEl = document.getElementById('bm-wkt-meta');
+  const n = (workoutPlan[currentDay] && workoutPlan[currentDay].exercises.length) || 0;
+  const idx = WEEK_DAY_ORDER.indexOf(currentDay);
+  if (titleEl) titleEl.textContent = (workoutPlan[currentDay] && workoutPlan[currentDay].name) || currentDay;
+  if (metaEl) {
+    const clipIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>';
+    const dayIcon  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+    metaEl.innerHTML =
+      `<span class="bm-meta-item">${clipIcon}${n} exercise${n!==1?'s':''}</span>` +
+      `<span class="bm-meta-sep">&#183;</span>` +
+      `<span class="bm-meta-item">${dayIcon}Day ${idx+1} of ${WEEK_DAY_ORDER.length}</span>`;
   }
+}
+
+// Inline rename: swap the title span for the workout-name input.
+function bmRename() {
+  const span = document.getElementById('bm-wkt-title');
+  const input = document.getElementById('workout-name-input');
+  if (!span || !input) return;
+  input.value = workoutPlan[currentDay].name || '';
+  span.style.display = 'none';
+  input.classList.remove('hidden');
+  input.classList.add('bm-title-edit');
+  input.focus(); input.select();
+  const done = () => {
+    input.classList.add('hidden');
+    input.classList.remove('bm-title-edit');
+    span.style.display = '';
+    bmRefreshHeader();
+  };
+  input.onblur = done;
+  input.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = workoutPlan[currentDay].name || ''; input.blur(); }
+  };
+}
+
+function toggleAxpPanel(show) {
+  const panel = document.getElementById('add-exercise-panel');
+  const reopen = document.getElementById('axp-reopen');
+  if (panel) panel.style.display = show ? '' : 'none';
+  if (reopen) reopen.classList.toggle('hidden', !!show);
+}
+
+function axpFillRanges() {
+  const fill = (id, from, to, def) => {
+    const el = document.getElementById(id);
+    if (!el || el.options.length > 1) return;
+    for (let v = from; v <= to; v++) {
+      const o = document.createElement('option');
+      o.value = String(v); o.textContent = String(v);
+      if (v === def) o.selected = true;
+      el.appendChild(o);
+    }
+    if (def !== '' && def != null) el.value = String(def);
+  };
+  fill('aef-sets', 1, 12, 3);
+  fill('aef-min', 1, 30, 10);
+  fill('aef-max', 1, 30, '');
+  // Browser-restored textarea content fires no input event — sync the counter.
+  const _nc = document.getElementById('aef-note-count');
+  const _nv = document.getElementById('aef-note');
+  if (_nc && _nv) _nc.textContent = (_nv.value || '').length + '/200';
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', axpFillRanges);
+} else {
+  axpFillRanges();
+}
+
+let _axpResults = [];
+function axpThumb(ex) {
+  try {
+    const m = (typeof getWorkoutMedia !== 'undefined') ? getWorkoutMedia(ex.name) : null;
+    if (m && m.thumbnail) return `<img src="${m.thumbnail}" alt="" loading="lazy" onerror="this.remove()">`;
+  } catch (e) {}
+  const init = ((ex.name || '?').trim()[0] || '?').toUpperCase();
+  return `<div class="axp-noimg">${init}</div>`;
+}
+function axpSearch(q) {
+  const box = document.getElementById('axp-results');
+  if (!box) return;
+  q = (q || '').trim().toLowerCase();
+  if (!q || typeof EXERCISE_DB === 'undefined') {
+    box.innerHTML = '';
+    _axpResults = [];
+    return;
+  }
+  _axpResults = EXERCISE_DB
+    .map((e, idx) => ({ e, idx }))
+    .filter(({ e }) => (e.name + ' ' + (e.muscles || '')).toLowerCase().includes(q))
+    .slice(0, 6);
+  box.innerHTML = _axpResults.map(({ e, idx }, i) =>
+    `<div class="axp-result" onclick="axpSelectExercise(${i})">${axpThumb(e)}<div style="min-width:0;"><div class="n">${escapeHtml(e.name)}</div><div class="m">${escapeHtml(e.muscles || '')}</div></div></div>`
+  ).join('');
+}
+function axpSelectExercise(i) {
+  const hit = _axpResults[i];
+  if (!hit) return;
+  document.getElementById('aef-name').value = hit.e.name || '';
+  document.getElementById('aef-detail').value = hit.e.muscles || '';
+  document.getElementById('axp-results').innerHTML = '';
+  _axpResults = [];
+}
+
+let _exEditIdx = -1;
+function openExEditModal(i) {
+  const ex = workoutPlan[currentDay].exercises[i];
+  if (!ex) return;
+  _exEditIdx = i;
+  const np = (typeof normalizeExercisePrescription === 'function')
+    ? normalizeExercisePrescription(ex)
+    : { sets: ex.sets || 3, minReps: ex.minReps || 10, maxReps: ex.maxReps || ex.minReps || 10, rir: ex.rir || 0, note: ex.note || '' };
+  document.getElementById('exedit-name').textContent = ex.name || 'Untitled Exercise';
+  document.getElementById('exedit-detail').textContent = ex.detail || '';
+  document.getElementById('exedit-exname').value = ex.name || '';
+  document.getElementById('exedit-exdetail').value = ex.detail || '';
+  try {
+    const m = (typeof getWorkoutMedia !== 'undefined') ? getWorkoutMedia(ex.name) : null;
+    const img = document.getElementById('exedit-thumb');
+    const fb = document.getElementById('exedit-noimg');
+    if (m && m.thumbnail) { img.src = m.thumbnail; img.style.display = ''; fb.style.display = 'none'; }
+    else { img.style.display = 'none'; fb.style.display = ''; fb.textContent = ((ex.name || '?').trim()[0] || '?').toUpperCase(); }
+  } catch (e) {}
+  document.getElementById('exedit-sets').value = np.sets;
+  document.getElementById('exedit-min').value = np.minReps;
+  document.getElementById('exedit-max').value = (np.maxReps > np.minReps) ? np.maxReps : '';
+  document.getElementById('exedit-rir').value = np.rir > 0 ? np.rir : '';
+  document.getElementById('exedit-note').value = np.note || '';
+  document.getElementById('exedit-note-count').textContent = (np.note || '').length + '/200';
+  document.getElementById('exedit-overlay').classList.add('open');
+}
+function closeRepairModal() {
+  document.getElementById('repair-overlay').classList.remove('open');
+}
+// Batch repair: list every nameless exercise across the whole week with an
+// inline name field, so hollow cards are fixed in one pass instead of one
+// modal per exercise. Sets/reps/RIR/notes are untouched.
+function openRepairModal() {
+  const list = document.getElementById('repair-list');
+  const saveBtn = document.getElementById('repair-save-btn');
+  const rows = [];
+  Object.entries(workoutPlan).forEach(([day, d]) => {
+    (d.exercises || []).forEach((ex, i) => {
+      if (!ex.name) rows.push({ day, i, target: ex.target || '' });
+    });
+  });
+  window._repairRows = rows;
+  if (!rows.length) {
+    list.innerHTML = `<div class="repair-empty">✓ No untitled exercises — everything has a name.</div>`;
+    if (saveBtn) saveBtn.style.display = 'none';
+  } else {
+    if (saveBtn) saveBtn.style.display = '';
+    list.innerHTML = rows.map((r, k) =>
+      `<div class="repair-row"><span class="repair-tag">${r.day.slice(0,3).toUpperCase()} · #${r.i + 1}</span><span class="repair-target">${r.target.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</span><input type="text" id="repair-name-${k}" maxlength="80" placeholder="Exercise name"></div>`
+    ).join('');
+  }
+  document.getElementById('repair-overlay').classList.add('open');
+  setTimeout(() => { const f = document.getElementById('repair-name-0'); if (f) f.focus(); }, 80);
+}
+function confirmRepair() {
+  const rows = window._repairRows || [];
+  const clientUid = document.getElementById('assign-client-select').value;
+  if (!clientUid) { showToast('Select a client first — repairs save to their plan.'); return; }
+  let fixed = 0;
+  rows.forEach((r, k) => {
+    const el = document.getElementById('repair-name-' + k);
+    const name = el ? getSanitizedValue('repair-name-' + k, 80) : '';
+    if (!name) return;
+    const ex = workoutPlan[r.day].exercises[r.i];
+    if (ex && !ex.name) { ex.name = name; if (!ex.detail) ex.detail = 'Exercise'; fixed++; }
+  });
+  if (!fixed) { showToast('Type at least one name first'); return; }
+  closeRepairModal();
+  renderExerciseList();
+  autoSavePlanToFirebase(`${fixed} exercise${fixed!==1?'s':''} repaired — client plan updated.`);
+}
+
+function closeExEditModal() {
+  _exEditIdx = -1;
+  document.getElementById('exedit-overlay').classList.remove('open');
+}
+function confirmExEdit() {
+  if (_exEditIdx < 0) return;
+  const ex = workoutPlan[currentDay].exercises[_exEditIdx];
+  if (!ex) { closeExEditModal(); return; }
+  const sets = Math.min(99, Math.max(1, parseInt(document.getElementById('exedit-sets').value, 10) || 3));
+  const min = Math.min(999, Math.max(1, parseInt(document.getElementById('exedit-min').value, 10) || 10));
+  const maxRaw = (document.getElementById('exedit-max').value || '').trim();
+  let max = maxRaw === '' ? min : parseInt(maxRaw, 10);
+  if (!(max >= min)) { showToast('Max reps must be at least min reps'); return; }
+  max = Math.min(999, max);
+  const rir = Math.min(10, Math.max(0, parseInt(document.getElementById('exedit-rir').value, 10) || 0));
+  const note = getSanitizedValue('exedit-note', 200);
+  const newName = getSanitizedValue('exedit-exname', 80);
+  const newDetail = getSanitizedValue('exedit-exdetail', 100);
+  if (!newName) { showToast('Exercise name cannot be empty'); return; }
+  ex.name = newName;
+  ex.detail = newDetail || 'Exercise';
+  ex.sets = sets;
+  ex.minReps = min;
+  ex.target = formatPrescription({ sets, minReps: min, maxReps: max, rir });
+  if (max > min) ex.maxReps = max; else delete ex.maxReps;
+  if (rir > 0) ex.rir = rir; else delete ex.rir;
+  if (note) ex.note = note; else delete ex.note;
+  closeExEditModal();
+  renderExerciseList();
+  autoSavePlanToFirebase('Exercise updated — client plan updated.');
 }
 
 function renderExerciseList() {
@@ -13029,28 +13533,44 @@ function renderExerciseList() {
       const _m = (typeof getWorkoutMedia !== 'undefined') ? getWorkoutMedia(ex.name) : null;
       const safeName   = (ex.name||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       const safeDetail = (ex.detail||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      const safeNote   = (ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       const _vidEl = _m && _m.thumbnail
         ? `<div class="ebi-vid-wrap">
              <img class="ebi-vid-thumb" src="${_m.thumbnail}" data-exname="${safeName}" data-exdetail="${safeDetail}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';var _b=this.nextElementSibling;_b.style.opacity='1';_b.style.pointerEvents='auto';">
              <div class="ebi-vid-btn" data-exname="${safeName}" data-exdetail="${safeDetail}">&#x25B6;</div>
            </div>`
         : `<div class="ebi-vid-btn" data-exname="${safeName}" data-exdetail="${safeDetail}">&#x25B6;</div>`;
+      // Two chips instead of one combined string: "3 × 8–10" and "RIR 2".
+      const _rx   = (typeof normalizeExercisePrescription === 'function') ? normalizeExercisePrescription(ex)
+                  : { sets: ex.sets || 3, minReps: ex.minReps || 10, maxReps: ex.maxReps || ex.minReps || 10, rir: ex.rir || 0 };
+      const setsLabel = _rx.sets + ' \u00D7 ' + _rx.minReps + (_rx.maxReps > _rx.minReps ? '\u2013' + _rx.maxReps : '');
+      const rirLabel  = _rx.rir > 0 ? 'RIR ' + _rx.rir : '';
       return `<div class="ex-builder-item" draggable="true" data-idx="${i}">
+        <div class="ebi-main">
         <div class="ebi-handle" data-idx="${i}" title="Drag to reorder">
           <svg viewBox="0 0 14 18" fill="currentColor"><circle cx="3" cy="3" r="1.6"/><circle cx="11" cy="3" r="1.6"/><circle cx="3" cy="9" r="1.6"/><circle cx="11" cy="9" r="1.6"/><circle cx="3" cy="15" r="1.6"/><circle cx="11" cy="15" r="1.6"/></svg>
         </div>
-        <div class="ebi-num">${i+1}</div>
         <div class="ebi-reorder">
           <button class="ebi-move-btn" data-idx="${i}" data-dir="up" type="button" title="Move up" ${i===0?'disabled':''}>&#x25B2;</button>
           <button class="ebi-move-btn" data-idx="${i}" data-dir="down" type="button" title="Move down" ${i===exs.length-1?'disabled':''}>&#x25BC;</button>
         </div>
         ${_vidEl}
-        <div style="flex:1;min-width:0;">
-          <div class="ebi-name">${safeName}</div>
+        <div class="ebi-text">
+          <div class="ebi-name">${safeName || '<span class="ebi-unnamed">Untitled Exercise</span>'}</div>
           <div class="ebi-detail">${safeDetail}</div>
         </div>
-        <div class="ebi-target" data-idx="${i}" title="Click to edit sets × reps">${ex.target||''}</div>
-        <button class="ebi-del" data-idx="${i}" type="button">&#x2715;</button>
+        </div>
+        <div class="ebi-presc">
+          <div class="ebi-pills">
+            <div class="ebi-target" data-idx="${i}" title="Click to edit sets × reps">${setsLabel}</div>
+            ${rirLabel ? `<div class="ebi-rir" data-idx="${i}" title="Click to edit RIR and notes">${rirLabel}</div>` : ''}
+          </div>
+          ${safeNote ? `<div class="ebi-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg><span>${safeNote}</span></div>` : ''}
+        </div>
+        <div class="ebi-actions">
+        <button class="ebi-edit" data-idx="${i}" type="button" title="Edit sets, reps, RIR, notes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg></button>
+        <button class="ebi-del" data-idx="${i}" type="button" title="Remove exercise"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+        </div>
       </div>`;
     }).join('');
 
@@ -13077,6 +13597,18 @@ function renderExerciseList() {
         editExerciseTarget(this, idx);
       });
     });
+    list.querySelectorAll('.ebi-rir').forEach(pill => {
+      pill.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openExEditModal(parseInt(this.dataset.idx, 10));
+      });
+    });
+    list.querySelectorAll('.ebi-edit').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openExEditModal(parseInt(this.dataset.idx, 10));
+      });
+    });
     list.querySelectorAll('.ebi-vid-btn, .ebi-vid-thumb').forEach(el => {
       el.addEventListener('click', function() {
         const name = this.dataset.exname || '';
@@ -13089,7 +13621,13 @@ function renderExerciseList() {
 }
 
 function editExerciseTarget(pill, i) {
-  const current = workoutPlan[currentDay].exercises[i].target || '';
+  const existing = workoutPlan[currentDay].exercises[i];
+  // The pill edits only the "sets × reps" part; RIR has its own chip, so
+  // prefill from the structured fields rather than the full target string.
+  const rx = (typeof normalizeExercisePrescription === 'function') ? normalizeExercisePrescription(existing) : null;
+  const current = rx
+    ? rx.sets + ' \u00D7 ' + rx.minReps + (rx.maxReps > rx.minReps ? '\u2013' + rx.maxReps : '')
+    : (existing.target || '');
   const input = document.createElement('input');
   input.className = 'ebi-target-input';
   input.value = current;
@@ -13097,14 +13635,23 @@ function editExerciseTarget(pill, i) {
   input.focus(); input.select();
   const save = () => {
     const val = input.value.trim() || current;
-    workoutPlan[currentDay].exercises[i].target = val;
-    const newPill = document.createElement('div');
-    newPill.className = 'ebi-target';
-    newPill.title = 'Click to edit sets × reps';
-    newPill.textContent = val;
-    newPill.onclick = () => editExerciseTarget(newPill, i);
-    input.replaceWith(newPill);
-    updateBuilderSummary();
+    const ex = workoutPlan[currentDay].exercises[i];
+    // Keep structured fields in sync when the raw string still parses —
+    // RIR/notes are untouched (the pill edits sets × reps only).
+    const parsed = (typeof parsePrescriptionTarget === 'function') ? parsePrescriptionTarget(val) : null;
+    if (parsed) {
+      ex.sets = parsed.sets;
+      ex.minReps = parsed.minReps;
+      if (parsed.maxReps > parsed.minReps) ex.maxReps = parsed.maxReps;
+      else delete ex.maxReps;
+      // Rebuild target so the stored string keeps its RIR suffix.
+      if (typeof formatPrescription === 'function') {
+        ex.target = formatPrescription({ sets: ex.sets, minReps: ex.minReps, maxReps: ex.maxReps, rir: ex.rir });
+      }
+    } else {
+      ex.target = val;
+    }
+    renderExerciseList();
     if (val !== current) autoSavePlanToFirebase('Sets/reps updated — client plan updated.');
   };
   input.addEventListener('blur', save);
@@ -13117,12 +13664,44 @@ function editExerciseTarget(pill, i) {
 function addExerciseToPlan() {
   const name   = getSanitizedValue('aef-name', 80);
   const detail = getSanitizedValue('aef-detail', 100);
-  const target = getSanitizedValue('aef-target', 30);
-  if (!name) { showToast('Enter an exercise name'); return; }
-  workoutPlan[currentDay].exercises.push({ name, detail:detail||'Exercise', target:target||'3×10' });
+  const note   = getSanitizedValue('aef-note', 200);
+  if (!name) {
+    // Loud inline feedback — impossible to miss (a toast alone is too easy
+    // to overlook, which reads as "nothing happens" when tapping Add).
+    const nm = document.getElementById('aef-name');
+    if (nm) {
+      nm.classList.remove('axp-invalid');
+      void nm.offsetWidth; // restart the shake animation
+      nm.classList.add('axp-invalid');
+      nm.oninput = () => nm.classList.remove('axp-invalid');
+      nm.focus();
+    }
+    showToast('Enter an exercise name');
+    return;
+  }
+  const sets = Math.min(99, Math.max(1, parseInt(document.getElementById('aef-sets').value, 10) || 3));
+  const min  = Math.min(999, Math.max(1, parseInt(document.getElementById('aef-min').value, 10) || 10));
+  const maxRaw = document.getElementById('aef-max').value.trim();
+  let max = maxRaw === '' ? min : parseInt(maxRaw, 10);
+  if (!(max >= min)) { showToast('Max reps must be at least min reps'); return; }
+  max = Math.min(999, max);
+  const rir = Math.min(10, Math.max(0, parseInt(document.getElementById('aef-rir').value, 10) || 0));
+  const ex = {
+    name, detail: detail || 'Exercise', sets, minReps: min,
+    target: formatPrescription({ sets, minReps: min, maxReps: max, rir })
+  };
+  if (max > min) ex.maxReps = max;
+  if (rir > 0) ex.rir = rir;
+  if (note) ex.note = note;
+  workoutPlan[currentDay].exercises.push(ex);
   document.getElementById('aef-name').value='';
   document.getElementById('aef-detail').value='';
-  document.getElementById('aef-target').value='';
+  document.getElementById('aef-sets').value='3';
+  document.getElementById('aef-min').value='10';
+  document.getElementById('aef-max').value='';
+  document.getElementById('aef-rir').value='';
+  document.getElementById('aef-note').value='';
+  document.getElementById('aef-note-count').textContent='0/200';
   renderExerciseList();
   autoSavePlanToFirebase('Exercise added — client plan updated.');
 }
@@ -13352,7 +13931,15 @@ async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
       showToast(successMsg || (totalEx ? 'Exercise removed — client plan updated.' : 'All exercises removed — plan cleared.'), 'success');
     }
   } catch (e) {
-    showToast('Error updating plan: ' + e.message);
+    // Session flipped mid-save (shared Auth session with index.html): show an
+    // actionable message instead of the raw permission error. Genuine rule
+    // failures while still signed in as the coach keep the original message.
+    const saveUser = auth && auth.currentUser;
+    if (!saveUser || saveUser.email !== COACH_AUTH_EMAIL) {
+      showToast('Session expired. Please sign in again.');
+    } else {
+      showToast('Error updating plan: ' + e.message);
+    }
     console.error('[autoSavePlanToFirebase]', e);
   }
 }
@@ -13368,6 +13955,7 @@ function updateBuilderSummary() {
   const days = Object.values(workoutPlan).filter(d=>d.exercises.length>0).length;
   const exs  = Object.values(workoutPlan).reduce((t,d)=>t+d.exercises.length,0);
   document.getElementById('builder-summary').textContent = `${exs} exercise${exs!==1?'s':''} across ${days} day${days!==1?'s':''}`;
+  if (typeof bmRefreshHeader === 'function') bmRefreshHeader();
 }
 
 // Save workout name on input, auto-saving to Firebase after a short pause
@@ -13375,6 +13963,8 @@ function updateBuilderSummary() {
 let _wktNameSaveTimer = null;
 document.getElementById('workout-name-input').addEventListener('input', function() {
   workoutPlan[currentDay].name = this.value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, '').slice(0, 80);
+  const titleEl = document.getElementById('bm-wkt-title');
+  if (titleEl) titleEl.textContent = workoutPlan[currentDay].name || currentDay;
   clearTimeout(_wktNameSaveTimer);
   _wktNameSaveTimer = setTimeout(() => {
     autoSavePlanToFirebase(null, true); // silent — don't toast on every keystroke pause
@@ -14076,7 +14666,7 @@ function openChatWith(clientUid) {
       if (!area) return;
       area.innerHTML = '';
       if (snap.empty) {
-        area.innerHTML = `<div class="chat-empty"><div class="chat-empty-icon">👋</div><div class="chat-empty-text">Say hi to ${client.firstName||'your client'}!</div></div>`;
+        area.innerHTML = `<div class="chat-empty"><div class="chat-empty-icon">👋</div><div class="chat-empty-text">Say hi to ${escapeHtml(client.firstName||'your client')}!</div></div>`;
         area.scrollTop = area.scrollHeight;
         return;
       }
@@ -14096,13 +14686,15 @@ function openChatWith(clientUid) {
       });
       docs.forEach((doc, i)=>{
         const m = doc.data();
-        const isCoach = m.senderId===coachUid || m.senderRole==='coach';
+        // Trust senderId only — senderRole is client-writable, so a client
+        // could otherwise mark their own messages as 'coach'.
+        const isCoach = m.senderId===coachUid;
         const role = isCoach ? 'coach' : 'client';
         const prevDoc = i > 0 ? docs[i-1].data() : null;
-        const prevIsCoach = prevDoc ? (prevDoc.senderId===coachUid || prevDoc.senderRole==='coach') : null;
+        const prevIsCoach = prevDoc ? (prevDoc.senderId===coachUid) : null;
         const isSameGroup = prevIsCoach !== null && (prevIsCoach === isCoach);
         const nextDoc = i < docs.length-1 ? docs[i+1].data() : null;
-        const nextIsCoach = nextDoc ? (nextDoc.senderId===coachUid || nextDoc.senderRole==='coach') : null;
+        const nextIsCoach = nextDoc ? (nextDoc.senderId===coachUid) : null;
         const isLastInGroup = nextIsCoach === null || nextIsCoach !== isCoach;
 
         // Date separator
@@ -14122,7 +14714,7 @@ function openChatWith(clientUid) {
           : `<div class="msg-avatar hidden"></div>`;
 
         const senderLabel = isFirstInGroup
-          ? `<div class="msg-sender-name">${isCoach ? coachDisplayName : (client.firstName || 'Client')}</div>`
+          ? `<div class="msg-sender-name">${isCoach ? escapeHtml(coachDisplayName) : escapeHtml(client.firstName || 'Client')}</div>`
           : '';
 
         row.innerHTML = `
@@ -14141,7 +14733,7 @@ function openChatWith(clientUid) {
       const lastTime = lastDoc?.createdAt;
       const prev = document.getElementById('cci-preview-'+clientUid);
       if (prev) {
-        const isCoachLast = lastDoc?.senderId===coachUid || lastDoc?.senderRole==='coach';
+        const isCoachLast = lastDoc?.senderId===coachUid;
         prev.textContent = (isCoachLast ? 'You: ' : '') + lastText.slice(0,35);
       }
       const timeEl = document.getElementById('cci-time-'+clientUid);
@@ -15256,15 +15848,18 @@ function startLibraryAdd(idx, btn) {
   libPendingExercise = { ...EXERCISE_DB[idx], btnEl: btn };
   // Show new modal
   document.getElementById('sets-modal-exname').textContent = EXERCISE_DB[idx].name;
-  // Parse existing sets string if present (e.g. "3×10")
+  // Parse existing sets string if present (e.g. "3×10" or "2×12-15")
   const existing = EXERCISE_DB[idx].sets || '3×10';
-  const m = existing.match(/(\d+)[×x](\d+)/);
-  document.getElementById('setsm-sets').value   = m ? m[1] : '3';
-  document.getElementById('setsm-reps').value   = m ? m[2] : '10';
+  const parsed = (typeof parsePrescriptionTarget === 'function') ? parsePrescriptionTarget(existing) : null;
+  document.getElementById('setsm-sets').value = parsed ? parsed.sets : '3';
+  document.getElementById('setsm-min').value  = parsed ? parsed.minReps : '10';
+  document.getElementById('setsm-max').value  = (parsed && parsed.maxReps > parsed.minReps) ? parsed.maxReps : '';
+  document.getElementById('setsm-rir').value  = '';
+  document.getElementById('setsm-note').value = '';
   const weightEl = document.getElementById('setsm-weight');
   if (weightEl) weightEl.value = '';
   document.getElementById('sets-modal-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('setsm-reps').focus(), 120);
+  setTimeout(() => document.getElementById('setsm-min').focus(), 120);
   // Also keep old bar hidden
   document.getElementById('ex-sets-bar').classList.remove('visible');
 }
@@ -15277,14 +15872,24 @@ function cancelLibraryAdd() {
 
 function confirmLibraryAdd() {
   if (!libPendingExercise) return;
-  const sets   = parseInt(document.getElementById('setsm-sets')?.value)   || 3;
-  const reps   = parseInt(document.getElementById('setsm-reps')?.value)   || 10;
-  const target = `${sets}×${reps}`;
-  workoutPlan[currentDay].exercises.push({
+  const sets = Math.min(99, Math.max(1, parseInt(document.getElementById('setsm-sets')?.value) || 3));
+  const min  = Math.min(999, Math.max(1, parseInt(document.getElementById('setsm-min')?.value) || 10));
+  const maxRaw = (document.getElementById('setsm-max')?.value || '').trim();
+  let max = maxRaw === '' ? min : parseInt(maxRaw, 10);
+  if (!(max >= min)) { showToast('Max reps must be at least min reps'); return; }
+  max = Math.min(999, max);
+  const rir = Math.min(10, Math.max(0, parseInt(document.getElementById('setsm-rir')?.value) || 0));
+  const note = (document.getElementById('setsm-note')?.value || '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, '').trim().slice(0, 200);
+  const ex = {
     name:   libPendingExercise.name,
     detail: libPendingExercise.muscles,
-    target: target
-  });
+    sets, minReps: min,
+    target: formatPrescription({ sets, minReps: min, maxReps: max, rir })
+  };
+  if (max > min) ex.maxReps = max;
+  if (rir > 0) ex.rir = rir;
+  if (note) ex.note = note;
+  workoutPlan[currentDay].exercises.push(ex);
   if (libPendingExercise.btnEl) {
     libPendingExercise.btnEl.textContent = '✓';
     libPendingExercise.btnEl.classList.add('added');
@@ -15692,6 +16297,68 @@ function exportCheckinsCsv() {
 </div>
 
 
+<!-- Repair Untitled Exercises Modal -->
+<div id="repair-overlay" onclick="if(event.target===this)closeRepairModal()">
+  <div id="repair-box">
+    <div class="exedit-head"><span>Repair Untitled Exercises</span><button class="axp-close" onclick="closeRepairModal()">×</button></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">These saved without a name. Type each name, then save once — everything else (sets, reps, RIR, notes) is kept.</div>
+    <div id="repair-list"></div>
+    <div class="sets-modal-btns" style="margin-top:14px;">
+      <button class="sets-modal-cancel" onclick="closeRepairModal()">Cancel</button>
+      <button class="sets-modal-confirm" id="repair-save-btn" onclick="confirmRepair()">Save Names</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Exercise Modal -->
+<div id="exedit-overlay" onclick="if(event.target===this)closeExEditModal()">
+  <div id="exedit-box">
+    <div class="exedit-head"><span>Edit Exercise</span><button class="axp-close" onclick="closeExEditModal()">×</button></div>
+    <div class="exedit-sub">
+      <img id="exedit-thumb" alt="" style="display:none;">
+      <div class="axp-noimg" id="exedit-noimg" style="display:none;"></div>
+      <div style="flex:1;min-width:0;"><div class="n" id="exedit-name"></div><div class="m" id="exedit-detail"></div></div>
+    </div>
+    <div class="sets-modal-fields">
+      <div class="sets-modal-field" style="flex:2;">
+        <label>Exercise Name</label>
+        <input type="text" id="exedit-exname" maxlength="80" style="text-align:left;">
+      </div>
+      <div class="sets-modal-field" style="flex:2;">
+        <label>Muscle / Detail</label>
+        <input type="text" id="exedit-exdetail" maxlength="100" style="text-align:left;">
+      </div>
+    </div>
+    <div class="sets-modal-fields">
+      <div class="sets-modal-field">
+        <label>Sets</label>
+        <input type="number" id="exedit-sets" min="1" max="99" inputmode="numeric">
+      </div>
+      <div class="sets-modal-field">
+        <label>Min Reps</label>
+        <input type="number" id="exedit-min" min="1" max="999" inputmode="numeric">
+      </div>
+      <div class="sets-modal-field">
+        <label>Max Reps</label>
+        <input type="number" id="exedit-max" min="1" max="999" inputmode="numeric">
+      </div>
+      <div class="sets-modal-field">
+        <label>RIR</label>
+        <input type="number" id="exedit-rir" min="0" max="10" inputmode="numeric">
+      </div>
+    </div>
+    <div class="sets-modal-field" style="margin-bottom:16px;">
+      <label>Notes</label>
+      <textarea id="exedit-note" maxlength="200" placeholder="e.g. Controlled descent and full range of motion." oninput="document.getElementById('exedit-note-count').textContent=this.value.length+'/200'"></textarea>
+      <div class="axp-count" id="exedit-note-count">0/200</div>
+    </div>
+    <div class="sets-modal-btns">
+      <button class="sets-modal-cancel" onclick="closeExEditModal()">Cancel</button>
+      <button class="sets-modal-confirm" onclick="confirmExEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Sets & Reps Modal -->
 <div id="sets-modal-overlay" onclick="if(event.target===this)cancelLibraryAdd()">
   <div id="sets-modal-box">
@@ -15704,10 +16371,23 @@ function exportCheckinsCsv() {
         <input type="number" id="setsm-sets" value="3" min="1" max="99" inputmode="numeric">
       </div>
       <div class="sets-modal-field">
-        <label>Reps</label>
-        <input type="number" id="setsm-reps" value="10" min="1" max="999" inputmode="numeric">
+        <label>Min Reps</label>
+        <input type="number" id="setsm-min" value="10" min="1" max="999" inputmode="numeric">
       </div>
-
+      <div class="sets-modal-field">
+        <label>Max (opt)</label>
+        <input type="number" id="setsm-max" placeholder="—" min="1" max="999" inputmode="numeric">
+      </div>
+      <div class="sets-modal-field">
+        <label>RIR (opt)</label>
+        <input type="number" id="setsm-rir" placeholder="—" min="0" max="10" inputmode="numeric">
+      </div>
+    </div>
+    <div class="sets-modal-fields" style="margin-top:10px;">
+      <div class="sets-modal-field" style="flex:1;">
+        <label>Exercise Notes (optional)</label>
+        <input type="text" id="setsm-note" maxlength="200" placeholder="e.g. Controlled descent" style="text-align:left;">
+      </div>
     </div>
     <div class="sets-modal-btns">
       <button class="sets-modal-cancel" onclick="cancelLibraryAdd()">Cancel</button>
@@ -15747,11 +16427,11 @@ function exportCheckinsCsv() {
 <script>
 let _workoutsCache = null;
 function _getWorkoutsRaw() {
-  return _workoutsCache || {};
+  return _workoutsCache || window._WORKOUTS_EMBEDDED || {};
 }
 window._evolveWorkoutsLoad = fetch('data/workouts.json')
   .then(r => (r.ok ? r.json() : null)).catch(() => null)
-  .then(d => { _workoutsCache = d || window._WORKOUTS_EMBEDDED || {}; });
+  .then(d => { if (d && Object.keys(d).length) _workoutsCache = d; });
 
 // One-shot re-render if the exercise list rendered before the fetch landed.
 Promise.all([window._evolveWorkoutsLoad]).then(() => {
@@ -17476,7 +18156,7 @@ async function loadAssignedFoodsPanel() {
             const dayBadge = `<span style="font-size:9px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;background:${dayTypeBadgeColor(item.dayType)};border:1px solid;border-radius:100px;padding:2px 7px;margin-left:6px;white-space:nowrap;">${dayTypeLabel(item.dayType)}</span>`;
             return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;${idx > 0 ? 'border-top:1px solid var(--border);' : ''}${isLogged?'opacity:0.7;':''}">
-              <div style="flex:1;min-width:0;">
+        <div style="flex:1;min-width:0;overflow:hidden;">
                 <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;">
                   ${item.food_name||'Food'}${dayBadge}${statusBadge}
                 </div>
@@ -19847,7 +20527,7 @@ textarea:focus-visible, select:focus-visible,
     pointer-events: none;
   }
   .btn-primary:hover::after { left: 130%; }
-  .action-btn:active, .aef-add:active, .logout-btn:active, .browse-library-btn:active, .template-save-btn:active { transform: scale(0.96); }
+  .action-btn:active, .axp-add:active, .ebi-edit:active, .logout-btn:active, .browse-library-btn:active, .template-save-btn:active { transform: scale(0.96); }
   .sidebar-toggle:active { transform: scale(0.9); }
 
   /* ── Page entrance: springy cascade ── */
@@ -19905,7 +20585,7 @@ textarea:focus-visible, select:focus-visible,
 
     /* ── Ripple ink on primary interactive elements ── */
     if (!reduce) {
-      var RIPPLE = '.btn-primary, .action-btn, .day-btn, .aef-add, .ebi-target, .logout-btn, .theme-toggle-row, .ccs-trigger, .ebi-del, .ebi-move-btn, .browse-library-btn, .template-save-btn, .online-chip, .modal-close, .log-expand-btn, .sidebar-toggle';
+      var RIPPLE = '.btn-primary, .action-btn, .day-btn, .axp-add, .ebi-target, .logout-btn, .theme-toggle-row, .ccs-trigger, .ebi-del, .ebi-edit, .ebi-move-btn, .browse-library-btn, .template-save-btn, .online-chip, .modal-close, .log-expand-btn, .sidebar-toggle';
       document.addEventListener('pointerdown', function(e) {
         var t = e.target.closest && e.target.closest(RIPPLE);
         if (!t) return;
