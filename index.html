@@ -1233,9 +1233,9 @@
    background: rgba(193,68,14,0.14); color: var(--gold-2); border: 1px solid rgba(193,68,14,0.3);
   }
   .log-ex-coach-note {
-   margin-top: 5px; font-size: 11px; line-height: 1.5;
+   margin-top: 5px; font-size: 13px; line-height: 1.5; font-weight: 1000;
    font-family:'Outfit',sans-serif; color: var(--text2);
-   border-left: 2px solid rgba(193,68,14,0.4); padding-left: 8px;
+   border-left: 2px solid rgba(193,68,14,0.4); padding-left: 8px;font-z
   }
  .log-ex-pr-badge {
   display: inline-flex; align-items: center; gap: 4px;
@@ -8907,7 +8907,7 @@ async function buildWorkoutLogger(workout) {
          <div class="log-ex-name">${escapeHtml(exName)}</div>
          <div class="log-ex-muscles">${escapeHtml(ex.detail || '')}</div>
          <div class="log-ex-target-badge">${escapeHtml(ex.target || '')}</div>
-         ${ex.note ? `<div class="log-ex-coach-note">📝 ${escapeHtml(ex.note)}</div>` : ''}
+         ${ex.note ? `<div class="log-ex-coach-note">NOTE: &nbsp; ${escapeHtml(ex.note)}</div>` : ''}
         </div>
       <div class="ex-edit-controls">
        <button class="ex-move-btn" onclick="moveExercise(${exIdx},-1)" title="Move exercise up">▲</button>
@@ -16145,7 +16145,7 @@ function renderAssignedPlanModal() {
      <div style="flex:1;min-width:0;">
       <div style="font-size:12.5px;font-weight:600;color:#ddd;font-family:'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeExName}</div>
       ${safeDetail ? `<div style="font-size:11px;color:var(--text2);font-family:'Outfit',sans-serif;">${safeDetail}</div>` : ''}
-      ${ex.note ? `<div style="font-size:11px;color:var(--text2);font-family:'Outfit',sans-serif;margin-top:2px;">📝 ${escapeHtml(ex.note)}</div>` : ''}
+      ${ex.note ? `<div style="font-size:11px;color:var(--text2);font-family:'Outfit',sans-serif;margin-top:2px;">NOTE:  ${escapeHtml(ex.note)}</div>` : ''}
      </div>
      <div style="font-size:11.5px;color:var(--text2);font-family:'Outfit',sans-serif;flex-shrink:0;">${safeTarget}</div>
     </div>`;
