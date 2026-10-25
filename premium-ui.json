@@ -1,0 +1,17 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["."],
+  "locale": "en-PH",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Table Selection", "Select/Listbox", "Date", "Form", "Scrollbar", "Toast", "CRUD"],
+  "ownership": { "Select/Listbox": "native", "Date": "native" },
+  "requiredCommands": ["regression"],
+  "commands": {
+    "regression": "node scripts/audit/verify.cjs",
+    "browser": "node scripts/audit/browser.cjs"
+  },
+  "evidence": {
+    "crudFullFlow": "scripts/audit/browser.cjs",
+    "failurePaths": "scripts/audit/verify.cjs"
+  }
+}

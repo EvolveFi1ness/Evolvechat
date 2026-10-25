@@ -11,7 +11,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
-  <script src="shared.js"></script>
+  <script src="shared.js?v=7"></script>
   <script>
     // Apply theme before first paint to avoid a flash. Dark is the default:
     // only an explicit stored light choice opts out. Accepts BOTH the coach
@@ -49,7 +49,7 @@
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://browser.sentry-cdn.com">
-  <link rel="stylesheet" href="design-tokens.css">
+  <link rel="stylesheet" href="design-tokens.css?v=7">
 
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -3172,8 +3172,8 @@
   .food-db-search-icon { left: 27px !important; }
   .food-db-search-clear { right: 27px !important; }
   .food-cat-btn { padding: 5px 12px !important; font-size: 11px !important; }
-  .food-db-item { padding: 10px 16px !important; grid-template-columns: 1fr 54px 32px !important; }
-  .food-db-quick-btn { width: 28px !important; height: 28px !important; font-size: 15px !important; }
+  .food-db-item { padding: 10px 16px !important; grid-template-columns: minmax(0,1fr) max-content 44px !important; }
+  .food-db-quick-btn { width: 44px !important; height: 44px !important; font-size: 15px !important; }
   .food-db-item-name { font-size: 13px !important; }
   .food-db-item-macros { font-size: 10.5px !important; margin-top: 3px !important; }
   .food-db-item-kcal { font-size: 13px !important; }
@@ -5619,8 +5619,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="food-db-search-icon">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </span>
-                <input id="food-db-search-input" class="food-db-search" type="text" placeholder="Search foods…" oninput="searchFoodDb(this.value)" autocomplete="off" />
-                <button id="food-search-clear" class="food-db-search-clear hidden" onclick="clearFoodSearch()"  title="Clear search">✕</button>
+                <input id="food-db-search-input" aria-label="Search foods" class="food-db-search" type="search" placeholder="Search foods…" oninput="searchFoodDb(this.value)" autocomplete="off" />
+                <button id="food-search-clear" aria-label="Clear food search" class="food-db-search-clear" style="display:none;" onclick="clearFoodSearch()"  title="Clear search">✕</button>
               </div>
 
               <!-- Category filter — pill buttons -->
@@ -6411,7 +6411,7 @@ document.addEventListener('DOMContentLoaded', () => {
 .food-db-item-info { min-width: 0; }
 .food-db-item-name { font-size: 14.5px; font-weight: 700; color: var(--text); white-space: normal; word-break: break-word; line-height: 1.4; font-family: 'Syne',sans-serif; }
 .food-db-item-macros { font-size: 11.5px; color: var(--muted); margin-top: 5px; font-family: 'Inter', sans-serif; }
-.food-db-item-kcal { font-size: 15px; font-weight: 800; color: var(--text); text-align: right; white-space: nowrap; padding-left: 10px; }
+.food-db-item-kcal { font-size: 15px; font-weight: 800; color: var(--text); text-align: right; white-space: nowrap; }
 .food-db-empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
 
 /* One-tap quick assign — skips the detail panel and assigns with the
@@ -7134,7 +7134,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <!-- Firebase -->
 
@@ -7755,10 +7755,7 @@ async function wkStartFromScratch() {
 //  UTILS
 // ─────────────────────────────────────────
 function showToast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast'+(type?' '+type:'');
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3500);
+  showAppToast(msg, type, type === 'error' ? 6000 : 3500);
 }
 
 // Toast with an inline "Undo" action for reversible destructive actions
@@ -8163,8 +8160,12 @@ async function handleChangePassword() {
 // ─────────────────────────────────────────
 let _currentPage = 'dashboard'; // matches the page marked "active" in the static HTML on load
 function showPage(page, _fromPopState) {
+  if (!document.getElementById('page-' + page)) return;
   if (_currentPage === page) return; // already on this page — no-op
   const prev = _currentPage;
+  if (!window._pageHistoryInit) {
+    try { history.replaceState({ appPage: prev }, '', location.href); window._pageHistoryInit = true; } catch(e) {}
+  }
   _currentPage = page;
   window._currentCoachPage = page;
   // Leaving the Chat page: tear down per-client preview listeners so they
@@ -8193,6 +8194,11 @@ function showPage(page, _fromPopState) {
   document.querySelectorAll('.cmt-tab').forEach(t => t.classList.remove('active'));
   const mTab = document.getElementById('cmt-' + page);
   if (mTab) mTab.classList.add('active');
+  document.title = 'Evolve Coach · ' + page.charAt(0).toUpperCase() + page.slice(1);
+  document.querySelectorAll('[id^="nav-"], .cmt-tab').forEach(el => {
+    if (el.id === 'nav-' + page || el.id === 'cmt-' + page) el.setAttribute('aria-current', 'page');
+    else el.removeAttribute('aria-current');
+  });
   closeMobileSidebar();
 
   // ── Phone / browser back button support ──
@@ -13102,7 +13108,7 @@ async function deleteProgressPhoto() {
   const docId = window._currentLbDocId;
   const uid = currentModalUid;
   if (!docId || !uid) return;
-  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  if (!(await showConfirmDialog({ title: 'Confirm delete', message: 'Delete this photo? This cannot be undone.', confirmText: 'Delete', danger: true }))) return;
   try {
     const docRef = db.collection('members').doc(uid).collection('progressPhotos').doc(docId);
     let old = null;
@@ -13984,7 +13990,7 @@ async function loadClientAssignedWorkout(clientUid) {
     ? 0
     : Object.values(workoutPlan).reduce((s, d) => s + d.exercises.length, 0);
   if (unsavedCount > 0) {
-    if (!confirm(`You have ${unsavedCount} unsaved exercise${unsavedCount!==1?'s':''} in the builder that ${unsavedCount!==1?'were':'was'} never assigned to a client. Switching clients will discard ${unsavedCount!==1?'them':'it'}. Continue?`)) {
+    if (!(await showConfirmDialog({ title: 'Discard unsaved changes?', message: `You have ${unsavedCount} unsaved exercise${unsavedCount!==1?'s':''} in the builder that ${unsavedCount!==1?'were':'was'} never assigned to a client. Switching clients will discard ${unsavedCount!==1?'them':'it'}. Continue?`, confirmText: 'Discard changes', danger: true }))) {
       // Revert the dropdown/select back to blank rather than silently no-op,
       // so the UI doesn't look like it changed but didn't.
       const sel = document.getElementById('assign-client-select');
@@ -14175,7 +14181,7 @@ async function assignWorkoutToClient(evt) {
 async function clearClientWorkoutPlan() {
   const clientUid = document.getElementById('assign-client-select').value;
   if (!clientUid) { showToast('Select a client first'); return; }
-  if (!confirm("Are you sure you want to clear this client's entire workout plan?")) return;
+  if (!(await showConfirmDialog({ title: 'Confirm clear plan', message: "Are you sure you want to clear this client's entire workout plan?", confirmText: 'Clear plan', danger: true }))) return;
 
   const btn = document.getElementById('clear-plan-btn');
   btn.disabled = true; btn.textContent = 'Clearing...';
@@ -14796,11 +14802,6 @@ function jsAttrSafe(s) {
   return jsEscaped.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function jsAttrSafe(s) {
-  const jsEscaped = String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  return jsEscaped.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
 // Resolves CSS custom property colors for Canvas 2D (canvas ignores var()).
 // Caches per theme switch; call _resolveCanvasColors() after toggling dark mode.
 let _canvasColorCache = {};
@@ -14940,22 +14941,7 @@ let ptEnergyRating = 0;
 let ptSleepRating  = 0;
 let ptNutritionRating = 0;
 
-function renderPtClientList() {
-  const list = document.getElementById('pt-client-list-items');
-  if (!allClients.length) {
-    list.innerHTML = `<div style="padding:1rem;text-align:center;font-size:12px;color:var(--muted)">No clients yet</div>`;
-    return;
-  }
-  list.innerHTML = allClients.map(c => `
-    <div class="pt-client-item ${ptSelectedUid===c.uid?'active':''}" id="pt-ci-${c.uid}" onclick="selectPtClient('${c.uid}')">
-      <div class="pt-ci-av">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
-      <div>
-        <div class="pt-ci-name">${c.firstName||''} ${c.lastName||''}</div>
-        <div class="pt-ci-sub" id="pt-ci-sub-${c.uid}">Loading…</div>
-      </div>
-    </div>`).join('');
-  allClients.forEach(c => loadPtClientSummary(c.uid));
-}
+
 
 async function loadPtClientSummary(uid) {
   try {
@@ -16829,10 +16815,10 @@ async function loadFoodDbPanel() {
       const firestoreNames = new Set(firestoreFoods.map(f => (f.food_name||'').toLowerCase().trim()));
       const builtinsNotInFirestore = (await getBuiltinFoods()).filter(f => f && !firestoreNames.has((f.food_name||'').toLowerCase().trim()));
       foodDbAll = [...firestoreFoods, ...builtinsNotInFirestore];
-      foodDbFiltered = [...foodDbAll];
-      renderFoodDbList();
+      filterFoodDb();
     }
   } catch(e) {
+    _foodDbFirestoreLoaded = false;
     console.warn('[FoodDB] Firestore refresh failed, using built-in foods:', e.message);
   }
 }
@@ -16844,28 +16830,30 @@ async function loadFoodDbPanel() {
 let _builtinFoodsCache = null;
 let _builtinFoodsPromise = null;
 async function getBuiltinFoods() {
-  if (_builtinFoodsCache) return _builtinFoodsCache;
+  if (_builtinFoodsCache?.length) return _builtinFoodsCache;
   if (!_builtinFoodsPromise) {
     _builtinFoodsPromise = loadFoodDatabase('data/foods.json', '_FOODS_EMBEDDED')
-      .then(d => { _builtinFoodsCache = d || []; return _builtinFoodsCache; });
+      .then(d => { _builtinFoodsCache = d || []; return _builtinFoodsCache; })
+      .finally(() => { _builtinFoodsPromise = null; });
   }
   return _builtinFoodsPromise;
 }
 
 let _foodDbSearchTimer = null;
-let _foodDbBatchTimer = null;
 
 function searchFoodDb(query) {
   foodDbQuery = query.trim().toLowerCase();
   const clearBtn = document.getElementById('food-search-clear');
   if (clearBtn) clearBtn.style.display = foodDbQuery ? 'block' : 'none';
   clearTimeout(_foodDbSearchTimer);
+  if (!foodDbQuery) { filterFoodDb(); return; }
   _foodDbSearchTimer = setTimeout(filterFoodDb, 150);
 }
 
 function clearFoodSearch() {
+  clearTimeout(_foodDbSearchTimer);
   const inp = document.getElementById('food-db-search-input');
-  if (inp) inp.value = '';
+  if (inp) { inp.value = ''; inp.focus(); }
   foodDbQuery = '';
   const clearBtn = document.getElementById('food-search-clear');
   if (clearBtn) clearBtn.style.display = 'none';
@@ -16904,11 +16892,10 @@ function renderFoodDbList() {
     });
     if (pillsWrap) {
       const pillHtml = ['<button type="button" class="food-cat-btn active" data-cat="all" onclick="setFoodCat(\'all\',this)">All</button>']
-        .concat(cats.map(c => `<button type="button" class="food-cat-btn" data-cat="${escapeHtml(c)}" onclick="setFoodCat('${c.replace(/'/g,"\\'")}',this)">${escapeHtml(c)}</button>`));
+        .concat(cats.map(c => `<button type="button" class="food-cat-btn" data-cat="${escapeAttr(c)}" onclick="setFoodCat(this.dataset.cat,this)">${escapeHtml(c)}</button>`));
       pillsWrap.innerHTML = pillHtml.join('');
     }
   }
-  clearTimeout(_foodDbBatchTimer);
   if (!foodDbFiltered.length) {
     list.innerHTML = '<div class="food-db-empty">No foods found.<br><small>Try a different search or category.</small></div>';
     return;
@@ -16923,9 +16910,9 @@ function renderFoodDbList() {
       const f = foodDbFiltered[i];
       const kcal = f.calories || 0;
       const serving = f.serving_size_g || 100;
-      html += `<div class="food-db-item" onclick="selectFoodDbItem(${i})" data-idx="${i}">
+      html += `<div class="food-db-item" role="button" tabindex="0" aria-label="Edit serving for ${escapeAttr(f.food_name||'Unknown')}" onclick="selectFoodDbItem(${i})" onkeydown="if(event.target===this && (event.key==='Enter'||event.key===' ')){event.preventDefault();selectFoodDbItem(${i});}" data-idx="${i}">
       <div class="food-db-item-info">
-        <div class="food-db-item-name">${f.food_name||'Unknown'}</div>
+        <div class="food-db-item-name">${escapeHtml(f.food_name||'Unknown')}</div>
         <div class="food-db-item-macros">
           <span class="nt-macro-p">P ${Math.round(f.protein_g||0)}g</span>
           <span class="nt-macro-c">C ${Math.round(f.carbs_g||0)}g</span>
@@ -16939,7 +16926,14 @@ function renderFoodDbList() {
     </div>`;
     }
     list.insertAdjacentHTML('beforeend', html);
-    if (i < foodDbFiltered.length) _foodDbBatchTimer = setTimeout(renderNext, 0);
+    if (i < foodDbFiltered.length) {
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'food-db-load-more';
+      more.textContent = `Show more foods (${foodDbFiltered.length - i} remaining)`;
+      more.onclick = () => { more.remove(); renderNext(); };
+      list.appendChild(more);
+    }
   };
   renderNext();
 }
@@ -17585,10 +17579,10 @@ function _findMacroPlanByDayType(dayType) {
 }
 
 // When the coach changes the Day Type selector, load the matching plan or show empty state
-function onDayTypeChange() {
+async function onDayTypeChange() {
   // If currently editing a plan, confirm before switching
   if (_editingMacroPlanId) {
-    if (!confirm('You are editing a plan. Switch day type will discard unsaved changes. Continue?')) {
+    if (!(await showConfirmDialog({ title: 'Discard unsaved changes?', message: 'You are editing a plan. Switch day type will discard unsaved changes. Continue?', confirmText: 'Discard changes', danger: true }))) {
       // Revert the selector to the previous value
       const prev = _macroPlanMap[_editingMacroPlanId]?.dayType || '';
       const sel = document.getElementById('mt-day-type');
@@ -17633,8 +17627,10 @@ function cancelEditMacroPlan() {
 
 // Store all assigned macro plans for the current client: { docId -> data }
 let _macroPlanMap = {};
+let _macroPlanLoadToken = 0;
 
 async function loadClientMacroTargetCard() {
+  const token = ++_macroPlanLoadToken;
   const clientUid = document.getElementById('nutr-assign-client')?.value;
   const container = document.getElementById('nutr-assigned-macro-plans');
   const note = document.getElementById('mt-current-note');
@@ -17651,6 +17647,7 @@ async function loadClientMacroTargetCard() {
   try {
     const snap = await db.collection('members').doc(clientUid).collection('nutritionPlans')
       .orderBy('assignedAt','desc').limit(10).get();
+    if (token !== _macroPlanLoadToken) return;
 
     // Filter to macro-only plans (empty meals array)
     const macroDocs = snap.docs.filter(d => {
@@ -17668,6 +17665,7 @@ async function loadClientMacroTargetCard() {
     renderMacroPlanCards();
     if (note) note.innerHTML = '';
   } catch(e) {
+    if (token !== _macroPlanLoadToken) return;
     if (note) note.innerHTML = '';
     console.error('loadClientMacroTargetCard:', e);
   }
@@ -17689,6 +17687,7 @@ function dayTypeBadgeColor(dt) {
 // the coach switches to a different client.
 let _assignedFoodsDayType = undefined;
 let _assignedFoodsDayTypeClientUid = null;
+let _assignedFoodsLoadToken = 0;
 
 function renderMacroPlanCards() {
   const container = document.getElementById('nutr-assigned-macro-plans');
@@ -17740,7 +17739,7 @@ async function removeMacroPlanById(docId) {
   const clientUid = document.getElementById('nutr-assign-client')?.value;
   if (!clientUid || !docId) { showToast('Nothing to remove'); return; }
   const planName = _macroPlanMap[docId]?.planName || 'this plan';
-  if (!confirm(`Remove "${planName}"? The client will no longer see this macro target.`)) return;
+  if (!(await showConfirmDialog({ title: 'Confirm remove', message: `Remove "${planName}"? The client will no longer see this macro target.`, confirmText: 'Remove', danger: true }))) return;
   try {
     await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(docId).delete();
     delete _macroPlanMap[docId];
@@ -18019,6 +18018,7 @@ async function quickAssignFood(idx, btnEl) {
 }
 
 async function loadAssignedFoodsPanel() {
+  const token = ++_assignedFoodsLoadToken;
   const clientUid = document.getElementById('nutr-assign-client')?.value;
   const list = document.getElementById('assigned-foods-list');
 
@@ -18034,6 +18034,7 @@ async function loadAssignedFoodsPanel() {
 
   try {
     const snap = await db.collection('members').doc(clientUid).collection('mealLogs').where('assignedByCoach','==',true).limit(300).get();
+    if (token !== _assignedFoodsLoadToken) return;
     if (snap.empty) {
       if (list) list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px 0;">No foods assigned yet. Assigned foods will stay until you remove them.</div>';
       return;
@@ -18153,12 +18154,19 @@ async function loadAssignedFoodsPanel() {
             const statusBadge = isLogged
               ? `<span style="font-size:9px;font-weight:700;background:rgba(74,222,128,0.12);color:#4ADE80;border:1px solid rgba(74,222,128,0.3);border-radius:100px;padding:2px 7px;margin-left:6px;">✓ Logged</span>`
               : `<span style="font-size:9px;font-weight:700;background:var(--bg3);color:var(--muted);border:1px solid var(--border);border-radius:100px;padding:2px 7px;margin-left:6px;">Pending</span>`;
-            const dayBadge = `<span style="font-size:9px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;background:${dayTypeBadgeColor(item.dayType)};border:1px solid;border-radius:100px;padding:2px 7px;margin-left:6px;white-space:nowrap;">${dayTypeLabel(item.dayType)}</span>`;
+            const dayBadge = isLogged
+              ? `<span style="font-size:9px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;background:${dayTypeBadgeColor(item.dayType)};border:1px solid;border-radius:100px;padding:2px 7px;margin-left:6px;white-space:nowrap;">${dayTypeLabel(item.dayType)}</span>`
+              : `<select aria-label="Day type for ${escapeAttr(item.food_name || 'Food')}" title="Change day type (saves automatically)"
+                  data-saved-day-type="${escapeAttr(item.dayType || '')}"
+                  onchange="coachUpdateAssignedFoodDayType('${clientUid}','${item.logId}',this)"
+                  style="font-family:inherit;font-size:10px;font-weight:700;letter-spacing:0.3px;text-transform:uppercase;background:${dayTypeBadgeColor(item.dayType)};border:1px solid;border-radius:100px;padding:3px 7px;margin-left:6px;flex-shrink:0;max-width:125px;cursor:pointer;">
+                  ${['', 'Training Day', 'Rest Day'].map(dt => `<option value="${dt}" ${(item.dayType || '') === dt ? 'selected' : ''} style="background:var(--bg3);color:var(--text);">${dayTypeLabel(dt)}</option>`).join('')}
+                </select>`;
             return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;${idx > 0 ? 'border-top:1px solid var(--border);' : ''}${isLogged?'opacity:0.7;':''}">
         <div style="flex:1;min-width:0;overflow:hidden;">
-                <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;">
-                  ${item.food_name||'Food'}${dayBadge}${statusBadge}
+                <div class="assigned-food-heading" style="font-size:13px;font-weight:600;color:var(--text);">
+                  <span class="assigned-food-name">${escapeHtml(item.food_name||'Food')}</span>${dayBadge}${statusBadge}
                 </div>
                 ${!isLogged ? (item.unitMode === 'srv' && item.srvQty ? `
                 <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
@@ -18203,12 +18211,36 @@ async function loadAssignedFoodsPanel() {
 
     if (list) list.innerHTML = html;
   } catch(e) {
-    if (list) list.innerHTML = `<div style="color:var(--red);font-size:13px;">Error: ${e.message}</div>`;
+    if (token !== _assignedFoodsLoadToken) return;
+    if (list) list.innerHTML = `<div style="color:var(--red);font-size:13px;">Error: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function coachUpdateAssignedFoodDayType(clientUid, logId, select) {
+  const dayType = select.value;
+  const previousDayType = select.dataset.savedDayType || '';
+  if (!['', 'Training Day', 'Rest Day'].includes(dayType) || dayType === previousDayType) return;
+  select.disabled = true;
+  try {
+    await db.collection('members').doc(clientUid).collection('mealLogs').doc(logId).update({ dayType });
+    select.dataset.savedDayType = dayType;
+    if (window._foodLogsCache) delete window._foodLogsCache[clientUid];
+    if (window._checkinMlCache) delete window._checkinMlCache[clientUid];
+    window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
+    showToast('Day type updated → ' + dayTypeLabel(dayType));
+    if (document.getElementById('nutr-assign-client')?.value === clientUid) {
+      await loadAssignedFoodsPanel();
+    }
+  } catch(e) {
+    select.value = previousDayType;
+    showToast('Error: ' + e.message);
+  } finally {
+    select.disabled = false;
   }
 }
 
 async function coachDeleteAssignedFood(clientUid, logId) {
-  if (!confirm('Remove this food from the client\'s assigned list?')) return;
+  if (!(await showConfirmDialog({ title: 'Confirm remove', message: 'Remove this food from the client\'s assigned list?', confirmText: 'Remove', danger: true }))) return;
   try {
     await db.collection('members').doc(clientUid).collection('mealLogs').doc(logId).delete();
     if (window._foodLogsCache) delete window._foodLogsCache[clientUid];
@@ -18236,7 +18268,7 @@ async function coachClearAllAssignedFoods() {
     });
     if (!pendingDocs.length) { showToast('Nothing to clear — all remaining items are already logged'); return; }
 
-    if (!confirm(`Remove all ${pendingDocs.length} pending assigned food${pendingDocs.length!==1?'s':''} for this client?`)) return;
+    if (!(await showConfirmDialog({ title: 'Confirm remove foods', message: `Remove all ${pendingDocs.length} pending assigned food${pendingDocs.length!==1?'s':''} for this client?`, confirmText: 'Remove foods', danger: true }))) return;
 
     if (btn) { btn.disabled = true; btn.textContent = 'Clearing…'; }
     const batch = db.batch();
@@ -18278,7 +18310,12 @@ async function coachUpdateAssignedFoodGrams(clientUid, logId, baseSizeG) {
   const inp = document.getElementById('afg-' + logId);
   const saveBtn = document.getElementById('afg-save-' + logId);
   if (!inp) return;
-  const newG = parseFloat(inp.value) || 1;
+  const newG = Number(inp.value);
+  if (!Number.isFinite(newG) || newG <= 0) {
+    showToast('Enter a quantity greater than zero.', 'error');
+    inp.focus();
+    return;
+  }
   if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '…'; }
   try {
     // Fetch latest doc so we recalculate from the base food data stored on it
@@ -18299,37 +18336,22 @@ async function coachUpdateAssignedFoodGrams(clientUid, logId, baseSizeG) {
       carbs_g:   Math.round((d.carbs_g   || 0) * ratio * 10) / 10,
       fat_g:     Math.round((d.fat_g     || 0) * ratio * 10) / 10,
     });
+    if (window._foodLogsCache) delete window._foodLogsCache[clientUid];
+    if (window._checkinMlCache) delete window._checkinMlCache[clientUid];
+    window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
     showToast('✓ Grams updated');
     if (saveBtn) saveBtn.style.display = 'none';
     loadAssignedFoodsPanel();
   } catch(e) {
     showToast('Error: ' + e.message);
+  } finally {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save'; }
   }
 }
 
-function clearNutrBuilder() {
-  document.getElementById('nb-plan-name').value = '';
-  document.getElementById('nb-protein').value = '';
-  document.getElementById('nb-carbs').value = '';
-  document.getElementById('nb-fats').value = '';
-  document.getElementById('nb-calories').value = '';
-  document.getElementById('nb-notes').value = '';
-  document.getElementById('nb-meals-container').innerHTML = '';
-  nutrMealCount = 0;
-  addNutrMeal();
-  updateBuilderTotal();
-}
 
-async function loadClientNutritionSummary() {
-  const clientUid = document.getElementById('nutr-assign-client').value;
-  if (!clientUid) {
-    ['ns-protein','ns-carbs','ns-fats','ns-calories'].forEach(id => document.getElementById(id).textContent = '—');
-    document.getElementById('nutr-plans-list').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0;">Select a client to view assigned plans.</div>';
-    return;
-  }
-  loadClientAssignedPlans(clientUid);
-}
+
+
 
 async function loadClientAssignedPlans(clientUid) {
   const list = document.getElementById('nutr-plans-list');
@@ -18375,7 +18397,7 @@ async function loadClientAssignedPlans(clientUid) {
 }
 
 async function deleteNutrPlan(clientUid, planId) {
-  if (!confirm('Delete this nutrition plan?')) return;
+  if (!(await showConfirmDialog({ title: 'Confirm delete', message: 'Delete this nutrition plan?', confirmText: 'Delete', danger: true }))) return;
   await db.collection('members').doc(clientUid).collection('nutritionPlans').doc(planId).delete();
   showToast('Plan deleted');
   loadClientAssignedPlans(clientUid);
@@ -18684,14 +18706,7 @@ function retryNutrCard(uid) {
   })();
 }
 
-function macroPBar(label, consumed, target, color) {
-  const pct = target ? Math.min(100, Math.round((consumed/target)*100)) : 0;
-  return `<div class="macro-bar-row">
-    <div class="macro-bar-label">${label}</div>
-    <div class="macro-bar-track"><div class="macro-bar-fill" style="width:${pct}%;background:${color};"></div></div>
-    <div class="macro-bar-val">${consumed}/${target}g</div>
-  </div>`;
-}
+
 
 // ── MEAL LOGS ──
 // Helper: build YYYY-MM-DD string for a given Date offset
@@ -19083,7 +19098,7 @@ function renderStepGoalCard(d) {
 async function removeStepGoal() {
   const clientUid = document.getElementById('nutr-assign-client')?.value;
   if (!clientUid) return;
-  if (!confirm("Remove this client's step goal? They will no longer see a daily step target.")) return;
+  if (!(await showConfirmDialog({ title: 'Confirm remove', message: "Remove this client's step goal? They will no longer see a daily step target.", confirmText: 'Remove', danger: true }))) return;
   try {
     await db.collection('members').doc(clientUid).collection('goals').doc('steps').delete();
     showToast('Step goal removed');

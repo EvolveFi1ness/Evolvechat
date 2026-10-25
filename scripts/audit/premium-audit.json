@@ -1,0 +1,13 @@
+{
+  "status": "timed_out",
+  "timeoutSeconds": 45,
+  "mode": "strict",
+  "scope": [
+    "coach.html",
+    "index.html",
+    "shared.js",
+    "design-tokens.css",
+    "sw.js"
+  ],
+  "note": "The installed premium static auditor did not finish. No compliance or clean-audit claim is made. Project-owned syntax, regression, and browser checks are recorded separately."
+}

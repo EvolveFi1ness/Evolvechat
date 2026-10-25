@@ -7,7 +7,7 @@
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
- <link rel="stylesheet" href="design-tokens.css">
+ <link rel="stylesheet" href="design-tokens.css?v=7">
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -15,7 +15,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
- <script src="shared.js"></script>
+ <script src="shared.js?v=7"></script>
 
 <style>
  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -7123,16 +7123,16 @@ img, video, iframe { max-width: 100%; }
    <div>
     <div style="font-size:15px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif;">Add Food <span id="nutr-search-meal-label" style="color:#C1440E;font-size:13px;font-weight:600;"></span></div>
    </div>
-   <button onclick="closeNutrFoodSearch()" style="background:rgba(255,255,255,0.06);border:none;color:#888;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">✕</button>
+   <button aria-label="Close food search" onclick="closeNutrFoodSearch()" style="background:rgba(255,255,255,0.06);border:none;color:#888;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <!-- Search input -->
   <div style="padding:12px 16px;border-bottom:1px solid var(--bg3);flex-shrink:0;position:relative;">
-   <input id="nutr-search-input" type="text" placeholder="Search foods…" oninput="nutrSearchFoods(this.value)"
+   <input id="nutr-search-input" aria-label="Search foods" type="search" placeholder="Search foods…" oninput="nutrSearchFoods(this.value)"
     style="width:100%;background:var(--bg3);border:1px solid rgba(30,22,12,0.16);border-radius:12px;padding:10px 36px 10px 14px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
-   <button id="nutr-search-clear" onclick="nutrClearSearch()" style="display:none;position:absolute;right:26px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;">✕</button>
+   <button id="nutr-search-clear" aria-label="Clear food search" onclick="nutrClearSearch()" style="display:none;position:absolute;right:26px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;">✕</button>
   </div>
   <!-- Category pills -->
-  <div id="nutr-cat-pills" style="display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;"></div>
+  <div id="nutr-cat-pills" style="display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;"></div>
    <!-- Results -->
    <div id="nutr-search-results" style="flex:1;overflow-y:auto;"></div>
    <!-- Add Custom Food button -->
@@ -7467,7 +7467,7 @@ img, video, iframe { max-width: 100%; }
 </div>
 
 <!-- ══ TOAST ══ -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 
 <!-- Firebase SDKs -->
@@ -7656,7 +7656,7 @@ const storage = typeof firebase !== 'undefined' ? firebase.storage() : null;
 // writes queue locally when the device is offline and sync automatically
 // when the connection returns. Best-effort — if it fails (unsupported
 // browser, another tab holding the database) the app stays online-only.
-db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+if (db) db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
 // ─────────────────────────────────────────
 // PHILIPPINES TIMEZONE HELPERS (UTC+8)
@@ -7771,11 +7771,8 @@ function clearStatus(id) {
  el.className = 'status'; el.textContent = '';
 }
 function showToast(msg, type='') {
- const t = document.getElementById('toast');
- t.textContent = msg; t.className = 'toast' + (type?' '+type:'');
- t.classList.add('show');
  const duration = type === 'error' ? 6000 : type === 'pr' ? 4500 : 3000;
- setTimeout(() => t.classList.remove('show'), duration);
+ showAppToast(msg, type, duration);
 }
 
 // ─────────────────────────────────────────
@@ -8316,7 +8313,7 @@ async function loadHomeScreen(data) {
  Object.assign(_peCurrentData, data);
  try {
   const _cacheData = {};
-  const _cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','approvalStatus','assignedWorkoutPlan','personalRecords'];
+  const _cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','status','approvalStatus','assignedWorkoutPlan','personalRecords'];
   _cacheFields.forEach(k => {
    if (data[k] === undefined) return;
    const _v = data[k];
@@ -8333,7 +8330,7 @@ async function loadHomeScreen(data) {
     || (typeof firebase !== 'undefined' && firebase.auth().currentUser?.email);
    if (_aEmail) _cacheData.email = _aEmail;
   }
-  safeLocalStorageSet('evolve_profile_cache', JSON.stringify(_cacheData));
+  safeLocalStorageSet('evolve_profile_cache', JSON.stringify({ ..._cacheData, uid: currentUid || auth?.currentUser?.uid }));
  } catch(e) {}
 
  // Profile panel — fully null-safe, won't throw if any element is missing
@@ -10935,7 +10932,7 @@ async function submitAnglePhotos() {
     let next = new Date((mData.nextPhotoDue || mData.photoUpdateStartDate) + 'T00:00:00');
     while (next <= today) next.setDate(next.getDate() + 14);
     await db.collection('members').doc(uid).update({
-     nextPhotoDue: next.toISOString().split('T')[0],
+     nextPhotoDue: localDateKey(next),
      lastPhotoSubmitted: phIsoDate()
     });
    }
@@ -11425,7 +11422,7 @@ async function deleteProgressPhoto() {
  const docId = window._currentLbDocId;
  const uid = currentUid || auth?.currentUser?.uid;
  if (!docId || !uid) return;
-  if (!confirm('Delete this photo? This cannot be undone.')) return;
+  if (!(await showConfirmDialog({ title: 'Confirm delete', message: 'Delete this photo? This cannot be undone.', confirmText: 'Delete', danger: true }))) return;
   try {
    const docRef = db.collection('members').doc(uid).collection('progressPhotos').doc(docId);
    let old = null;
@@ -11460,7 +11457,7 @@ function _computeNextDue(dayOfWeek) {
  if (daysUntil < 14) daysUntil += 7; // ensure at least 2 weeks out
  const next = new Date(today);
  next.setDate(today.getDate() + daysUntil);
- return next.toISOString().split('T')[0];
+ return localDateKey(next);
 }
 
 function _updateNextDueLabel(dayOfWeek) {
@@ -11527,7 +11524,9 @@ async function savePhotoSchedule() {
 // BOTTOM NAV TABS
 // ─────────────────────────────────────────
 function setTab(tab, _fromPopState) {
+ if (!['home','log','progress','chat','profile','nutrition'].includes(tab)) return;
  window._currentClientTab = tab;
+ document.title = 'Evolve · ' + ({home:'Home',log:'Log workout',progress:'Progress',chat:'Chat',profile:'Profile',nutrition:'Nutrition'})[tab];
  const homeScreen = document.getElementById('screen-home');
  if (homeScreen) homeScreen.style.display = '';
 
@@ -11539,6 +11538,10 @@ function setTab(tab, _fromPopState) {
   const scls = 'sidebar-nav-item' + (t===tab ? ' active' : '');
   if (el) el.className = cls;
   if (sn) sn.className = scls;
+  [el, sn].filter(Boolean).forEach(nav => {
+   if (t === tab) nav.setAttribute('aria-current', 'page');
+   else nav.removeAttribute('aria-current');
+  });
  });
 
  // Hide ALL panels first, then show the right one
@@ -11625,7 +11628,7 @@ async function _refreshProfileTab() {
    if (typeof refreshProfileDisplay === 'function') refreshProfileDisplay(_peCurrentData);
    // Update localStorage cache with the fresh data
    try {
-    const _cf = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','assignedWorkoutPlan','personalRecords'];
+    const _cf = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','status','approvalStatus','assignedWorkoutPlan','personalRecords'];
     const _co = {};
     _cf.forEach(k => {
      if (_peCurrentData[k] === undefined) return;
@@ -11633,7 +11636,7 @@ async function _refreshProfileTab() {
      if (v && typeof v === 'object' && typeof v.toDate === 'function') { try { _co[k] = v.toDate().toISOString(); } catch(e){} return; }
      _co[k] = v;
     });
-    safeLocalStorageSet('evolve_profile_cache', JSON.stringify(_co));
+    safeLocalStorageSet('evolve_profile_cache', JSON.stringify({ ..._co, uid: currentUid || auth?.currentUser?.uid }));
    } catch(e) {}
   }
  } catch(e) {
@@ -11838,6 +11841,40 @@ async function clientSendMessage() {
 // LOGOUT
 // ─────────────────────────────────────────
 const logout = () => handleLogout();
+function clearClientSessionState() {
+ stopPresenceHeartbeat();
+ // Tear down all per-session Firestore listeners. Several of these
+ // (cliCalUnsub, cliMyEvUnsub, clientPhotoReqUnsub) guard against duplicate
+ // subscriptions by checking "if already set, skip" — leaving them set after
+ // logout would make the next login's listener silently fail to (re)attach,
+ // showing stale or missing data for whoever logs in next.
+ if (clientChatUnsub) { clientChatUnsub(); clientChatUnsub = null; }
+ if (chatUnreadUnsub) { chatUnreadUnsub(); chatUnreadUnsub = null; }
+ if (coachPresenceUnsub) { coachPresenceUnsub(); coachPresenceUnsub = null; }
+ if (cliCalUnsub) { cliCalUnsub(); cliCalUnsub = null; }
+ if (cliMyEvUnsub) { cliMyEvUnsub(); cliMyEvUnsub = null; }
+ if (clientPhotoReqUnsub) { clientPhotoReqUnsub(); clientPhotoReqUnsub = null; }
+ if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
+ if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
+ if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
+ if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
+ if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
+ if (_wktTimerInterval) { clearInterval(_wktTimerInterval); _wktTimerInterval = null; }
+ _nutrInitialized = false;
+ nutrFoodLogs = {};
+ nutrPlan = null; nutrPlanId = null; nutrAllMacroPlans = [];
+ _customFoodsLoaded = false; _customFoodsCache = [];
+ if (NUTR_FOODS) NUTR_FOODS = NUTR_FOODS.filter(f => !nutrIsMyCustomFood(f));
+ window._nutrDayTypeFilter = undefined;
+ window._lastHomeData = null;
+ if (window._nutrObserver) window._nutrObserver.disconnect();
+ clearTimeout(nutrSearchTimer);
+ try { localStorage.removeItem('evolve_profile_cache'); } catch(e) {}
+ currentUid = null; step1Data = {}; todayWorkout = null; _peCurrentData = {};
+ _setChatBadge('');
+ explicitAuthInProgress = false;
+}
+
 async function handleLogout() {
  // Give the click instant feedback — previously this button did nothing
  // visible while the Firestore write below was in flight.
@@ -11855,28 +11892,14 @@ async function handleLogout() {
   const timeout = new Promise(r => setTimeout(r, 2000));
   await Promise.race([offlineWrite, timeout]).catch(() => {});
  }
- try { await auth.signOut(); } catch(e) { console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message); }
- // Tear down all per-session Firestore listeners. Several of these
- // (cliCalUnsub, cliMyEvUnsub, clientPhotoReqUnsub) guard against duplicate
- // subscriptions by checking "if already set, skip" — leaving them set after
- // logout would make the next login's listener silently fail to (re)attach,
- // showing stale or missing data for whoever logs in next.
-  if (clientChatUnsub) { clientChatUnsub(); clientChatUnsub = null; }
-  if (chatUnreadUnsub) { chatUnreadUnsub(); chatUnreadUnsub = null; }
-  if (coachPresenceUnsub) { coachPresenceUnsub(); coachPresenceUnsub = null; }
-  if (cliCalUnsub) { cliCalUnsub(); cliCalUnsub = null; }
-  if (cliMyEvUnsub) { cliMyEvUnsub(); cliMyEvUnsub = null; }
-  if (clientPhotoReqUnsub) { clientPhotoReqUnsub(); clientPhotoReqUnsub = null; }
-  if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
-  if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
-  if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
-  if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
-   if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
-   if (_wktTimerInterval) { clearInterval(_wktTimerInterval); _wktTimerInterval = null; }
-   currentUid = null; step1Data = {}; todayWorkout = null; _peCurrentData = {};
-  _setChatBadge('');
- explicitAuthInProgress = false;
- try { localStorage.removeItem('evolve_profile_cache'); } catch(e) {}
+ try { await auth.signOut(); } catch(e) {
+  console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message);
+  showToast('Could not sign out. Please try again.', 'error');
+  startPresenceHeartbeat();
+  if (btn) { btn.disabled = false; btn.textContent = 'Sign Out'; }
+  return;
+ }
+ clearClientSessionState();
  showScreen('screen-auth');
  switchTab('login');
  if (btn) { btn.disabled = false; btn.textContent = 'Sign Out'; }
@@ -11890,21 +11913,12 @@ async function handleBlockedSignOut() {
    isOnline: false, lastSeenAt: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }); } catch(e) {}
  }
- try { await auth.signOut(); } catch(e) { console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message); }
- if (clientChatUnsub) { clientChatUnsub(); clientChatUnsub = null; }
-  if (chatUnreadUnsub) { chatUnreadUnsub(); chatUnreadUnsub = null; }
-  if (coachPresenceUnsub) { coachPresenceUnsub(); coachPresenceUnsub = null; }
-  if (cliCalUnsub) { cliCalUnsub(); cliCalUnsub = null; }
-  if (cliMyEvUnsub) { cliMyEvUnsub(); cliMyEvUnsub = null; }
-  if (clientPhotoReqUnsub) { clientPhotoReqUnsub(); clientPhotoReqUnsub = null; }
-  if (window._nutrAssignedFoodsUnsub) { window._nutrAssignedFoodsUnsub(); window._nutrAssignedFoodsUnsub = null; }
-  if (window._nutrMacroPlanUnsub) { window._nutrMacroPlanUnsub(); window._nutrMacroPlanUnsub = null; }
-  if (window._accessWatcher) { window._accessWatcher(); window._accessWatcher = null; }
-  if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
-   if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
-   if (_wktTimerInterval) { clearInterval(_wktTimerInterval); _wktTimerInterval = null; }
-   currentUid = null;
-   explicitAuthInProgress = false;
+ try { await auth.signOut(); } catch(e) {
+  console.warn('[EVOLVE] signOut error:', e && e.code, e && e.message);
+  showToast('Could not sign out. Please try again.', 'error');
+  return;
+ }
+ clearClientSessionState();
    showScreen('screen-auth');
    switchTab('login');
 }
@@ -11962,7 +11976,7 @@ if (auth) auth.onAuthStateChanged(async user => {
     const _hasRealName = _cData && _cData.firstName && _cData.firstName !== 'Athlete';
     const _hasBodyStats = _cData && (_cData.age || _cData.heightCm || _cData.weightKg);
     const _hasAnyData = _cData && (_cData.email || _hasRealName || _hasBodyStats || _cData.goal);
-    if (_hasAnyData) {
+    if (_hasAnyData && _cData.uid === user.uid && !['archived', 'deleted'].includes(_cData.status) && !['pending', 'rejected'].includes(_cData.approvalStatus)) {
      Object.assign(_peCurrentData, _cData);
      await loadHomeScreen(_cData);
      // Paint profile panel after loadHomeScreen finishes
@@ -11972,6 +11986,7 @@ if (auth) auth.onAuthStateChanged(async user => {
    }
   } catch(e) {}
 
+  if (auth.currentUser?.uid !== user.uid || currentUid !== user.uid) return;
   // ── BACKGROUND: mark online + fetch fresh data from Firestore ──
   db.collection('members').doc(user.uid).set({
    isOnline: true,
@@ -12001,6 +12016,7 @@ if (auth) auth.onAuthStateChanged(async user => {
    }
    return;
   }
+  if (auth.currentUser?.uid !== user.uid || currentUid !== user.uid) return;
   if (doc.exists) {
    const data = doc.data();
    // Block archived or soft-deleted clients — show access suspended screen
@@ -12048,6 +12064,10 @@ if (auth) auth.onAuthStateChanged(async user => {
    }
   }
   // If doc doesn't exist during active signup, handleSignup handles the redirect
+ } else if (currentUid) {
+  clearClientSessionState();
+  showScreen('screen-auth');
+  switchTab('login');
  }
 });
 
@@ -12267,7 +12287,7 @@ function openAddEventModal(dateStr) {
 async function deleteClientEvent(evId) {
  const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
- if (!confirm('Delete this event?')) return;
+ if (!(await showConfirmDialog({ title: 'Confirm delete', message: 'Delete this event?', confirmText: 'Delete', danger: true }))) return;
  try {
   await db.collection('members').doc(uid).collection('myEvents').doc(evId).delete();
   showToast('Event removed');
@@ -13106,27 +13126,31 @@ let cliMealLogPhotoFile = null;
 // Nutrition food database is big (~830 KB); lazy-load on first use via shared loader.
 let NUTR_FOODS = null;
 let NUTR_CATS = [];
-let _nutrFoodLoadAttempted = false;
+let _nutrFoodLoadPromise = null;
+let _nutrBuiltinsLoaded = false;
 
 async function _ensureNutrFoodsLoaded() {
- if (NUTR_FOODS) return;
- if (_nutrFoodLoadAttempted) return;
- _nutrFoodLoadAttempted = true;
- 
- // Show loading state in nutrition panel
+ if (_nutrBuiltinsLoaded) return;
+ if (_nutrFoodLoadPromise) return _nutrFoodLoadPromise;
  const loadingEl = document.getElementById('nutr-food-loading');
  if (loadingEl) loadingEl.style.display = 'flex';
- 
- try {
-  NUTR_FOODS = await loadFoodDatabase('data/nutr-foods.json', '_NUTR_FOODS_EMBEDDED');
-  NUTR_CATS = [...new Set(NUTR_FOODS.map(f => f.category).filter(Boolean))].sort();
- } catch(e) {
-  console.error('Failed to load nutrition food database:', e);
-  NUTR_FOODS = [];
- }
- 
- // Hide loading state
- if (loadingEl) loadingEl.style.display = 'none';
+ _nutrFoodLoadPromise = (async () => {
+  try {
+   const foods = await loadFoodDatabase('data/nutr-foods.json', '_NUTR_FOODS_EMBEDDED');
+   _nutrBuiltinsLoaded = foods.length > 0;
+   // Custom foods may have loaded while the built-in request was in flight.
+   const custom = (NUTR_FOODS || []).filter(nutrIsMyCustomFood);
+   NUTR_FOODS = [...custom, ...foods];
+   NUTR_CATS = [...new Set(NUTR_FOODS.map(f => f.category).filter(Boolean))].sort();
+  } catch(e) {
+   console.error('Failed to load nutrition food database:', e);
+   NUTR_FOODS = NUTR_FOODS || [];
+  } finally {
+   if (loadingEl) loadingEl.style.display = 'none';
+   _nutrFoodLoadPromise = null;
+  }
+ })();
+ return _nutrFoodLoadPromise;
 }
 
 const NUTR_MEALS = ['Meal 1','Meal 2','Meal 3','Meal 4','Meal 5'];
@@ -13150,7 +13174,6 @@ function servingQtyLabel(servingG, sizeG, label) {
 // e.g. srvCountLabel(1.5, 'small') -> "1.5 smalls". Used for foods the coach
 // assigned in "Servings" mode (item.unitMode === 'srv').
 function srvCountLabel(qty, unit) {
- _ensureNutrFoodsLoaded();
  const q = Math.round((qty || 0) * 10) / 10;
  const qStr = Number.isInteger(q) ? q : q.toFixed(1);
  const u = unit || 'serving';
@@ -13257,9 +13280,9 @@ function nutrFormatDate(d) {
 
  let _nutrInitialized = false;
  async function initClientNutrition() {
-  await _ensureNutrFoodsLoaded();
   const uid = auth?.currentUser?.uid;
   if (_nutrInitialized) { renderNutritionTab(); return; }
+  if (!uid) return;
   _nutrInitialized = true;
   renderNutritionTab();
    // Load custom foods from members/{uid}/customFoods
@@ -13366,56 +13389,53 @@ function nutrFormatDate(d) {
 // coach-assigned foods, since both are valid coaching inputs the client
 // should see at the same time.
 
-let _nutrLoadInFlight = false;
-let _nutrLoadQueued   = false;
-async function nutrLoadDayLogs(uid, dateKey) {
- if (_nutrLoadInFlight) { _nutrLoadQueued = true; return; }
- _nutrLoadInFlight = true;
- try {
-  nutrFoodLogs[dateKey] = {};
-  NUTR_MEALS.forEach(m => nutrFoodLogs[dateKey][m] = []);
+const _nutrDayLoads = new Map();
+function nutrLoadDayLogs(uid, dateKey) {
+ const key = uid + '|' + dateKey;
+ if (_nutrDayLoads.has(key)) return _nutrDayLoads.get(key);
+ const request = (async () => {
+  try {
+  const dayLogs = {};
+  NUTR_MEALS.forEach(m => dayLogs[m] = []);
 
   // Query 1: logs for this specific date (client-logged meals)
-  const snapDay = await db.collection('members').doc(uid).collection('mealLogs').where('date','==',dateKey).get();
+  const [snapDay, snapCoach] = await Promise.all([
+   db.collection('members').doc(uid).collection('mealLogs').where('date','==',dateKey).get(),
+   db.collection('members').doc(uid).collection('mealLogs').where('assignedByCoach','==',true).get()
+  ]);
   snapDay.docs.forEach(doc => {
    const d = doc.data();
    if (d.assignedByCoach) {
     // These live in the Assigned Plan section only, not in meal slots
-    if (!nutrFoodLogs[dateKey].__assigned__) nutrFoodLogs[dateKey].__assigned__ = [];
-    nutrFoodLogs[dateKey].__assigned__.push({...d, logId: doc.id});
+    if (!dayLogs.__assigned__) dayLogs.__assigned__ = [];
+    dayLogs.__assigned__.push({...d, logId: doc.id});
     return;
    }
    const meal = d.mealSlot || d.mealName || 'Meal 1';
    const slot = NUTR_MEALS.includes(meal) ? meal : 'Meal 1';
-   if (!nutrFoodLogs[dateKey][slot]) nutrFoodLogs[dateKey][slot] = [];
-   nutrFoodLogs[dateKey][slot].push({...d, logId: doc.id});
+   if (!dayLogs[slot]) dayLogs[slot] = [];
+   dayLogs[slot].push({...d, logId: doc.id});
   });
 
   // Query 2: persistent coach-assigned foods (no date field — always-on plan)
   // Single-field query: filtering on both assignedByCoach AND persistent would
   // require a composite index; persistent is filtered client-side instead.
-  const snapCoach = await db.collection('members').doc(uid).collection('mealLogs')
-    .where('assignedByCoach','==',true)
-    .get();
   snapCoach.docs.forEach(doc => {
    const d = doc.data();
    // Skip if it has a date (already handled above or belongs to a specific day)
    if (d.date) return;
    if (d.persistent !== true) return;
-   if (!nutrFoodLogs[dateKey].__assigned__) nutrFoodLogs[dateKey].__assigned__ = [];
+   if (!dayLogs.__assigned__) dayLogs.__assigned__ = [];
    // Avoid duplicates
-   const alreadyIn = (nutrFoodLogs[dateKey].__assigned__ || []).some(i => i.logId === doc.id);
-   if (!alreadyIn) nutrFoodLogs[dateKey].__assigned__.push({...d, logId: doc.id});
+   const alreadyIn = (dayLogs.__assigned__ || []).some(i => i.logId === doc.id);
+   if (!alreadyIn) dayLogs.__assigned__.push({...d, logId: doc.id});
   });
 
- } catch(e) { console.error('[Nutr]', e); }
- finally {
-  _nutrLoadInFlight = false;
-  if (_nutrLoadQueued) {
-   _nutrLoadQueued = false;
-   await nutrLoadDayLogs(uid, dateKey);
-  }
- }
+   if (currentUid === uid) nutrFoodLogs[dateKey] = dayLogs;
+  } catch(e) { console.error('[Nutr]', e); }
+ })().finally(() => { if (_nutrDayLoads.get(key) === request) _nutrDayLoads.delete(key); });
+ _nutrDayLoads.set(key, request);
+ return request;
 }
 
 function nutrGetDayTotals(dateKey) {
@@ -13435,6 +13455,20 @@ function nutrGetDayTotals(dateKey) {
  return {cal:Math.round(cal), p:Math.round(p), c:Math.round(c), f:Math.round(f), fi:Math.round(fi), n};
 }
 
+function nutrActiveDayType() {
+ const selected = window._nutrDayTypeFilter;
+ if (selected === 'Training Day' || selected === 'Rest Day') return selected;
+ return todayWorkout ? 'Training Day' : 'Rest Day';
+}
+
+function nutrPlanForDayType(dayType) {
+ if (nutrAllMacroPlans.length) {
+  return nutrAllMacroPlans.find(p => p.dayType === dayType)
+    || nutrAllMacroPlans.find(p => !p.dayType) || null;
+ }
+ return nutrPlan && (!nutrPlan.dayType || nutrPlan.dayType === dayType) ? nutrPlan : null;
+}
+
 function renderNutritionTab() {
  const dateKey = nutrDateKey(nutrCurrentDate);
  const el = document.getElementById('nutr-date-label');
@@ -13448,27 +13482,8 @@ function renderNutritionTab() {
 
  const totals = nutrGetDayTotals(dateKey);
 
- // Collect every day-type the coach has actually configured (macro plans and/or assigned foods)
- const dayObj = nutrFoodLogs[dateKey] || {};
- const assignedRawForTypes = dayObj.__assigned__ || [];
- const availableDayTypes = [...new Set([
-  ...nutrAllMacroPlans.map(p => p.dayType || ''),
-  ...assignedRawForTypes.map(a => a.dayType || '')
- ])].filter(dt => dt === 'Training Day' || dt === 'Rest Day');
-
- // Resolve which plan's targets to show — respect the active day-type tab
- let activePlan = nutrPlan;
- if (nutrAllMacroPlans.length > 0) {
-  const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
-  const autoType = isTrainingDay ? 'Training Day' : 'Rest Day';
-  const dayTypes = [...new Set(nutrAllMacroPlans.map(p => p.dayType || ''))];
-  const savedFilter = window._nutrDayTypeFilter;
-  const activeFilter = (savedFilter !== undefined && dayTypes.includes(savedFilter))
-    ? savedFilter
-    : (dayTypes.includes(autoType) ? autoType : (dayTypes.includes('') ? '' : dayTypes[0]));
-  const filtered = nutrAllMacroPlans.filter(p => (p.dayType || '') === activeFilter);
-  activePlan = (filtered.length > 0 ? filtered : nutrAllMacroPlans)[0] || nutrPlan;
- }
+ const activeType = nutrActiveDayType();
+ const activePlan = nutrPlanForDayType(activeType);
 
  // Show macro targets AND assigned foods together — both coach inputs
  // should always be visible to the client, regardless of which one was set.
@@ -13511,19 +13526,11 @@ function renderNutritionTab() {
  // Training/Rest day pills
  const pillsEl = document.getElementById('nutr-daytype-pills');
  if (pillsEl) {
-  const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
-  const autoType = isTrainingDay ? 'Training Day' : 'Rest Day';
-  const clickable = availableDayTypes.length > 1;
-  const activeType = clickable
-   ? ((window._nutrDayTypeFilter === 'Training Day' || window._nutrDayTypeFilter === 'Rest Day') ? window._nutrDayTypeFilter : autoType)
-   : autoType;
   const isTrainingActive = activeType === 'Training Day';
-  const pillStyle = (active) => `font-size:12px;font-weight:700;padding:7px 16px;border-radius:100px;${clickable?'cursor:pointer;':''}background:${active ? 'var(--gold-glow)' : 'var(--bg4)'};border:1px solid ${active ? 'var(--border-gold)' : 'var(--border)'};color:${active ? 'var(--gold)' : 'var(--text3)'};`;
-  const trainClick = clickable ? `onclick="window._nutrDayTypeFilter='Training Day';renderNutritionTab();"` : '';
-  const restClick  = clickable ? `onclick="window._nutrDayTypeFilter='Rest Day';renderNutritionTab();"` : '';
+  const pillStyle = (active) => `font-family:inherit;font-size:12px;font-weight:700;padding:7px 16px;border-radius:100px;cursor:pointer;background:${active ? 'var(--gold-glow)' : 'var(--bg4)'};border:1px solid ${active ? 'var(--border-gold)' : 'var(--border)'};color:${active ? 'var(--gold)' : 'var(--text3)'};`;
   pillsEl.innerHTML = `
-   <span ${trainClick} style="${pillStyle(isTrainingActive)}">Training</span>
-   <span ${restClick} style="${pillStyle(!isTrainingActive)}">Rest day</span>`;
+   <button type="button" aria-pressed="${isTrainingActive}" onclick="window._nutrDayTypeFilter='Training Day';renderNutritionTab();" style="${pillStyle(isTrainingActive)}">Training</button>
+   <button type="button" aria-pressed="${!isTrainingActive}" onclick="window._nutrDayTypeFilter='Rest Day';renderNutritionTab();" style="${pillStyle(!isTrainingActive)}">Rest day</button>`;
  }
 
  // Steps pill
@@ -13591,28 +13598,15 @@ function renderNutrMealSections(dateKey) {
 }
 
 function renderNutrAssignedPlan() {
- _ensureNutrFoodsLoaded();
  const el = document.getElementById('nutr-assigned-plan');
  const chipsEl = document.getElementById('nutr-macro-chips');
 
  const dateKey = nutrDateKey(nutrCurrentDate);
- // Coach can tag each assigned food as All Days ('' / undefined), Training Day, or Rest Day.
- // FIX: previously this picked a day type purely from todayWorkout and filtered assigned
- // foods down to just that type with no way for the client to see the other type — so a
- // client with no workout assigned at all could never see any food tagged "Training Day",
- // and there was no UI (unlike the macro chips' tabs) to reach it. Now this shares the same
- // window._nutrDayTypeFilter state as the macro tabs, and renders its own tabs when the
- // assigned foods span more than one day type, so every assigned food stays reachable.
+ // Respect the selected tab even when that day has no assigned foods.
+ // All Days foods belong in both Training and Rest views.
  const allAssignedRaw = (nutrFoodLogs[dateKey]?.__assigned__) || [];
- const isTrainingDayForFood = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
- const currentFoodDayType = isTrainingDayForFood ? 'Training Day' : 'Rest Day';
- const foodDayTypes = [...new Set(allAssignedRaw.map(item => item.dayType || ''))];
- const savedFoodFilter = window._nutrDayTypeFilter;
- const activeFoodType = (savedFoodFilter !== undefined && foodDayTypes.includes(savedFoodFilter))
-   ? savedFoodFilter
-   : (foodDayTypes.includes(currentFoodDayType)
-     ? currentFoodDayType
-     : (foodDayTypes.includes('') ? '' : foodDayTypes[0]));
+ const activeFoodType = nutrActiveDayType();
+ const plan = nutrPlanForDayType(activeFoodType);
  const assigned = allAssignedRaw.filter(item => !item.dayType || item.dayType === activeFoodType);
  const day = nutrFoodLogs[dateKey] || {};
 
@@ -13631,20 +13625,7 @@ function renderNutrAssignedPlan() {
  // ── MACRO CHIPS: show whenever the coach has assigned macro targets ──
  // Assigned foods are rendered separately below, so both can be visible together.
  if (chipsEl) {
-  if (nutrAllMacroPlans.length > 0) {
-   // Multiple day-type plans — show tabs to switch between them
-   const isTrainingDay = !!(typeof todayWorkout !== 'undefined' && todayWorkout);
-   const autoType = isTrainingDay ? 'Training Day' : 'Rest Day';
-   const dayTypes = [...new Set(nutrAllMacroPlans.map(p => p.dayType || ''))];
-   const savedFilter = window._nutrDayTypeFilter;
-   const activeFilter = (savedFilter !== undefined && dayTypes.includes(savedFilter))
-     ? savedFilter
-     : (dayTypes.includes(autoType) ? autoType : (dayTypes.includes('') ? '' : dayTypes[0]));
-   window._nutrDayTypeFilter = activeFilter;
-
-   const filtered = nutrAllMacroPlans.filter(p => (p.dayType || '') === activeFilter);
-   const plan = (filtered.length > 0 ? filtered : nutrAllMacroPlans)[0];
-
+  if (nutrAllMacroPlans.length > 0 && plan) {
    chipsEl.innerHTML = (plan ? `
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px 6px;text-align:center;">
@@ -13694,12 +13675,12 @@ function renderNutrAssignedPlan() {
   return;
  }
 
- const planHeader = nutrPlan ? `
+ const planHeader = plan ? `
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:6px;">
    <div style="display:flex;align-items:center;gap:8px;">
-     <span style="font-size:13px;font-weight:700;color:#C1440E;">${escapeHtml(nutrPlan.planName||'My Plan')}</span>
+     <span style="font-size:13px;font-weight:700;color:#C1440E;">${escapeHtml(plan.planName||'My Plan')}</span>
    </div>
-   <div style="font-size:11px;color:var(--text2);">P:${nutrPlan.protein||0}g · C:${nutrPlan.carbs||0}g · F:${nutrPlan.fats||0}g · ${nutrPlan.calories||0} kcal</div>
+   <div style="font-size:11px;color:var(--text2);">P:${plan.protein||0}g · C:${plan.carbs||0}g · F:${plan.fats||0}g · ${plan.calories||0} kcal</div>
   </div>` : '';
 
  const foodRows = assigned.map((item, idx) => {
@@ -13724,10 +13705,10 @@ function renderNutrAssignedPlan() {
   const remainQtyLabel = (!isSrv && item.serving_label) ? servingQtyLabel(remainG, item.serving_size_g || 100, item.serving_label) : null;
   const progressPct = assignedG > 0 ? Math.min(100, Math.round(loggedG / assignedG * 100)) : 0;
   return {html: `
-   <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-top:1px solid var(--bg3);${isDone?'opacity:0.5;':''}">
+   <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-top:1px solid var(--bg3);">
     <div style="flex:1;min-width:0;">
-     <div style="display:flex;align-items:center;gap:6px;">
-      <div style="font-size:13px;color:${isDone?'#555':'#ddd'};font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${isDone?'text-decoration:line-through;':''}">${escapeHtml(item.food_name||'Food')}</div>
+     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <div style="font-size:13px;color:${isDone?'var(--text2)':'var(--text)'};font-weight:600;line-height:1.4;overflow-wrap:anywhere;${isDone?'text-decoration:line-through;':''}">${escapeHtml(item.food_name||'Food')}</div>
       ${isDone ? '<span style="font-size:10px;background:rgba(61,203,114,0.12);color:#3DCB72;border:1px solid rgba(61,203,114,0.25);border-radius:4px;padding:1px 6px;letter-spacing:0.4px;font-weight:700;flex-shrink:0;"> DONE</span>' : ''}
      </div>
      <div style="font-size:11px;color:var(--text2);margin-top:2px;">
@@ -13786,35 +13767,41 @@ function renderNutrAssignedPlan() {
 }
 
 // ── FOOD SEARCH ──────────────────────────────
- function openNutrFoodSearch(meal) {
-  _ensureNutrFoodsLoaded();
+ async function openNutrFoodSearch(meal) {
   nutrSearchMeal = meal;
   // Load custom foods from Firestore if not yet loaded
-  nutrLoadCustomFoods();
   const hasRecents = nutrGetRecentFoods().length > 0;
  nutrCatFilter = hasRecents ? 'Recent' : 'All';
  const modal = document.getElementById('nutr-search-modal');
  modal.style.display = 'flex'; modal.classList.add('open');
+  const searchInput = document.getElementById('nutr-search-input');
+  if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+  const clearButton = document.getElementById('nutr-search-clear');
+  if (clearButton) clearButton.style.display = 'none';
+  clearTimeout(nutrSearchTimer);
+  if (!NUTR_FOODS) document.getElementById('nutr-search-results').innerHTML = '<div style="padding:24px;text-align:center;" role="status">Loading foods…</div>';
+  await _ensureNutrFoodsLoaded();
+  await nutrLoadCustomFoods();
+  if (!modal.classList.contains('open')) return;
  const lbl = document.getElementById('nutr-search-meal-label');
  if (lbl) lbl.textContent = meal !== 'any' ? '→ ' + meal : '';
   // Category pills — "Recent" leads (only if there's history), then All, then My Foods, then real categories
   const pills = document.getElementById('nutr-cat-pills');
   if (pills) {
-    const hasCustom = NUTR_FOODS.some(f => f.id && (f.createdBy || f._source === 'customFoods'));
+    const hasCustom = (NUTR_FOODS || []).some(nutrIsMyCustomFood);
     const allCats = [...(hasRecents ? ['Recent'] : []), 'All', ...(hasCustom ? ['My Foods'] : []), ...NUTR_CATS];
     pills.innerHTML = allCats.map(cat =>
-     `<button onclick="nutrSetCat('${cat.replace(/'/g,"\\'")}')" id="nutrcat-${cat.replace(/[^a-z0-9]/gi,'_')}"
+     `<button data-category="${escapeAttr(cat)}" onclick="nutrSetCat(this.dataset.category)" id="nutrcat-${cat.replace(/[^a-z0-9]/gi,'_')}"
       style="flex-shrink:0;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.3px;white-space:nowrap;
           background:${cat===nutrCatFilter?'rgba(193,68,14,0.15)':'transparent'};
           color:${cat===nutrCatFilter?'#C1440E':'#555'};
           border:1px solid ${cat===nutrCatFilter?'rgba(193,68,14,0.4)':'var(--bg3)'};"
-     >${cat === 'Recent' ? '🕐 Recent' : cat === 'My Foods' ? '⭐ My Foods' : cat}</button>`
+     >${cat === 'Recent' ? '🕐 Recent' : cat === 'My Foods' ? '⭐ My Foods' : escapeHtml(cat)}</button>`
     ).join('');
    }
   // Default results — Recent if we have history, otherwise the full list
-  nutrShowDefaultFoods();
-  // Focus search
-  setTimeout(() => { const inp = document.getElementById('nutr-search-input'); if(inp){ inp.value=''; inp.focus(); } }, 100);
+  if (searchInput?.value.trim()) nutrSearchFoods(searchInput.value);
+  else nutrShowDefaultFoods();
  }
 
   function nutrIsMyCustomFood(f) {
@@ -13822,9 +13809,9 @@ function renderNutrAssignedPlan() {
   }
 
   function nutrShowDefaultFoods() {
-   _ensureNutrFoodsLoaded();
    const res = document.getElementById('nutr-search-results');
    if (!res) return;
+   if (!NUTR_FOODS) return;
    let pool;
    if (nutrCatFilter === 'Recent') pool = nutrGetRecentFoods();
    else if (nutrCatFilter === 'My Foods') pool = NUTR_FOODS.filter(nutrIsMyCustomFood);
@@ -13834,7 +13821,8 @@ function renderNutrAssignedPlan() {
   }
 
 function closeNutrFoodSearch() {
- _ensureNutrFoodsLoaded();
+ clearTimeout(nutrSearchTimer);
+ if (window._nutrObserver) window._nutrObserver.disconnect();
  const _nsm2 = document.getElementById('nutr-search-modal'); _nsm2.style.display = 'none'; _nsm2.classList.remove('open');
 }
 
@@ -13855,6 +13843,7 @@ function closeNutrFoodSearch() {
 }
 
 function nutrClearSearch() {
+ clearTimeout(nutrSearchTimer);
  const inp = document.getElementById('nutr-search-input');
  if (inp) { inp.value = ''; inp.focus(); }
  document.getElementById('nutr-search-clear').style.display = 'none';
@@ -13865,7 +13854,9 @@ function nutrSearchFoods(q) {
  const clr = document.getElementById('nutr-search-clear');
  if (clr) clr.style.display = q.length ? 'block' : 'none';
  clearTimeout(nutrSearchTimer);
+ if (!q.trim()) { nutrShowDefaultFoods(); return; }
  nutrSearchTimer = setTimeout(() => {
+   if (!NUTR_FOODS) return;
    const query = q.toLowerCase().trim();
    let pool;
     if (nutrCatFilter === 'Recent') pool = nutrGetRecentFoods();
@@ -13875,7 +13866,7 @@ function nutrSearchFoods(q) {
    if (query.length >= 1) {
    // Score: exact start > word start > contains
    pool = pool.map(f => {
-    const n = f.food_name.toLowerCase();
+    const n = (f.food_name || '').toLowerCase();
     let score = 0;
     if (n.startsWith(query)) score = 3;
     else if (n.split(/[, ]+/).some(w => w.startsWith(query))) score = 2;
@@ -13890,6 +13881,7 @@ function nutrSearchFoods(q) {
 function nutrRenderFoodList(items, reset) {
  const BATCH = 60;
  if (reset) {
+  if (window._nutrObserver) window._nutrObserver.disconnect();
   nutrSearchResultsCache = items;
   nutrRenderOffset = 0;
  }
@@ -13909,7 +13901,8 @@ function nutrRenderFoodList(items, reset) {
  const html = slice.map((f, i) => {
   const globalIdx = nutrRenderOffset + i;
    const isCustom = nutrIsMyCustomFood(f);
-   return `<div onclick="openNutrDetail(nutrSearchResultsCache[${globalIdx}])"
+   return `<div role="button" tabindex="0" aria-label="Add ${escapeAttr(f.food_name)}" onclick="openNutrDetail(nutrSearchResultsCache[${globalIdx}])"
+   onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openNutrDetail(nutrSearchResultsCache[${globalIdx}]);}"
    style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #FFFFFF;cursor:pointer;transition:background .15s;"
    onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
    <div style="flex:1;min-width:0;">
@@ -14027,7 +14020,7 @@ function openNutrDetail(food) {
   );
  }
  nutrDetailUnitIdx = 0;
- nutrDetailServing = nutrDetailUnits[0].grams; // start at 1 unit of selected
+ nutrDetailServing = base; // start at the food's standard serving, including g/ml-only foods
 
  const modal = document.getElementById('nutr-detail-modal');
  const sheet = document.getElementById('nutr-detail-sheet');
@@ -14358,7 +14351,6 @@ function nutrRenderDetailMacros() {
 
 let _nutrConfirmInFlight = false;
 async function nutrConfirmAdd() {
- _ensureNutrFoodsLoaded();
  if (_nutrConfirmInFlight) return;
  const uid = auth?.currentUser?.uid;
  if (!uid || !nutrDetailFood) return;
@@ -14466,6 +14458,7 @@ async function nutrConfirmAdd() {
 
   function _mergeCustomFoodsIntoCatalog(foods) {
    if (!foods || !foods.length) return;
+   if (!NUTR_FOODS) NUTR_FOODS = [];
    const existingNames = new Set(NUTR_FOODS.map(f => (f.food_name || '').toLowerCase().trim()));
    const newFoods = foods.filter(f => f.food_name && !existingNames.has(f.food_name.toLowerCase().trim()));
    if (!newFoods.length) return;
@@ -14491,6 +14484,7 @@ async function nutrConfirmAdd() {
      docs = snap.docs;
     }
     _customFoodsCache = docs.map(d => _normalizeCustomFood(d.id, d.data(), uid)).filter(Boolean);
+    if (auth?.currentUser?.uid !== uid) return;
     _mergeCustomFoodsIntoCatalog(_customFoodsCache);
     _customFoodsLoaded = true;
    } catch(e) {
@@ -14541,8 +14535,7 @@ async function nutrConfirmAdd() {
   let _customFoodSaving = false;
 
   async function saveCustomFood() {
-   _ensureNutrFoodsLoaded();
-   if (_customFoodSaving) return;
+     if (_customFoodSaving) return;
    const uid = auth?.currentUser?.uid;
    if (!uid) { showClientToast('Please log in first'); return; }
 
@@ -14655,7 +14648,6 @@ let _editUnits = [], _editUnitIdx = 0;
 let _editDayType = ''; // day type for the edit modal
 
 function nutrEditLog(logId, meal) {
- _ensureNutrFoodsLoaded();
  const dateKey = nutrDateKey(nutrCurrentDate);
  const item = (nutrFoodLogs[dateKey]?.[meal] || []).find(i => i.logId === logId);
  if (!item) return;
@@ -14678,7 +14670,6 @@ function nutrEditLog(logId, meal) {
 }
 
 function _renderEditModal() {
- _ensureNutrFoodsLoaded();
  document.getElementById('nutr-edit-modal')?.remove();
  document.getElementById('nutr-edit-backdrop')?.remove();
 
@@ -14876,7 +14867,6 @@ function nutrEditAdjServing(delta) {
 }
 
 function nutrEditUpdateServing() {
- _ensureNutrFoodsLoaded();
  const v = parseFloat(document.getElementById('nutr-edit-serving-input')?.value) || 0.1;
  const unit = _editUnits[_editUnitIdx];
  _editServing = v * unit.grams;
@@ -15722,7 +15712,7 @@ async function saveProfileEdit() {
   if (!_peCurrentData.email && resolvedEmail) _peCurrentData.email = resolvedEmail;
 
   // Update cache list — skip Firestore Timestamps (not JSON-serialisable)
-  const cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','assignedWorkoutPlan','personalRecords','profilePhotoURL'];
+  const cacheFields = ['firstName','lastName','email','age','heightCm','weightKg','weightDisplay','bmi','goal','allergies','medications','medicalConditions','attendanceCount','memberSince','status','approvalStatus','assignedWorkoutPlan','personalRecords','profilePhotoURL'];
   const cacheObj = {};
   cacheFields.forEach(k => {
    if (_peCurrentData[k] === undefined) return;
@@ -15730,7 +15720,7 @@ async function saveProfileEdit() {
    if (v && typeof v === 'object' && typeof v.toDate === 'function') return; // skip Timestamps
    cacheObj[k] = v;
   });
-  try { safeLocalStorageSet('evolve_profile_cache', JSON.stringify(cacheObj)); } catch(e) {}
+  try { safeLocalStorageSet('evolve_profile_cache', JSON.stringify({ ...cacheObj, uid: currentUid || auth?.currentUser?.uid })); } catch(e) {}
 
   _peSelectedPhotoDataUrl = null;
   _peRemovePhoto = false;
@@ -16212,100 +16202,7 @@ async function startAssignedPlanDay(day) {
 }
 </script>
 
-<!-- ══ GENERIC CONFIRM MODAL ══ -->
-<!-- Reusable in-app confirmation dialog. Used in place of the native browser
-     confirm() for destructive actions (like switching templates) so the
-     prompt matches the app's look instead of the default OS popup. -->
-<div id="app-confirm-modal" class="acm-overlay">
- <div class="acm-card">
-  <div class="acm-icon">
-   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
-  </div>
-  <div id="acm-title" class="acm-title">Are you sure?</div>
-  <div id="acm-message" class="acm-message"></div>
-  <div class="acm-actions">
-   <button id="acm-cancel-btn" class="acm-btn acm-btn-cancel" type="button">Cancel</button>
-   <button id="acm-confirm-btn" class="acm-btn acm-btn-confirm" type="button">Confirm</button>
-  </div>
- </div>
-</div>
-<script>
-// Returns a Promise<boolean> — true if the person confirmed, false for
-// cancel/backdrop-click/Escape. Usage: if (await showConfirmDialog({...})) { ... }
-function showConfirmDialog(opts) {
- opts = opts || {};
- return new Promise((resolve) => {
-  const modal   = document.getElementById('app-confirm-modal');
-  const titleEl = document.getElementById('acm-title');
-  const msgEl   = document.getElementById('acm-message');
-  const okBtn   = document.getElementById('acm-confirm-btn');
-  const cancelBtn = document.getElementById('acm-cancel-btn');
 
-  titleEl.textContent   = opts.title || 'Are you sure?';
-  msgEl.textContent     = opts.message || '';
-  okBtn.textContent     = opts.confirmText || 'Confirm';
-  cancelBtn.textContent = opts.cancelText || 'Cancel';
-  okBtn.classList.toggle('acm-btn-danger', !!opts.danger);
-  okBtn.classList.toggle('acm-btn-confirm', !opts.danger);
-
-  modal.classList.add('open');
-
-  function cleanup(result) {
-   modal.classList.remove('open');
-   okBtn.removeEventListener('click', onOk);
-   cancelBtn.removeEventListener('click', onCancel);
-   modal.removeEventListener('click', onBackdrop);
-   document.removeEventListener('keydown', onKey);
-   resolve(result);
-  }
-  function onOk()       { cleanup(true); }
-  function onCancel()   { cleanup(false); }
-  function onBackdrop(e){ if (e.target === modal) cleanup(false); }
-  function onKey(e)     { if (e.key === 'Escape') cleanup(false); }
-
-  okBtn.addEventListener('click', onOk);
-  cancelBtn.addEventListener('click', onCancel);
-  modal.addEventListener('click', onBackdrop);
-  document.addEventListener('keydown', onKey);
- });
-}
-</script>
-<style>
-.acm-overlay {
- position:fixed; inset:0; z-index:9500;
- background:rgba(0,0,0,0.72);
- display:flex; align-items:center; justify-content:center; padding:20px;
- opacity:0; pointer-events:none; transition:opacity 0.18s ease;
-}
-.acm-overlay.open { opacity:1; pointer-events:auto; }
-.acm-card {
- background:var(--bg3); border:1px solid rgba(255,255,255,0.08);
- border-radius:var(--radius-2xl); width:100%; max-width:360px;
- padding:24px 22px 20px; text-align:center;
- box-shadow:0 20px 60px rgba(0,0,0,0.5);
- transform:scale(0.92) translateY(6px); transition:transform 0.2s cubic-bezier(.32,0,.18,1);
-}
-.acm-overlay.open .acm-card { transform:scale(1) translateY(0); }
-.acm-icon {
- width:44px;height:44px;border-radius:50%;margin:0 auto 14px;
- background:rgba(193,68,14,0.12); border:1px solid rgba(193,68,14,0.3);
- color:var(--gold); display:flex;align-items:center;justify-content:center;
-}
-.acm-title { font-family:'Syne',sans-serif; font-size:17px; font-weight:800; color:#f0f0f0; letter-spacing:-0.2px; margin-bottom:8px; }
-.acm-message { font-family:'Outfit',sans-serif; font-size:13.5px; line-height:1.55; color:var(--text2); margin-bottom:22px; }
-.acm-actions { display:flex; gap:10px; }
-.acm-btn {
- flex:1; padding:13px 14px; border-radius:var(--radius-md); font-family:'Outfit',sans-serif;
- font-size:13.5px; font-weight:700; cursor:pointer; border:1px solid transparent;
- transition:all 0.15s;
-}
-.acm-btn-cancel { background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.1); color:#ccc; }
-.acm-btn-cancel:hover { background:rgba(255,255,255,0.1); }
-.acm-btn-confirm { background:rgba(193,68,14,0.15); border-color:rgba(193,68,14,0.35); color:var(--gold); }
-.acm-btn-confirm:hover { background:rgba(193,68,14,0.22); }
-.acm-btn-danger { background:rgba(248,113,113,0.15); border-color:rgba(248,113,113,0.35); color:#F87171; }
-.acm-btn-danger:hover { background:rgba(248,113,113,0.22); }
-</style>
 
 <style>
 /* Custom workout modal exercise chip */
@@ -17050,7 +16947,7 @@ function editHomeTemplate(id) {
 async function deleteHomeTemplate(id) {
  const tpl = (_cwktTemplates || []).find(t => t.id === id);
  if (!tpl) return;
- if (!confirm(`Delete template "${tpl.name}"?`)) return;
+ if (!(await showConfirmDialog({ title: 'Confirm delete', message: `Delete template "${tpl.name}"?`, confirmText: 'Delete', danger: true }))) return;
  const uid = currentUid || (auth?.currentUser?.uid);
  if (!uid) return;
  try {

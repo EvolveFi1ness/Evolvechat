@@ -44,6 +44,82 @@ function safeLocalStorageSet(key, value) {
   }
 }
 
+// Format a calendar Date without converting local midnight to the previous UTC day.
+function localDateKey(date) {
+ return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+}
+
+let _appToastTimer = null;
+function showAppToast(message, type, duration) {
+ const toast = document.getElementById('toast');
+ if (!toast) return;
+ clearTimeout(_appToastTimer);
+ toast.setAttribute('role', 'status');
+ toast.setAttribute('aria-live', 'polite');
+ toast.setAttribute('aria-atomic', 'true');
+ toast.textContent = message;
+ toast.className = 'toast' + (type ? ' ' + type : '') + ' show';
+ _appToastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+let _appConfirmPending = false;
+function showConfirmDialog(opts) {
+ opts = opts || {};
+ // A repeated tap must not queue a second destructive operation.
+ if (_appConfirmPending) return Promise.resolve(false);
+ _appConfirmPending = true;
+ let dialog = document.getElementById('app-confirm-dialog');
+ if (!dialog) {
+  dialog = document.createElement('dialog');
+  dialog.id = 'app-confirm-dialog';
+  dialog.className = 'ev-confirm';
+  dialog.setAttribute('aria-labelledby', 'ev-confirm-title');
+  dialog.setAttribute('aria-describedby', 'ev-confirm-message');
+  dialog.innerHTML = '<h2 id="ev-confirm-title"></h2><p id="ev-confirm-message"></p><div class="ev-confirm-actions"><button type="button" data-action="cancel">Cancel</button><button type="button" data-action="confirm">Confirm</button></div>';
+  document.body.appendChild(dialog);
+ }
+ const previousFocus = document.activeElement;
+ const cancel = dialog.querySelector('[data-action="cancel"]');
+ const confirm = dialog.querySelector('[data-action="confirm"]');
+ dialog.querySelector('h2').textContent = opts.title || 'Confirm action';
+ dialog.querySelector('p').textContent = opts.message || '';
+ cancel.textContent = opts.cancelText || 'Cancel';
+ confirm.textContent = opts.confirmText || 'Confirm';
+ confirm.classList.toggle('ev-confirm-danger', !!opts.danger);
+ return new Promise(resolve => {
+  function finish(result) {
+   dialog.removeEventListener('cancel', onCancel);
+   dialog.removeEventListener('close', onClose);
+   dialog.removeEventListener('click', onClick);
+   dialog.removeEventListener('keydown', onKey);
+   dialog.close();
+   _appConfirmPending = false;
+   if (previousFocus && previousFocus.isConnected) previousFocus.focus();
+   resolve(result);
+  }
+  function onCancel(event) { event.preventDefault(); finish(false); }
+  function onClose() { if (!dialog.open) finish(false); }
+  function onKey(event) {
+   if (event.key !== 'Tab') return;
+   if (event.shiftKey && document.activeElement === cancel) {
+    event.preventDefault(); confirm.focus();
+   } else if (!event.shiftKey && document.activeElement === confirm) {
+    event.preventDefault(); cancel.focus();
+   }
+  }
+  function onClick(event) {
+   if (event.target === confirm) finish(true);
+   else if (event.target === cancel) finish(false);
+  }
+  dialog.addEventListener('cancel', onCancel);
+  dialog.addEventListener('close', onClose);
+  dialog.addEventListener('click', onClick);
+  dialog.addEventListener('keydown', onKey);
+  dialog.showModal();
+  cancel.focus();
+ });
+}
+
 function isStandalone() {
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
@@ -149,10 +225,8 @@ function normalizeExercisePrescription(ex) {
 // ═══════════════════════════════════════════════════════════════
 
 const _foodDbLoader = {
- _cache: null,
- _promise: null,
- _error: null,
- _retryCount: 0,
+ _entries: new Map(),
+ _lastUrl: null,
  _maxRetries: 2
 };
 
@@ -163,45 +237,40 @@ const _foodDbLoader = {
  * @returns {Promise<Array>}
  */
 function loadFoodDatabase(url, embeddedKey) {
- // Return cached data immediately if available
- if (_foodDbLoader._cache) {
-  return Promise.resolve(_foodDbLoader._cache);
+ _foodDbLoader._lastUrl = url;
+ let entry = _foodDbLoader._entries.get(url);
+ if (!entry) {
+  entry = { cache: null, promise: null };
+  _foodDbLoader._entries.set(url, entry);
  }
-
- // Return existing promise if a load is in progress
- if (_foodDbLoader._promise) {
-  return _foodDbLoader._promise;
- }
-
- _foodDbLoader._promise = new Promise((resolve, reject) => {
-  const attemptLoad = (retryNum) => {
-   fetch(url)
-    .then(r => {
-     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-     return r.json();
-    })
-    .then(data => {
-     _foodDbLoader._cache = data || (embeddedKey && window[embeddedKey]) || [];
-     _foodDbLoader._retryCount = 0;
-     resolve(_foodDbLoader._cache);
-    })
-    .catch(err => {
-     console.warn(`Food database load attempt ${retryNum + 1} failed:`, err.message);
-     if (retryNum < _foodDbLoader._maxRetries) {
-      // Retry with exponential backoff
-      setTimeout(() => attemptLoad(retryNum + 1), 1000 * (retryNum + 1));
-     } else {
-      // Final fallback to embedded data if available
-      _foodDbLoader._cache = (embeddedKey && window[embeddedKey]) || [];
-      _foodDbLoader._error = err;
-      resolve(_foodDbLoader._cache);
-     }
-    });
-  };
-  attemptLoad(0);
- });
-
- return _foodDbLoader._promise;
+ if (entry.cache) return Promise.resolve(entry.cache);
+ if (entry.promise) return entry.promise;
+ entry.promise = (async () => {
+  for (let attempt = 0; attempt <= _foodDbLoader._maxRetries; attempt++) {
+   const controller = new AbortController();
+   const timeout = setTimeout(() => controller.abort(), 10000);
+   try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!Array.isArray(data) || !data.length) throw new Error('Food database is empty or invalid');
+    entry.cache = data.filter(f => f && typeof f.food_name === 'string');
+    if (!entry.cache.length) { entry.cache = null; throw new Error('Food database contains no foods'); }
+    return entry.cache;
+   } catch(err) {
+    console.warn(`Food database load attempt ${attempt + 1} failed:`, err.message);
+    if (attempt < _foodDbLoader._maxRetries) {
+     await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+   } finally {
+    clearTimeout(timeout);
+   }
+  }
+  const fallback = embeddedKey && window[embeddedKey];
+  // Do not cache a failed load: reopening search should retry after reconnection.
+  return Array.isArray(fallback) ? fallback.filter(f => f && typeof f.food_name === 'string') : [];
+ })().finally(() => { entry.promise = null; });
+ return entry.promise;
 }
 
 /**
@@ -209,7 +278,7 @@ function loadFoodDatabase(url, embeddedKey) {
  * @returns {Array|null}
  */
 function getFoodDatabaseSync() {
- return _foodDbLoader._cache;
+ return _foodDbLoader._entries.get(_foodDbLoader._lastUrl)?.cache || null;
 }
 
 /**
@@ -217,15 +286,13 @@ function getFoodDatabaseSync() {
  * @returns {boolean}
  */
 function isFoodDatabaseLoading() {
- return _foodDbLoader._promise !== null && _foodDbLoader._cache === null;
+ return !!_foodDbLoader._entries.get(_foodDbLoader._lastUrl)?.promise;
 }
 
 /**
  * Reset the food database loader (for testing or forced reload).
  */
 function resetFoodDatabaseLoader() {
- _foodDbLoader._cache = null;
- _foodDbLoader._promise = null;
- _foodDbLoader._error = null;
- _foodDbLoader._retryCount = 0;
+ _foodDbLoader._entries.clear();
+ _foodDbLoader._lastUrl = null;
 }

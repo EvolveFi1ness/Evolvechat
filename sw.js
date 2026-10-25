@@ -4,13 +4,13 @@
    for the CDN libs the apps already depend on. */
 'use strict';
 
-const CACHE = 'evolve-v6';
+const CACHE = 'evolve-v7';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
   './manifest-coach.json',
-  './design-tokens.css',
-  './shared.js',
+  './design-tokens.css?v=7',
+  './shared.js?v=7',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -42,7 +42,8 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  if (url.origin !== location.origin) return; // CDN/other origins: let the browser handle it
+  const isGoogleFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
+  if (url.origin !== location.origin && !isGoogleFont) return;
 
   // HTML navigations: network-first, fall back to a cached shell for offline.
   if (event.request.mode === 'navigate') {
@@ -50,7 +51,7 @@ self.addEventListener('fetch', (event) => {
       fetch(event.request)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(url.pathname, copy)).catch(() => {});
+          if (res.ok) caches.open(CACHE).then((cache) => cache.put(url.pathname, copy)).catch(() => {});
           return res;
         })
         .catch(() => {
@@ -65,17 +66,19 @@ self.addEventListener('fetch', (event) => {
   // Static assets: cache-first with stale-while-revalidate for CSS/JS.
   // NOTE: STATIC entries are './'-prefixed, pathnames are '/'-prefixed —
   // normalize before comparing or this branch never matches (it didn't).
-  const _norm = (s) => s.replace(/^\.\//, '/');
+  const _norm = (s) => s.replace(/^\.\//, '/').split('?')[0];
   if (STATIC.some((s) => url.pathname.endsWith(_norm(s)))) {
+    const refresh = fetch(event.request).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        return caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {}).then(() => res);
+      }
+      return res;
+    });
+    // Handle offline refresh failures even when a cached response wins.
+    event.waitUntil(refresh.then(() => {}, () => {}));
     event.respondWith(
-      caches.match(event.request).then((hit) => {
-        const fallback = fetch(event.request).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
-          return res;
-        });
-        return hit || fallback;
-      })
+      caches.match(event.request).then((hit) => hit || refresh)
     );
     return;
   }
@@ -87,7 +90,7 @@ self.addEventListener('fetch', (event) => {
         if (hit) return hit;
         return fetch(event.request).then((res) => {
           const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
+          if (res.ok || res.type === 'opaque') caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => {});
           return res;
         });
       })
