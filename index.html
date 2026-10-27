@@ -6,8 +6,10 @@
  <title>Evolve</title>
  <link rel="preconnect" href="https://fonts.googleapis.com">
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
- <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
- <link rel="stylesheet" href="design-tokens.css?v=7">
+ <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
+ <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+ <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+ <link rel="stylesheet" href="design-tokens.css?v=9">
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -15,7 +17,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
- <script src="shared.js?v=7"></script>
+ <script src="shared.js?v=9"></script>
 
 <style>
  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -7116,23 +7118,24 @@ img, video, iframe { max-width: 100%; }
 ══════════════════════════════ -->
 
 <!-- ══ NUTRITION FOOD SEARCH MODAL ══ -->
-<div id="nutr-search-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.85);align-items:flex-end;justify-content:center;" class="nutr-modal-overlay">
+<div id="nutr-search-modal" role="dialog" aria-modal="true" aria-labelledby="nutr-search-title" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.85);align-items:flex-end;justify-content:center;" class="nutr-modal-overlay">
  <div style="background:var(--bg3);border:1px solid rgba(30,22,12,0.14);border-radius:20px 20px 0 0;width:100%;max-width:600px;height:90vh;display:flex;flex-direction:column;overflow:hidden;">
   <!-- Modal header -->
   <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--bg3);flex-shrink:0;">
    <div>
-    <div style="font-size:15px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif;">Add Food <span id="nutr-search-meal-label" style="color:#C1440E;font-size:13px;font-weight:600;"></span></div>
+    <div id="nutr-search-title" style="font-size:15px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif;">Add Food <span id="nutr-search-meal-label" style="color:#C1440E;font-size:13px;font-weight:600;"></span></div>
    </div>
    <button aria-label="Close food search" onclick="closeNutrFoodSearch()" style="background:rgba(255,255,255,0.06);border:none;color:#888;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
   <!-- Search input -->
   <div style="padding:12px 16px;border-bottom:1px solid var(--bg3);flex-shrink:0;position:relative;">
-   <input id="nutr-search-input" aria-label="Search foods" type="search" placeholder="Search foods…" oninput="nutrSearchFoods(this.value)"
+   <input id="nutr-search-input" aria-label="Search foods" type="search" placeholder="Search foods…" oninput="if(!event.isComposing)nutrSearchFoods(this.value)" oncompositionend="nutrSearchFoods(this.value)"
     style="width:100%;background:var(--bg3);border:1px solid rgba(30,22,12,0.16);border-radius:12px;padding:10px 36px 10px 14px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;box-sizing:border-box;"/>
    <button id="nutr-search-clear" aria-label="Clear food search" onclick="nutrClearSearch()" style="display:none;position:absolute;right:26px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;">✕</button>
   </div>
   <!-- Category pills -->
   <div id="nutr-cat-pills" style="display:flex;gap:6px;padding:10px 16px;overflow-x:auto;flex-shrink:0;"></div>
+   <div id="nutr-search-status" class="food-search-status" role="status" aria-live="polite" aria-atomic="true"></div>
    <!-- Results -->
    <div id="nutr-search-results" style="flex:1;overflow-y:auto;"></div>
    <!-- Add Custom Food button -->
@@ -8893,7 +8896,7 @@ async function buildWorkoutLogger(workout) {
    <div class="log-ex-header">
     <div class="log-ex-color-bar" style="background:${accentColor};"></div>
     <div class="log-ex-header-inner">
-     <div class="log-ex-thumb-wrap" onclick="clientPreviewVideo('${escapeAttr(exName)}')">
+     <div class="log-ex-thumb-wrap" data-preview-name="${escapeAttr(exName)}" onclick="clientPreviewVideo(this.dataset.previewName)">
        <img id="ex-thumb-${exIdx}" src="" alt="${escapeAttr(exName)}" loading="lazy" decoding="async"
        data-ex-name="${escapeAttr(exName)}"
        style="width:100%;height:100%;object-fit:cover;display:none;"
@@ -12452,16 +12455,6 @@ function checkHomePhotoRequestAlert() {
 // Fallback: workouts.js loaded on-demand only if fetch fails (offline).
 let _WORKOUTS_RAW = null;
 function _getWorkoutsRaw() { return _WORKOUTS_RAW || {}; }
-function _loadWorkoutsEmbeddedFallback() {
- return new Promise((resolve) => {
-  if (window._WORKOUTS_EMBEDDED) { resolve(window._WORKOUTS_EMBEDDED); return; }
-  const s = document.createElement('script');
-  s.src = 'data/workouts.js';
-  s.onload = () => resolve(window._WORKOUTS_EMBEDDED || {});
-  s.onerror = () => resolve({});
-  document.head.appendChild(s);
- });
-}
 window._evolveWorkoutsLoad = fetch('data/workouts.json')
  .then(r => (r.ok ? r.json() : null)).catch(() => (null))
  .then(d => {
@@ -13216,6 +13209,7 @@ function nutrTrackRecentFood(foodName) {
 }
 
 function nutrGetRecentFoods() {
+ if (!NUTR_FOODS) return [];
  const names = nutrGetRecentNames();
  return names.map(n => NUTR_FOODS.find(f => f.food_name === n)).filter(Boolean);
 }
@@ -13574,7 +13568,7 @@ function renderNutrMealSections(dateKey) {
      <div style="font-size:15px;font-weight:700;color:var(--text);">${meal}</div>
      ${tot.cal > 0 ? `<div style="font-size:11px;color:var(--text3);margin-top:1px;">${tot.cal} kcal &nbsp;·&nbsp; P${tot.p} C${tot.c} F${tot.f}</div>` : ''}
     </div>
-    <span onclick="event.stopPropagation();openNutrFoodSearch('${meal}')" style="font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;">Add</span>
+    <button type="button" aria-label="Add food to ${meal}" onclick="event.stopPropagation();openNutrFoodSearch('${meal}')" style="background:none;border:none;font-family:inherit;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0;cursor:pointer;padding:6px 0;">Add</button>
    </div>
    ${items.length > 0 ? `
    <div style="padding:0 16px 12px 54px;">
@@ -13767,22 +13761,28 @@ function renderNutrAssignedPlan() {
 }
 
 // ── FOOD SEARCH ──────────────────────────────
- async function openNutrFoodSearch(meal) {
+ let _nutrSearchTrigger = null;
+ async function openNutrFoodSearch(meal, query = '') {
   nutrSearchMeal = meal;
   // Load custom foods from Firestore if not yet loaded
-  const hasRecents = nutrGetRecentFoods().length > 0;
- nutrCatFilter = hasRecents ? 'Recent' : 'All';
+ nutrCatFilter = 'All';
  const modal = document.getElementById('nutr-search-modal');
+ if (!modal.classList.contains('open')) _nutrSearchTrigger = document.activeElement;
  modal.style.display = 'flex'; modal.classList.add('open');
   const searchInput = document.getElementById('nutr-search-input');
-  if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+  if (searchInput) { searchInput.value = query; searchInput.focus(); }
   const clearButton = document.getElementById('nutr-search-clear');
-  if (clearButton) clearButton.style.display = 'none';
+  if (clearButton) clearButton.style.display = query ? 'block' : 'none';
   clearTimeout(nutrSearchTimer);
-  if (!NUTR_FOODS) document.getElementById('nutr-search-results').innerHTML = '<div style="padding:24px;text-align:center;" role="status">Loading foods…</div>';
+  if (!NUTR_FOODS?.length) {
+   document.getElementById('nutr-search-results').innerHTML = '<div class="food-search-message">Loading foods…</div>';
+   document.getElementById('nutr-search-status').textContent = 'Loading food list…';
+  }
   await _ensureNutrFoodsLoaded();
   await nutrLoadCustomFoods();
   if (!modal.classList.contains('open')) return;
+  const hasRecents = nutrGetRecentFoods().length > 0;
+  nutrCatFilter = hasRecents ? 'Recent' : 'All';
  const lbl = document.getElementById('nutr-search-meal-label');
  if (lbl) lbl.textContent = meal !== 'any' ? '→ ' + meal : '';
   // Category pills — "Recent" leads (only if there's history), then All, then My Foods, then real categories
@@ -13791,7 +13791,7 @@ function renderNutrAssignedPlan() {
     const hasCustom = (NUTR_FOODS || []).some(nutrIsMyCustomFood);
     const allCats = [...(hasRecents ? ['Recent'] : []), 'All', ...(hasCustom ? ['My Foods'] : []), ...NUTR_CATS];
     pills.innerHTML = allCats.map(cat =>
-     `<button data-category="${escapeAttr(cat)}" onclick="nutrSetCat(this.dataset.category)" id="nutrcat-${cat.replace(/[^a-z0-9]/gi,'_')}"
+     `<button aria-pressed="${cat===nutrCatFilter}" data-category="${escapeAttr(cat)}" onclick="nutrSetCat(this.dataset.category)" id="nutrcat-${cat.replace(/[^a-z0-9]/gi,'_')}"
       style="flex-shrink:0;padding:5px 12px;border-radius:100px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;letter-spacing:0.3px;white-space:nowrap;
           background:${cat===nutrCatFilter?'rgba(193,68,14,0.15)':'transparent'};
           color:${cat===nutrCatFilter?'#C1440E':'#555'};
@@ -13824,7 +13824,23 @@ function closeNutrFoodSearch() {
  clearTimeout(nutrSearchTimer);
  if (window._nutrObserver) window._nutrObserver.disconnect();
  const _nsm2 = document.getElementById('nutr-search-modal'); _nsm2.style.display = 'none'; _nsm2.classList.remove('open');
+ if (_nutrSearchTrigger?.isConnected) _nutrSearchTrigger.focus();
 }
+
+document.addEventListener('keydown', event => {
+ const modal = document.getElementById('nutr-search-modal');
+ if (!modal?.classList.contains('open') || event.isComposing || document.querySelector('dialog[open]')) return;
+ if (['nutr-detail-modal', 'nutr-custom-food-modal'].some(id => {
+  const child = document.getElementById(id);
+  return child && getComputedStyle(child).display !== 'none';
+ })) return;
+ if (event.key === 'Escape') { event.preventDefault(); closeNutrFoodSearch(); }
+ if (event.key !== 'Tab') return;
+ const controls = [...modal.querySelectorAll('button:not(:disabled), input:not(:disabled), [tabindex="0"]')].filter(el => el.offsetParent !== null);
+ const first = controls[0], last = controls[controls.length - 1];
+ if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+ else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+});
 
  function nutrSetCat(cat) {
   nutrCatFilter = cat;
@@ -13833,6 +13849,7 @@ function closeNutrFoodSearch() {
   const el = document.getElementById('nutrcat-' + c.replace(/[^a-z0-9]/gi,'_'));
   if (!el) return;
   const active = c === cat;
+  el.setAttribute('aria-pressed', String(active));
   el.style.background = active ? 'rgba(193,68,14,0.15)' : 'transparent';
   el.style.color = active ? '#C1440E' : '#555';
   el.style.borderColor = active ? 'rgba(193,68,14,0.4)' : 'var(--bg3)';
@@ -13855,6 +13872,7 @@ function nutrSearchFoods(q) {
  if (clr) clr.style.display = q.length ? 'block' : 'none';
  clearTimeout(nutrSearchTimer);
  if (!q.trim()) { nutrShowDefaultFoods(); return; }
+ if (nutrCatFilter === 'Recent') { nutrSetCat('All'); return; }
  nutrSearchTimer = setTimeout(() => {
    if (!NUTR_FOODS) return;
    const query = q.toLowerCase().trim();
@@ -13863,17 +13881,7 @@ function nutrSearchFoods(q) {
     else if (nutrCatFilter === 'My Foods') pool = NUTR_FOODS.filter(nutrIsMyCustomFood);
     else if (nutrCatFilter === 'All') pool = NUTR_FOODS;
     else pool = NUTR_FOODS.filter(f => f.category === nutrCatFilter);
-   if (query.length >= 1) {
-   // Score: exact start > word start > contains
-   pool = pool.map(f => {
-    const n = (f.food_name || '').toLowerCase();
-    let score = 0;
-    if (n.startsWith(query)) score = 3;
-    else if (n.split(/[, ]+/).some(w => w.startsWith(query))) score = 2;
-    else if (n.includes(query)) score = 1;
-    return {...f, _score: score};
-   }).filter(f => f._score > 0).sort((a,b) => b._score - a._score);
-  }
+   pool = searchFoodCatalog(pool, query);
   nutrRenderFoodList(pool, true);
  }, 150);
 }
@@ -13887,7 +13895,14 @@ function nutrRenderFoodList(items, reset) {
  }
  const res = document.getElementById('nutr-search-results');
  if (!res) return;
+ const status = document.getElementById('nutr-search-status');
+ if (status) status.textContent = `${items.length.toLocaleString()} food${items.length === 1 ? '' : 's'} · ${nutrCatFilter === 'All' ? 'All foods' : nutrCatFilter}`;
   if (items.length === 0) {
+   if (!_nutrBuiltinsLoaded && !NUTR_FOODS?.length) {
+    if (status) status.textContent = 'Food list unavailable';
+    res.innerHTML = '<div class="food-search-message">The food list could not load. Check your connection and try again.<button type="button" class="food-search-retry" onclick="openNutrFoodSearch(nutrSearchMeal, document.getElementById(\'nutr-search-input\').value)">Retry loading foods</button></div>';
+    return;
+   }
    if (nutrCatFilter === 'Recent') {
     res.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text2);font-size:14px;">No recent foods yet.<br><span style="font-size:12px;color:var(--text3);">Foods you log will show up here next time</span></div>';
    } else if (nutrCatFilter === 'My Foods') {
@@ -13906,7 +13921,7 @@ function nutrRenderFoodList(items, reset) {
    style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #FFFFFF;cursor:pointer;transition:background .15s;"
    onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
    <div style="flex:1;min-width:0;">
-     <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px;">${escapeHtml(f.food_name)}${isCustom ? '<span style="font-size:9px;font-weight:700;background:rgba(193,68,14,0.12);color:#C1440E;padding:2px 6px;border-radius:6px;flex-shrink:0;letter-spacing:0.5px;">MY</span>' : ''}</div>
+     <div style="font-size:13px;font-weight:600;color:var(--text);line-height:1.45;overflow-wrap:anywhere;">${escapeHtml(f.food_name)}${isCustom ? '<span style="font-size:9px;font-weight:700;background:rgba(193,68,14,0.12);color:#C1440E;padding:2px 6px;border-radius:6px;margin-left:6px;letter-spacing:0.5px;">MY</span>' : ''}</div>
      <div style="font-size:11px;color:var(--text2);margin-top:1px;">${escapeHtml(f.category)} · ${escapeHtml(f.serving_label||f.serving_size_g+'g')}</div>
    </div>
    <div style="text-align:right;flex-shrink:0;">
@@ -14591,13 +14606,7 @@ async function nutrConfirmAdd() {
     const docRef = await db.collection('members').doc(uid).collection('customFoods').add(foodData);
     const localFood = _normalizeCustomFood(docRef.id, foodData, uid);
     _customFoodsCache.push(localFood);
-    const exists = NUTR_FOODS.some(f => (f.food_name || '').toLowerCase().trim() === name.toLowerCase().trim());
-    if (!exists) {
-     NUTR_FOODS.push(localFood);
-     const cats = [...new Set(NUTR_FOODS.map(f => f.category).filter(Boolean))].sort();
-     NUTR_CATS.length = 0;
-     NUTR_CATS.push(...cats);
-    }
+    _mergeCustomFoodsIntoCatalog([localFood]);
     showClientToast('"' + name + '" added to My Foods');
     closeAddCustomFoodModal();
     // Refresh pills so "My Foods" appears if this was the first custom food
@@ -14669,6 +14678,21 @@ function nutrEditLog(logId, meal) {
  _renderEditModal();
 }
 
+// Logged macros already represent servingG, so editing scales from that saved
+// amount. A catalog lookup would change custom foods or fail before search loads.
+function nutrEditedMacros(item, grams) {
+ const ratio = (Number.isFinite(grams) && grams > 0 ? grams : 0) / (item.servingG || item.serving_size_g || 100);
+ const scaled = (value, precision = 10) => Math.round((value || 0) * ratio * precision) / precision;
+ const protein = scaled(item.protein_g ?? item.protein);
+ const carbs = scaled(item.carbs_g ?? item.carbs);
+ const fats = scaled(item.fat_g ?? item.fats ?? item.fat);
+ return {
+  calories: scaled(item.calories, 1), protein_g: protein, carbs_g: carbs, fat_g: fats,
+  protein, carbs, fats, fiber_g: scaled(item.fiber_g), sugar_g: scaled(item.sugar_g),
+  sodium_mg: scaled(item.sodium_mg, 1)
+ };
+}
+
 function _renderEditModal() {
  document.getElementById('nutr-edit-modal')?.remove();
  document.getElementById('nutr-edit-backdrop')?.remove();
@@ -14677,20 +14701,7 @@ function _renderEditModal() {
  const unit = _editUnits[_editUnitIdx];
  const displayVal = Math.round((_editServing / unit.grams) * 10) / 10;
 
- const ratio = _editServing / (item.serving_size_g || 100);
- const cal = Math.round((item.calories / (item.servingG / (item.serving_size_g || 100))) * ratio) || Math.round(item.calories);
- const p = Math.round(((item.protein_g || item.protein || 0) / ((item.servingG||100) / (item.serving_size_g||100))) * ratio * 10)/10;
- const c = Math.round(((item.carbs_g || item.carbs || 0) / ((item.servingG||100) / (item.serving_size_g||100))) * ratio * 10)/10;
- const fa= Math.round(((item.fat_g || item.fats || 0) / ((item.servingG||100) / (item.serving_size_g||100))) * ratio * 10)/10;
-
- // Find original food in DB for accurate per-100g macros
- const orig = NUTR_FOODS.find(f => f.food_name === item.food_name);
- const perG = orig ? orig : null;
- const oRatio = _editServing / (orig ? orig.serving_size_g : 100);
- const oCal = orig ? Math.round(orig.calories * oRatio) : cal;
- const oP  = orig ? Math.round(orig.protein_g * oRatio * 10)/10 : p;
- const oC  = orig ? Math.round(orig.carbs_g * oRatio * 10)/10 : c;
- const oFa = orig ? Math.round(orig.fat_g * oRatio * 10)/10 : fa;
+ const { calories: oCal, protein_g: oP, carbs_g: oC, fat_g: oFa } = nutrEditedMacros(item, _editServing);
 
  const backdrop = document.createElement('div');
  backdrop.id = 'nutr-edit-backdrop';
@@ -14821,15 +14832,7 @@ function nutrEditSelectDayType(dt) {
 }
 
 function nutrEditUpdateMacroPreview() {
- const item = _editItem;
- const orig = NUTR_FOODS.find(f => f.food_name === item.food_name);
- const baseFood = orig || item;
- const baseG = orig ? orig.serving_size_g : (item.serving_size_g || 100);
- const ratio = _editServing / baseG;
- const oCal = Math.round((orig ? orig.calories : item.calories) * ratio);
- const oP  = Math.round((orig ? orig.protein_g : (item.protein_g||item.protein||0)) * ratio * 10)/10;
- const oC  = Math.round((orig ? orig.carbs_g : (item.carbs_g||item.carbs||0)) * ratio * 10)/10;
- const oFa = Math.round((orig ? orig.fat_g : (item.fat_g||item.fats||0)) * ratio * 10)/10;
+ const { calories: oCal, protein_g: oP, carbs_g: oC, fat_g: oFa } = nutrEditedMacros(_editItem, _editServing);
  const el = id => document.getElementById(id);
  if (el('em-cal')) el('em-cal').textContent = oCal;
  if (el('em-p'))   el('em-p').textContent   = oP + 'g';
@@ -14867,7 +14870,7 @@ function nutrEditAdjServing(delta) {
 }
 
 function nutrEditUpdateServing() {
- const v = parseFloat(document.getElementById('nutr-edit-serving-input')?.value) || 0.1;
+ const v = Number(document.getElementById('nutr-edit-serving-input')?.value);
  const unit = _editUnits[_editUnitIdx];
  _editServing = v * unit.grams;
  const slider = document.querySelector('#nutr-edit-modal input[type=range]');
@@ -14886,6 +14889,12 @@ function nutrEditSlider(val) {
 async function nutrEditSave() {
  const uid = auth?.currentUser?.uid;
  if (!uid || !_editLogId) return;
+ const servingG = Math.round(_editServing * 10) / 10;
+ if (!Number.isFinite(servingG) || servingG <= 0) {
+  showClientToast('Enter a quantity greater than zero.');
+  document.getElementById('nutr-edit-serving-input')?.focus();
+  return;
+ }
 
  // Day type required — shake row if missing
  if (_editDayType === null || _editDayType === undefined || _editDayType === '__none__') {
@@ -14906,24 +14915,9 @@ async function nutrEditSave() {
   }
  }
 
- const item = _editItem;
- const orig = NUTR_FOODS.find(f => f.food_name === item.food_name);
- const baseFood = orig || item;
- const baseG = orig ? orig.serving_size_g : (item.serving_size_g || 100);
- const ratio = _editServing / baseG;
-
  const updates = {
-  servingG:  Math.round(_editServing),
-  calories:  Math.round((orig ? orig.calories : item.calories) * ratio),
-  protein_g: Math.round((orig ? orig.protein_g : (item.protein_g||0)) * ratio * 10)/10,
-  carbs_g:   Math.round((orig ? orig.carbs_g : (item.carbs_g||0)) * ratio * 10)/10,
-  fat_g:     Math.round((orig ? orig.fat_g : (item.fat_g||0)) * ratio * 10)/10,
-  fiber_g:   Math.round((orig ? orig.fiber_g : (item.fiber_g||0)) * ratio * 10)/10,
-  sugar_g:   Math.round((orig ? orig.sugar_g : (item.sugar_g||0)) * ratio * 10)/10,
-  sodium_mg: Math.round((orig ? orig.sodium_mg : (item.sodium_mg||0)) * ratio),
-  protein:   Math.round((orig ? orig.protein_g : (item.protein_g||0)) * ratio * 10)/10,
-  carbs:     Math.round((orig ? orig.carbs_g : (item.carbs_g||0)) * ratio * 10)/10,
-  fats:      Math.round((orig ? orig.fat_g : (item.fat_g||0)) * ratio * 10)/10,
+  servingG,
+  ...nutrEditedMacros(_editItem, servingG),
   dayType:   _editDayType === 'All Days' ? '' : _editDayType,
   editedAt:  firebase.firestore.FieldValue.serverTimestamp()
  };
@@ -16601,6 +16595,7 @@ let _cwktExercises = []; // [{name, sets}]
 let _cwktLibFilter = 'All';
 
 function openCustomWorkoutBuilder() {
+ clearTimeout(_cwktCloseTimer);
  _cwktLibFilter = 'All';
  document.getElementById('custom-wkt-ex-input').value = '';
  if (document.getElementById('cwkt-lib-search')) document.getElementById('cwkt-lib-search').value = '';
@@ -16609,11 +16604,13 @@ function openCustomWorkoutBuilder() {
  const hasActiveWorkout = todayWorkout && todayWorkout.exercises && todayWorkout.exercises.length > 0;
  if (hasActiveWorkout) {
   // Pre-populate with current exercises from the DOM (preserves actual set/rep counts)
-  _cwktExercises = Array.from(document.querySelectorAll('.log-ex-card')).map(card => {
+  _cwktExercises = Array.from(document.querySelectorAll('.log-ex-card')).map((card, idx) => {
    const nameEl = card.querySelector('.log-ex-name');
    const name = nameEl ? nameEl.textContent.trim() : '';
    const setRows = card.querySelectorAll('.log-set-row');
-   return { name, sets: setRows.length || 3, reps: 10, _existing: true };
+   const prescription = normalizeExercisePrescription(todayWorkout.exercises[idx]);
+   const sets = setRows.length || prescription.sets;
+   return { name, sets, reps: prescription.minReps, _initialSets: sets, _initialReps: prescription.minReps, _existing: true };
   }).filter(ex => ex.name);
   // Set workout name
   const logSub = document.getElementById('log-sub');
@@ -16720,10 +16717,12 @@ function cwktAddFromInlineLib(name) {
  setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
 }
 
+let _cwktCloseTimer = null;
 function closeCustomWorkoutBuilder() {
+ clearTimeout(_cwktCloseTimer);
  const sheet = document.getElementById('custom-wkt-sheet');
  sheet.style.transform = 'translateY(100%)';
- setTimeout(() => {
+ _cwktCloseTimer = setTimeout(() => {
   const modal = document.getElementById('custom-wkt-modal');
   modal.style.display = 'none';
  }, 320);
@@ -16748,7 +16747,7 @@ function _renderCwktList() {
   <div class="cwkt-ex-chip">
    <div class="cwkt-chip-top">
     <div class="cwkt-chip-thumb" style="background:${c.bg};border:1px solid ${c.accent}33;">
-     ${(()=>{ const _wm2=(typeof getWorkoutMedia!=='undefined')?getWorkoutMedia(ex.name):null; const _thumb=_wm2&&_wm2.thumbnail?_wm2.thumbnail:null; if(_thumb){ return `<img src="${_thumb}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display='none';this.parentNode.insertAdjacentHTML('beforeend','<span style=\'display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:${c.accent};\'>'+c.icon+'</span>')">`; } return `<span style="display:flex;align-items:center;justify-content:center;color:${c.accent};">${c.icon}</span>`; })()}
+     ${(()=>{ const _wm2=(typeof getWorkoutMedia!=='undefined')?getWorkoutMedia(ex.name):null; const _thumb=_wm2&&_wm2.thumbnail?_wm2.thumbnail:null; const fallback=`<span style="display:${_thumb?'none':'flex'};width:100%;height:100%;align-items:center;justify-content:center;color:${c.accent};">${c.icon}</span>`; return (_thumb ? `<img src="${escapeAttr(_thumb)}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` : '') + fallback; })()}
     </div>
      <span class="cwkt-chip-name">${escapeHtml(ex.name)}</span>
     <button class="cwkt-ex-remove" onclick="cwktRemoveEx(${i})" title="Remove">
@@ -17107,26 +17106,41 @@ function startCustomWorkout() {
  const wktName = getSanitizedValue('custom-wkt-name', 80) || 'Custom Workout';
  const hasActiveWorkout = todayWorkout && todayWorkout.exercises && todayWorkout.exercises.length > 0;
 
- // Only the exercises that are NEW (not pre-existing)
- const newExercises = _cwktExercises.filter(ex => !ex._existing);
-
  if (hasActiveWorkout) {
   // BUILD final exercise list from the builder state (handles both adds and removals)
-  const finalExercises = _cwktExercises.map(ex => ({
-   name: ex.name,
-   detail: '',
-   target: `${ex.sets}×${ex.reps || 10}`,
-  }));
+  const finalExercises = _cwktExercises.map(ex => {
+   const original = ex._existing ? todayWorkout.exercises.find(item => item.name === ex.name) : null;
+   if (original && ex.sets === ex._initialSets && ex.reps === ex._initialReps) return { ...original };
+   const prescription = normalizeExercisePrescription(original);
+   prescription.sets = ex.sets;
+   if (!original || ex.reps !== ex._initialReps) prescription.minReps = prescription.maxReps = ex.reps || 10;
+   return { ...original, name: ex.name, detail: original?.detail || '', ...prescription, target: formatPrescription(prescription) };
+  });
 
   // If nothing changed, just close
-  const currentNames = (todayWorkout.exercises || []).map(e => e.name).join(',');
-  const newNames = finalExercises.map(e => e.name).join(',');
-  if (currentNames === newNames && newExercises.length === 0) {
+  if (JSON.stringify(todayWorkout.exercises) === JSON.stringify(finalExercises) && todayWorkout.name === wktName) {
    closeCustomWorkoutBuilder();
    return;
   }
 
   closeCustomWorkoutBuilder();
+
+  // Keep entered set data while making the saved logger match the edited set
+  // count; otherwise restoreLoggerState would put the old count straight back.
+  saveLoggerState();
+  try {
+   const key = _loggerStorageKey();
+   const saved = JSON.parse(localStorage.getItem(key) || 'null');
+   if (saved?.exercises) {
+    _cwktExercises.forEach(ex => {
+     const logged = saved.exercises.find(item => item.name === ex.name);
+     if (!logged) return;
+     logged.sets = logged.sets.slice(0, ex.sets);
+     while (logged.sets.length < ex.sets) logged.sets.push({ weight: '', reps: '', done: false });
+    });
+    safeLocalStorageSet(key, JSON.stringify(saved));
+   }
+  } catch(e) { console.warn('Could not reconcile edited workout sets:', e.message); }
 
   // Update todayWorkout with the full new list
   todayWorkout = Object.assign({}, todayWorkout, {

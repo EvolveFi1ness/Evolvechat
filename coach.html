@@ -11,7 +11,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
-  <script src="shared.js?v=7"></script>
+  <script src="shared.js?v=9"></script>
   <script>
     // Apply theme before first paint to avoid a flash. Dark is the default:
     // only an explicit stored light choice opts out. Accepts BOTH the coach
@@ -41,15 +41,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <!-- Critical: Inter is used for all body text — load synchronously -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Use the system fallback immediately while the body font downloads. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"></noscript>
   <!-- Non-critical: decorative/display fonts deferred to avoid blocking render -->
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=Anton&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet"></noscript>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://browser.sentry-cdn.com">
-  <link rel="stylesheet" href="design-tokens.css?v=7">
+  <link rel="stylesheet" href="design-tokens.css?v=9">
 
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -5619,12 +5620,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="food-db-search-icon">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </span>
-                <input id="food-db-search-input" aria-label="Search foods" class="food-db-search" type="search" placeholder="Search foods…" oninput="searchFoodDb(this.value)" autocomplete="off" />
+                <input id="food-db-search-input" aria-label="Search foods" class="food-db-search" type="search" placeholder="Search foods…" oninput="if(!event.isComposing)searchFoodDb(this.value)" oncompositionend="searchFoodDb(this.value)" autocomplete="off" />
                 <button id="food-search-clear" aria-label="Clear food search" class="food-db-search-clear" style="display:none;" onclick="clearFoodSearch()"  title="Clear search">✕</button>
               </div>
 
               <!-- Category filter — pill buttons -->
               <div id="food-cat-pills" class="nt-cat-pills"></div>
+              <div id="food-db-status" class="food-search-status" role="status" aria-live="polite" aria-atomic="true"></div>
               <!-- Hidden select kept for backward-compat with any code referencing it -->
               <select class="hidden" id="food-cat-select" onchange="setFoodCat(this.value,null)" >
                 <option value="all">All Categories</option>
@@ -16408,8 +16410,6 @@ function exportCheckinsCsv() {
 
 
 
-<script defer src="data/workouts.js"></script>
-
 <script>
 let _workoutsCache = null;
 function _getWorkoutsRaw() {
@@ -16417,7 +16417,10 @@ function _getWorkoutsRaw() {
 }
 window._evolveWorkoutsLoad = fetch('data/workouts.json')
   .then(r => (r.ok ? r.json() : null)).catch(() => null)
-  .then(d => { if (d && Object.keys(d).length) _workoutsCache = d; });
+  .then(d => {
+    if (d && Object.keys(d).length) { _workoutsCache = d; return; }
+    return _loadWorkoutsEmbeddedFallback().then(e => { _workoutsCache = e; });
+  });
 
 // One-shot re-render if the exercise list rendered before the fetch landed.
 Promise.all([window._evolveWorkoutsLoad]).then(() => {
@@ -16868,18 +16871,16 @@ function setFoodCat(cat, btn) {
 }
 
 function filterFoodDb() {
-  foodDbFiltered = foodDbAll.filter(f => {
-    if (!f) return false;
-    const matchCat = foodDbCat === 'all' || f.category === foodDbCat;
-    const matchQ = !foodDbQuery || (f.food_name||'').toLowerCase().includes(foodDbQuery) || (f.category||'').toLowerCase().includes(foodDbQuery);
-    return matchCat && matchQ;
-  });
+  const categoryFoods = foodDbAll.filter(f => f && (foodDbCat === 'all' || f.category === foodDbCat));
+  foodDbFiltered = searchFoodCatalog(categoryFoods, foodDbQuery);
   renderFoodDbList();
 }
 
 function renderFoodDbList() {
   const list = document.getElementById('food-db-list');
   if (!list) return;
+  const status = document.getElementById('food-db-status');
+  if (status) status.textContent = foodDbFiltered.length ? `${foodDbFiltered.length.toLocaleString()} foods found` : 'No matching foods';
   // Auto-populate category dropdown (hidden, kept for compat) + pill buttons on first load
   const catSel = document.getElementById('food-cat-select');
   const pillsWrap = document.getElementById('food-cat-pills');
@@ -16926,6 +16927,7 @@ function renderFoodDbList() {
     </div>`;
     }
     list.insertAdjacentHTML('beforeend', html);
+    if (status) status.textContent = `Showing ${i.toLocaleString()} of ${foodDbFiltered.length.toLocaleString()} foods`;
     if (i < foodDbFiltered.length) {
       const more = document.createElement('button');
       more.type = 'button';
@@ -17877,7 +17879,7 @@ async function assignMacroTargetOnly() {
   } catch(e) {
     showToast('Error: ' + e.message);
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = editingId ? 'Update Macros →' : 'Assign Macros →'; }
+    if (btn) { btn.disabled = false; btn.textContent = _editingMacroPlanId ? 'Update Macros →' : 'Assign Macros →'; }
   }
 }
 
@@ -17894,12 +17896,13 @@ function updateFdContextLabel() {
 }
 
 async function assignFoodToClient() {
+  const food = foodDbSelected;
   const clientUid = document.getElementById('nutr-assign-client')?.value;
   if (!clientUid) { showToast(' Select a client first'); return; }
-  if (!foodDbSelected) { showToast(' Select a food first'); return; }
+  if (!food) { showToast(' Select a food first'); return; }
 
   const servingG = fdServingGrams();
-  const ratio = servingG / (foodDbSelected.serving_size_g || 100);
+  const ratio = servingG / (food.serving_size_g || 100);
 
   // Get selected meal slot
   const activeSlotBtn = document.querySelector('#fd-meal-slots .fd-meal-slot-btn.active');
@@ -17916,19 +17919,19 @@ async function assignFoodToClient() {
   const srvQty = fdUnitMode === 'srv' ? (parseFloat(servingInp?.value) || 1) : null;
 
   const entry = {
-    food_name:      foodDbSelected.food_name,
-    category:       foodDbSelected.category || '',
-    serving_size_g: foodDbSelected.serving_size_g || 100,
+    food_name:      food.food_name,
+    category:       food.category || '',
+    serving_size_g: food.serving_size_g || 100,
     servingG:       Math.round(servingG),
-    calories:       Math.round((foodDbSelected.calories  || 0) * ratio),
-    protein_g:      Math.round((foodDbSelected.protein_g || 0) * ratio * 10) / 10,
-    carbs_g:        Math.round((foodDbSelected.carbs_g   || 0) * ratio * 10) / 10,
-    fat_g:          Math.round((foodDbSelected.fat_g     || 0) * ratio * 10) / 10,
+    calories:       Math.round((food.calories  || 0) * ratio),
+    protein_g:      Math.round((food.protein_g || 0) * ratio * 10) / 10,
+    carbs_g:        Math.round((food.carbs_g   || 0) * ratio * 10) / 10,
+    fat_g:          Math.round((food.fat_g     || 0) * ratio * 10) / 10,
     mealSlot:       mealSlot,
     dayType:        dayType,
     unitMode:       fdUnitMode,
     srvQty:         srvQty,
-    srvUnitLabel:   fdUnitMode === 'srv' ? fdServingUnitName(foodDbSelected) : null,
+    srvUnitLabel:   fdUnitMode === 'srv' ? fdServingUnitName(food) : null,
     assignedByCoach: true,
     persistent:     true,
     assignedAt:     firebase.firestore.FieldValue.serverTimestamp()
@@ -17949,10 +17952,10 @@ async function assignFoodToClient() {
     // would make that "automatic reappear" impossible, since the target
     // would no longer exist in the database at all.
     const dayTypeMsg = dayType ? ' · ' + dayType : '';
-    showToast(' ' + foodDbSelected.food_name + ' → ' + mealSlot + dayTypeMsg + ' · ' + clientName);
+    showToast(' ' + food.food_name + ' → ' + mealSlot + dayTypeMsg + ' · ' + clientName);
     // Invalidate plan totals so next food shows fresh running total
     window._planTotals = { cal: 0, p: 0, c: 0, f: 0, loaded: false };
-    closeFoodDetail();
+    if (foodDbSelected === food) closeFoodDetail();
     loadAssignedFoodsPanel();
   } catch(e) {
     showToast('Error: ' + e.message);

@@ -1,16 +1,16 @@
 /* Evolve PWA service worker — offline support + fast repeat loads.
    Strategy: network-first for the HTML app shell (always fresh when online),
-   cache-first for static assets (icons, manifests, fonts, CSS), stale-while-revalidate
-   for the CDN libs the apps already depend on. */
+   cache-first for release catalogs and fonts, stale-while-revalidate for other
+   static assets. Catalogs are downloaded only when used. */
 'use strict';
 
-const CACHE = 'evolve-v7';
+const CACHE = 'evolve-v9';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
   './manifest-coach.json',
-  './design-tokens.css?v=7',
-  './shared.js?v=7',
+  './design-tokens.css?v=9',
+  './shared.js?v=9',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -20,6 +20,7 @@ const STATIC = [
   './icons/coach-icon-maskable-512.png',
   './icons/coach-apple-touch-icon.png',
   './data/workouts.json',
+  './data/workouts.js',
   './data/nutr-foods.json',
   './data/foods.json'
 ];
@@ -27,7 +28,9 @@ const STATIC = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) =>
-      Promise.allSettled([...APP_SHELL, ...STATIC].map((url) => cache.add(url).catch(() => {})))
+      // Catalogs load when needed; installing the worker must not download both
+      // apps' food databases or race the page's exercise request.
+      Promise.allSettled([...APP_SHELL, ...STATIC.filter(url => !url.startsWith('./data/'))].map((url) => cache.add(url).catch(() => {})))
     ).then(() => self.skipWaiting())
   );
 });
@@ -68,6 +71,20 @@ self.addEventListener('fetch', (event) => {
   // normalize before comparing or this branch never matches (it didn't).
   const _norm = (s) => s.replace(/^\.\//, '/').split('?')[0];
   if (STATIC.some((s) => url.pathname.endsWith(_norm(s)))) {
+    // Bundled catalogs change with the release cache version. Reuse them until
+    // the next release instead of downloading megabytes on every cache hit.
+    if (/\/data\/(?:workouts\.(?:json|js)|(?:nutr-)?foods\.json)$/.test(url.pathname)) {
+      event.respondWith(caches.match(event.request).then(async hit => {
+        if (hit) return hit;
+        const res = await fetch(event.request, { cache: 'no-cache' });
+        if (res.ok) {
+          const copy = res.clone();
+          await caches.open(CACHE).then(cache => cache.put(event.request, copy)).catch(() => {});
+        }
+        return res;
+      }));
+      return;
+    }
     const refresh = fetch(event.request).then((res) => {
       if (res.ok) {
         const copy = res.clone();

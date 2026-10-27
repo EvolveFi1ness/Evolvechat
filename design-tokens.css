@@ -748,3 +748,47 @@ body {
   font: inherit;
   cursor: pointer;
 }
+
+.food-search-status {
+  min-height: 30px;
+  flex-shrink: 0;
+  padding: 4px 16px 8px;
+  color: var(--evolve-text-secondary);
+  font-size: 12px;
+  line-height: 18px;
+}
+.food-search-message { padding: 28px 20px; text-align: center; color: var(--evolve-text-secondary); line-height: 1.6; }
+.food-search-retry {
+  display: block;
+  min-height: 44px;
+  margin: 16px auto 0;
+  padding: 10px 16px;
+  border: 1px solid var(--evolve-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--evolve-bg-raised);
+  color: var(--evolve-text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+#nutr-search-results { overscroll-behavior: contain; scrollbar-gutter: stable; }
+#nutr-search-input::-webkit-search-cancel-button,
+#food-db-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+#toast {
+  width: max-content !important;
+  max-width: min(420px, calc(100vw - 32px)) !important;
+  padding: 12px 16px !important;
+  background: var(--evolve-bg-raised) !important;
+  color: var(--evolve-text-primary) !important;
+  box-shadow: var(--shadow-lg) !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  border-radius: var(--radius-md) !important;
+  text-align: left;
+  line-height: 1.45;
+}
+#toast.error { border-color: var(--evolve-error) !important; }
+#toast.success { border-color: var(--evolve-success) !important; }
+@media (max-width: 768px) {
+  #toast { bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important; left: 50% !important; }
+}

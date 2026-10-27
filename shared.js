@@ -9,6 +9,43 @@ function escapeAttr(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// Both apps use the embedded exercise map only if JSON cannot be loaded.
+function _loadWorkoutsEmbeddedFallback() {
+ return new Promise((resolve) => {
+  if (window._WORKOUTS_EMBEDDED) { resolve(window._WORKOUTS_EMBEDDED); return; }
+  const s = document.createElement('script');
+  s.src = 'data/workouts.js';
+  s.onload = () => resolve(window._WORKOUTS_EMBEDDED || {});
+  s.onerror = () => resolve({});
+  document.head.appendChild(s);
+ });
+}
+
+// Reuse normalized search text and rank into buckets instead of cloning and
+// sorting the entire catalog on each keystroke. Results retain the food objects.
+const _foodSearchIndex = new WeakMap();
+function searchFoodCatalog(foods, query) {
+ const normalized = String(query || '').trim().toLowerCase();
+ if (!normalized) return foods;
+ const tokens = normalized.split(/\s+/);
+ const ranked = [[], [], []];
+ foods.forEach(food => {
+  if (!food) return;
+  const rawName = food.food_name || '';
+  const rawCategory = food.category || '';
+  let entry = _foodSearchIndex.get(food);
+  if (!entry || entry.rawName !== rawName || entry.rawCategory !== rawCategory) {
+   const name = rawName.toLowerCase();
+   entry = { rawName, rawCategory, name, text: name + ' ' + rawCategory.toLowerCase(), words: name.split(/[,\s]+/) };
+   _foodSearchIndex.set(food, entry);
+  }
+  if (!tokens.every(token => entry.text.includes(token))) return;
+  const bucket = entry.name.startsWith(normalized) ? 0 : tokens.every(token => entry.words.some(word => word.startsWith(token))) ? 1 : 2;
+  ranked[bucket].push(food);
+ });
+ return ranked[0].concat(ranked[1], ranked[2]);
+}
+
 function sanitizeInput(raw, maxLen) {
   let s = String(raw ?? '');
   s = s.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200D\uFEFF]/g, '');
