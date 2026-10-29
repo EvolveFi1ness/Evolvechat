@@ -8093,6 +8093,15 @@ async function handleFinish() {
 // ─────────────────────────────────────────
 // LOAD HOME SCREEN
 // ─────────────────────────────────────────
+function _stableStringify(obj) {
+ const sorter = (o) => {
+  if (o === null || typeof o !== 'object') return o;
+  if (Array.isArray(o)) return o.map(sorter);
+  return Object.keys(o).sort().reduce((acc, k) => { acc[k] = sorter(o[k]); return acc; }, {});
+ };
+ return JSON.stringify(sorter(obj));
+}
+
 async function loadHomeScreen(data) {
  window._lastHomeData = data || null;
  // NOTE: the archived/deleted mid-session check that used to live here in its
@@ -8148,7 +8157,14 @@ async function loadHomeScreen(data) {
   if (plan && plan.exercises?.length) WORKOUTS[day] = plan;
  });
 
- const w = WORKOUTS[todayName] || null;
+ let _restoredCustomWkt = null;
+ try {
+  const saved = JSON.parse(localStorage.getItem('evolve_custom_wkt_' + phIsoDate()) || 'null');
+  if (saved?.exercises?.length && (!saved.sourceAssignedPlan || saved.sourceAssignedPlan === _stableStringify(assignedPlan))) _restoredCustomWkt = saved;
+ } catch(e) {}
+ // Personal edits take priority on refresh while the coach's plan is unchanged.
+ const assignedWorkout = WORKOUTS[todayName] || null;
+ const w = assignedWorkout && (_restoredCustomWkt || assignedWorkout);
  todayWorkout = w ? { dayName: todayName, ...w } : null;
 
  if (w && w.exercises?.length) {
@@ -8229,12 +8245,6 @@ async function loadHomeScreen(data) {
   const barNameRest = document.getElementById('wkt-bar-name');
   if (barNameRest) barNameRest.textContent = hasAnyPlan ? 'Rest Day' : 'No Workout';
   // Check if user had an in-progress custom workout today (survives page refresh)
-  let _restoredCustomWkt = null;
-  try {
-   const _today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-   const _raw = localStorage.getItem('evolve_custom_wkt_' + _today);
-   if (_raw) _restoredCustomWkt = JSON.parse(_raw);
-  } catch(e) {}
 
   // FIX: if there's no saved custom workout either, check for an orphaned
   // in-progress session — sets the user was actively typing in under the
@@ -8368,14 +8378,6 @@ async function loadHomeScreen(data) {
  // reconnect with the same values but different key ordering (e.g. cached
  // copy vs a fresh server round-trip), which would otherwise make a plain
  // JSON.stringify() diff spuriously report "changed" and re-render the app.
- const _stableStringify = (obj) => {
-  const sorter = (o) => {
-   if (o === null || typeof o !== 'object') return o;
-   if (Array.isArray(o)) return o.map(sorter);
-   return Object.keys(o).sort().reduce((acc, k) => { acc[k] = sorter(o[k]); return acc; }, {});
-  };
-  return JSON.stringify(sorter(obj));
- };
  if (uid && !window._workoutPlanListener) {
   // Pre-stamp with current plan JSON so the onSnapshot first-run doesn't
   // trigger a redundant loadHomeScreen that wipes the completed workout state.
@@ -17145,7 +17147,8 @@ function startCustomWorkout() {
   // Update todayWorkout with the full new list
   todayWorkout = Object.assign({}, todayWorkout, {
    name: wktName,
-   exercises: finalExercises
+   exercises: finalExercises,
+   sourceAssignedPlan: _stableStringify(window._lastHomeData?.assignedWorkoutPlan || {})
   });
 
   // Persist updated definition
@@ -17178,6 +17181,7 @@ function startCustomWorkout() {
   name: wktName,
   dayName: 'Custom',
   isCustom: true,
+  sourceAssignedPlan: _stableStringify(window._lastHomeData?.assignedWorkoutPlan || {}),
   exercises: _cwktExercises.map(ex => ({
    name: ex.name,
    detail: '',
