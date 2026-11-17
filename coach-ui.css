@@ -3780,3 +3780,22 @@ html.evolve-ui[data-theme="dark"] body #client-modal .modal-tab{color:var(--evol
 html.evolve-ui[data-theme="dark"] body #client-modal .modal-tab.active{color:var(--evolve-text-primary)!important;border-bottom-color:var(--gold)!important}
 html.evolve-ui[data-theme="dark"] body #m-checkin-summary button{color:var(--evolve-text-secondary)!important}
 html.evolve-ui[data-theme="dark"] body #m-checkin-summary button.is-active{color:#151d27!important;background:var(--gold)!important}
+
+/* Training reviews use the shared surface, brand, and semantic palette. */
+html.evolve-ui body :is(#mp-logs,#m-checkin-summary) .coach-exercise-card{background:var(--evolve-bg-raised)!important;border-color:var(--evolve-border)!important}
+html.evolve-ui body .coach-exercise-stats>div{background:var(--evolve-bg-sunken)!important;border:1px solid var(--evolve-border)!important}
+html.evolve-ui body .coach-exercise-stats>div>div:first-child{color:var(--evolve-text-secondary)!important}
+html.evolve-ui body :is(.coach-exercise-status.is-complete,.coach-set-status.is-complete){background:var(--evolve-success-dim)!important;color:var(--evolve-success)!important;border-color:var(--evolve-border)!important}
+html.evolve-ui body .coach-set-status.is-skipped{background:var(--evolve-bg-sunken)!important;color:var(--evolve-text-secondary)!important}
+html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color:#FF5A2B"],html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color: #FF5A2B"]{color:var(--evolve-orange)!important}
+html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color:rgba(var(--ink-"],html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color:rgba(var(--line-"]{color:var(--evolve-text-secondary)!important}
+html.evolve-ui body #mp-logs :is(#log-view-table-btn,#log-view-chart-btn,[id^="log-metric-"],[id^="log-period-"]),html.evolve-ui body #m-checkin-summary :is(button[id*="_viewtab_"],button[id*="_tab_"],button[id*="_ptab_"]){background:transparent!important;border-color:transparent!important;color:var(--evolve-text-secondary)!important}
+html.evolve-ui body #mp-logs :is(#log-view-table-btn,#log-view-chart-btn,[id^="log-metric-"],[id^="log-period-"]).is-active,html.evolve-ui body #m-checkin-summary :is(button[id*="_viewtab_"],button[id*="_tab_"],button[id*="_ptab_"]).is-active{background:var(--evolve-orange)!important;border-color:var(--evolve-orange)!important;color:var(--evolve-text-inverse)!important}
+html.evolve-ui[data-theme="dark"] body #mp-logs :is(#log-view-table-btn,#log-view-chart-btn,[id^="log-metric-"],[id^="log-period-"]).is-active,html.evolve-ui[data-theme="dark"] body #m-checkin-summary :is(button[id*="_viewtab_"],button[id*="_tab_"],button[id*="_ptab_"]).is-active{color:var(--evolve-bg)!important}
+html.evolve-ui body #mp-logs #log-chart-summary>div,html.evolve-ui body #m-checkin-summary [id$="_stats"]>div{background:var(--evolve-bg-sunken)!important;border-color:var(--evolve-border)!important}
+
+html.evolve-ui body :is(#mp-logs,#m-checkin-summary){--gold:var(--evolve-orange);--bg2:var(--evolve-bg-raised);--bg3:var(--evolve-bg-sunken);--text:var(--evolve-text-primary);--muted:var(--evolve-text-secondary);--green:var(--evolve-success);--red:var(--evolve-error)}
+html.evolve-ui body #mp-logs #m-log-body>.log-summary-row>td{background:transparent!important}
+html.evolve-ui body #m-log-table .log-badge.done{background:var(--evolve-success-dim)!important;color:var(--evolve-success)!important;border-color:var(--evolve-border)!important}
+html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color:#4ade80"],html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color:#16A34A"]{color:var(--evolve-success)!important}
+html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color:#f87171"],html.evolve-ui body :is(#mp-logs,#m-checkin-summary) [style*="color:#DC2626"]{color:var(--evolve-error)!important}

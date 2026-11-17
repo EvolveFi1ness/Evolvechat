@@ -9473,6 +9473,10 @@ function isoKeyForPeriod(d, period) {
 }
 
 function drawLogChart() {
+  const palette = getComputedStyle(document.documentElement);
+  const accent = palette.getPropertyValue('--evolve-orange').trim();
+  const accentFill = palette.getPropertyValue('--evolve-orange-dim').trim();
+
   const canvas  = document.getElementById('log-chart-canvas');
   const empty   = document.getElementById('log-chart-empty');
   const summary = document.getElementById('log-chart-summary');
@@ -9586,8 +9590,8 @@ function drawLogChart() {
 
   // Gradient fill
   const grad = ctx.createLinearGradient(0, PAD.top, 0, PAD.top + cH);
-  grad.addColorStop(0, 'rgba(255,90,43,0.28)');
-  grad.addColorStop(1, 'rgba(255,90,43,0)');
+  grad.addColorStop(0, accentFill);
+  grad.addColorStop(1, 'transparent');
   ctx.beginPath();
   ctx.moveTo(toX(0), toY(vals[0]));
   for (let i = 1; i < data.length; i++) ctx.lineTo(toX(i), toY(vals[i]));
@@ -9601,7 +9605,7 @@ function drawLogChart() {
   ctx.beginPath();
   ctx.moveTo(toX(0), toY(vals[0]));
   for (let i = 1; i < data.length; i++) ctx.lineTo(toX(i), toY(vals[i]));
-  ctx.strokeStyle = '#FF5A2B';
+  ctx.strokeStyle = accent;
   ctx.lineWidth   = 2.2;
   ctx.lineJoin    = 'round';
   ctx.stroke();
@@ -9618,11 +9622,11 @@ function drawLogChart() {
     // Dot
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#FF5A2B';
+    ctx.fillStyle = accent;
     ctx.fill();
     ctx.beginPath();
     ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#161616';
+    ctx.fillStyle = palette.getPropertyValue('--evolve-bg-raised').trim();
     ctx.fill();
 
     // X label
@@ -10537,7 +10541,7 @@ async function loadClientCheckins(uid) {
             <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Calorie Trend</span>
             <div style="display:flex;gap:4px" id="${nutrChartUid}_tabs">
               <button onclick="nutrChartSwitch('${nutrChartUid}','day')" id="${nutrChartUid}_tab_day" class="is-active"
-                style="padding:4px 10px;border-radius:6px;border:1px solid rgba(255,90,43,0.5);background:rgba(255,90,43,0.15);color:#FF5A2B;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;text-transform:uppercase">Day</button>
+                style="padding:4px 10px;border-radius:6px;border:1px solid rgba(255,90,43,0.5);background:rgba(255,90,43,0.15);color:var(--evolve-orange);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;text-transform:uppercase">Day</button>
               <button onclick="nutrChartSwitch('${nutrChartUid}','week')" id="${nutrChartUid}_tab_week"
                 style="padding:4px 10px;border-radius:6px;border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.08);background:transparent;color:#555;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;text-transform:uppercase">Week</button>
               <button onclick="nutrChartSwitch('${nutrChartUid}','month')" id="${nutrChartUid}_tab_month"
@@ -10546,8 +10550,8 @@ async function loadClientCheckins(uid) {
           </div>
           <!-- Macro line toggles -->
           <div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap" id="${nutrChartUid}_legend">
-            <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:#FF5A2B;cursor:pointer;user-select:none">
-              <input type="checkbox" id="${nutrChartUid}_show_cal" checked onchange="nutrChartRedraw('${nutrChartUid}')" style="accent-color:#FF5A2B;width:12px;height:12px"> Calories
+            <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--evolve-orange);cursor:pointer;user-select:none">
+              <input type="checkbox" id="${nutrChartUid}_show_cal" checked onchange="nutrChartRedraw('${nutrChartUid}')" style="accent-color:var(--evolve-orange);width:12px;height:12px"> Calories
             </label>
             <label style="display:flex;align-items:center;gap:5px;font-size:10px;color:#60a5fa;cursor:pointer;user-select:none">
               <input type="checkbox" id="${nutrChartUid}_show_prot" onchange="nutrChartRedraw('${nutrChartUid}')" style="accent-color:#60a5fa;width:12px;height:12px"> Protein
@@ -10623,6 +10627,10 @@ async function loadClientCheckins(uid) {
 // ─────────────────────────────────────────
 
 function drawSumWLChart(chartUid) {
+  const palette = getComputedStyle(document.documentElement);
+  const accent = palette.getPropertyValue('--evolve-orange').trim();
+  const accentFill = palette.getPropertyValue('--evolve-orange-dim').trim();
+
   const stored = window['__chartData_'+chartUid];
   if (!stored) return;
 
@@ -10704,7 +10712,7 @@ function drawSumWLChart(chartUid) {
 
   // Fill
   const grad=ctx.createLinearGradient(0,PAD.top,0,PAD.top+cH);
-  grad.addColorStop(0,'rgba(255,90,43,0.28)'); grad.addColorStop(1,'rgba(255,90,43,0)');
+  grad.addColorStop(0,accentFill); grad.addColorStop(1,'transparent');
   ctx.beginPath(); ctx.moveTo(toX(0),toY(vals[0]));
   for(let i=1;i<data.length;i++) ctx.lineTo(toX(i),toY(vals[i]));
   ctx.lineTo(toX(data.length-1),PAD.top+cH); ctx.lineTo(toX(0),PAD.top+cH);
@@ -10712,18 +10720,18 @@ function drawSumWLChart(chartUid) {
 
   // Line
   ctx.save();
-  ctx.shadowColor='rgba(255,90,43,0.25)'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
+  ctx.shadowColor=accentFill; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
   ctx.beginPath(); ctx.moveTo(toX(0),toY(vals[0]));
   for(let i=1;i<data.length;i++) ctx.lineTo(toX(i),toY(vals[i]));
-  ctx.strokeStyle='#FF5A2B'; ctx.lineWidth=2.4; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.stroke();
+  ctx.strokeStyle=accent; ctx.lineWidth=2.4; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.stroke();
   ctx.restore();
 
   // Dots + X labels
   const step=data.length<=7?1:needsRotation?Math.ceil(data.length/10):Math.ceil(data.length/7);
   data.forEach((d,i)=>{
     const x=toX(i),y=toY(vals[i]);
-    ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fillStyle='#FF5A2B'; ctx.fill();
-    ctx.beginPath(); ctx.arc(x,y,2.4,0,Math.PI*2); ctx.fillStyle='#FFFFFF'; ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y,4.5,0,Math.PI*2); ctx.fillStyle=accent; ctx.fill();
+    ctx.beginPath(); ctx.arc(x,y,2.4,0,Math.PI*2); ctx.fillStyle=palette.getPropertyValue('--evolve-bg-raised').trim(); ctx.fill();
     if(i%step===0||i===data.length-1){
       ctx.fillStyle=canvasInk(0.65); ctx.font='10px Inter,sans-serif';
       const labelY = PAD.top + (H - PAD.top - PAD.bottom) + (needsRotation ? 14 : 16);
@@ -10943,7 +10951,7 @@ function coachLogExerciseHeading(ex, index, done, total) {
 
 function buildSumExDetail(doc) {
   var exercises = doc.exercises || [];
-  if (!exercises.length) return '<div style="padding:16px 4px;font-size:12px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3);text-align:center">No exercise breakdown recorded for this session</div>';
+  if (!exercises.length) return '<div style="padding:16px 4px;font-size:12px;color:var(--evolve-text-secondary);text-align:center">No exercise breakdown recorded for this session</div>';
 
   var exCards = exercises.map(function(ex, exIdx) {
     var sets     = ex.sets || [];
@@ -10966,7 +10974,7 @@ function buildSumExDetail(doc) {
     var exUnit = 'kg';
 
     // Completion color
-    var pctColor = pct===100 ? '#4ade80' : pct>=50 ? '#FF5A2B' : '#f87171';
+    var pctColor = pct===100 ? 'var(--evolve-success)' : 'var(--evolve-orange)';
 
     // Set rows
     var setRows = sets.map(function(s, si) {
@@ -10978,15 +10986,15 @@ function buildSumExDetail(doc) {
       var sUnitLabel = s.weightUnit || 'kg';
       var isBest = bestSet && s === bestSet;
       return '<tr style="border-bottom:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.035);'+(s.done?'':'opacity:0.45;')+'">' +
-        '<td style="padding:7px 10px;font-size:11px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.45);white-space:nowrap">' +
-          (isBest ? '<span style="color:#FF5A2B;margin-right:4px" title="Best set">★</span>' : '') +
+        '<td style="padding:7px 10px;font-size:11px;color:var(--evolve-text-secondary);white-space:nowrap">' +
+          (isBest ? '<span style="color:var(--evolve-orange);margin-right:4px" title="Best set">★</span>' : '') +
           'Set '+(si+1) +
         '</td>' +
         '<td style="padding:7px 10px;font-size:12px;color:var(--text);font-weight:700">'+escapeHtml(wt)+'</td>' +
         '<td style="padding:7px 10px;font-size:12px;color:var(--text)">'+escapeHtml(rp)+' reps</td>' +
         '<td style="padding:7px 10px;font-size:11px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)">'+(setVol ? setVol+' '+sUnitLabel : '—')+'</td>' +
         '<td style="padding:7px 10px;text-align:right">' +
-          '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;'+(s.done?'background:rgba(74,222,128,0.12);color:#4ade80':'background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);color:rgba(var(--line-r),var(--line-g),var(--line-b),0.2)')+'">'+(s.done?'Done':'Skipped')+'</span>' +
+          '<span class="coach-set-status '+(s.done?'is-complete':'is-skipped')+'" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;'+(s.done?'background:var(--evolve-success-dim);color:var(--evolve-success)':'background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);color:rgba(var(--line-r),var(--line-g),var(--line-b),0.2)')+'">'+(s.done?'Done':'Skipped')+'</span>' +
         '</td>' +
       '</tr>';
     }).join('');
@@ -11001,17 +11009,17 @@ function buildSumExDetail(doc) {
       '</div>' +
 
       // Stat chips row
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' +
+      '<div class="coach-exercise-stats" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">' +
         '<div style="background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:60px">' +
-          '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3);margin-bottom:3px">Sets</div>' +
-          '<div style="font-size:14px;font-weight:700;color:var(--text)">'+doneCount+'<span style="font-size:10px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3)">/'+totalCount+'</span></div>' +
+          '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:var(--evolve-text-secondary);margin-bottom:3px">Sets</div>' +
+          '<div style="font-size:14px;font-weight:700;color:var(--text)">'+doneCount+'<span style="font-size:10px;color:var(--evolve-text-secondary)">/'+totalCount+'</span></div>' +
         '</div>' +
-        (bestSet ? '<div style="background:rgba(255,90,43,0.06);border:1px solid rgba(255,90,43,0.15);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:60px">' +
-          '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(255,90,43,0.5);margin-bottom:3px">Best</div>' +
-          '<div style="font-size:14px;font-weight:700;color:#FF5A2B">'+(bestSet.weightDisplay !== undefined ? bestSet.weightDisplay : bestSet.weight)+' '+(bestSet.weightUnit||'kg')+'</div>' +
+        (bestSet ? '<div style="background:var(--evolve-orange-dim);border:1px solid var(--evolve-border);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:60px">' +
+          '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:var(--evolve-text-secondary);margin-bottom:3px">Best</div>' +
+          '<div style="font-size:14px;font-weight:700;color:var(--evolve-orange)">'+(bestSet.weightDisplay !== undefined ? bestSet.weightDisplay : bestSet.weight)+' '+(bestSet.weightUnit||'kg')+'</div>' +
         '</div>' : '') +
         (exVol > 0 ? '<div style="background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);border-radius:8px;padding:6px 10px;text-align:center;flex:1;min-width:60px">' +
-          '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3);margin-bottom:3px">Volume</div>' +
+          '<div style="font-size:9px;text-transform:uppercase;letter-spacing:0.8px;color:var(--evolve-text-secondary);margin-bottom:3px">Volume</div>' +
           '<div style="font-size:14px;font-weight:700;color:var(--text)">'+Math.round(exVol).toLocaleString()+' <span style="font-size:10px;font-weight:400">'+exUnit+'</span></div>' +
         '</div>' : '') +
       '</div>' +
@@ -11254,7 +11262,7 @@ window.switchWorkoutChart = function(chartUid, metric) {
   if (!entry) return;
 
   const {vals, unit} = entry;
-  const lineColor = '#FF5A2B';
+  const lineColor = 'var(--evolve-orange)';
   const needsRotation = vals.length > 9;
   const CW=560, pL=48, pR=16, pT=16, pB=needsRotation?68:40, CH=200;
   const iW=CW-pL-pR, iH=CH-pT-pB;
@@ -11405,7 +11413,7 @@ window.switchWorkoutPeriod = function(chartUid, period) {
   const body = document.getElementById(chartUid+'_body');
   if (!body) return;
 
-  const lineColor = '#FF5A2B';
+  const lineColor = 'var(--evolve-orange)';
   const needsRotation = vals.length > 9;
   const CW=560, pL=48, pR=16, pT=16, pB=needsRotation?68:40, CH=200;
   const iW=CW-pL-pR, iH=CH-pT-pB;
@@ -19493,6 +19501,10 @@ function applyDarkModeUI(isDark) {
   if (icon) icon.textContent = isDark ? '☀️' : '🌙';
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
   if (themeColorMeta) themeColorMeta.setAttribute('content', isDark ? '#111820' : '#F5F0E8');
+  _resolveCanvasColors();
+  if (document.getElementById('log-chart-canvas')?.getClientRects().length) drawLogChart();
+  const summaryChart = currentModalUid && 'wc_' + currentModalUid;
+  if (summaryChart && document.getElementById(summaryChart + '_canvas')?.getClientRects().length) drawSumWLChart(summaryChart);
 }
 function applyDarkModeState() {
   const isDark = document.documentElement.classList.contains('dark-mode');
@@ -20905,6 +20917,6 @@ textarea:focus-visible, select:focus-visible,
    <button onclick="location.reload()">Reload</button>
   </div>
   </div>
-  <link rel="stylesheet" href="coach-ui.css?v=10">
+  <link rel="stylesheet" href="coach-ui.css?v=11">
   </body>
   </html>
