@@ -342,3 +342,35 @@ function resetFoodDatabaseLoader() {
  _foodDbLoader._entries.clear();
  _foodDbLoader._lastUrl = null;
 }
+
+// Photo schedules use Philippine calendar days, independent of the device timezone.
+function photoScheduleDate(value) {
+ if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+  const date = new Date(value + 'T00:00:00Z');
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value ? value : null;
+ }
+ if (!value) return null;
+ const date = value.toDate ? value.toDate() : value instanceof Date ? value : new Date(value);
+ return Number.isFinite(date.getTime()) ? date.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' }) : null;
+}
+function firstPhotoScheduleDue(day, today = photoScheduleDate(new Date())) {
+ if (!Number.isInteger(day) || day < 0 || day > 6 || !photoScheduleDate(today)) return null;
+ const date = new Date(today + 'T00:00:00Z');
+ date.setUTCDate(date.getUTCDate() + 14 + (day - date.getUTCDay() + 7) % 7);
+ return date.toISOString().slice(0, 10);
+}
+function photoScheduleStatus(member, latestPhoto, today = photoScheduleDate(new Date())) {
+ const day = member.photoUpdateDay;
+ if (!Number.isInteger(day) || day < 0 || day > 6 || !photoScheduleDate(today)) return null;
+ const start = photoScheduleDate(member.photoUpdateStartDate);
+ const stored = photoScheduleDate(member.nextPhotoDue);
+ if (!start && !stored) return null;
+ const dayNumber = iso => Date.parse(iso + 'T00:00:00Z') / 86400000;
+ let due = dayNumber(stored && (!start || stored >= start) ? stored : start);
+ const weekday = new Date(due * 86400000).getUTCDay();
+ due += (day - weekday + 7) % 7;
+ const submitted = [photoScheduleDate(member.lastPhotoSubmitted), photoScheduleDate(latestPhoto)].filter(date => date && date <= today).sort().pop();
+ if (submitted && dayNumber(submitted) >= due) due += (Math.floor((dayNumber(submitted) - due) / 14) + 1) * 14;
+ const daysLate = Math.max(0, dayNumber(today) - due);
+ return { day, nextDue: new Date(due * 86400000).toISOString().slice(0, 10), daysLate, dueToday: due === dayNumber(today) };
+}

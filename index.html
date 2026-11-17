@@ -15,7 +15,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
- <script src="shared.js?v=11"></script>
+ <script src="shared.js?v=12"></script>
 
 <style>
  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -10943,15 +10943,11 @@ async function submitAnglePhotos() {
    try {
     const memberDoc = await _memberGet;
     const mData = (memberDoc && memberDoc.exists ? memberDoc.data() : null) || {};
-   if (mData.photoUpdateStartDate) {
-    const today = phNow(); today.setHours(0,0,0,0);
-    let next = new Date((mData.nextPhotoDue || mData.photoUpdateStartDate) + 'T00:00:00');
-    while (next <= today) next.setDate(next.getDate() + 14);
-    await db.collection('members').doc(uid).update({
-     nextPhotoDue: localDateKey(next),
-     lastPhotoSubmitted: phIsoDate()
-    });
-   }
+   const schedule = photoScheduleStatus(mData, phIsoDate());
+   await db.collection('members').doc(uid).update({
+    ...(schedule ? { nextPhotoDue: schedule.nextDue } : {}),
+    lastPhotoSubmitted: phIsoDate()
+   });
   } catch(e) { console.warn('Photo schedule update failed:', e); }
    if (reqId) {
     // Reuse the already-uploaded front photo URL — the legacy path below
@@ -11137,6 +11133,9 @@ async function loadProgressPhotos() {
  try {
   const snap = await db.collection('members').doc(uid).collection('progressPhotos')
    .orderBy('uploadedAt', 'desc').limit(60).get();
+
+  if (uid !== currentUid) return;
+  initPhotoSchedule(snap.docs[0]?.data().uploadedAt || null);
 
   // Show empty state in both views if no data
   if (snap.empty) {
@@ -11464,75 +11463,77 @@ async function deleteProgressPhoto() {
 let _selectedScheduleDay = null;
 const _DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
+let _photoScheduleMember = null;
+let _photoScheduleUid = null;
+let _photoScheduleLatest = null;
+let _photoScheduleGeneration = 0;
 function _computeNextDue(dayOfWeek) {
- const today = phNow(); today.setHours(0,0,0,0);
- const todayDay = today.getDay();
- // Find the next occurrence of dayOfWeek that is at least 14 days away
- let daysUntil = (dayOfWeek - todayDay + 7) % 7;
- if (daysUntil === 0) daysUntil = 7; // same weekday
- if (daysUntil < 14) daysUntil += 7; // ensure at least 2 weeks out
- const next = new Date(today);
- next.setDate(today.getDate() + daysUntil);
- return localDateKey(next);
+ return firstPhotoScheduleDue(dayOfWeek, phIsoDate());
 }
-
 function _updateNextDueLabel(dayOfWeek) {
  const el = document.getElementById('psc-next');
  if (!el) return;
- const nextIso = _computeNextDue(dayOfWeek);
- const next = new Date(nextIso + 'T00:00:00');
- const label = next.toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' });
- el.textContent = `Next: ${label}`;
+ const saved = _photoScheduleUid === currentUid && _photoScheduleMember?.photoUpdateDay === dayOfWeek
+  ? photoScheduleStatus(_photoScheduleMember, _photoScheduleLatest) : null;
+ const nextIso = saved?.nextDue || _computeNextDue(dayOfWeek);
+ if (!nextIso) { el.textContent = ''; return; }
+ const label = new Date(nextIso + 'T00:00:00Z').toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' });
+ el.textContent = saved?.daysLate ? `Overdue by ${saved.daysLate} days · Due ${label}` : saved?.dueToday ? `Due today · ${label}` : `Next: ${label}`;
 }
-
-function initPhotoSchedule() {
- document.querySelectorAll('.psc-day').forEach(btn => {
-  btn.addEventListener('click', () => {
-   _selectedScheduleDay = parseInt(btn.dataset.day, 10);
-   document.querySelectorAll('.psc-day').forEach(b => b.classList.remove('selected'));
-   btn.classList.add('selected');
-   document.getElementById('psc-save-btn').classList.add('active');
-   _updateNextDueLabel(_selectedScheduleDay);
-  });
- });
-
- // Load saved preference
+async function initPhotoSchedule(latestPhoto = null) {
+ const generation = ++_photoScheduleGeneration;
  const uid = currentUid || auth?.currentUser?.uid;
  if (!uid) return;
- db.collection('members').doc(uid).get().then(doc => {
-  const data = doc.data() || {};
-  const day = data.photoUpdateDay;
-  if (day !== undefined && day !== null) {
-   _selectedScheduleDay = day;
-   document.querySelectorAll('.psc-day').forEach(b => {
-    if (parseInt(b.dataset.day, 10) === day) b.classList.add('selected');
-   });
+ if (_photoScheduleUid !== uid) { _photoScheduleMember = null; _selectedScheduleDay = null; }
+ _photoScheduleUid = uid;
+ _photoScheduleLatest = latestPhoto;
+ document.querySelectorAll('.psc-day').forEach(btn => {
+  btn.onclick = () => {
+   _selectedScheduleDay = Number(btn.dataset.day);
+   document.querySelectorAll('.psc-day').forEach(b => b.classList.toggle('selected', b === btn));
    document.getElementById('psc-save-btn').classList.add('active');
-   _updateNextDueLabel(day); // always recompute — don't trust stale stored date
-  }
- }).catch(() => {});
+   _updateNextDueLabel(_selectedScheduleDay);
+  };
+  btn.classList.remove('selected');
+ });
+ try {
+  const doc = await db.collection('members').doc(uid).get();
+  if (uid !== currentUid || generation !== _photoScheduleGeneration) return;
+  _photoScheduleMember = doc.exists ? doc.data() : {};
+  const day = _photoScheduleMember.photoUpdateDay;
+  _selectedScheduleDay = Number.isInteger(day) && day >= 0 && day <= 6 ? day : null;
+  document.querySelectorAll('.psc-day').forEach(b => b.classList.toggle('selected', Number(b.dataset.day) === _selectedScheduleDay));
+  document.getElementById('psc-save-btn').classList.toggle('active', _selectedScheduleDay !== null);
+  if (_selectedScheduleDay !== null) _updateNextDueLabel(day);
+  else document.getElementById('psc-next').textContent = 'Choose an update day';
+ } catch (_) {
+  if (uid === currentUid) document.getElementById('psc-next').textContent = 'Could not load schedule. Reopen Progress to retry.';
+ }
 }
-
 async function savePhotoSchedule() {
  if (_selectedScheduleDay === null) return;
  const uid = currentUid || auth?.currentUser?.uid;
- if (!uid) return;
- const nextDue = _computeNextDue(_selectedScheduleDay);
  const btn = document.getElementById('psc-save-btn');
- btn.textContent = 'Saving…';
+ if (!uid || btn.disabled) return;
+ const day = _selectedScheduleDay;
+ const existing = _photoScheduleUid === uid && _photoScheduleMember?.photoUpdateDay === day
+  ? photoScheduleStatus(_photoScheduleMember, _photoScheduleLatest) : null;
+ const nextDue = existing?.nextDue || _computeNextDue(day);
+ const patch = { photoUpdateDay: day, photoUpdateStartDate: existing ? (_photoScheduleMember.photoUpdateStartDate || nextDue) : nextDue, nextPhotoDue: nextDue };
+ btn.disabled = true; btn.textContent = 'Saving…';
+ document.querySelectorAll('.psc-day').forEach(b => b.disabled = true);
  try {
-  await db.collection('members').doc(uid).update({
-   photoUpdateDay: _selectedScheduleDay,
-   photoUpdateStartDate: nextDue,
-   nextPhotoDue: nextDue
-  });
-  _updateNextDueLabel(_selectedScheduleDay);
-  showToast(`Schedule saved — every other ${_DAY_NAMES[_selectedScheduleDay]}`, 'success');
-  btn.textContent = 'Saved';
-  setTimeout(() => { btn.textContent = 'Save'; }, 2000);
+  await db.collection('members').doc(uid).update(patch);
+  if (uid !== currentUid) return;
+  _photoScheduleUid = uid; _photoScheduleMember = { ..._photoScheduleMember, ...patch };
+  _updateNextDueLabel(day);
+  showToast(`Schedule saved — every other ${_DAY_NAMES[day]}`, 'success');
  } catch(e) {
-  showToast('Failed to save: ' + e.message, 'error');
-  btn.textContent = 'Save';
+  if (uid === currentUid) showToast('Could not save schedule. Please try again.', 'error');
+  console.warn('Photo schedule save failed:', e);
+ } finally {
+  btn.disabled = false; btn.textContent = 'Save';
+  document.querySelectorAll('.psc-day').forEach(b => b.disabled = false);
  }
 }
 

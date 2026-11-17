@@ -11,7 +11,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
-  <script src="shared.js?v=11"></script>
+  <script src="shared.js?v=12"></script>
   <script>
     // Apply theme before first paint to avoid a flash. Light is the default:
     // only an explicit stored dark choice opts in. Accepts BOTH the coach
@@ -9034,13 +9034,15 @@ function _sessAvatarColor(uid) {
   for (let i = 0; i < uid.length; i++) h = (h * 31 + uid.charCodeAt(i)) >>> 0;
   return _sessAvatarPalette[h % _sessAvatarPalette.length];
 }
-function renderTodaysSessions() {
+async function renderTodaysSessions() {
   const list = document.getElementById('todays-sessions-list');
   if (!list) return;
   const todayIso = manilaToday();
-  const due = allClients.filter(c => c.nextPhotoDue === todayIso);
+  const schedules = await Promise.all(allClients.map(async c => ({ client: c, schedule: await coachPhotoSchedule(c.uid) })));
+  const due = schedules.filter(({ schedule }) => schedule?.verified && schedule.dueToday).map(({ client }) => client);
   if (!due.length) {
-    list.innerHTML = `<div class="empty-state" style="padding:1.5rem"><div class="empty-sub">No check-ins scheduled for today</div></div>`;
+    const message = schedules.some(({ schedule }) => schedule && !schedule.verified) ? 'Could not verify some photo schedules. Refresh to retry.' : 'No check-ins scheduled for today';
+    list.innerHTML = `<div class="empty-state" style="padding:1.5rem"><div class="empty-sub">${message}</div></div>`;
     return;
   }
   list.innerHTML = due.map(c => {
@@ -12661,6 +12663,10 @@ async function loadClientPhotos(uid, forceRefresh) {
     const snap = await db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt','desc').limit(PAGE_SIZE).get();
     await cacheDone;
     if (gen !== window._photoGen) return;
+    _coachSchedulePhotos.set(uid, { time: Date.now(), promise: Promise.resolve(snap.docs[0]?.data().uploadedAt || null) });
+    loadClientScheduleInfo(uid);
+    loadMissedUpdates();
+    renderTodaysSessions();
 
     if (snap.empty) {
       clearTimeout(timeoutId);
@@ -12965,63 +12971,51 @@ function manilaToday() {
 
 const _COACH_DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-async function loadClientScheduleInfo(uid) {
-  const infoEl  = document.getElementById('m-schedule-info');
-  const dayEl   = document.getElementById('m-schedule-day');
-  const nextEl  = document.getElementById('m-schedule-next');
-  const statEl  = document.getElementById('m-schedule-status');
-  if (!infoEl) return;
-  try {
-    const client = allClients.find(c => c.uid === uid) || {};
-    const day     = client.photoUpdateDay;
-    const nextDue = client.nextPhotoDue;
-    if (day === undefined || day === null || !nextDue) {
-      infoEl.style.display = 'none'; return;
-    }
-    infoEl.style.display = 'flex';
-    dayEl.textContent  = `Every other ${_COACH_DAY_NAMES[day]}`;
-    const nextDate = new Date(nextDue + 'T00:00:00');
-    nextEl.textContent = nextDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const todayIso = manilaToday();
-    if (nextDue < todayIso) {
-      statEl.className = 'csi-status-late';
-      const daysLate = Math.round((new Date(todayIso) - new Date(nextDue + 'T00:00:00')) / 86400000);
-      statEl.textContent = ` Overdue by ${daysLate} day${daysLate !== 1 ? 's' : ''}`;
-    } else {
-      statEl.className = 'csi-status-ok';
-      statEl.textContent = 'On track';
-    }
-  } catch(_) { infoEl.style.display = 'none'; }
+const _coachSchedulePhotos = new Map();
+async function coachPhotoSchedule(uid) {
+ const client = allClients.find(c => c.uid === uid);
+ if (!client || !photoScheduleStatus(client)) return null;
+ let entry = _coachSchedulePhotos.get(uid);
+ if (!entry || Date.now() - entry.time > 60000) {
+  entry = { time: Date.now(), promise: withTimeout(db.collection('members').doc(uid).collection('progressPhotos').orderBy('uploadedAt', 'desc').limit(1).get(), 8000, 'photo schedule')
+   .then(snap => snap.docs[0]?.data().uploadedAt || null).catch(() => undefined) };
+  _coachSchedulePhotos.set(uid, entry);
+ }
+ const latest = await entry.promise;
+ const current = allClients.find(c => c.uid === uid);
+ const schedule = current && photoScheduleStatus(current, latest);
+ return schedule ? { ...schedule, verified: latest !== undefined } : null;
 }
-
-function loadMissedUpdates() {
-  const todayIso = manilaToday();
-  const missed = allClients.filter(c => {
-    if (!c.photoUpdateDay && c.photoUpdateDay !== 0) return false;
-    if (!c.nextPhotoDue) return false;
-    return c.nextPhotoDue < todayIso;
-  });
-  const panel = document.getElementById('missed-updates-panel');
-  const list  = document.getElementById('missed-updates-list');
-  const count = document.getElementById('missed-updates-count');
-  if (!panel || !list) return;
-  if (!missed.length) { panel.style.display = 'none'; return; }
-  panel.style.display = 'block';
-  count.textContent = missed.length + ' client' + (missed.length !== 1 ? 's' : '');
-  list.innerHTML = missed.map(c => {
-    const daysLate = Math.round((new Date(todayIso) - new Date(c.nextPhotoDue + 'T00:00:00')) / 86400000);
-    const initials = ((c.firstName||'?')[0] + (c.lastName||'')[0]).toUpperCase();
-    const nextFmt = new Date(c.nextPhotoDue + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    return `<div class="missed-update-card">
-      <div class="muc-av">${clientAvatarInner(c, initials)}</div>
-      <div class="muc-info">
-        <div class="muc-name">${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')}</div>
-        <div class="muc-detail">Was due ${nextFmt}</div>
-        <div class="muc-days">${daysLate} day${daysLate !== 1 ? 's' : ''} overdue</div>
-      </div>
-      <button class="muc-view-btn" onclick="openClientModal('${c.uid}')">View</button>
-    </div>`;
-  }).join('');
+async function loadClientScheduleInfo(uid) {
+ const infoEl = document.getElementById('m-schedule-info');
+ if (!infoEl) return;
+ infoEl.style.display = 'none';
+ const schedule = await coachPhotoSchedule(uid);
+ if (currentModalUid !== uid || !schedule) return;
+ infoEl.style.display = 'flex';
+ document.getElementById('m-schedule-day').textContent = `Every other ${_COACH_DAY_NAMES[schedule.day]}`;
+ document.getElementById('m-schedule-next').textContent = new Date(schedule.nextDue + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' });
+ const statEl = document.getElementById('m-schedule-status');
+ statEl.className = schedule.verified && schedule.daysLate ? 'csi-status-late' : 'csi-status-ok';
+ statEl.textContent = !schedule.verified ? 'Could not verify recent uploads. Refresh photos to retry.' : schedule.daysLate ? `Overdue by ${schedule.daysLate} day${schedule.daysLate !== 1 ? 's' : ''}` : schedule.dueToday ? 'Due today' : 'On track';
+}
+let _missedUpdatesGeneration = 0;
+async function loadMissedUpdates() {
+ const generation = ++_missedUpdatesGeneration;
+ const scheduled = await Promise.all(allClients.map(async client => ({ client, schedule: await coachPhotoSchedule(client.uid) })));
+ if (generation !== _missedUpdatesGeneration) return;
+ const missed = scheduled.filter(({ schedule }) => schedule?.verified && schedule.daysLate).sort((a, b) => b.schedule.daysLate - a.schedule.daysLate);
+ const panel = document.getElementById('missed-updates-panel');
+ const list = document.getElementById('missed-updates-list');
+ if (!panel || !list) return;
+ const unverified = scheduled.filter(({ schedule }) => schedule && !schedule.verified).length;
+ panel.style.display = missed.length || unverified ? 'block' : 'none';
+ document.getElementById('missed-updates-count').textContent = missed.length + ' client' + (missed.length !== 1 ? 's' : '');
+ list.innerHTML = (unverified ? `<div class="empty-sub" role="status">Could not verify ${unverified} photo schedule${unverified === 1 ? '' : 's'}. Refresh the page to retry.</div>` : '') + missed.map(({ client: c, schedule }) => {
+  const initials = ((c.firstName||'?')[0] + (c.lastName||'')[0]).toUpperCase();
+  const date = new Date(schedule.nextDue + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' });
+  return `<div class="missed-update-card"><div class="muc-av">${clientAvatarInner(c, initials)}</div><div class="muc-info"><div class="muc-name">${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')}</div><div class="muc-detail">Was due ${date}</div><div class="muc-days">${schedule.daysLate} day${schedule.daysLate !== 1 ? 's' : ''} overdue</div></div><button class="muc-view-btn" onclick="openClientModal('${c.uid}')">View</button></div>`;
+ }).join('');
 }
 
 function openLightbox(url,date,note) {
@@ -20917,6 +20911,6 @@ textarea:focus-visible, select:focus-visible,
    <button onclick="location.reload()">Reload</button>
   </div>
   </div>
-  <link rel="stylesheet" href="coach-ui.css?v=11">
+  <link rel="stylesheet" href="coach-ui.css?v=12">
   </body>
   </html>

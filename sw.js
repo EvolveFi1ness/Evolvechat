@@ -4,17 +4,17 @@
    static assets. Catalogs are downloaded only when used. */
 'use strict';
 
-const CACHE = 'evolve-v32';
+const CACHE = 'evolve-v34';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
   './manifest-coach.json',
   './design-tokens.css?v=16',
   './app-ui.css?v=20',
-  './coach-ui.css?v=11',
+  './coach-ui.css?v=12',
   './fonts/manrope.ttf',
   './fonts/barlow-condensed-semibold.ttf',
-  './shared.js?v=11',
+  './shared.js?v=12',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',

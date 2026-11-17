@@ -2323,7 +2323,7 @@ html.evolve-ui body .chat-layout {
 /* -- Settings -------------------------------------------------- */
 html.evolve-ui body .settings-wrap {
   max-width: 720px !important;
-  margin: 0 !important;
+  margin: 0 auto !important;
 }
 html.evolve-ui body .settings-wrap .page-header {
   margin-bottom: 28px !important;
