@@ -1,15 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="evolve-ui">
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
  <title>Evolve</title>
- <link rel="preconnect" href="https://fonts.googleapis.com">
- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
- <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
- <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+ <link rel="preload" href="fonts/manrope.ttf" as="font" type="font/ttf" crossorigin>
+ <link rel="preload" href="fonts/barlow-condensed-semibold.ttf" as="font" type="font/ttf" crossorigin>
  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
- <link rel="stylesheet" href="design-tokens.css?v=9">
+ <link rel="stylesheet" href="design-tokens.css?v=16">
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
         c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
@@ -17,7 +15,7 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
- <script src="shared.js?v=9"></script>
+ <script src="shared.js?v=11"></script>
 
 <style>
  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -5264,7 +5262,7 @@ html[data-theme="dark"] .field textarea::placeholder {
    if (saved === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
     var tm = document.getElementById('theme-color-meta');
-    if (tm) tm.setAttribute('content', '#16140F');
+    if (tm) tm.setAttribute('content', '#111820');
    }
   } catch (e) {}
  })();
@@ -5902,7 +5900,7 @@ img, video, iframe { max-width: 100%; }
 
  <!-- ── PWA / Add to Home Screen ── -->
  <meta name="description" content="Evolve — your personal fitness companion: workouts, nutrition, progress tracking and direct chat with your coach.">
- <meta name="theme-color" id="theme-color-meta" content="#EDE8DC">
+ <meta name="theme-color" id="theme-color-meta" content="#F5F0E8">
  <meta name="mobile-web-app-capable" content="yes">
  <meta name="apple-mobile-web-app-capable" content="yes">
  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -5910,6 +5908,7 @@ img, video, iframe { max-width: 100%; }
  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
  <link rel="icon" type="image/png" href="icons/icon-192.png">
  <link rel="manifest" href="manifest-client.json">
+ <link rel="stylesheet" href="app-ui.css?v=20">
 </head>
  <body>
 
@@ -5997,7 +5996,7 @@ img, video, iframe { max-width: 100%; }
  </div>
  <div class="a2hs-actions">
   <button id="a2hs-install-btn" onclick="a2hsInstallClick()">Install</button>
-  <button id="a2hs-dismiss-btn" onclick="a2hsDismiss()">&times;</button>
+  <button id="a2hs-dismiss-btn" aria-label="Dismiss install prompt" onclick="a2hsDismiss()">&times;</button>
  </div>
 </div>
 
@@ -6141,6 +6140,12 @@ img, video, iframe { max-width: 100%; }
 <!-- ══════════ AUTH ══════════ -->
 <div class="screen active" id="screen-auth">
  <div class="center-wrap">
+  <section class="auth-story" aria-label="Evolve client workspace">
+   <div class="auth-story-brand">EVOLVE <span>CLIENT WORKSPACE</span></div>
+   <h1>Show up.<br>Build momentum.</h1>
+   <p>Your training, nutrition, and progress. Together with your coach, one day at a time.</p>
+   <div class="auth-story-steps"><span>Train with a plan</span><span>Fuel your progress</span><span>Stay connected</span></div>
+  </section>
   <div class="card">
    <div class="logo-lockup">
     <div class="logo-icon-row">
@@ -6287,7 +6292,7 @@ img, video, iframe { max-width: 100%; }
    </div>
    <div class="field">
     <label>Medications or Supplements</label>
-    <textarea id="ob-meds" placeholder="e.g. Vitamin D, Creatine — or leave blank"></textarea>
+    <textarea id="ob-meds" style="resize:none;min-height:96px;field-sizing:content;max-height:320px;overflow:auto;" placeholder="e.g. Vitamin D, Creatine — or leave blank"></textarea>
     <div class="hint">Helps your coach give safe advice.</div>
    </div>
    <div class="field">
@@ -6482,6 +6487,7 @@ img, video, iframe { max-width: 100%; }
     </div>
    </div>
 
+   <div class="home-training">
    <div class="section-label">Today's Workout<span class="home-photo-view-all" style="white-space:nowrap;" onclick="openAssignedPlanModal()" role="button" tabindex="0">Weekly Plan →</span></div>
    <div class="workout-card" role="article" aria-label="Today's workout">
     <div class="workout-card-header">
@@ -6509,6 +6515,8 @@ img, video, iframe { max-width: 100%; }
     <div class="coach-preview-badge hidden" id="coach-preview-badge"></div>
    </div>
 
+   </div>
+   <div class="home-insights">
    <div class="section-label">Body Mass Index</div>
    <div class="bmi-card" role="region" aria-label="Body Mass Index">
     <div class="bmi-row">
@@ -6537,6 +6545,8 @@ img, video, iframe { max-width: 100%; }
     </div>
    </div>
 
+   </div>
+   <div class="home-history">
    <div class="section-label">Recent Activity</div>
    <div class="activity-feed" id="activity-feed" role="feed" aria-label="Recent activity">
     <div class="activity-row" role="article">
@@ -6544,6 +6554,7 @@ img, video, iframe { max-width: 100%; }
      <div class="activity-text"><strong>Account created</strong> — welcome to Evolve!</div>
      <div class="activity-time">Just now</div>
     </div>
+   </div>
    </div>
    <div style="height:1.5rem"></div>
   </div>
@@ -6955,7 +6966,7 @@ img, video, iframe { max-width: 100%; }
      <textarea id="client-chat-input" placeholder="Message your coach…" rows="1"
       style="flex:1;background:var(--bg2);border:1px solid rgba(30,22,12,0.16);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;resize:none;max-height:120px;line-height:1.5;transition:border-color .2s"
       onkeydown="clientChatKeydown(event)"></textarea>
-     <button onclick="clientSendMessage()"
+     <button class="chat-send-button" aria-label="Send message" onclick="clientSendMessage()"
       style="background:#C1440E;border:none;color:var(--bg3);width:42px;height:42px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
      </button>
@@ -6982,7 +6993,7 @@ img, video, iframe { max-width: 100%; }
     <div class="hidden" id="nutr-date-label" ></div>
 
     <!-- Today's targets card -->
-    <div style="background:var(--bg4);border:1px solid var(--border);border-radius:20px;margin:0 1.25rem 1rem;padding:20px;box-shadow:var(--shadow-sm);">
+    <div class="nutr-target-card" style="background:var(--bg4);border:1px solid var(--border);border-radius:20px;margin:0 1.25rem 1rem;padding:20px;box-shadow:var(--shadow-sm);">
      <div class="ev-flex-between ev-mb-md">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:17px;color:var(--text);">Today's targets</div>
       <div id="nutr-logged-count" class="ev-text-sm" style="font-style:italic;color:var(--text3);">0 logged</div>
@@ -7000,7 +7011,7 @@ img, video, iframe { max-width: 100%; }
      </div>
 
      <!-- Protein -->
-     <div class="ev-mb-lg">
+     <div class="ev-mb-lg nutr-metric">
       <div class="ev-flex-between" style="align-items:flex-start;">
        <div class="ev-flex" style="gap:8px;align-items:flex-start;">
         <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:5px;flex-shrink:0;" aria-hidden="true"></span>
@@ -7015,7 +7026,7 @@ img, video, iframe { max-width: 100%; }
      </div>
 
      <!-- Carbs -->
-     <div class="ev-mb-lg">
+     <div class="ev-mb-lg nutr-metric">
       <div class="ev-flex-between" style="align-items:flex-start;">
        <div class="ev-flex" style="gap:8px;align-items:flex-start;">
         <span style="width:8px;height:8px;border-radius:50%;background:#D2601F;margin-top:5px;flex-shrink:0;" aria-hidden="true"></span>
@@ -7030,7 +7041,7 @@ img, video, iframe { max-width: 100%; }
      </div>
 
      <!-- Fat -->
-     <div>
+     <div class="nutr-metric">
       <div class="ev-flex-between" style="align-items:flex-start;">
        <div class="ev-flex" style="gap:8px;align-items:flex-start;">
         <span style="width:8px;height:8px;border-radius:50%;background:#7C5CBF;margin-top:5px;flex-shrink:0;" aria-hidden="true"></span>
@@ -7062,13 +7073,13 @@ img, video, iframe { max-width: 100%; }
    </div>
 
    <!-- Meals -->
-   <div style="padding:0 1.25rem;">
+   <div class="nutr-meals-group" style="padding:0 1.25rem;">
     <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">Meals</div>
     <div id="nutr-meal-sections" style="background:var(--bg4);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow-sm);overflow:hidden;"></div>
    </div>
 
    <!-- Assigned food plan (Coach's Plan food rows) -->
-   <div style="padding:0 1.25rem;margin-top:16px;">
+   <div class="nutr-coach-group" style="padding:0 1.25rem;margin-top:16px;">
     <div style="font-size:11px;font-weight:700;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Coach's Plan</div>
     <div id="nutr-assigned-plan"></div>
    </div>
@@ -7084,31 +7095,31 @@ img, video, iframe { max-width: 100%; }
    <button class="side-nav-toggle" onclick="toggleSideNav()" title="Hide navigation" aria-label="Toggle navigation">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
    </button>
-   <div class="nav-item active" id="nav-home" onclick="setTab('home')" role="button" tabindex="0" aria-current="page">
+   <button type="button" class="nav-item active" id="nav-home" onclick="setTab('home')" role="button" tabindex="0" aria-current="page">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <span>Home</span>
-   </div>
-   <div class="nav-item" id="nav-log" onclick="setTab('log')" role="button" tabindex="0">
+   </button>
+   <button type="button" class="nav-item" id="nav-log" onclick="setTab('log')" role="button" tabindex="0">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M3 6.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM3 20.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 6.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM21 20.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>
     <span>Log</span>
-   </div>
-   <div class="nav-item" id="nav-nutrition" onclick="setTab('nutrition')" role="button" tabindex="0">
+   </button>
+   <button type="button" class="nav-item" id="nav-nutrition" onclick="setTab('nutrition')" role="button" tabindex="0">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
     <span>Nutrition</span>
-   </div>
-   <div class="nav-item" id="nav-progress" onclick="setTab('progress')" role="button" tabindex="0">
+   </button>
+   <button type="button" class="nav-item" id="nav-progress" onclick="setTab('progress')" role="button" tabindex="0">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
     <span>Progress</span>
-   </div>
-   <div class="nav-item" id="nav-chat" onclick="setTab('chat')" role="button" tabindex="0">
+   </button>
+   <button type="button" class="nav-item" id="nav-chat" onclick="setTab('chat')" role="button" tabindex="0">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
     <span>Chat</span>
     <span class="chat-unread-badge" id="nav-chat-badge" aria-label="Unread messages"></span>
-   </div>
-   <div class="nav-item" id="nav-profile" onclick="setTab('profile')" role="button" tabindex="0">
+   </button>
+   <button type="button" class="nav-item" id="nav-profile" onclick="setTab('profile')" role="button" tabindex="0">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span>Profile</span>
-   </div>
+   </button>
   </nav>
  </div>
 </div>
@@ -7686,6 +7697,12 @@ let heightUnit = 'cm';
 let weightUnit = 'kg';
 let step1Data  = {};
 let todayWorkout = null;
+// An old unscoped draft may be recovered only for the profile cached at startup.
+const _legacyWorkoutOwnerUid = (() => {
+ try { return JSON.parse(localStorage.getItem('evolve_profile_cache') || 'null')?.uid || null; }
+ catch (_) { return null; }
+})();
+
 let _peCurrentData = {}; // profile edit cache — declared early so loadHomeScreen can populate it
 // Personal records cache: { "Exercise Name": { weight (kg), reps, achievedAt } }
 // Loaded from the member doc and updated live as sets are marked done.
@@ -8159,7 +8176,7 @@ async function loadHomeScreen(data) {
 
  let _restoredCustomWkt = null;
  try {
-  const saved = JSON.parse(localStorage.getItem('evolve_custom_wkt_' + phIsoDate()) || 'null');
+  const saved = JSON.parse(_readWorkoutStorage(_workoutStorageKey('evolve_custom_wkt_' + phIsoDate())) || 'null');
   if (saved?.exercises?.length && (!saved.sourceAssignedPlan || saved.sourceAssignedPlan === _stableStringify(assignedPlan))) _restoredCustomWkt = saved;
  } catch(e) {}
  // Personal edits take priority on refresh while the coach's plan is unchanged.
@@ -8174,14 +8191,16 @@ async function loadHomeScreen(data) {
   document.getElementById('workout-badge').textContent = w.exercises.length + ' exercise' + (w.exercises.length !== 1 ? 's' : '');
   document.getElementById('exercise-list-preview').innerHTML = w.exercises.map((ex,i) => {
    const _m2 = (typeof getWorkoutMedia!=='undefined')?getWorkoutMedia(ex.name):null;
-   const _e2 = s=>(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
    const _hasThumb = _m2 && _m2.thumbnail;
-   const _vEl = `<img class="exrow-vid-thumb" data-ex-name="${_e2(ex.name)}" src="${_hasThumb ? _m2.thumbnail : ''}" onclick="openWorkoutVidModal('${_e2(ex.name)}')" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';var _b=this.nextElementSibling;if(_b)_b.style.display='flex';"${_hasThumb ? '' : ' style="display:none;"'}>` +
-    `<div class="exrow-vid-btn" onclick="openWorkoutVidModal('${_e2(ex.name)}')'" + ${_hasThumb ? ' style="display:none;"' : ''}>&#x25B6;</div>`;
+   const _videoClick = escapeAttr('openWorkoutVidModal(' + JSON.stringify(ex.name || '') + ')');
+   const _vEl = `<button type="button" class="exrow-video-trigger" aria-label="Watch ${escapeAttr(ex.name)} demo" onclick="${_videoClick}">
+    <img class="exrow-vid-thumb" data-ex-name="${escapeAttr(ex.name)}" src="${escapeAttr(_hasThumb ? _m2.thumbnail : '')}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';var _b=this.nextElementSibling;if(_b)_b.style.display='flex';"${_hasThumb ? '' : ' style="display:none;"'}>
+    <span class="exrow-vid-btn"${_hasThumb ? ' style="display:none;"' : ''} aria-hidden="true">&#x25B6;</span>
+   </button>`;
    return `<div class="exercise-row-preview" style="display:flex;align-items:center;gap:10px;padding:6px 0;">
     ${_vEl}
-    <div class="ex-left" style="flex:1;min-width:0;"><div class="ex-num">${i+1}</div><div><div class="ex-name">${ex.name}</div><div class="ex-detail">${ex.detail||''}</div></div></div>
-    <div class="ex-sets">${ex.target||''}</div>
+    <div class="ex-left" style="flex:1;min-width:0;"><div class="ex-num">${i+1}</div><div><div class="ex-name">${escapeHtml(ex.name)}</div><div class="ex-detail">${escapeHtml(ex.detail||'')}</div></div></div>
+    <div class="ex-sets">${escapeHtml(ex.target||'')}</div>
    </div>`;
   }).join('');
   document.getElementById('log-day-badge').textContent = todayName;
@@ -8556,7 +8575,7 @@ async function checkTodayCompletion(workout) {
     const _sameWorkout = _loggedNames.size > 0 && _overlap === _loggedNames.size && _newNames.size === _loggedNames.size;
     if (!_sameWorkout) {
      // Genuinely a different/new workout for today — clear local flag and show it fresh
-     try { localStorage.removeItem('evolve_completed_' + todayFormatted); } catch(e) {}
+     try { localStorage.removeItem(_workoutStorageKey('evolve_completed_' + todayFormatted)); } catch(e) {}
      return false;
     }
     // Same exercises as what was already completed — fall through and show the completed view.
@@ -8628,27 +8647,10 @@ function showCompletedWorkoutView(workout, log) {
 }
 
 // ── PREVIOUS column: lookup + background refresh ────────────────────────────
-// Fuzzy exercise name lookup — exact match first, then fuzzy word-overlap
-// (≥0.7 score, 1-char typo tolerance) — e.g. "Bycicle" finds "Bicycle" data.
-// Reads window._prevSetMap directly so it always reflects the latest fetch.
-function _prevSetLookup(name) {
+// Exercise variants must keep separate histories even when most words match.
+function _prevSetLookup(name, exerciseId) {
  const map = window._prevSetMap || {};
- const key = (name || '').toLowerCase().trim();
- if (map[key] && map[key].length) return map[key];
- const tkn = s => s.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(Boolean);
- const qT = tkn(key);
- if (!qT.length) return [];
- let bestKey = null, bestScore = 0;
- Object.keys(map).forEach(k => {
-  const kT = tkn(k);
-  const shared = qT.filter(t => kT.some(kt =>
-   kt === t || (Math.abs(kt.length - t.length) <= 1 &&
-    [...t].filter((c,i) => kt[i] !== c).length <= 1)
-  )).length;
-  const score = shared / Math.max(qT.length, kT.length);
-  if (score > bestScore && score >= 0.7) { bestScore = score; bestKey = k; }
- });
- return bestKey ? map[bestKey] : [];
+ return map['id:' + getExerciseId({ name, exerciseId })] || map['legacy:' + exerciseHistoryKey(name)] || [];
 }
 window._prevSetMapLookup = _prevSetLookup;
 
@@ -8673,7 +8675,7 @@ async function _refreshPrevSetMap(workout, myToken) {
   // A newer buildWorkoutLogger call has since started (e.g. the client
   // switched workouts again while this was in flight) — its own refresh
   // will patch the current cards, so don't apply stale data on top.
-  if (window._buildLoggerToken !== myToken) return;
+  if (window._buildLoggerToken !== myToken || (currentUid || auth?.currentUser?.uid) !== _uid) return;
 
   // Resolve a Firestore timestamp to ms. For pending serverTimestamp (toDate returns null),
   // fall back to the document's Firestore metadata read time so it still sorts correctly.
@@ -8697,55 +8699,20 @@ async function _refreshPrevSetMap(workout, myToken) {
    _toMs(b.data().completedAt, b) - _toMs(a.data().completedAt, a)
   );
 
-  // Token helper — splits name into words, allows 1-char typo per word
-  const _tkn = s => s.toLowerCase().replace(/[^a-z0-9 ]/g,'').split(/\s+/).filter(Boolean);
-  const _fuzzyMatch = (a, b) => {
-   const aT = _tkn(a), bT = _tkn(b);
-   // Only tolerate typos within the SAME word count. If one name has an
-   // extra/missing word (e.g. "Smith Bench Press" vs "Smith Incline Bench
-   // Press"), that's a different exercise variant, not a typo — never merge.
-   if (aT.length !== bT.length) return 0;
-   const shared = aT.filter(t => bT.some(kt =>
-    kt === t || (Math.abs(kt.length - t.length) <= 1 &&
-     [...t].filter((c,i) => kt[i] !== c).length <= 1)
-   )).length;
-   return shared / Math.max(aT.length, bT.length);
-  };
-
-  // canonical key map: normalised-name → canonical key already stored in _prevSetMap
-  // so that typo variants ("bycicle" / "bicycle") all resolve to one entry.
-  const _canonMap = {}; // normalisedVariant → canonicalKey
   const _prevSetMap = {};
 
-  // Walk newest→oldest. For each exercise, find or create a canonical slot.
-  // Show the most recent completed lift ever — no date filtering.
-  // The user always wants to see their last recorded weight/reps regardless of when.
+  // Walk newest to oldest; keep the latest sets for each full exercise name.
   for (const _doc of _sorted) {
    const _d = _doc.data();
    const _ms = _toMs(_d.completedAt, _doc);
    if (!_ms) continue;
 
    (_d.exercises || []).forEach(exLog => {
-    const key = (exLog.name || '').toLowerCase().trim();
-    if (!key) return;
+    if (!exerciseHistoryKey(exLog.name)) return;
+    const key = 'id:' + getExerciseId(exLog);
+    if (_prevSetMap[key]) return;
 
-    // Check if this key (or a fuzzy variant) already has a canonical slot
-    let canonKey = _canonMap[key];
-    if (!canonKey) {
-     // Try to find an existing canonical key that fuzzy-matches this one
-     const existing = Object.keys(_prevSetMap).find(k => _fuzzyMatch(k, key) >= 0.7);
-     if (existing) {
-      canonKey = existing;
-     } else {
-      canonKey = key; // new canonical slot
-     }
-     _canonMap[key] = canonKey;
-    }
-
-    // Only store if this canonical slot hasn't been filled yet (newest wins)
-    if (_prevSetMap[canonKey]) return;
-
-    _prevSetMap[canonKey] = (exLog.sets || []).map(s => {
+    _prevSetMap[key] = (exLog.sets || []).map(s => {
      const unit = s.weightUnit || _d.weightUnit || 'kg';
      const displayW = s.weightDisplay !== undefined ? s.weightDisplay : s.weight;
      if (displayW === null || displayW === undefined || displayW === '') {
@@ -8753,6 +8720,7 @@ async function _refreshPrevSetMap(workout, myToken) {
      }
      return displayW + ' ' + unit + ' × ' + (s.reps || '—');
     });
+    if (!exLog.exerciseId) _prevSetMap['legacy:' + exerciseHistoryKey(exLog.name)] = _prevSetMap[key];
    });
   }
 
@@ -8769,7 +8737,7 @@ async function _refreshPrevSetMap(workout, myToken) {
 function _patchPrevSetColumns(workout) {
  (workout.exercises || []).forEach((ex, exIdx) => {
   const exName = ex && ex.name ? ex.name : '';
-  const prevSets = _prevSetLookup(exName);
+  const prevSets = _prevSetLookup(exName, ex.exerciseId);
   if (!prevSets.length) return;
   const setsContainer = document.getElementById('sets-' + exIdx);
   if (!setsContainer) return;
@@ -8788,6 +8756,7 @@ async function buildWorkoutLogger(workout) {
  // (can happen when loadHomeScreen is called twice in quick succession e.g. initial load + onSnapshot)
  if (window._buildLoggerToken === undefined) window._buildLoggerToken = 0;
  const myToken = ++window._buildLoggerToken;
+ workout = { ...workout, exercises: (workout.exercises || []).map(ex => ({ ...ex, exerciseId: getExerciseId(ex) })) };
 
  const container = document.getElementById('log-exercises-container');
  container.innerHTML = '';
@@ -8886,7 +8855,8 @@ async function buildWorkoutLogger(workout) {
   card.className = 'log-ex-card';
   card.dataset.exIdx = exIdx;
   const exName = ex && ex.name ? ex.name : 'Exercise';
-  const _exPrevSets = _prevSetLookup(exName);
+  card.dataset.exerciseId = getExerciseId(ex);
+  const _exPrevSets = _prevSetLookup(exName, ex.exerciseId);
 
    const match = (ex.target || '').match(/(\d+)[×x](\d+)/);
    // Structured fields first (new prescriptions), legacy string parse second.
@@ -9148,7 +9118,7 @@ function removeExercise(exIdx) {
     // doesn't ghost back on page reload
     try {
      const _today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-     localStorage.removeItem('evolve_custom_wkt_' + _today);
+     localStorage.removeItem(_workoutStorageKey('evolve_custom_wkt_' + _today));
      localStorage.removeItem(_loggerStorageKey());
     } catch(e) {}
     todayWorkout = null;
@@ -9203,7 +9173,7 @@ function removeExercise(exIdx) {
        exercises: todayWorkout.exercises.filter(ex => remainingNames.includes(ex.name))
       });
       todayWorkout = updatedWkt;
-      safeLocalStorageSet('evolve_custom_wkt_' + _today2, JSON.stringify(updatedWkt));
+      safeLocalStorageSet(_workoutStorageKey('evolve_custom_wkt_' + _today2), JSON.stringify(updatedWkt));
      } catch(e) {}
     }
    }
@@ -9399,13 +9369,29 @@ function updateSummary() {
 // ─────────────────────────────────────────
 // LOGGER STATE PERSISTENCE (localStorage)
 // ─────────────────────────────────────────
+function _workoutStorageKey(base) {
+ const uid = currentUid || auth?.currentUser?.uid || 'signed-out';
+ return 'evolve_member_' + encodeURIComponent(uid) + '_' + base;
+}
+
+function _readWorkoutStorage(key) {
+ const stored = localStorage.getItem(key);
+ if (stored !== null) return stored;
+ const uid = currentUid || auth?.currentUser?.uid;
+ const prefix = _workoutStorageKey('');
+ if (!uid || uid !== _legacyWorkoutOwnerUid || !key.startsWith(prefix)) return null;
+ const legacy = localStorage.getItem(key.slice(prefix.length));
+ if (legacy !== null) safeLocalStorageSet(key, legacy);
+ return legacy;
+}
+
 function _loggerStorageKey() {
  // While editing a PAST workout the session state is kept under a dedicated
  // key so it can never clobber — or be clobbered by — today's live session.
- if (window._editingLogId) return 'evolve_logger_edit_' + window._editingLogId;
+ if (window._editingLogId) return _workoutStorageKey('evolve_logger_edit_' + window._editingLogId);
  // Key is scoped to today's date (PH timezone) so yesterday's session doesn't bleed in
  const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
- return 'evolve_logger_' + today;
+ return _workoutStorageKey('evolve_logger_' + today);
 }
 
 function saveLoggerState() {
@@ -9432,12 +9418,26 @@ function saveLoggerState() {
    const targetEl = card.querySelector('.log-ex-target-badge');
    exercises.push({
     sets, note,
+    exerciseId: card.dataset.exerciseId,
     weightUnit: card.dataset.weightUnit || 'kg',
     name:  nameEl  ? nameEl.textContent  : '',
     detail: detailEl ? detailEl.textContent : '',
     target: targetEl ? targetEl.textContent : ''
    });
   });
+  // DOM edits (duplicate, move, add/remove sets) must survive a page reload too.
+  if (!window._editingLogId && todayWorkout && exercises.length) {
+   const original = todayWorkout.exercises || [];
+   todayWorkout = { ...todayWorkout, exercises: exercises.map(ex => {
+    const source = original.find(item => item.name === ex.name)
+     || original.find(item => getExerciseId(item) === ex.exerciseId) || {};
+    return { ...source, name: ex.name, exerciseId: ex.exerciseId, detail: ex.detail,
+     target: ex.target, sets: ex.sets.length };
+   }), sourceAssignedPlan: todayWorkout.sourceAssignedPlan || _stableStringify(window._lastHomeData?.assignedWorkoutPlan || {}) };
+   const definitionKey = _workoutStorageKey('evolve_custom_wkt_' + phIsoDate());
+   const definition = JSON.stringify(todayWorkout);
+   if (localStorage.getItem(definitionKey) !== definition) safeLocalStorageSet(definitionKey, definition);
+  }
   const timerElapsed = _wktStartTime ? Math.floor((Date.now() - _wktStartTime) / 1000) : 0;
   safeLocalStorageSet(_loggerStorageKey(), JSON.stringify({
    exercises, timerElapsed, weightUnit: workoutWeightUnit,
@@ -9451,7 +9451,7 @@ function saveLoggerState() {
 
 function restoreLoggerState() {
  try {
-  const raw = localStorage.getItem(_loggerStorageKey());
+  const raw = _readWorkoutStorage(_loggerStorageKey());
   if (!raw) return false;
   const saved = JSON.parse(raw);
   if (!saved || !saved.exercises) return false;
@@ -9468,6 +9468,7 @@ function restoreLoggerState() {
   const currentNameByIdx = currentCards.map(c => (c.querySelector('.log-ex-name')?.textContent || '').trim().toLowerCase());
 
   const savedHasNames = saved.exercises.some(ex => ex.name);
+  const usedSavedExercises = new Set();
 
   // Suppress auto-save while we're rebuilding from saved data
   window._loggerRestoring = true;
@@ -9480,14 +9481,18 @@ function restoreLoggerState() {
 
    let exData = null;
    if (savedHasNames) {
-    // Name-based match — safe regardless of card order or reassignment
-    exData = saved.exercises.find(ex => (ex.name || '').trim().toLowerCase() === curName);
+    // Prefer the same occurrence/name before an ID-only rename fallback.
+    const available = saved.exercises.filter(ex => !usedSavedExercises.has(ex));
+    exData = available.find(ex => ex.exerciseId === card.dataset.exerciseId && exerciseHistoryKey(ex.name) === exerciseHistoryKey(curName))
+     || available.find(ex => ex.exerciseId && ex.exerciseId === card.dataset.exerciseId)
+     || available.find(ex => !ex.exerciseId && exerciseHistoryKey(ex.name) === exerciseHistoryKey(curName));
    } else {
     // Legacy saved data (from before names were captured) — fall back to
     // positional match, same as the original behavior.
     exData = saved.exercises[exIdx];
    }
    if (!exData || !exData.sets || !exData.sets.length) return;
+   usedSavedExercises.add(exData);
 
    appliedAny = true;
    // Restore per-card weight unit
@@ -9499,7 +9504,7 @@ function restoreLoggerState() {
     const tgtMatch = (todayWorkout?.exercises?.[exIdx]?.target || '').match(/(\d+)[×x](\d+)/);
     const _tgtEx = todayWorkout?.exercises?.[exIdx] || {};
     const tgtReps = (_tgtEx.minReps > 0) ? _tgtEx.minReps : (tgtMatch ? tgtMatch[2] : '');
-   const _exPrev = (window._prevSetMapLookup ? window._prevSetMapLookup(curName) : (window._prevSetMap && window._prevSetMap[curName])) || [];
+   const _exPrev = (window._prevSetMapLookup ? window._prevSetMapLookup(curName, card.dataset.exerciseId) : (window._prevSetMap && window._prevSetMap[curName])) || [];
    exData.sets.forEach((s, sIdx) => {
     const _prevTxt = _exPrev[sIdx] || (_exPrev.length > 0 ? _exPrev[_exPrev.length - 1] : '');
     addSet(exIdx, s.weight, s.reps, s.done, tgtReps, _prevTxt);
@@ -9529,7 +9534,7 @@ function restoreLoggerState() {
 // can offer to resume, instead of the data just silently disappearing.
 function checkOrphanedLoggerSession() {
  try {
-  const raw = localStorage.getItem(_loggerStorageKey());
+  const raw = _readWorkoutStorage(_loggerStorageKey());
   if (!raw) return null;
   const saved = JSON.parse(raw);
   if (!saved || !saved.exercises || !saved.exercises.length) return null;
@@ -9561,7 +9566,7 @@ function clearLoggerState() {
  // Also clear any saved custom workout for today
  try {
   const _today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  localStorage.removeItem('evolve_custom_wkt_' + _today);
+  localStorage.removeItem(_workoutStorageKey('evolve_custom_wkt_' + _today));
  } catch(e) {}
 }
 
@@ -9569,7 +9574,7 @@ function markWorkoutCompletedToday() {
  // Stamp a simple flag so checkTodayCompletion can resolve synchronously on reload
  // without waiting for the Firestore serverTimestamp to be set.
  try {
-  const key = 'evolve_completed_' + phIsoDate();
+  const key = _workoutStorageKey('evolve_completed_' + phIsoDate());
   localStorage.setItem(key, JSON.stringify({
    dayName:   todayWorkout?.dayName || '',
    workoutName: todayWorkout?.name  || 'Workout',
@@ -9577,15 +9582,15 @@ function markWorkoutCompletedToday() {
   }));
   // Clean up keys from previous days to avoid localStorage bloat
   Object.keys(localStorage).forEach(k => {
-   if (k.startsWith('evolve_completed_') && k !== key) localStorage.removeItem(k);
+   if (k.startsWith(_workoutStorageKey('evolve_completed_')) && k !== key) localStorage.removeItem(k);
   });
  } catch(e) {}
 }
 
 function getTodayCompletionFlag(dayName) {
  try {
-  const key = 'evolve_completed_' + phIsoDate();
-  const raw = localStorage.getItem(key);
+  const key = _workoutStorageKey('evolve_completed_' + phIsoDate());
+  const raw = _readWorkoutStorage(key);
   if (!raw) return null;
   const data = JSON.parse(raw);
   // Match on dayName (empty string matches empty string too)
@@ -9720,7 +9725,7 @@ async function completeWorkout() {
    });
   });
   const note = document.getElementById('note-' + exIdx)?.value.trim() || '';
-  exercises.push({ name: exName, sets, note, weightUnit: cardUnit });
+  exercises.push({ name: exName, exerciseId: card.dataset.exerciseId || getExerciseId({ name: exName }), sets, note, weightUnit: cardUnit });
  });
 
  const doneSets  = parseInt(document.getElementById('ls-sets').textContent, 10)  || 0;
@@ -9735,6 +9740,8 @@ async function completeWorkout() {
 
  try {
   const editingLogId = window._editingLogId;
+  const memberRef = db.collection('members').doc(uid);
+  const batch = db.batch();
   if (editingLogId) {
    // Editing a past (completed) workout — update the ORIGINAL log in place.
    // No new document, no attendance increment, no duplicate activity entry.
@@ -9742,7 +9749,7 @@ async function completeWorkout() {
    // the existing name if the user cleared it).
    const editedName = (document.getElementById('edit-wkt-name')?.value || '').trim()
     || (window._editingLogData?.workoutName) || 'Workout';
-   await db.collection('members').doc(uid).collection('workoutLogs').doc(editingLogId).update({
+   batch.update(memberRef.collection('workoutLogs').doc(editingLogId), {
     workoutName: editedName,
     dayName:   window._editingLogData?.dayName || todayWorkout?.dayName || '',
     exercises,
@@ -9752,10 +9759,11 @@ async function completeWorkout() {
     editedAt: firebase.firestore.FieldValue.serverTimestamp()
    });
    // Persist any new/updated personal records found while editing
-   await db.collection('members').doc(uid).update({ personalRecords });
+   batch.update(memberRef, { personalRecords });
+   await batch.commit();
   } else {
    // Save workout log
-   await db.collection('members').doc(uid).collection('workoutLogs').add({
+   batch.set(memberRef.collection('workoutLogs').doc(), {
     workoutName: todayWorkout?.name || 'Workout',
     dayName:   todayWorkout?.dayName || '',
     exercises,
@@ -9766,10 +9774,11 @@ async function completeWorkout() {
    });
 
    // Increment attendance, and persist any new/updated personal records from this session
-   await db.collection('members').doc(uid).update({
+   batch.update(memberRef, {
     attendanceCount: firebase.firestore.FieldValue.increment(1),
     personalRecords: personalRecords
    });
+   await batch.commit();
 
    // Update UI
    const sessEl = document.getElementById('stat-sessions');
@@ -9874,7 +9883,7 @@ function startNewWorkoutSession() {
  todayWorkout = null;
  try {
   const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  localStorage.removeItem('evolve_custom_wkt_' + today);
+  localStorage.removeItem(_workoutStorageKey('evolve_custom_wkt_' + today));
   localStorage.removeItem(_loggerStorageKey());
  } catch(e) {}
 
@@ -10379,6 +10388,7 @@ function editWorkoutFromHistory() {
   dayName: d.dayName || '',
   isCustom: true,
   exercises: (d.exercises || []).map(ex => ({
+   exerciseId: getExerciseId(ex),
    name: ex.name || 'Exercise',
    detail: '',
    target: '',
@@ -10395,6 +10405,7 @@ function editWorkoutFromHistory() {
    exercises: (d.exercises || []).map(ex => {
     const unit = ex.weightUnit || d.weightUnit || 'kg';
     return {
+     exerciseId: getExerciseId(ex),
      name: ex.name || 'Exercise',
      detail: '',
      target: '',
@@ -10582,7 +10593,7 @@ function exitEditMode() {
  window._editingLogData = null;
  _editOriginalStateJSON = null;
  if (id) {
-  try { localStorage.removeItem('evolve_logger_edit_' + id); } catch(e) {}
+  try { localStorage.removeItem(_workoutStorageKey('evolve_logger_edit_' + id)); } catch(e) {}
  }
  const bar = document.getElementById('edit-mode-bar');
  if (bar) bar.style.display = 'none';
@@ -11789,7 +11800,7 @@ function subscribeClientChat(uid, coachUid) {
     bubble.style.cssText = `display:flex;flex-direction:column;gap:3px;max-width:75%;align-self:${isMe?'flex-end':'flex-start'};align-items:${isMe?'flex-end':'flex-start'}`;
     const ts = m.createdAt?.toDate ? m.createdAt.toDate().toLocaleTimeString('en-PH', { timeZone: 'Asia/Manila',hour:'numeric',minute:'2-digit'}) : '';
     bubble.innerHTML = `
-     <div style="padding:10px 14px;border-radius:${isMe?'14px 14px 4px 14px':'14px 14px 14px 4px'};font-size:13px;line-height:1.5;background:${isMe?'#C1440E':'var(--bg2)'};color:${isMe?'var(--bg3)':'var(--text)'};border:${isMe?'none':'1px solid rgba(30,22,12,0.12)'}">${escapeHtml(m.text)}</div>
+     <div class="client-message-bubble ${isMe?'outgoing':'incoming'}" style="padding:10px 14px;border-radius:${isMe?'14px 14px 4px 14px':'14px 14px 14px 4px'};font-size:13px;line-height:1.5;background:${isMe?'var(--gold)':'var(--bg2)'};color:${isMe?'var(--evolve-text-inverse)':'var(--text)'};border:${isMe?'none':'1px solid var(--border)'}">${escapeHtml(m.text)}</div>
      <div style="font-size:10px;color:var(--text2)">${ts}</div>`;
     area.appendChild(bubble);
    });
@@ -11865,6 +11876,12 @@ function clearClientSessionState() {
  if (window._workoutPlanListener) { window._workoutPlanListener(); window._workoutPlanListener = null; }
  if (_pendingApprovalUnsub) { _pendingApprovalUnsub(); _pendingApprovalUnsub = null; }
  if (_wktTimerInterval) { clearInterval(_wktTimerInterval); _wktTimerInterval = null; }
+ window._prevSetMap = {};
+ window._buildLoggerToken = (window._buildLoggerToken || 0) + 1;
+ window._editingLogId = null; window._editingLogData = null;
+ window._workoutLoggingActive = false; window._pendingPlanUpdate = null;
+ _editOriginalStateJSON = null; _wktStartTime = null;
+ personalRecords = {}; _pastLogsData = [];
  _nutrInitialized = false;
  nutrFoodLogs = {};
  nutrPlan = null; nutrPlanId = null; nutrAllMacroPlans = [];
@@ -13580,9 +13597,9 @@ function renderNutrMealSections(dateKey) {
      const c  = Math.round(item.carbs_g||item.carbs||0);
      const fa = Math.round(item.fat_g||item.fats||0);
      return `
-     <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border);cursor:pointer;" onclick="nutrEditLog('${item.logId}','${meal}')">
+     <div class="nutr-logged-food" style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--border);cursor:pointer;" onclick="nutrEditLog('${item.logId}','${meal}')">
       <div style="flex:1;min-width:0;">
-       <div style="font-size:13px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.food_name||item.mealName||'Food')}</div>
+       <div class="nutr-food-name" style="font-size:13px;color:var(--text);font-weight:600;">${escapeHtml(item.food_name||item.mealName||'Food')}</div>
       </div>
       <div style="font-size:11px;color:var(--text3);flex-shrink:0;">P${p} C${c} F${fa}</div>
       <button onclick="event.stopPropagation();nutrDeleteLog('${item.logId}','${meal}')" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 6px;flex-shrink:0;border-radius:6px;transition:color 0.15s,background 0.15s;" title="Remove" onmouseover="this.style.color='#F87171';this.style.background='rgba(248,113,113,0.1)'" onmouseout="this.style.color='var(--text3)';this.style.background='none'"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
@@ -16059,6 +16076,7 @@ function toggleAssignedPlanDay(idx) {
  if (!body) return;
  const open = body.style.display !== 'none';
  body.style.display = open ? 'none' : 'block';
+ document.querySelector('[aria-controls="assigned-plan-day-body-' + idx + '"]')?.setAttribute('aria-expanded', String(!open));
  if (chev) chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
 }
 
@@ -16139,15 +16157,15 @@ function renderAssignedPlanModal() {
   }).join('');
 
   return `<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;margin-bottom:8px;overflow:hidden;${isToday ? 'border-color:rgba(193,68,14,0.35);' : ''}${doneToday ? 'border-color:rgba(61,203,114,0.3);' : ''}">
-   <div onclick="toggleAssignedPlanDay(${idx})" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer;">
+   <button type="button" aria-expanded="false" aria-controls="assigned-plan-day-body-${idx}" onclick="toggleAssignedPlanDay(${idx})" style="width:100%;text-align:left;background:transparent;border:0;font:inherit;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer;">
     <div style="min-width:0;">
      <div style="display:flex;align-items:center;">
-      <span style="font-size:13px;font-weight:700;color:#e2e2e2;font-family:'Outfit',sans-serif;">${day}</span>${todayTag}${doneTag}
+      <span style="font-size:13px;font-weight:700;color:var(--text);font-family:'Outfit',sans-serif;">${day}</span>${todayTag}${doneTag}
      </div>
      <div style="font-size:12px;color:var(--text2);font-family:'Outfit',sans-serif;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${safeName} · ${exCount} exercise${exCount !== 1 ? 's' : ''}</div>
     </div>
     <svg id="assigned-plan-day-chev-${idx}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform 0.2s;"><polyline points="6 9 12 15 18 9"/></svg>
-   </div>
+   </button>
    <div id="assigned-plan-day-body-${idx}" style="display:none;padding:0 14px 14px;">
     ${exRows}
     <button onclick="event.stopPropagation();startAssignedPlanDay('${safeDay}')" style="margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;background:${doneToday ? 'rgba(255,255,255,0.05)' : 'rgba(61,203,114,0.15)'};border:1px solid ${doneToday ? 'rgba(255,255,255,0.14)' : 'rgba(61,203,114,0.35)'};border-radius:11px;color:${doneToday ? '#ccc' : '#3DCB72'};font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">
@@ -16612,7 +16630,7 @@ function openCustomWorkoutBuilder() {
    const setRows = card.querySelectorAll('.log-set-row');
    const prescription = normalizeExercisePrescription(todayWorkout.exercises[idx]);
    const sets = setRows.length || prescription.sets;
-   return { name, sets, reps: prescription.minReps, _initialSets: sets, _initialReps: prescription.minReps, _existing: true };
+   return { exerciseId: card.dataset.exerciseId, name, sets, reps: prescription.minReps, _initialSets: sets, _initialReps: prescription.minReps, _existing: true };
   }).filter(ex => ex.name);
   // Set workout name
   const logSub = document.getElementById('log-sub');
@@ -16926,7 +16944,7 @@ function startHomeTemplate(id, btnEl) {
   btnEl.style.opacity = '0.75';
   btnEl.innerHTML = '<span class="wkt-spinner small"></span>';
  }
- _cwktExercises = (tpl.exercises || []).map(ex => ({ name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
+ _cwktExercises = (tpl.exercises || []).map(ex => ({ exerciseId: getExerciseId(ex), name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
  const nameInput = document.getElementById('custom-wkt-name');
  if (nameInput) nameInput.value = tpl.name || '';
  startCustomWorkout();
@@ -16937,7 +16955,7 @@ function editHomeTemplate(id) {
  const tpl = (_cwktTemplates || []).find(t => t.id === id);
  if (!tpl) return;
  openCustomWorkoutBuilder();
- _cwktExercises = (tpl.exercises || []).map(ex => ({ name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
+ _cwktExercises = (tpl.exercises || []).map(ex => ({ exerciseId: getExerciseId(ex), name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
  const nameInput = document.getElementById('custom-wkt-name');
  if (nameInput) nameInput.value = tpl.name || '';
  _renderCwktList();
@@ -17053,7 +17071,7 @@ async function addTemplateToActiveWorkout(id, btnEl) {
 
  const newExercises = (tpl.exercises || [])
   .filter(ex => ex.name)
-  .map(ex => ({ name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
+  .map(ex => ({ exerciseId: getExerciseId(ex), name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
 
  closeLogTemplatePicker();
 
@@ -17086,7 +17104,7 @@ async function saveCwktAsTemplate() {
  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
 
  try {
-  const exercises = _cwktExercises.map(ex => ({ name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
+  const exercises = _cwktExercises.map(ex => ({ exerciseId: getExerciseId(ex), name: ex.name, sets: ex.sets || 3, reps: ex.reps || 10 }));
   await db.collection('members').doc(uid).collection('workoutTemplates').add({
    name, exercises,
    savedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -17116,7 +17134,7 @@ function startCustomWorkout() {
    const prescription = normalizeExercisePrescription(original);
    prescription.sets = ex.sets;
    if (!original || ex.reps !== ex._initialReps) prescription.minReps = prescription.maxReps = ex.reps || 10;
-   return { ...original, name: ex.name, detail: original?.detail || '', ...prescription, target: formatPrescription(prescription) };
+   return { ...original, exerciseId: getExerciseId(original || ex), name: ex.name, detail: original?.detail || '', ...prescription, target: formatPrescription(prescription) };
   });
 
   // If nothing changed, just close
@@ -17154,7 +17172,7 @@ function startCustomWorkout() {
   // Persist updated definition
   try {
    const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-   safeLocalStorageSet('evolve_custom_wkt_' + today, JSON.stringify(todayWorkout));
+   safeLocalStorageSet(_workoutStorageKey('evolve_custom_wkt_' + today), JSON.stringify(todayWorkout));
   } catch(e) {}
 
   // Update header
@@ -17183,6 +17201,7 @@ function startCustomWorkout() {
   isCustom: true,
   sourceAssignedPlan: _stableStringify(window._lastHomeData?.assignedWorkoutPlan || {}),
   exercises: _cwktExercises.map(ex => ({
+   exerciseId: getExerciseId(ex),
    name: ex.name,
    detail: '',
    target: `${ex.sets}×${ex.reps || 10}`,
@@ -17194,9 +17213,9 @@ function startCustomWorkout() {
  // Persist custom workout definition so it survives a page refresh
  try {
   const today = (typeof phIsoDate === 'function') ? phIsoDate() : new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  safeLocalStorageSet('evolve_custom_wkt_' + today, JSON.stringify(customWorkout));
+  safeLocalStorageSet(_workoutStorageKey('evolve_custom_wkt_' + today), JSON.stringify(customWorkout));
   Object.keys(localStorage).forEach(k => {
-   if (k.startsWith('evolve_custom_wkt_') && k !== 'evolve_custom_wkt_' + today) localStorage.removeItem(k);
+   if (k.startsWith(_workoutStorageKey('evolve_custom_wkt_')) && k !== _workoutStorageKey('evolve_custom_wkt_' + today)) localStorage.removeItem(k);
   });
  } catch(e) {}
 
@@ -17236,7 +17255,7 @@ function syncEvolveThemeUI() {
  if (sub) sub.textContent = isDark ? 'Dark theme' : 'Light theme';
  if (sw) sw.setAttribute('aria-checked', isDark ? 'true' : 'false');
  const tm = document.getElementById('theme-color-meta');
- if (tm) tm.setAttribute('content', isDark ? '#16140F' : '#EDE8DC');
+ if (tm) tm.setAttribute('content', isDark ? '#111820' : '#F5F0E8');
 }
 
 function toggleEvolveTheme() {
@@ -17248,7 +17267,7 @@ function toggleEvolveTheme() {
  try { localStorage.setItem('evolve_theme', next); } catch(e) {}
  try { localStorage.setItem('evolveDarkMode', next === 'dark' ? '1' : '0'); } catch(e) {}
  const tm = document.getElementById('theme-color-meta');
- if (tm) tm.setAttribute('content', next === 'dark' ? '#16140F' : '#EDE8DC');
+ if (tm) tm.setAttribute('content', next === 'dark' ? '#111820' : '#F5F0E8');
 
  // click feedback: ripple + pop on the knob
  const sw = document.getElementById('theme-switch');

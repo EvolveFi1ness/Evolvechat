@@ -4,33 +4,37 @@
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── TYPOGRAPHY ── */
-/* Display: DM Serif Display — elegant, premium headings
-   Interface: Inter — clean, legible UI text
+/* Display: Barlow Condensed — compact training headings
+   Interface: Manrope — clear, legible UI text
    One display font + one interface font maximum
-   NOTE: fonts load via <link> in index.html / coach.html. No @import here —
-   @import is render-blocking and serial (blocks on this CSS first), and would
-   fetch the same families a second time. */
+   Local @font-face sources live in app-ui.css, with preloads in both apps.
+   Licenses are shipped alongside the fonts in fonts/. */
 
 
 /* ── DESIGN TOKENS ── */
-:root {
+:root, html.evolve-ui {
   /* ── Color: Brand ── */
-  --evolve-orange: #E8712E;
+  --evolve-orange: #C74B18;
   --evolve-orange-light: #F0904C;
   --evolve-orange-dim: rgba(232,113,46,0.12);
   --evolve-orange-glow: rgba(232,113,46,0.06);
 
   /* ── Color: Background ── */
   --evolve-bg: #F5F0E8;
-  --evolve-bg-raised: #FFFFFF;
-  --evolve-bg-sunken: #EDE8DC;
-  --evolve-bg-overlay: rgba(245,240,232,0.92);
+  --evolve-bg-raised: #FFFDFA;
+  --evolve-bg-sunken: #EEE8DF;
+  --evolve-bg-overlay: rgba(245,240,232,0.96);
 
   /* ── Color: Text ── */
-  --evolve-text-primary: #1A1712;
-  --evolve-text-secondary: #6B6355;
-  --evolve-text-tertiary: #9A9184;
+  --evolve-text-primary: #211D18;
+  --evolve-text-secondary: #6F6255;
+  --evolve-text-tertiary: #7C6F62;
   --evolve-text-inverse: #FFFFFF;
+  --evolve-feature-bg: linear-gradient(115deg, #19140F 12%, #542818 100%);
+  --evolve-feature-text: #FFFDFA;
+  --evolve-feature-muted: #E1D3C7;
+  --evolve-feature-accent: #FFB180;
+  --evolve-panel-shadow: 0 8px 24px rgba(63,40,18,0.06);
 
   /* ── Color: Semantic ── */
   --evolve-success: #16A34A;
@@ -48,8 +52,8 @@
   --evolve-border-focus: var(--evolve-orange);
 
   /* ── Typography Scale ── */
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-body: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Type scale — modular, 1.25 ratio */
   --text-xs: 0.6875rem;    /* 11px */
@@ -126,20 +130,20 @@
 }
 
 /* ── Dark Mode ── */
-html[data-theme="dark"] {
+html.evolve-ui[data-theme="dark"] {
   --evolve-orange: #F0904C;
   --evolve-orange-light: #F5A870;
   --evolve-orange-dim: rgba(240,144,76,0.15);
   --evolve-orange-glow: rgba(240,144,76,0.08);
 
-  --evolve-bg: #12110D;
-  --evolve-bg-raised: #1A1814;
-  --evolve-bg-sunken: #0D0C09;
-  --evolve-bg-overlay: rgba(18,17,13,0.94);
+  --evolve-bg: #111820;
+  --evolve-bg-raised: #1A2430;
+  --evolve-bg-sunken: #222F3D;
+  --evolve-bg-overlay: rgba(17,24,32,0.96);
 
-  --evolve-text-primary: #F3EEE3;
-  --evolve-text-secondary: #A09888;
-  --evolve-text-tertiary: #6B6355;
+  --evolve-text-primary: #EEF3FA;
+  --evolve-text-secondary: #B7C3D3;
+  --evolve-text-tertiary: #9AAABD;
 
   --evolve-border: rgba(243,238,227,0.08);
   --evolve-border-strong: rgba(243,238,227,0.14);
@@ -789,6 +793,36 @@ body {
 }
 #toast.error { border-color: var(--evolve-error) !important; }
 #toast.success { border-color: var(--evolve-success) !important; }
+
+/* Keep the important content readable before secondary actions and metadata. */
+#nutr-meal-sections .nutr-food-name { white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
+#nutr-meal-sections button { min-height: 44px; min-width: 44px; }
+#nutr-meal-sections .nutr-logged-food { display: grid !important; grid-template-columns: minmax(0, 1fr) 44px; gap: 4px 12px !important; padding: 12px 0 !important; }
+.nutr-logged-food > :first-child { grid-column: 1; }
+.nutr-logged-food > :nth-child(2) { grid-column: 1; grid-row: 2; line-height: 1.5; }
+.nutr-logged-food > button { grid-column: 2; grid-row: 1 / 3; }
+#nutr-daytype-pills button { min-height: 44px; }
+.log-ex-card .log-ex-name { line-height: 1.4; overflow-wrap: anywhere; }
+.log-ex-card .log-ex-coach-note { font-weight: 400; }
+.log-ex-card .set-table-head, .log-ex-card .log-set-row { grid-template-columns: 28px minmax(32px, 1fr) 68px 68px 44px 44px; }
+.log-ex-card .set-input { min-width: 0; min-height: 44px; }
+.log-ex-card .set-done-btn, .log-ex-card .set-remove-btn { width: 44px; height: 44px; }
+.log-ex-card .add-set-btn { min-height: 44px; }
+.assigned-food-heading .assigned-food-name { flex-basis: 100%; line-height: 1.5; font-size: 14px; }
+.assigned-food-heading select { min-height: 44px; min-width: 170px; max-width: 100% !important; margin-left: 0 !important; }
+@media (max-width: 480px) {
+ .log-ex-card .log-ex-header-inner { display: grid; grid-template-columns: 42px minmax(0, 1fr) 44px 44px; gap: 10px 8px; padding: 16px 12px; }
+ .log-ex-card .log-ex-thumb-wrap { grid-column: 1; grid-row: 1; align-self: start; }
+ .log-ex-card .log-ex-info { grid-column: 2 / -1; grid-row: 1; }
+ .log-ex-card .ex-edit-controls { grid-column: 2; grid-row: 2; display: flex; flex-direction: row; justify-content: flex-end; }
+ .log-ex-card .ex-dup-btn { grid-column: 3; grid-row: 2; }
+ .log-ex-card .ex-remove-btn { grid-column: 4; grid-row: 2; }
+ .log-ex-card .ex-move-btn, .log-ex-card .ex-dup-btn, .log-ex-card .ex-remove-btn { width: 44px; height: 44px; }
+ .log-ex-card .log-sets-area { padding: 8px 12px 12px; }
+ .log-ex-card .set-table-head, .log-ex-card .log-set-row { grid-template-columns: 20px minmax(30px, 1fr) minmax(44px, 56px) minmax(44px, 56px) 44px 44px; gap: 3px; }
+ .log-ex-card .set-th { letter-spacing: 0; font-size: 9px; }
+ .nutr-target-card > .ev-mb-lg { margin-bottom: 16px; }
+}
 @media (max-width: 768px) {
   #toast { bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important; left: 50% !important; }
 }

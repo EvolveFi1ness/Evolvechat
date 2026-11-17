@@ -4,13 +4,17 @@
    static assets. Catalogs are downloaded only when used. */
 'use strict';
 
-const CACHE = 'evolve-v10';
+const CACHE = 'evolve-v30';
 const APP_SHELL = ['./index.html', './coach.html'];
 const STATIC = [
   './manifest-client.json',
   './manifest-coach.json',
-  './design-tokens.css?v=9',
-  './shared.js?v=9',
+  './design-tokens.css?v=16',
+  './app-ui.css?v=20',
+  './coach-ui.css?v=9',
+  './fonts/manrope.ttf',
+  './fonts/barlow-condensed-semibold.ttf',
+  './shared.js?v=11',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
@@ -38,7 +42,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('evolve-v') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -58,9 +62,11 @@ self.addEventListener('fetch', (event) => {
           return res;
         })
         .catch(() => {
-          const candidates = [url.pathname, url.pathname + 'index.html', './index.html', './coach.html'];
-          return caches.match(url.pathname)
-            .then((hit) => hit || Promise.all(candidates.map((c) => caches.match(c))).then((r) => r.find(Boolean)));
+          const shell = /\/coach(?:\.html)?\/?$/.test(url.pathname) ? './coach.html' : './index.html';
+          return caches.match(url.pathname).then(hit => hit || caches.match(shell)).then(hit => hit || new Response(
+            'This page is unavailable offline. Reconnect and reload.',
+            { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+          ));
         })
     );
     return;
@@ -73,7 +79,7 @@ self.addEventListener('fetch', (event) => {
   if (STATIC.some((s) => url.pathname.endsWith(_norm(s)))) {
     // Bundled catalogs change with the release cache version. Reuse them until
     // the next release instead of downloading megabytes on every cache hit.
-    if (/\/data\/(?:workouts\.(?:json|js)|(?:nutr-)?foods\.json)$/.test(url.pathname)) {
+    if (/\/data\/(?:workouts\.(?:json|js)|(?:nutr-)?foods\.json)$/.test(url.pathname) || /\/fonts\/[\w-]+\.ttf$/.test(url.pathname)) {
       event.respondWith(caches.match(event.request).then(async hit => {
         if (hit) return hit;
         const res = await fetch(event.request, { cache: 'no-cache' });

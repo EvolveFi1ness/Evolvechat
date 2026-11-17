@@ -1,6 +1,15 @@
 /* shared.js — Pure utility functions shared between index.html and coach.html
    Loaded via <script src="shared.js"> before inline scripts in both files. */
 
+function exerciseHistoryKey(name) {
+ return String(name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+// Deterministic IDs also identify old name-only logs without database rewrites.
+function getExerciseId(ex) {
+ return ex.exerciseId || 'ex-v1:' + encodeURIComponent(exerciseHistoryKey(ex.name));
+}
+
 function escapeHtml(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }

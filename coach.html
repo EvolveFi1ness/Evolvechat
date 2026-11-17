@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="evolve-ui">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,10 +11,10 @@
         y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
     })(window, document, "clarity", "script", "y6e7yruh2a");
 </script>
-  <script src="shared.js?v=9"></script>
+  <script src="shared.js?v=11"></script>
   <script>
-    // Apply theme before first paint to avoid a flash. Dark is the default:
-    // only an explicit stored light choice opts out. Accepts BOTH the coach
+    // Apply theme before first paint to avoid a flash. Light is the default:
+    // only an explicit stored dark choice opts in. Accepts BOTH the coach
     // key (evolveDarkMode) and the client key (evolve_theme) so a theme set
     // in either Evolve app carries over.
     (function(){
@@ -23,11 +23,12 @@
         var dark;
         if (dm === '0') dark = false;
         else if (dm === '1') dark = true;
-        else dark = localStorage.getItem('evolve_theme') !== 'light';
+        else dark = localStorage.getItem('evolve_theme') === 'dark';
         if (dark) {
           document.documentElement.classList.add('dark-mode');
+          document.documentElement.setAttribute('data-theme', 'dark');
           var tm = document.querySelector('meta[name="theme-color"]');
-          if (tm) tm.setAttribute('content', '#0c0c0c');
+          if (tm) tm.setAttribute('content', '#111820');
         }
         // If a login session already exists, this refresh is just re-verifying
         // it in the background — hold off on showing the login form so the
@@ -38,19 +39,13 @@
       } catch(e) {}
     })();
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="fonts/manrope.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="fonts/barlow-condensed-semibold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-  <!-- Use the system fallback immediately while the body font downloads. -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"></noscript>
-  <!-- Non-critical: decorative/display fonts deferred to avoid blocking render -->
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=Anton&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=Anton&display=swap" rel="stylesheet"></noscript>
   <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="preconnect" href="https://browser.sentry-cdn.com">
-  <link rel="stylesheet" href="design-tokens.css?v=9">
+  <link rel="stylesheet" href="design-tokens.css?v=16">
 
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -657,6 +652,15 @@
   .coach-ba-date-box select option:disabled { color: var(--muted); }
   .coach-ba-date-arrow {
     flex-shrink: 0; color: var(--muted); font-size: 15px; margin-top: 10px;
+  }
+  /* Stack the two date boxes once side-by-side would squeeze the dates, so the
+     full "Month D, YYYY — weight" text is never clipped. */
+  @media(max-width:700px) {
+    .coach-ba-date-range { flex-direction: column; align-items: stretch; gap: 8px; }
+    .coach-ba-date-arrow { margin-top: 0; display: flex; justify-content: center; transform: rotate(90deg); }
+  }
+  @media(max-width:420px) {
+    .coach-ba-date-box select { font-size: 12px; }
   }
 
   /* side-by-side before/after photos */
@@ -3840,7 +3844,7 @@ button.loading::before {
 
  <!-- ── PWA / Add to Home Screen ── -->
  <meta name="description" content="Evolve Coach — manage your clients, workout programs, nutrition plans and messages from one dashboard.">
- <meta name="theme-color" content="#040404">
+ <meta name="theme-color" content="#F5F0E8">
  <meta name="mobile-web-app-capable" content="yes">
  <meta name="apple-mobile-web-app-capable" content="yes">
  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -4444,6 +4448,7 @@ html.dark-mode .wk-modal-pill.active {
   color: #EDE9E1 !important;
 }
 </style>
+ <link rel="stylesheet" href="app-ui.css?v=20">
 </head>
 <body>
 
@@ -4526,7 +4531,7 @@ html.dark-mode .wk-modal-pill.active {
  </div>
  <div class="a2hs-actions">
   <button id="a2hs-install-btn" onclick="a2hsInstallClick()">Install</button>
-  <button id="a2hs-dismiss-btn" onclick="a2hsDismiss()">&times;</button>
+  <button id="a2hs-dismiss-btn" aria-label="Dismiss install prompt" onclick="a2hsDismiss()">&times;</button>
  </div>
 </div>
 
@@ -4659,15 +4664,6 @@ html.dark-mode .wk-modal-pill.active {
 </script>
 
 
-<!-- ── MOBILE TOPBAR ── -->
-<header id="mobile-topbar" role="banner">
-  <button id="mob-hamburger" onclick="toggleMobileSidebar()" aria-label="Open navigation menu">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-</button>
-  <div class="mob-brand" aria-label="Evolve Coach Dashboard">EVOLVE</div>
-  <div style="width:40px" aria-hidden="true"></div>
-</header>
-
 <!-- ── SIDEBAR OVERLAY (tap to close) ── -->
 <div id="sidebar-overlay" onclick="closeMobileSidebar()" role="presentation" aria-hidden="true"></div>
 
@@ -4751,6 +4747,12 @@ document.addEventListener('DOMContentLoaded', () => {
 </div>
 
 <div id="auth-screen" class="no-invert">
+  <section class="auth-story" aria-label="Evolve coach workspace">
+    <div class="auth-story-brand">EVOLVE <span>COACH WORKSPACE</span></div>
+    <h1>Good coaching.<br>Clear direction.</h1>
+    <p>A focused workspace for your clients, their training, and the progress you build together.</p>
+    <div class="auth-story-steps"><span>Plan the next session</span><span>Review the progress</span><span>Keep clients moving</span></div>
+  </section>
   <div class="auth-card">
     <div class="auth-brand">
       <div class="auth-logo">EVOLVE<span class="auth-logo-dot"></span></div>
@@ -4879,6 +4881,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="notif-header">
       <div class="notif-header-title">Notifications</div>
       <button class="notif-mark-all" onclick="coachMarkAllRead()" aria-label="Mark all notifications as read">Mark all read</button>
+      <button class="notif-close" type="button" onclick="closeCoachNotifPanel()" aria-label="Close notifications">×</button>
     </div>
     <div class="notif-list" id="coach-notif-list" role="list" aria-label="Notification list">
       <div class="notif-empty">
@@ -4937,7 +4940,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="card">
           <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
             <div class="card-title">Today's Sessions</div>
-            <span style="font-size:11.5px;font-weight:700;color:var(--gold);cursor:pointer" onclick="showPage('clients')" role="button" tabindex="0">Calendar &rarr;</span>
+            <span class="coach-inline-link" style="font-size:11.5px;font-weight:700;color:var(--gold);cursor:pointer" onclick="showPage('clients')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showPage('clients')}" role="button" tabindex="0">Calendar &rarr;</span>
           </div>
           <div class="card-body" id="todays-sessions-list" role="list" aria-label="Today's sessions">
             <div style="text-align:center;color:var(--muted);padding:1.5rem;font-size:13px">Loading…</div>
@@ -4991,7 +4994,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <!-- Pending signup requests, awaiting coach confirmation -->
       <div class="hidden" id="clients-pending-panel" role="tabpanel" aria-label="Pending signup requests">
-        <div style="background:rgba(255,90,43,0.06);border:1px solid rgba(255,90,43,0.18);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+        <div class="clients-notice" style="background:rgba(255,90,43,0.06);border:1px solid rgba(255,90,43,0.18);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF5A2B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span style="font-size:12px;color:rgba(255,90,43,0.9);line-height:1.5;">These people signed up but haven't been confirmed as real clients yet. Approve to grant site access, or decline to remove them completely — declined accounts disappear from your roster and can't access the site.</span>
         </div>
@@ -5001,7 +5004,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
       <!-- Archived clients -->
       <div class="hidden" id="clients-archived-panel" role="tabpanel" aria-label="Archived clients">
-        <div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+        <div class="clients-notice-archived" style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15);border-radius:12px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
           <span style="font-size:12px;color:rgba(248,113,113,0.85);line-height:1.5;">Archived clients cannot access the app. Their data is fully preserved — restore them anytime to re-enable access.</span>
         </div>
@@ -5376,7 +5379,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="axp-field">
             <div class="axp-label">Notes (optional)</div>
-            <textarea id="aef-note" class="axp-notes" maxlength="200" placeholder="Controlled descent and full range of motion." oninput="document.getElementById('aef-note-count').textContent=this.value.length+'/200'"></textarea>
+            <textarea id="aef-note" style="resize:none;min-height:96px;field-sizing:content;max-height:320px;overflow:auto;" class="axp-notes" maxlength="200" placeholder="Controlled descent and full range of motion." oninput="document.getElementById('aef-note-count').textContent=this.value.length+'/200'"></textarea>
             <div class="axp-count" id="aef-note-count">0/200</div>
           </div>
           <button class="axp-add" type="button" onclick="addExerciseToPlan()">＋ Add Exercise</button>
@@ -5564,7 +5567,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
               <div class="nt-field nt-notes-field">
                 <label>Notes <span class="nt-optional">— optional</span></label>
-                <textarea id="mt-notes" rows="2" placeholder="Hit protein first, carbs and fats flexible around training"></textarea>
+                <textarea id="mt-notes" style="resize:none;min-height:96px;field-sizing:content;max-height:320px;overflow:auto;" rows="2" placeholder="Hit protein first, carbs and fats flexible around training"></textarea>
               </div>
 
               <div class="nt-btn-row">
@@ -5578,7 +5581,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-            <div style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:12px;">
+            <div class="assigned-foods-card" style="background:var(--bg2);border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-bottom:12px;">
               <div style="padding:14px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
                 <div>
                   <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);">Assigned Foods</div>
@@ -5609,12 +5612,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="food-db-title nt-fd-title">Food database</div>
                   <div class="food-db-sub">Search and assign foods directly to the client.</div>
                 </div>
-                <button class="fd-collapse-btn" id="fd-collapse-btn" onclick="toggleFdPanel()" aria-expanded="true" title="Collapse or expand the food database">
+                <button class="fd-collapse-btn" id="fd-collapse-btn" type="button" onclick="toggleFdPanel()" aria-expanded="true" aria-controls="food-db-content" aria-label="Collapse food database" title="Collapse or expand the food database">
                   <span class="fd-collapse-chev" id="fd-collapse-chev">▴</span>
                   <span class="fd-collapse-label" id="fd-collapse-label">Expanded · click to collapse</span>
                 </button>
               </div>
 
+              <div class="food-db-content" id="food-db-content">
               <!-- Search bar -->
               <div class="food-db-search-wrap">
                 <span class="food-db-search-icon">
@@ -5633,11 +5637,12 @@ document.addEventListener('DOMContentLoaded', () => {
               </select>
 
               <div id="food-db-list" class="food-db-list nt-food-list"></div>
+              </div>
             </div>
 
             <!-- ══ TDEE CALCULATOR ══ (below the Food database panel) -->
             <div class="tdee-card" id="tdee-card">
-              <div class="tdee-head" onclick="toggleTdeeCard()" role="button" tabindex="0"
+              <div class="tdee-head" onclick="toggleTdeeCard()" role="button" tabindex="0" aria-expanded="false" aria-controls="tdee-body"
                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTdeeCard();}">
                 <div style="min-width:0">
                   <div class="tdee-title">TDEE Calculator</div>
@@ -5782,7 +5787,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="coach-email" id="coach-email"></div>
             </div>
             <div class="notif-btn-wrap">
-              <button class="notif-btn" id="coach-notif-btn" onclick="toggleCoachNotifPanel()" title="Notifications" aria-label="Notifications">
+              <button class="notif-btn" id="coach-notif-btn" type="button" onclick="toggleCoachNotifPanel()" aria-expanded="false" aria-controls="coach-notif-panel" title="Notifications" aria-label="Notifications">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                 <span class="notif-badge" id="coach-notif-badge" aria-label="unread notifications">0</span>
               </button>
@@ -5792,7 +5797,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         <div class="settings-section-title">Preferences</div>
         <div class="settings-card">
-          <div class="theme-toggle-row" onclick="toggleDarkMode()" title="Toggle dark mode" role="switch" tabindex="0" aria-label="Toggle dark mode">
+          <div class="theme-toggle-row" onclick="toggleDarkMode()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDarkMode();}" title="Toggle dark mode" role="switch" tabindex="0" aria-label="Toggle dark mode" aria-checked="false">
             <span class="theme-toggle-label"><span class="theme-toggle-icon" id="theme-toggle-icon">🌙</span> Dark Mode</span>
             <span class="theme-switch" id="theme-switch"><span class="theme-switch-knob"></span></span>
           </div>
@@ -5950,19 +5955,28 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
       <div class="modal-panel" id="mp-profile">
+        <div class="client-details-heading"><h3>Client details</h3><button type="button" class="btn-primary" id="client-details-edit" onclick="editClientDetails()">Edit client details</button></div>
+        <div id="client-details-summary">
         <div class="info-grid" id="m-info-grid"></div>
         <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Health Info</div>
         <div class="info-grid" id="m-health-grid"></div>
+        </div>
+        <form id="client-details-form" hidden novalidate onsubmit="saveClientDetails(event)">
+          <p class="client-details-note">Update this client's profile. Sign-in email is read-only. Workout logs and plans are kept.</p>
+          <div class="client-details-fields" id="client-details-fields"></div>
+          <p id="client-details-error" role="alert" hidden></p>
+          <div class="client-details-actions"><button class="btn-primary" type="submit" id="client-details-save">Save changes</button><button class="btn-ghost" type="button" onclick="cancelClientDetails()">Cancel</button></div>
+        </form>
       </div>
       <div class="modal-panel" id="mp-logs">
         <!-- View + Metric toggles -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-          <div style="display:flex;gap:4px">
-            <button onclick="setLogView('table')" id="log-view-table-btn" style="padding:6px 14px;border-radius:8px;background:var(--gold);color:#0A0A0A;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Table</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px" class="log-toolbar">
+          <div class="log-seg" style="display:flex;gap:4px">
+            <button onclick="setLogView('table')" id="log-view-table-btn" class="is-active" style="padding:6px 14px;border-radius:8px;background:var(--gold);color:#0A0A0A;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Table</button>
             <button onclick="setLogView('chart')" id="log-view-chart-btn" style="padding:6px 14px;border-radius:8px;background:var(--bg3);color:var(--muted);border:1px solid var(--border);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Chart</button>
           </div>
-          <div style="display:none;gap:4px" id="log-metric-wrap">
-            <button onclick="setChartMetric('volume')" id="log-metric-volume" style="padding:5px 11px;border-radius:7px;background:var(--gold);color:#0A0A0A;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Volume</button>
+          <div style="display:none;gap:4px" id="log-metric-wrap" class="log-seg log-seg-sm">
+            <button onclick="setChartMetric('volume')" id="log-metric-volume" class="is-active" style="padding:5px 11px;border-radius:7px;background:var(--gold);color:#0A0A0A;border:none;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Volume</button>
             <button onclick="setChartMetric('reps')" id="log-metric-reps" style="padding:5px 11px;border-radius:7px;background:var(--bg3);color:var(--muted);border:1px solid var(--border);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Reps</button>
             <button onclick="setChartMetric('sets')" id="log-metric-sets" style="padding:5px 11px;border-radius:7px;background:var(--bg3);color:var(--muted);border:1px solid var(--border);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;transition:all 0.15s">Sets</button>
           </div>
@@ -5979,13 +5993,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div id="log-chart-summary" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap"></div>
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <span style="font-size:10px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3)">Hover a dot for details</span>
-            <div style="display:flex;gap:3px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1);border-radius:8px;padding:3px" id="log-period-wrap">
-              <button onclick="setLogPeriod('day')"   id="log-period-day"   style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--gold);color:#0A0A0A;font-family:inherit;transition:all .15s">Day</button>
+            <div style="display:flex;gap:3px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1);border-radius:8px;padding:3px" id="log-period-wrap" class="log-seg log-seg-sm">
+              <button onclick="setLogPeriod('day')"   id="log-period-day"   class="is-active" style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:var(--gold);color:#0A0A0A;font-family:inherit;transition:all .15s">Day</button>
               <button onclick="setLogPeriod('week')"  id="log-period-week"  style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:transparent;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4);font-family:inherit;transition:all .15s">Week</button>
               <button onclick="setLogPeriod('month')" id="log-period-month" style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:transparent;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4);font-family:inherit;transition:all .15s">Month</button>
             </div>
           </div>
-          <div style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:16px 16px 16px;overflow:visible">
+          <div style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:16px 16px 16px;overflow:visible" class="log-chart-card">
             <canvas id="log-chart-canvas" height="200" style="width:100%;display:block"></canvas>
             <div id="log-chart-tooltip" style="position:absolute;display:none;background:var(--bg4);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;font-size:12px;pointer-events:none;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
           </div>
@@ -6333,14 +6347,6 @@ document.addEventListener('DOMContentLoaded', () => {
 .fd-collapse-label { color: var(--text); }
 .fd-collapsed .fd-collapse-chev { transform: rotate(180deg); }
 @media (max-width: 480px) { .fd-collapse-label { display: none; } }
-
-.food-db-panel { transition: max-height 0.25s ease; }
-.fd-collapsed .food-db-panel { max-height: 74px !important; }
-.food-db-search-wrap, #food-cat-pills, #food-db-list { transition: opacity 0.25s ease; }
-.fd-collapsed .food-db-search-wrap,
-.fd-collapsed #food-cat-pills,
-.fd-collapsed #food-db-list { opacity: 0; pointer-events: none; }
-@media (max-width: 768px) { .fd-collapsed .food-db-panel { max-height: 62px !important; } }
 
 /* ── TDEE CALCULATOR (below the food database panel) ── */
 .tdee-card { flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 8px 20px rgba(var(--line-r),var(--line-g),var(--line-b),0.06); margin-top: 16px; }
@@ -7420,6 +7426,12 @@ function _clearPendingSave() {
   try { localStorage.removeItem(_PENDING_SAVE_KEY); } catch (_) {}
 }
 
+// Replace the whole schedule in one atomic update; never expose a cleared plan.
+function _workoutPlanPatch(plan) {
+  return { assignedWorkoutPlan: plan,
+    workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
+}
+
 function _recoverPendingSave() {
   try {
     const raw = localStorage.getItem(_PENDING_SAVE_KEY);
@@ -7428,16 +7440,8 @@ function _recoverPendingSave() {
     if (!clientUid || !plan || typeof plan !== 'object') { _clearPendingSave(); return; }
     // Only recover if the coach is logged in and Firestore is available
     if (!db || !coachUid) return;
-    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
     const ref = db.collection('members').doc(clientUid);
-    // Rebuild the same two-step write the auto-save uses
-    const clearData = { workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
-    DAYS.forEach(day => { clearData[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete(); });
-    ref.update(clearData).then(() => {
-      const writeData = { workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
-      Object.entries(plan).forEach(([day, d]) => { writeData[`assignedWorkoutPlan.${day}`] = d; });
-      return ref.update(writeData);
-    }).then(() => {
+    queueWorkoutSave(() => ref.update(_workoutPlanPatch(plan))).then(() => {
       _clearPendingSave();
       // Notify the client about the recovered plan
       const exs = Object.values(plan).reduce((s, d) => s + (d.exercises?.length || 0), 0);
@@ -7808,7 +7812,7 @@ function initials(first='', last='') {
 function clientAvatarInner(c, fallback) {
   return (c && c.profilePhotoURL)
     ? `<img src="${escapeAttr(c.profilePhotoURL)}" alt="" loading="lazy" decoding="async" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;">`
-    : fallback;
+    : escapeHtml(fallback);
 }
 
 // ─────────────────────────────────────────
@@ -8554,7 +8558,7 @@ function updateOnlineStrip() {
   row.innerHTML = online.map(c => `
     <div class="online-chip" onclick="openClientModal('${c.uid}')" title="Online now">
       <div class="online-chip-av">${clientAvatarInner(c, initials(c.firstName,c.lastName))}</div>
-      <span>${c.firstName||'Client'}</span>
+      <span>${escapeHtml(c.firstName||'Client')}</span>
     </div>`).join('');
   // Also add a toast notification if a client just came online
   snap_onlineNotify(online);
@@ -9089,13 +9093,7 @@ async function _updateActivityFeedFallback(feed) {
 // ─────────────────────────────────────────
 let currentModalUid = null;
 let _modalPhotoView = 'grid';
-async function openClientModal(uid) {
-  currentModalUid = uid;
-  const client = allClients.find(c=>c.uid===uid) || {};
-  document.getElementById('m-av').innerHTML      = clientAvatarInner(client, initials(client.firstName,client.lastName));
-  document.getElementById('m-name').textContent  = `${client.firstName||''} ${client.lastName||''}`;
-  document.getElementById('m-email').textContent = client.email||'';
-
+function renderClientProfileDetails(client) {
   const bmi = (client.heightCm&&client.weightKg) ? Math.round(client.weightKg/Math.pow(client.heightCm/100,2)*10)/10 : '—';
   document.getElementById('m-info-grid').innerHTML = [
     ['Name', `${escapeHtml(client.firstName||'')} ${escapeHtml(client.lastName||'')}`],
@@ -9120,6 +9118,140 @@ async function openClientModal(uid) {
     ['Sex', escapeHtml(client.sex||'—')]
   ].map(([l,v])=>`<div class="info-box"><div class="info-lbl">${l}</div><div class="info-val">${v}</div></div>`).join('');
 
+}
+
+const clientDetailFields = [
+  ['firstName', 'First name', 'text', 60], ['lastName', 'Last name', 'text', 60],
+  ['age', 'Age (years)', 'number', 1, 120], ['sex', 'Sex', 'select', ['', 'male', 'female', 'other']],
+  ['heightCm', 'Height (cm)', 'number', 50, 300], ['weightKg', 'Starting weight (kg)', 'number', 1, 600],
+  ['currentWeightKg', 'Current weight (kg)', 'number', 1, 600],
+  ['goal', 'Goal', 'select', ['', 'weight_loss', 'muscle_gain', 'endurance', 'general_fitness', 'maintain']],
+  ['allergies', 'Allergies (comma separated)', 'text', 300],
+  ['medications', 'Medications / supplements', 'text', 500],
+  ['medicalConditions', 'Medical conditions (comma separated)', 'text', 300],
+  ['emergencyContact.name', 'Emergency contact name', 'text', 120],
+  ['emergencyContact.phone', 'Emergency phone', 'tel', 40]
+];
+let clientDetailsDraft = null;
+let clientDetailsSaving = false;
+
+function editClientDetails() {
+  const client = allClients.find(c => c.uid === currentModalUid);
+  if (!client || clientDetailsDraft) return;
+  const values = {};
+  document.getElementById('client-details-fields').innerHTML = clientDetailFields.map(([key, label, type, limit, max]) => {
+    const value = key.startsWith('emergencyContact.') ? client.emergencyContact?.[key.split('.')[1]] : client[key];
+    const raw = Array.isArray(value) ? value.join(', ') : String(value ?? '');
+    values[key] = raw;
+    const id = 'client-detail-' + key.replace('.', '-');
+    const options = type === 'select' ? [...new Set([...limit, raw])] : [];
+    const input = type === 'select'
+      ? `<select id="${id}" name="${key}">${options.map(v => `<option value="${escapeAttr(v)}"${v === raw ? ' selected' : ''}>${escapeHtml(v ? v.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Not specified')}</option>`).join('')}</select>`
+      : `<input id="${id}" name="${key}" type="${type}" value="${escapeAttr(raw)}" ${type === 'number' ? `min="${limit}" max="${max}" step="${key === 'age' ? '1' : '0.1'}" inputmode="decimal"` : `maxlength="${limit}"`} ${key === 'firstName' ? 'required autocomplete="given-name"' : ''}>`;
+    return `<label for="${id}">${label}${input}</label>`;
+  }).join('');
+  clientDetailsDraft = { uid: currentModalUid, values };
+  document.getElementById('client-details-form').hidden = false;
+  document.getElementById('client-details-summary').hidden = true;
+  document.getElementById('client-details-edit').hidden = true;
+  document.getElementById('client-details-error').hidden = true;
+  document.getElementById('client-detail-firstName').focus();
+}
+
+function clientDetailsChanged() {
+  const form = document.getElementById('client-details-form');
+  return clientDetailsDraft && clientDetailFields.some(([key]) => form.elements.namedItem(key).value !== clientDetailsDraft.values[key]);
+}
+function resetClientDetails() {
+  clientDetailsDraft = null;
+  document.getElementById('client-details-form').hidden = true;
+  document.getElementById('client-details-summary').hidden = false;
+  document.getElementById('client-details-edit').hidden = false;
+}
+async function discardClientDetails() {
+  if (clientDetailsSaving) return false;
+  if (clientDetailsChanged() && !(await showConfirmDialog({ title: 'Discard profile changes?', message: 'Your unsaved client details will be lost.', confirmText: 'Discard changes', danger: true }))) return false;
+  resetClientDetails();
+  return true;
+}
+async function cancelClientDetails() {
+  if (await discardClientDetails()) document.getElementById('client-details-edit').focus();
+}
+async function saveClientDetails(event) {
+  event.preventDefault();
+  if (!clientDetailsDraft || clientDetailsSaving) return;
+  const form = document.getElementById('client-details-form');
+  const error = document.getElementById('client-details-error');
+  error.hidden = true;
+  const patch = {};
+  for (const [key, label, type, limit, max] of clientDetailFields) {
+    const input = form.elements.namedItem(key);
+    input.removeAttribute('aria-invalid');
+    if (input.value === clientDetailsDraft.values[key] && !input.validity.badInput) continue;
+    let value = sanitizeInput(input.value);
+    let message = '';
+    if (key === 'firstName' && !value) message = 'Enter a first name.';
+    if (type === 'number') {
+      value = value === '' ? null : Number(value);
+      if (input.validity.badInput || (value !== null && (!Number.isFinite(value) || value < limit || value > max || (key === 'age' && !Number.isInteger(value))))) message = `${label} must be between ${limit} and ${max}${key === 'age' ? ' in whole years' : ''}.`;
+    } else if (type !== 'select' && value.length > limit) message = `${label} must be ${limit} characters or fewer.`;
+    if (message) {
+      error.textContent = message; error.hidden = false;
+      input.setAttribute('aria-invalid', 'true'); input.setAttribute('aria-describedby', 'client-details-error'); input.focus(); return;
+    }
+    patch[key] = ['allergies', 'medicalConditions'].includes(key) ? value.split(',').map(v => v.trim()).filter(Boolean) : value;
+  }
+  if (!Object.keys(patch).length) { resetClientDetails(); return; }
+  const uid = clientDetailsDraft.uid;
+  const client = allClients.find(c => c.uid === uid);
+  if (!client) { error.textContent = 'Client unavailable. Reopen their profile and try again.'; error.hidden = false; return; }
+  if ('weightKg' in patch) patch.weightDisplay = patch.weightKg == null ? '' : `${patch.weightKg} kg`;
+  if ('weightKg' in patch || 'heightCm' in patch) {
+    const height = 'heightCm' in patch ? patch.heightCm : client.heightCm;
+    const weight = 'weightKg' in patch ? patch.weightKg : client.weightKg;
+    patch.bmi = height > 0 && weight > 0 ? Math.round(weight / Math.pow(height / 100, 2) * 10) / 10 : null;
+  }
+  if ('currentWeightKg' in patch) {
+    patch.currentWeightDisplay = patch.currentWeightKg == null ? '' : `${patch.currentWeightKg} kg`;
+    patch.currentWeightDate = patch.currentWeightKg == null ? null : localDateKey(new Date());
+  }
+  clientDetailsSaving = true;
+  const controls = Array.from(form.elements);
+  controls.forEach(input => input.disabled = true);
+  const save = document.getElementById('client-details-save'); save.textContent = 'Saving…';
+  try {
+    await db.collection('members').doc(uid).update(patch);
+    const updated = allClients.find(c => c.uid === uid);
+    if (updated) Object.entries(patch).forEach(([key, value]) => {
+      if (key.startsWith('emergencyContact.')) updated.emergencyContact = { ...updated.emergencyContact, [key.split('.')[1]]: value };
+      else updated[key] = value;
+    });
+    if (currentModalUid === uid && updated) {
+      renderClientProfileDetails(updated);
+      document.getElementById('m-name').textContent = `${updated.firstName || ''} ${updated.lastName || ''}`;
+      document.getElementById('m-av').innerHTML = clientAvatarInner(updated, initials(updated.firstName, updated.lastName));
+      resetClientDetails(); document.getElementById('client-details-edit').focus();
+    }
+    renderClientGrid();
+    showAppToast('Client details updated.', 'success');
+  } catch (err) {
+    error.textContent = 'Could not save client details. Check your connection and try again. Your edits are still here.';
+    error.hidden = false;
+  } finally {
+    clientDetailsSaving = false; controls.forEach(input => input.disabled = false); save.textContent = 'Save changes';
+  }
+}
+
+async function openClientModal(uid) {
+  if (!(await discardClientDetails())) return;
+  currentModalUid = uid;
+  const client = allClients.find(c=>c.uid===uid) || {};
+  document.getElementById('m-av').innerHTML      = clientAvatarInner(client, initials(client.firstName,client.lastName));
+  document.getElementById('m-name').textContent  = `${client.firstName||''} ${client.lastName||''}`;
+  document.getElementById('m-email').textContent = client.email||'';
+
+  renderClientProfileDetails(client);
+
   document.getElementById('m-streak').style.display = 'none';
   document.getElementById('client-modal').classList.add('open');
   switchModalTab('photos');
@@ -9132,7 +9264,8 @@ async function openClientModal(uid) {
   window._clientCheckinLoadedFor = null;
 }
 
-function closeModal() {
+async function closeModal() {
+  if (!(await discardClientDetails())) return;
   document.getElementById('client-modal').classList.remove('open');
   window._photoGen++;
   currentModalUid = null;
@@ -9182,6 +9315,7 @@ async function loadClientLogs(uid) {
     if (!b) return;
     if (id === 'day') { b.style.background = 'var(--gold)'; b.style.color = '#0A0A0A'; }
     else              { b.style.background = 'transparent'; b.style.color = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)'; }
+    b.classList.toggle('is-active', id === 'day');
   });
   try {
     const snap = await db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get();
@@ -9303,6 +9437,7 @@ function setLogPeriod(p) {
     if (!b) return;
     if (id === p) { b.style.background = 'var(--gold)'; b.style.color = '#0A0A0A'; }
     else          { b.style.background = 'transparent'; b.style.color = 'rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)'; }
+    b.classList.toggle('is-active', id === p);
   });
   drawLogChart();
 }
@@ -9332,6 +9467,8 @@ function setLogView(v) {
     tBtn.style.cssText += ';background:var(--bg3);color:var(--muted);border:1px solid var(--border)';
     drawLogChart();
   }
+  tBtn.classList.toggle('is-active', v === 'table');
+  cBtn.classList.toggle('is-active', v === 'chart');
 }
 
 function setChartMetric(m) {
@@ -9344,6 +9481,7 @@ function setChartMetric(m) {
     } else {
       b.style.background = 'var(--bg3)'; b.style.color = 'var(--muted)'; b.style.border = '1px solid var(--border)';
     }
+    b.classList.toggle('is-active', id === m);
   });
   drawLogChart();
 }
@@ -9544,7 +9682,7 @@ function drawLogChart() {
     const d = data[best];
     const unit2 = _logMetric === 'volume' ? ' kg' : '';
     const metricLabel = _logMetric.charAt(0).toUpperCase() + _logMetric.slice(1);
-    tooltip.innerHTML = `<div style="font-size:10px;color:var(--muted);margin-bottom:3px">${d.date} · ${d.name}</div>
+    tooltip.innerHTML = `<div style="font-size:10px;color:var(--muted);margin-bottom:3px">${escapeHtml(d.date)} · ${escapeHtml(d.name)}</div>
       <div style="color:var(--gold);font-weight:700;font-size:13px">${metricLabel}: ${d[_logMetric]}${unit2}</div>
       ${_logMetric !== 'volume' ? '' : `<div style="font-size:11px;color:var(--muted)">${d.sets} sets · ${d.reps} reps</div>`}`;
     tooltip.style.display = 'block';
@@ -9582,7 +9720,11 @@ async function loadClientFoodLogs(uid) {
     window._checkinMlCache = window._checkinMlCache || {};
     window._checkinMlCache[uid] = snap.docs.map(d => d.data());
     if (snap.empty) {
-      container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem">No food logs yet</div>';
+      container.innerHTML = `<div class="coach-empty">
+        <div class="coach-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3"/><path d="M6 12v9"/><path d="M17 3c-1.7 0-3 2.2-3 5s1.3 4 3 4v9"/></svg></div>
+        <div class="coach-empty-title">No food logs yet</div>
+        <div class="coach-empty-text">Meals logged by this client will appear here.</div>
+      </div>`;
       return;
     }
 
@@ -9608,7 +9750,11 @@ async function loadClientFoodLogs(uid) {
     });
 
     if (Object.keys(byDate).length === 0) {
-      container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:2rem">No food logs yet</div>';
+      container.innerHTML = `<div class="coach-empty">
+        <div class="coach-empty-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3"/><path d="M6 12v9"/><path d="M17 3c-1.7 0-3 2.2-3 5s1.3 4 3 4v9"/></svg></div>
+        <div class="coach-empty-title">No food logs yet</div>
+        <div class="coach-empty-text">Meals logged by this client will appear here.</div>
+      </div>`;
       return;
     }
 
@@ -9673,11 +9819,11 @@ async function loadClientFoodLogs(uid) {
       const dayCarb   = allItems.reduce((s,e)=>s+getCarb(e),0);
       const dayFat    = allItems.reduce((s,e)=>s+getFat(e),0);
 
-      html += `<div style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px">
-          <span style="font-size:13px;font-weight:700;color:var(--text)">${date}</span>
-          <span style="margin-left:auto;font-size:11px;color:var(--gold);font-weight:600">${Math.round(dayCal)} kcal</span>
-          <span style="font-size:11px;color:var(--muted)">P ${Math.round(dayProt)}g · C ${Math.round(dayCarb)}g · F ${Math.round(dayFat)}g</span>
+      html += `<div class="fl-day-group">
+        <div class="fl-day-head">
+          <span class="fl-day-date">${date}</span>
+          <span class="fl-day-kcal">${Math.round(dayCal)} kcal</span>
+          <span class="fl-day-macros">P ${Math.round(dayProt)}g · C ${Math.round(dayCarb)}g · F ${Math.round(dayFat)}g</span>
         </div>`;
 
       // Render each meal slot as a card grouping its food items
@@ -9736,7 +9882,11 @@ async function loadClientFoodLogs(uid) {
     }
 
   } catch(e) {
-    container.innerHTML = `<div style="text-align:center;color:var(--red);padding:2rem">Couldn't load food logs${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}<br><button onclick="loadClientFoodLogs('${uid}')" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
+    container.innerHTML = `<div class="coach-empty is-error">
+      <div class="coach-empty-title">Couldn't load food logs</div>
+      <div class="coach-empty-text">${e.message ? escapeHtml(String(e.message).slice(0,140)) : 'Something went wrong while loading this tab.'}</div>
+      <button class="coach-empty-btn" onclick="loadClientFoodLogs('${uid}')">Retry</button>
+    </div>`;
   }
 }
 
@@ -9995,18 +10145,15 @@ async function loadClientCheckins(uid) {
 
     // ── SECTION HELPER ──
     const section = (title, icon, content) => `
-      <div style="background:rgba(var(--line-r),var(--line-g),var(--line-b),0.025);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.07);border-radius:14px;overflow:hidden;margin-bottom:10px">
-        <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.05)">
-          <span style="font-size:14px">${icon}</span>
-          <span style="font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)">${title}</span>
-        </div>
-        <div style="padding:14px 16px">${content}</div>
+      <div class="sum-section">
+        <div class="sum-section-head">${title}</div>
+        <div class="sum-section-body">${content}</div>
       </div>`;
 
     const statRow = (label, value, sub='') => `
-      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.04);gap:8px">
-        <span style="font-size:12px;color:var(--muted);flex-shrink:0">${label}</span>
-        <span style="font-size:13px;font-weight:700;color:var(--text);text-align:right;min-width:0">${value}${sub ? `<span style="font-size:10px;font-weight:400;color:var(--muted);margin-left:4px;word-break:break-all">${sub}</span>` : ''}</span>
+      <div class="sum-stat-row">
+        <span class="sum-stat-label">${label}</span>
+        <span class="sum-stat-value">${value}${sub ? `<span class="sum-stat-sub">${sub}</span>` : ''}</span>
       </div>`;
 
     // ════════════════════════════
@@ -10086,7 +10233,7 @@ async function loadClientCheckins(uid) {
     // ════════════════════════════
     //  3. WORKOUT / LIFTS
     // ════════════════════════════
-    let workoutContent = '<span style="color:var(--muted);font-size:12px">No workout logs yet</span>';
+    let workoutContent = '<div class="sum-empty"><div class="sum-empty-title">No workout logs yet</div><div class="sum-empty-text">Sessions logged by this client will show their volume, sets, and personal records here.</div></div>';
     if (wlDocs.length) {
       const totalVol  = wlDocs.reduce((s,d)=>s+(d.totalVolume||0),0);
       const totalSets = wlDocs.reduce((s,d)=>s+(d.totalSets||0),0);
@@ -10195,7 +10342,7 @@ async function loadClientCheckins(uid) {
               </div>
             </div>`;
           }).join('')}
-        </div>` : '<span style="color:var(--muted);font-size:12px">No exercise data yet</span>';
+        </div>` : '<div class="sum-empty-sm">No exercise data yet</div>';
 
       // ════════════════════════════════════════
       //  PERSONAL RECORDS (PRs)
@@ -10230,7 +10377,7 @@ async function loadClientCheckins(uid) {
                 <div style="font-size:10px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.35)">${rec.reps} reps</div>
               </div>
             </div>`).join('')}
-        </div>` : '<span style="color:var(--muted);font-size:12px">No weight data recorded yet</span>';
+        </div>` : '<div class="sum-empty-sm">No weight data recorded yet</div>';
 
       // ════════════════════════════════════════
       //  PER-EXERCISE PROGRESS (top 5 exercises)
@@ -10262,7 +10409,7 @@ async function loadClientCheckins(uid) {
       const exProgressHTML = exProgressEntries.length ? `
         <div id="${exProgressUID}_tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
           ${exProgressEntries.map(([name],i)=>`
-            <button onclick="showExProgress('${exProgressUID}',${i})" id="${exProgressUID}_tab_${i}"
+            <button onclick="showExProgress('${exProgressUID}',${i})" id="${exProgressUID}_tab_${i}" class="${i===0?'is-active':''}"
               style="padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;${i===0?'background:#FF5A2B;color:#0A0A0A;border:none':'background:rgba(var(--line-r),var(--line-g),var(--line-b),0.05);color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.5);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)'}">
               ${name}
             </button>`).join('')}
@@ -10270,20 +10417,20 @@ async function loadClientCheckins(uid) {
         <div id="${exProgressUID}_chart" style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 14px 16px;overflow:visible">
           <canvas id="${exProgressUID}_canvas" height="140" style="width:100%;display:block"></canvas>
           <div id="${exProgressUID}_tooltip" style="position:absolute;display:none;background:rgba(15,15,15,0.95);border:1px solid rgba(255,90,43,0.3);border-radius:8px;padding:7px 11px;font-size:11px;pointer-events:none;white-space:nowrap"></div>
-        </div>` : '<span style="color:var(--muted);font-size:12px">Not enough data — exercises need 2+ sessions to show progress</span>';
+        </div>` : '<div class="sum-empty-sm">Not enough data. Exercises need 2 or more sessions to show progress.</div>';
 
       workoutContent = `
-        <div style="background:var(--bg2);border-radius:14px;padding:16px 18px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(var(--line-r),var(--line-g),var(--line-b),0.04)">
+        <div class="sum-inner-card">
           <div id="${chartUid}_body">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
               <div style="display:flex;gap:4px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.07);border-radius:10px;padding:4px">
                 <button onclick="setWLView('${chartUid}','table')" id="${chartUid}_viewtab_table"
                   style="padding:4px 14px;border-radius:7px;font-size:11px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border:none;background:transparent;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.45);transition:all .15s">Table</button>
-                <button onclick="setWLView('${chartUid}','chart')" id="${chartUid}_viewtab_chart"
+                <button onclick="setWLView('${chartUid}','chart')" id="${chartUid}_viewtab_chart" class="is-active"
                   style="padding:4px 14px;border-radius:7px;font-size:11px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border:none;background:#FF5A2B;color:#0A0A0A;transition:all .15s">Chart</button>
               </div>
               <div style="display:flex;gap:5px" id="${chartUid}_tabs">
-                <button onclick="sumWLMetric('${chartUid}','volume')" id="${chartUid}_tab_volume"
+                <button onclick="sumWLMetric('${chartUid}','volume')" id="${chartUid}_tab_volume" class="is-active"
                   style="padding:5px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all .15s;background:#FF5A2B;color:#0A0A0A;border:none">Volume</button>
                 <button onclick="sumWLMetric('${chartUid}','reps')" id="${chartUid}_tab_reps"
                   style="padding:5px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all .15s;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.05);color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.55);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)">Reps</button>
@@ -10295,7 +10442,7 @@ async function loadClientCheckins(uid) {
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
               <span style="font-size:10px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3)">Hover a dot for details · click to expand</span>
               <div style="display:flex;gap:3px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.07);border-radius:8px;padding:3px">
-                <button onclick="sumWLPeriod('${chartUid}','day')"   id="${chartUid}_ptab_day"   style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:#FF5A2B;color:#0A0A0A;font-family:'Inter',sans-serif;transition:all .15s">Day</button>
+                <button onclick="sumWLPeriod('${chartUid}','day')"   id="${chartUid}_ptab_day"   class="is-active" style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:#FF5A2B;color:#0A0A0A;font-family:'Inter',sans-serif;transition:all .15s">Day</button>
                 <button onclick="sumWLPeriod('${chartUid}','week')"  id="${chartUid}_ptab_week"  style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:transparent;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4);font-family:'Inter',sans-serif;transition:all .15s">Week</button>
                 <button onclick="sumWLPeriod('${chartUid}','month')" id="${chartUid}_ptab_month" style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;border:none;background:transparent;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4);font-family:'Inter',sans-serif;transition:all .15s">Month</button>
               </div>
@@ -10308,26 +10455,20 @@ async function loadClientCheckins(uid) {
         </div>
 
         <!-- MUSCLE GROUP BREAKDOWN -->
-        <div style="margin-top:14px;background:var(--bg2);border-radius:14px;padding:16px 18px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(var(--line-r),var(--line-g),var(--line-b),0.04)">
-          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px">
-            <span>💪</span> Muscle Groups Trained
-          </div>
+        <div class="sum-inner-card">
+          <div class="sum-card-head">Muscle Groups Trained</div>
           ${muscleHTML}
         </div>
 
         <!-- PERSONAL RECORDS -->
-        <div style="margin-top:14px;background:var(--bg2);border-radius:14px;padding:16px 18px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(var(--line-r),var(--line-g),var(--line-b),0.04)">
-          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px">
-            <span>🏆</span> Personal Records — Best Weight Lifted
-          </div>
+        <div class="sum-inner-card">
+          <div class="sum-card-head">Personal Records</div>
           ${prHTML}
         </div>
 
         <!-- PER-EXERCISE PROGRESS -->
-        <div style="margin-top:14px;background:var(--bg2);border-radius:14px;padding:16px 18px;border:1px solid var(--border);box-shadow:0 2px 12px rgba(var(--line-r),var(--line-g),var(--line-b),0.04)">
-          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:8px">
-            <span>📈</span> Exercise Progress Over Time
-          </div>
+        <div class="sum-inner-card">
+          <div class="sum-card-head">Exercise Progress Over Time</div>
           ${exProgressHTML}
         </div>`;
 
@@ -10340,7 +10481,7 @@ async function loadClientCheckins(uid) {
     // ════════════════════════════
     //  4. NUTRITION
     // ════════════════════════════
-    let nutritionContent = '<span style="color:var(--muted);font-size:12px">No meal logs yet</span>';
+    let nutritionContent = '<div class="sum-empty"><div class="sum-empty-title">No meal logs yet</div><div class="sum-empty-text">Daily calories and macro averages will appear once this client logs meals.</div></div>';
     let mlLatestDate = '—';
     let nutrChartUid = null;
     let chartDataAll = [];
@@ -10416,7 +10557,7 @@ async function loadClientCheckins(uid) {
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <span style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">Calorie Trend</span>
             <div style="display:flex;gap:4px" id="${nutrChartUid}_tabs">
-              <button onclick="nutrChartSwitch('${nutrChartUid}','day')" id="${nutrChartUid}_tab_day"
+              <button onclick="nutrChartSwitch('${nutrChartUid}','day')" id="${nutrChartUid}_tab_day" class="is-active"
                 style="padding:4px 10px;border-radius:6px;border:1px solid rgba(255,90,43,0.5);background:rgba(255,90,43,0.15);color:#FF5A2B;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;text-transform:uppercase">Day</button>
               <button onclick="nutrChartSwitch('${nutrChartUid}','week')" id="${nutrChartUid}_tab_week"
                 style="padding:4px 10px;border-radius:6px;border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.08);background:transparent;color:#555;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.5px;text-transform:uppercase">Week</button>
@@ -10450,17 +10591,16 @@ async function loadClientCheckins(uid) {
     // ════════════════════════════
     //  RENDER
     // ════════════════════════════
-    const latestDate = ciDocs[0]?.date || wlDocs[0]?.date || '—';
-    const srcColor   = ciDocs[0]?.source==='client' ? '#60a5fa' : 'var(--gold)';
+    const latestDate = ciDocs[0]?.date || wlDocs[0]?.date || 'No check-ins yet';
     const srcLabel   = ciDocs[0]?.source==='client' ? 'Client' : 'Coach';
 
     wrap.innerHTML = `
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+      <div class="sum-head">
         <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${latestDate}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${ciDocs.length} check-ins · ${wlDocs.length} workouts · ${mlDocs.length} meal entries</div>
+          <div class="sum-head-date">${latestDate}</div>
+          <div class="sum-head-meta">${ciDocs.length} check-ins · ${wlDocs.length} workouts · ${mlDocs.length} meal entries</div>
         </div>
-        ${ciDocs.length?`<span style="font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;border:1px solid ${srcColor};color:${srcColor}">${srcLabel}</span>`:''}
+        ${ciDocs.length?`<span class="sum-source${ciDocs[0]?.source==='client'?' is-client':''}">${srcLabel}</span>`:''}
       </div>
       ${section('Workout Performance', '🏋️', workoutContent)}
       ${section('Nutrition', '🥗', nutritionContent)}`;
@@ -10533,18 +10673,15 @@ function drawSumWLChart(chartUid) {
     const avg=Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
     const diff=latest-vals[0], diffPct=vals[0]>0?Math.round(diff/vals[0]*100):0;
     const tc=diff>=0?'#16A34A':'#DC2626', tbg=diff>=0?'rgba(22,163,74,0.08)':'rgba(220,38,38,0.08)';
-    const sBox=(lbl,val,vc,icon,accentBg)=>`<div style="flex:1;min-width:110px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px rgba(var(--line-r),var(--line-g),var(--line-b),0.03);display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700">${lbl}</span>
-        <span style="width:20px;height:20px;border-radius:6px;background:${accentBg};display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0">${icon}</span>
-      </div>
+    const sBox=(lbl,val,vc)=>`<div style="flex:1;min-width:110px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+      <span style="font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700">${lbl}</span>
       <div style="font-family:'Syne',sans-serif;font-size:21px;font-weight:700;line-height:1;color:${vc}">${val}</div>
     </div>`;
     statsEl.innerHTML=
-      sBox('Latest',latest.toLocaleString()+unit,'#FF5A2B','⚡','rgba(255,90,43,0.1)')+
-      sBox('Peak',peak.toLocaleString()+unit,'var(--text)','🏔️','rgba(var(--line-r),var(--line-g),var(--line-b),0.05)')+
-      sBox('Avg',avg.toLocaleString()+unit,'var(--text)','∿','rgba(var(--line-r),var(--line-g),var(--line-b),0.05)')+
-      sBox('Trend',(diff>=0?'↑':'↓')+Math.abs(diffPct)+'%',tc,diff>=0?'📈':'📉',tbg);
+      sBox('Latest',latest.toLocaleString()+unit,'#FF5A2B')+
+      sBox('Peak',peak.toLocaleString()+unit,'var(--text)')+
+      sBox('Avg',avg.toLocaleString()+unit,'var(--text)')+
+      sBox('Trend',(diff>=0?'↑':'↓')+Math.abs(diffPct)+'%',tc);
   }
 
   // Canvas
@@ -10623,7 +10760,7 @@ function drawSumWLChart(chartUid) {
     data.forEach((_,i)=>{const dist=Math.abs(toX(i)-mx);if(dist<bestDist){bestDist=dist;best=i;}});
     if(bestDist>cW/data.length+10){tooltip.style.display='none';return;}
     const d=data[best];
-    tooltip.innerHTML=`<div style="font-size:10px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.45);margin-bottom:3px">${d.shortDate}${d.count>1?' ('+d.count+' sessions)':' · '+d.name}</div><div style="color:#FF5A2B;font-weight:700;font-size:13px">${metric.charAt(0).toUpperCase()+metric.slice(1)}: ${vals[best].toLocaleString()}${unit}</div>`+(metric==='volume'?`<div style="font-size:11px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)">${d.sets} sets · ${d.reps} reps</div>`:'');
+    tooltip.innerHTML=`<div style="font-size:10px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.45);margin-bottom:3px">${d.shortDate}${d.count>1?' ('+d.count+' sessions)':' · '+escapeHtml(d.name)}</div><div style="color:#FF5A2B;font-weight:700;font-size:13px">${metric.charAt(0).toUpperCase()+metric.slice(1)}: ${vals[best].toLocaleString()}${unit}</div>`+(metric==='volume'?`<div style="font-size:11px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)">${d.sets} sets · ${d.reps} reps</div>`:'');
     tooltip.style.display='block';
     let tx2=toX(best)+12; if(tx2+180>W) tx2=toX(best)-184;
     tooltip.style.left=tx2+'px'; tooltip.style.top=(toY(vals[best])-10)+'px';
@@ -10645,6 +10782,7 @@ window.sumWLMetric=function(chartUid,metric){
     const b=document.getElementById(chartUid+'_tab_'+m); if(!b)return;
     if(m===metric){b.style.background='#FF5A2B';b.style.color='#0A0A0A';b.style.border='none';}
     else{b.style.background='rgba(var(--line-r),var(--line-g),var(--line-b),0.05)';b.style.color=canvasInk(0.55);b.style.border='1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)';}
+    b.classList.toggle('is-active', m===metric);
   });
   drawSumWLChart(chartUid);
 };
@@ -10656,6 +10794,7 @@ window.sumWLPeriod=function(chartUid,period){
     const b=document.getElementById(chartUid+'_ptab_'+p); if(!b)return;
     if(p===period){b.style.background='#FF5A2B';b.style.color='#0A0A0A';}
     else{b.style.background='transparent';b.style.color='rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)';}
+    b.classList.toggle('is-active', p===period);
   });
   drawSumWLChart(chartUid);
 };
@@ -10674,6 +10813,7 @@ window.showExProgress = function(uid, idx) {
     if (!btn) return;
     if (i === idx) { btn.style.background='#FF5A2B'; btn.style.color='#0A0A0A'; btn.style.border='none'; }
     else { btn.style.background='rgba(var(--line-r),var(--line-g),var(--line-b),0.05)'; btn.style.color=canvasInk(0.5); btn.style.border='1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)'; }
+    btn.classList.toggle('is-active', i === idx);
   });
 
   const [exName, pts] = entries[idx];
@@ -11064,6 +11204,8 @@ window.setWLView = function(chartUid, view) {
       tblBtn.style.background = '#FF5A2B'; tblBtn.style.color = '#0A0A0A';
       chtBtn.style.background = 'transparent'; chtBtn.style.color = canvasInk(0.45);
     }
+    tblBtn.classList.toggle('is-active', view !== 'chart');
+    chtBtn.classList.toggle('is-active', view === 'chart');
   }
 
   if (view === 'table') {
@@ -11172,7 +11314,7 @@ window.switchWorkoutChart = function(chartUid, metric) {
   const unitSuffix=unit==='kg'?' kg':'';
   const mBtn=(m,lbl)=>{
     const active=metric===m;
-    return `<button onclick="switchWorkoutChart('${chartUid}','${m}')" id="${chartUid}_tab_${m}"
+    return `<button onclick="switchWorkoutChart('${chartUid}','${m}')" id="${chartUid}_tab_${m}" class="${active?'is-active':''}"
       style="padding:5px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all .15s;
       ${active?`background:#FF5A2B;color:#0A0A0A;border:none;`:`background:rgba(var(--line-r),var(--line-g),var(--line-b),0.05);color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.55);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1);`}">${lbl}</button>`;
   };
@@ -11325,13 +11467,13 @@ window.switchWorkoutPeriod = function(chartUid, period) {
 
   const mBtn = (mid, lbl) => {
     const active = metric===mid;
-    return `<button onclick="switchWorkoutChart('${chartUid}','${mid}')" id="${chartUid}_tab_${mid}"
+    return `<button onclick="switchWorkoutChart('${chartUid}','${mid}')" id="${chartUid}_tab_${mid}" class="${active?'is-active':''}"
       style="padding:5px 14px;border-radius:8px;font-size:11px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:0.3px;transition:all .15s;
       ${active?`background:#FF5A2B;color:#0A0A0A;border:none;`:`background:rgba(var(--line-r),var(--line-g),var(--line-b),0.05);color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.55);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1);`}">${lbl}</button>`;
   };
   const pBtn = (pid, lbl) => {
     const active = period===pid;
-    return `<button onclick="switchWorkoutPeriod('${chartUid}','${pid}')" id="${chartUid}_ptab_${pid}"
+    return `<button onclick="switchWorkoutPeriod('${chartUid}','${pid}')" id="${chartUid}_ptab_${pid}" class="${active?'is-active':''}"
       style="padding:4px 12px;border-radius:6px;font-size:10px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;border:none;transition:all .15s;letter-spacing:0.3px;
       ${active?`background:#FF5A2B;color:#0A0A0A;`:`background:transparent;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4);`}">${lbl}</button>`;
   };
@@ -12446,6 +12588,12 @@ async function loadClientPhotos(uid, forceRefresh) {
 
   const gen = ++window._photoGen;
   _photoCellIdx = 0;
+  // Reset the compare-picker paging state for this load; the cache path restores
+  // what it knows about the server pages below.
+  _coachBaSessions = [];
+  _coachBaHasMore = null;
+  _coachBaFullUid = null;
+  _coachBaFullLoad = null;
   const refreshBtn = document.querySelector('.cpvt-btn[title="Refresh photos"]');
   if (refreshBtn) { refreshBtn.disabled = true; refreshBtn.style.opacity = '0.4'; }
 
@@ -12454,12 +12602,14 @@ async function loadClientPhotos(uid, forceRefresh) {
     grid.innerHTML = cached.html;
     window._photoCache = window._photoCache || {};
     Object.assign(window._photoCache, cached.photoCacheEntries);
-    if (_modalPhotoView === 'compare') coachRenderBeforeAfter(cached.sorted);
+    _coachBaHasMore = typeof cached.hasMore === 'boolean' ? cached.hasMore : null;
+    if (_modalPhotoView === 'compare') {
+      coachRenderBeforeAfter(cached.sorted);
+      coachEnsureAllBaSessions();
+    }
     if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.style.opacity = ''; }
     return;
   }
-
-  _coachBaSessions = [];
 
   if (!cached) grid.innerHTML = _renderPhotoSkeleton(8);
 
@@ -12485,7 +12635,12 @@ async function loadClientPhotos(uid, forceRefresh) {
     docs.forEach(d => { window._photoCache = window._photoCache || {}; window._photoCache[d.id] = d.data(); });
     const sorted = _groupPhotosBySession(docs);
     _renderSessionGrid(grid, sorted);
-    if (_modalPhotoView === 'compare') coachRenderBeforeAfter(sorted);
+    _coachBaHasMore = hasMore;
+    if (_modalPhotoView === 'compare') {
+      // Don't let a partial page overwrite a complete list that already loaded.
+      if (_coachBaFullUid !== uid) coachRenderBeforeAfter(sorted);
+      coachEnsureAllBaSessions();
+    }
     if (hasMore) {
       const loadMoreWrap = document.createElement('div');
       loadMoreWrap.className = 'photo-load-more';
@@ -12496,7 +12651,7 @@ async function loadClientPhotos(uid, forceRefresh) {
     if (isNetwork) {
       rendered = true;
       clearTimeout(timeoutId);
-      window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, photoCacheEntries: (() => { const e = {}; docs.forEach(d => { e[d.id] = d.data(); }); return e; })() };
+      window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, hasMore, photoCacheEntries: (() => { const e = {}; docs.forEach(d => { e[d.id] = d.data(); }); return e; })() };
     }
   };
 
@@ -12523,7 +12678,7 @@ async function loadClientPhotos(uid, forceRefresh) {
       clearTimeout(timeoutId);
       rendered = true;
       grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">️</div><div class="empty-text">No photos yet</div></div>`;
-      window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted: [], photoCacheEntries: {} };
+      window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted: [], hasMore: false, photoCacheEntries: {} };
       if (refreshBtn) { refreshBtn.disabled = false; refreshBtn.style.opacity = ''; }
       return;
     }
@@ -12554,7 +12709,9 @@ async function _loadMorePhotos(uid, gen, prevDocs, lastDoc, grid) {
     snap.docs.forEach(d => { window._photoCache = window._photoCache || {}; window._photoCache[d.id] = d.data(); });
     const sorted = _groupPhotosBySession(newDocs);
     _renderSessionGrid(grid, sorted);
-    if (_modalPhotoView === 'compare') coachRenderBeforeAfter(sorted);
+    _coachBaHasMore = hasMore;
+    // Keep the picker on the complete list if the compare view already loaded it.
+    if (_modalPhotoView === 'compare' && _coachBaFullUid !== uid) coachRenderBeforeAfter(sorted);
     if (hasMore) {
       const loadMoreWrap = document.createElement('div');
       loadMoreWrap.className = 'photo-load-more';
@@ -12562,7 +12719,7 @@ async function _loadMorePhotos(uid, gen, prevDocs, lastDoc, grid) {
       grid.appendChild(loadMoreWrap);
       document.getElementById('photo-load-more-btn').onclick = () => _loadMorePhotos(uid, gen, newDocs, lastDoc, grid);
     }
-    window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, photoCacheEntries: (() => { const e = {}; newDocs.forEach(d => { e[d.id] = d.data(); }); return e; })() };
+    window._clientPhotosCache[uid] = { html: grid.innerHTML, sorted, hasMore, photoCacheEntries: (() => { const e = {}; newDocs.forEach(d => { e[d.id] = d.data(); }); return e; })() };
   } catch(e) {
     if (btn) { btn.textContent = 'Retry'; btn.disabled = false; btn.onclick = () => _loadMorePhotos(uid, gen, prevDocs, lastDoc, grid); }
   }
@@ -12593,6 +12750,7 @@ function setCoachPhotoView(view) {
       ? _coachBaSessions
       : ((_cached && _cached.sorted) || []);
     coachRenderBeforeAfter(_sorted);
+    coachEnsureAllBaSessions();
   }
 }
 
@@ -12600,8 +12758,16 @@ let _coachBaSessions = [];
 let _coachBaAngle = null;
 let _coachBaBeforeIdx = 1; // index into _coachBaSessions picked for the "Before" side
 let _coachBaAfterIdx  = 0; // index into _coachBaSessions picked for the "After" side (defaults to most recent)
+let _coachBaHasMore = null;  // true when the server has check-ins older than the loaded photo page
+let _coachBaFullUid = null;  // client whose complete check-in history is already loaded
+let _coachBaFullLoad = null; // in-flight full-history fetch
 
 function coachRenderBeforeAfter(sorted) {
+  // Remember the current picks by calendar day so re-renders (e.g. while older
+  // check-ins stream in) keep the same Before/After sessions selected.
+  const prevBeforeKey = _coachBaSessions[_coachBaBeforeIdx]?.dateKey;
+  const prevAfterKey  = _coachBaSessions[_coachBaAfterIdx]?.dateKey;
+
   _coachBaSessions = sorted;
   const noP = document.getElementById('coach-ba-no-photos');
   const cnt = document.getElementById('coach-ba-content');
@@ -12611,6 +12777,16 @@ function coachRenderBeforeAfter(sorted) {
     noP.classList.remove('hidden'); cnt.classList.add('hidden'); return;
   }
   noP.classList.add('hidden'); cnt.classList.remove('hidden');
+
+  // Restore the picks if those sessions are still present in the new list.
+  if (prevBeforeKey) {
+    const i = sorted.findIndex(s => s.dateKey === prevBeforeKey);
+    if (i >= 0) _coachBaBeforeIdx = i;
+  }
+  if (prevAfterKey) {
+    const i = sorted.findIndex(s => s.dateKey === prevAfterKey);
+    if (i >= 0) _coachBaAfterIdx = i;
+  }
 
   // Populate both the Before and After dropdowns with every check-in session. Keep the
   // coach's prior picks if still valid for this client, otherwise default to the most
@@ -12623,7 +12799,10 @@ function coachRenderBeforeAfter(sorted) {
   }
 
   coachPopulateBaSelects();
-  coachRefreshBaCompare();
+  // Only reload the photos when the picked sessions actually changed.
+  if (prevBeforeKey !== sorted[_coachBaBeforeIdx].dateKey || prevAfterKey !== sorted[_coachBaAfterIdx].dateKey) {
+    coachRefreshBaCompare();
+  }
 }
 
 // Rebuilds both dropdowns' option lists. Any option that shares a calendar date with the
@@ -12648,6 +12827,45 @@ function coachPopulateBaSelects() {
 
   beforeSel.innerHTML = buildOpts(_coachBaBeforeIdx, afterDate);
   afterSel.innerHTML  = buildOpts(_coachBaAfterIdx, beforeDate);
+}
+
+// The photo grid pages in 20 photos at a time, so with 4 angles per check-in its
+// first page only covers ~5 sessions. The Before/After picker must list every
+// check-in, so once the compare view is opened pull the remaining pages and keep
+// the dropdowns updated as older sessions arrive.
+async function coachEnsureAllBaSessions() {
+  const uid = currentModalUid;
+  if (!uid) return;
+  if (_coachBaHasMore === false) return; // first page already covered the whole history
+  if (_coachBaFullUid === uid) return;   // complete list already loaded for this client
+  if (_coachBaFullLoad) return _coachBaFullLoad;
+
+  const gen = window._photoGen;
+  const p = (async () => {
+    let docs = [];
+    let cursor = null;
+    let more = true;
+    while (more) {
+      let query = db.collection('members').doc(uid).collection('progressPhotos')
+        .orderBy('uploadedAt','desc').limit(20);
+      if (cursor) query = query.startAfter(cursor);
+      const snap = await query.get();
+      if (gen !== window._photoGen || currentModalUid !== uid) return;
+      if (!snap.docs.length) break;
+      docs = docs.concat(snap.docs);
+      cursor = snap.docs[snap.docs.length - 1];
+      more = snap.docs.length >= 20;
+      if (_modalPhotoView === 'compare') coachRenderBeforeAfter(_groupPhotosBySession(docs));
+    }
+    _coachBaHasMore = false;
+    if (docs.length) _coachBaFullUid = uid;
+  })().catch(e => {
+    console.warn('Before/After history load failed:', e?.message || e);
+  }).finally(() => {
+    if (_coachBaFullLoad === p) _coachBaFullLoad = null;
+  });
+  _coachBaFullLoad = p;
+  return p;
 }
 
 // Coach picked a different session for the Before or After side
@@ -12809,7 +13027,7 @@ function loadMissedUpdates() {
     return `<div class="missed-update-card">
       <div class="muc-av">${clientAvatarInner(c, initials)}</div>
       <div class="muc-info">
-        <div class="muc-name">${c.firstName||''} ${c.lastName||''}</div>
+        <div class="muc-name">${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')}</div>
         <div class="muc-detail">Was due ${nextFmt}</div>
         <div class="muc-days">${daysLate} day${daysLate !== 1 ? 's' : ''} overdue</div>
       </div>
@@ -13140,7 +13358,7 @@ async function deleteProgressPhoto() {
 function populateClientSelect() {
   const sel = document.getElementById('assign-client-select');
   sel.innerHTML = '<option value="">Select a client…</option>' +
-    allClients.map(c=>`<option value="${c.uid}">${c.firstName||''} ${c.lastName||''} (${c.email||''})</option>`).join('');
+    allClients.map(c=>`<option value="${escapeAttr(c.uid)}">${escapeHtml(c.firstName||'')} ${escapeHtml(c.lastName||'')} (${escapeHtml(c.email||'')})</option>`).join('');
   // Also populate custom dropdown
   const list = document.getElementById('ccs-options-list');
   if (list) {
@@ -13149,12 +13367,12 @@ function populateClientSelect() {
       const initials = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?';
       const email = c.email || '';
       // Use data attributes to avoid any string escaping issues in onclick
-      const safeUid = (c.uid||'').replace(/"/g,'&quot;');
-      return `<div class="ccs-option" data-value="${safeUid}" data-name="${name.replace(/"/g,'&quot;')}">
+      const safeUid = escapeAttr(c.uid||'');
+      return `<div class="ccs-option" data-value="${safeUid}" data-name="${escapeAttr(name)}">
         <div class="ccs-avatar">${clientAvatarInner(c, initials)}</div>
         <div class="ccs-info">
-          <div class="ccs-name">${name}</div>
-          <div class="ccs-email">${email}</div>
+          <div class="ccs-name">${escapeHtml(name)}</div>
+          <div class="ccs-email">${escapeHtml(email)}</div>
         </div>
       </div>`;
     }).join('');
@@ -13518,6 +13736,7 @@ function confirmExEdit() {
   const newName = getSanitizedValue('exedit-exname', 80);
   const newDetail = getSanitizedValue('exedit-exdetail', 100);
   if (!newName) { showToast('Exercise name cannot be empty'); return; }
+  ex.exerciseId = getExerciseId(ex);
   ex.name = newName;
   ex.detail = newDetail || 'Exercise';
   ex.sets = sets;
@@ -13701,6 +13920,7 @@ function addExerciseToPlan() {
   if (max > min) ex.maxReps = max;
   if (rir > 0) ex.rir = rir;
   if (note) ex.note = note;
+  ex.exerciseId = getExerciseId(ex);
   workoutPlan[currentDay].exercises.push(ex);
   document.getElementById('aef-name').value='';
   document.getElementById('aef-detail').value='';
@@ -13872,12 +14092,10 @@ async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
 
   try {
     const ref  = db.collection('members').doc(clientUid);
-    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-
     // Build updated plan (only days that still have exercises)
     const plan = {};
     Object.entries(workoutPlan).forEach(([day, d]) => {
-      if (d.exercises.length) plan[day] = { name: d.name || day + ' Workout', exercises: d.exercises.map(ex => stripUndefined(ex)) };
+      if (d.exercises.length) plan[day] = { name: d.name || day + ' Workout', exercises: d.exercises.map(ex => stripUndefined({ ...ex, exerciseId: getExerciseId(ex) })) };
     });
 
     // Persist to localStorage BEFORE the async Firestore write so that if the
@@ -13885,17 +14103,7 @@ async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
     // will recover and push it.
     _persistPendingSave(clientUid, plan);
 
-    // Step 1 — delete all day fields so removed days don't linger
-    const clearData = { workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
-    DAYS.forEach(day => { clearData[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete(); });
-    await ref.update(clearData);
-
-    // Step 2 — write back only the days that still have exercises
-    if (Object.keys(plan).length) {
-      const writeData = { workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(), workoutAssignedBy: coachUid };
-      Object.entries(plan).forEach(([day, d]) => { writeData[`assignedWorkoutPlan.${day}`] = d; });
-      await ref.update(writeData);
-    }
+    await ref.update(_workoutPlanPatch(plan));
 
     // Firestore write succeeded — the backup is no longer needed
     _clearPendingSave();
@@ -13924,12 +14132,12 @@ async function _autoSavePlanToFirebaseImpl(successMsg, silent) {
     if (banner && bannerText) {
       banner.style.display = 'flex';
       if (totalEx === 0) {
-        bannerText.innerHTML = `Plan cleared for <strong>${name}</strong>. Client will see no workout assigned.`;
+        bannerText.innerHTML = `Plan cleared for <strong>${escapeHtml(name)}</strong>. Client will see no workout assigned.`;
         banner.style.background  = 'rgba(248,113,113,0.08)';
         banner.style.borderColor = 'rgba(248,113,113,0.3)';
         banner.style.color       = '#F87171';
       } else {
-        bannerText.innerHTML = `Saved! <strong>${name}'s</strong> plan — ${totalEx} exercise${totalEx!==1?'s':''} across ${totalDays} day${totalDays!==1?'s':''}.`;
+        bannerText.innerHTML = `Saved! <strong>${escapeHtml(name)}'s</strong> plan — ${totalEx} exercise${totalEx!==1?'s':''} across ${totalDays} day${totalDays!==1?'s':''}.`;
         banner.style.background  = '';
         banner.style.borderColor = '';
         banner.style.color       = '';
@@ -14056,7 +14264,7 @@ async function loadClientAssignedWorkout(clientUid) {
     const client  = allClients.find(c => c.uid === clientUid);
     const name    = client ? (client.firstName || client.email || 'Client') : 'Client';
     banner.style.display = 'flex';
-    bannerText.innerHTML = `Loaded <strong>${name}'s</strong> current plan — ${totalEx} exercise${totalEx!==1?'s':''} across ${days.length} day${days.length!==1?'s':''}. Changes save and assign automatically.`;
+    bannerText.innerHTML = `Loaded <strong>${escapeHtml(name)}'s</strong> current plan — ${totalEx} exercise${totalEx!==1?'s':''} across ${days.length} day${days.length!==1?'s':''}. Changes save and assign automatically.`;
   } catch(e) {
     // Unclear whether local state matches Firestore after a failed fetch —
     // don't claim it's synced, so a real "unsaved" warning can still fire.
@@ -14085,6 +14293,7 @@ async function assignWorkoutToClient(evt) {
     _notifyPending = null;
   }
 
+  let notificationFailed = false;
   const btn = document.getElementById('assign-btn');
   btn.disabled=true; btn.textContent='Saving…';
   try {
@@ -14095,58 +14304,44 @@ async function assignWorkoutToClient(evt) {
       const p = {};
       Object.entries(workoutPlan).forEach(([day,d])=>{
         if(d.exercises.length) {
-          p[day] = { name: d.name||day+' Workout', exercises: d.exercises.map(ex => stripUndefined(ex)) };
+          p[day] = { name: d.name||day+' Workout', exercises: d.exercises.map(ex => stripUndefined({ ...ex, exerciseId: getExerciseId(ex) })) };
         }
       });
 
       // Persist to localStorage before the async write as a safety net
       _persistPendingSave(clientUid, p);
 
-      // First delete ALL existing day fields so stale days from old plans don't persist
-      const ref  = db.collection('members').doc(clientUid);
-      const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-      const clearStale = {
-        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        workoutAssignedBy: coachUid,
-      };
-      DAYS.forEach(day => {
-        clearStale[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete();
-      });
-      await ref.update(clearStale);
-
-      // Now write only the days that actually have exercises
-      const updateData = {
-        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        workoutAssignedBy: coachUid,
-      };
-      Object.entries(p).forEach(([day, d]) => {
-        updateData[`assignedWorkoutPlan.${day}`] = d;
-      });
-      await ref.update(updateData);
+      const ref = db.collection('members').doc(clientUid);
+      await ref.update(_workoutPlanPatch(p));
 
       // Firestore write succeeded — the backup is no longer needed
       _clearPendingSave();
 
-      // Chat notification — skip if the last message already says this
-      // exact thing (e.g. a debounced auto-notification just sent it).
-      const chatId = [coachUid, clientUid].sort().join('_');
-      const text = `Workout plan updated. Open your app to see this week's schedule (${Object.keys(p).join(', ')}).`;
-      const lastSnap = await db.collection('chats').doc(chatId).collection('messages')
-        .orderBy('createdAt', 'desc').limit(1).get();
-      const alreadySent = !lastSnap.empty && lastSnap.docs[0].data().text === text;
-      if (!alreadySent) {
-        await db.collection('chats').doc(chatId).collection('messages').add({
-          text,
-          senderId: coachUid,
-          senderRole: 'coach',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+      try {
+        // Chat notification — skip if the last message already says this
+        // exact thing (e.g. a debounced auto-notification just sent it).
+        const chatId = [coachUid, clientUid].sort().join('_');
+        const text = `Workout plan updated. Open your app to see this week's schedule (${Object.keys(p).join(', ')}).`;
+        const lastSnap = await db.collection('chats').doc(chatId).collection('messages')
+          .orderBy('createdAt', 'desc').limit(1).get();
+        const alreadySent = !lastSnap.empty && lastSnap.docs[0].data().text === text;
+        if (!alreadySent) {
+          await db.collection('chats').doc(chatId).collection('messages').add({
+            text,
+            senderId: coachUid,
+            senderRole: 'coach',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+        await db.collection('chats').doc(chatId).set({
+          participants: [coachUid, clientUid],
+          lastMessage: 'Workout plan updated!',
+          lastAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, {merge:true});
+      } catch (error) {
+        notificationFailed = true;
+        console.warn('[workout plan notification]', error);
       }
-      await db.collection('chats').doc(chatId).set({
-        participants: [coachUid, clientUid],
-        lastMessage: 'Workout plan updated!',
-        lastAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, {merge:true});
 
       return p;
     });
@@ -14160,7 +14355,7 @@ async function assignWorkoutToClient(evt) {
     const bannerText = document.getElementById('assigned-plan-banner-text');
     const banner     = document.getElementById('assigned-plan-banner');
     banner.style.display = 'flex';
-    bannerText.innerHTML = `Saved! <strong>${name}'s</strong> plan — ${totalEx} exercise${totalEx!==1?'s':''} across ${days} day${days!==1?'s':''}.`;
+    bannerText.innerHTML = `Saved! <strong>${escapeHtml(name)}'s</strong> plan — ${totalEx} exercise${totalEx!==1?'s':''} across ${days} day${days!==1?'s':''}.`;
     banner.style.background = 'rgba(74,222,128,0.08)';
     banner.style.borderColor = 'rgba(74,222,128,0.3)';
     banner.style.color = 'var(--green)';
@@ -14170,7 +14365,7 @@ async function assignWorkoutToClient(evt) {
       banner.style.color = '';
     }, 4000);
 
-    showToast(`Plan saved for ${name}`, 'success');
+    showToast(notificationFailed ? 'Plan saved. Message not sent — notify your client in chat.' : `Plan saved for ${name}`, notificationFailed ? 'info' : 'success');
   } catch(e) {
     showToast('Error saving: '+e.message);
     console.error('[assignWorkoutToClient]', e);
@@ -14192,23 +14387,14 @@ async function clearClientWorkoutPlan() {
     // in the middle of (or get overwritten by) another pending save.
     await queueWorkoutSave(async () => {
       const ref  = db.collection('members').doc(clientUid);
-      const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-
-      // Step 1 — delete every individual day field explicitly
-      // (merge:true on an empty object does NOT remove existing sub-fields)
-      const deleteFields = {
-        workoutAssignedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        workoutAssignedBy: coachUid,
-      };
-      DAYS.forEach(day => {
-        deleteFields[`assignedWorkoutPlan.${day}`] = firebase.firestore.FieldValue.delete();
-      });
-      await ref.update(deleteFields);
-
-      // Step 2 — overwrite the parent key with a clean empty object (no merge)
-      await ref.set({ assignedWorkoutPlan: {} }, { merge: true });
+      _persistPendingSave(clientUid, {});
+      await ref.update(_workoutPlanPatch({}));
+      _clearPendingSave();
     });
 
+    if (_notifyPending && _notifyPending.clientUid === clientUid) {
+      clearTimeout(_notifyDebounceTimer); _notifyPending = null;
+    }
     const client = allClients.find(c => c.uid === clientUid);
     const name   = client ? (client.firstName || 'client') : 'client';
 
@@ -14216,7 +14402,7 @@ async function clearClientWorkoutPlan() {
     const banner     = document.getElementById('assigned-plan-banner');
     if (banner && bannerText) {
       banner.style.display  = 'flex';
-      bannerText.innerHTML  = `Plan fully removed for <strong>${name}</strong>. Client will see no workout assigned.`;
+      bannerText.innerHTML  = `Plan fully removed for <strong>${escapeHtml(name)}</strong>. Client will see no workout assigned.`;
       banner.style.background   = 'rgba(248,113,113,0.08)';
       banner.style.borderColor  = 'rgba(248,113,113,0.3)';
       banner.style.color        = '#F87171';
@@ -14353,7 +14539,7 @@ async function confirmSaveTemplate() {
   try {
     const dayData = workoutPlan[currentDay];
     // Only the currently selected day's exercises are saved — not the whole week.
-    const exercisesSnapshot = dayData.exercises.map(ex => ({...ex}));
+    const exercisesSnapshot = dayData.exercises.map(ex => ({...ex, exerciseId: getExerciseId(ex)}));
 
     const newTpl = stripUndefined({ name, day: currentDay, exercises: exercisesSnapshot, savedAt: Date.now() });
     const docRef = await templatesCollection().add(newTpl);
@@ -15877,6 +16063,7 @@ function confirmLibraryAdd() {
   if (max > min) ex.maxReps = max;
   if (rir > 0) ex.rir = rir;
   if (note) ex.note = note;
+  ex.exerciseId = getExerciseId(ex);
   workoutPlan[currentDay].exercises.push(ex);
   if (libPendingExercise.btnEl) {
     libPendingExercise.btnEl.textContent = '✓';
@@ -16337,7 +16524,7 @@ function exportCheckinsCsv() {
     </div>
     <div class="sets-modal-field" style="margin-bottom:16px;">
       <label>Notes</label>
-      <textarea id="exedit-note" maxlength="200" placeholder="e.g. Controlled descent and full range of motion." oninput="document.getElementById('exedit-note-count').textContent=this.value.length+'/200'"></textarea>
+      <textarea id="exedit-note" style="resize:none;min-height:96px;field-sizing:content;max-height:320px;overflow:auto;" maxlength="200" placeholder="e.g. Controlled descent and full range of motion." oninput="document.getElementById('exedit-note-count').textContent=this.value.length+'/200'"></textarea>
       <div class="axp-count" id="exedit-note-count">0/200</div>
     </div>
     <div class="sets-modal-btns">
@@ -16792,6 +16979,7 @@ function updateBuilderTotal() {
 
 function setFoodDbTarget(mealIdx) {
   foodDbTargetMeal = mealIdx;
+  setFdCollapsed(false);
   // Scroll food panel into view
   document.getElementById('nutr-food-db-col')?.scrollIntoView({ behavior:'smooth', block:'start' });
   showToast('Food DB: adding to Meal ' + mealIdx);
@@ -17316,30 +17504,27 @@ function _getTdeeClient() {
   return (uid && allClients) ? (allClients.find(c => c.uid === uid) || null) : null;
 }
 
+function _setTdeeExpanded(expanded) {
+  const body = document.getElementById('tdee-body');
+  if (!body) return;
+  body.classList.toggle('hidden', !expanded);
+  body.style.display = expanded ? 'block' : 'none';
+  document.getElementById('tdee-card')?.classList.toggle('open', expanded);
+  document.querySelector('.tdee-head')?.setAttribute('aria-expanded', String(expanded));
+}
+
 function toggleTdeeCard() {
   const body = document.getElementById('tdee-body');
   if (!body) return;
-  const card = document.getElementById('tdee-card');
-  const open = body.style.display !== 'none';
-  body.style.display = open ? 'none' : 'block';
-  if (card) card.classList.toggle('open', !open);
+  const expanded = getComputedStyle(body).display === 'none';
+  _setTdeeExpanded(expanded);
   tdeeReviewClose();
-  if (!open) renderTdeeCalculator();
+  if (expanded) renderTdeeCalculator();
 }
 
 function openTdeeCalculator() {
-  const body = document.getElementById('tdee-body');
-  if (!body) return;
-  // Switching clients (or reopening the calculator) must never leave a stale
-  // review panel around — close it before any auto-expand logic runs.
   tdeeReviewClose();
-  if (_getTdeeClient()) {
-    const card = document.getElementById('tdee-card');
-    if (body.style.display === 'none') {
-      body.style.display = 'block';
-      if (card) card.classList.add('open');
-    }
-  }
+  if (_getTdeeClient()) _setTdeeExpanded(true);
   renderTdeeCalculator();
 }
 
@@ -17356,7 +17541,12 @@ function setFdCollapsed(collapsed) {
   const col = document.getElementById('nutr-food-db-col');
   if (col) col.classList.toggle('fd-collapsed', _fdCollapsed);
   const btn = document.getElementById('fd-collapse-btn');
-  if (btn) btn.setAttribute('aria-expanded', String(!_fdCollapsed));
+  if (btn) {
+    btn.setAttribute('aria-expanded', String(!_fdCollapsed));
+    btn.setAttribute('aria-label', _fdCollapsed ? 'Expand food database' : 'Collapse food database');
+  }
+  const content = document.getElementById('food-db-content');
+  if (content) content.hidden = _fdCollapsed;
   const label = document.getElementById('fd-collapse-label');
   if (label) label.textContent = _fdCollapsed ? 'Collapsed · click to expand' : 'Expanded · click to collapse';
 }
@@ -17365,15 +17555,36 @@ function toggleFdPanel() {
   setFdCollapsed(!_fdCollapsed);
 }
 
+let _tdeeClientUid = null;
+function _tdeeProfileStats(client) {
+  const value = (raw, min, max) => {
+    const n = Number(raw);
+    return Number.isFinite(n) && n >= min && n <= max ? n : null;
+  };
+  const sex = String(client?.sex || '').toLowerCase();
+  return { age: value(client?.age, 10, 100), height: value(client?.heightCm, 100, 250),
+    weight: value(client?.currentWeightKg, 30, 300) || value(client?.weightKg, 30, 300),
+    sex: sex === 'male' || sex === 'female' ? sex : '' };
+}
+
 function renderTdeeCalculator() {
   const client = _getTdeeClient();
+  const profile = _tdeeProfileStats(client);
+  const uid = document.getElementById('nutr-assign-client')?.value || null;
+  if (uid !== _tdeeClientUid) {
+    ['age', 'height', 'weight', 'sex'].forEach(key => {
+      const input = document.getElementById('tdee-' + key);
+      if (input) input.value = '';
+    });
+    _tdeeClientUid = uid;
+  }
   const statsEl = document.getElementById('tdee-stats');
   const fieldIds = ['age', 'height', 'weight', 'sex'];
 
   fieldIds.forEach(k => {
     const f = document.getElementById('tdee-f-' + k);
     if (!f) return;
-    const val = client && k === 'height' ? client.heightCm : (client ? client[k] : '');
+    const val = profile[k];
     f.style.display = val ? 'none' : '';
   });
 
@@ -17382,28 +17593,28 @@ function renderTdeeCalculator() {
       statsEl.innerHTML = '<span class="tdee-missing">Select a client above to auto-fill from their profile — or enter stats manually.</span>';
     } else {
       const goal = client.goal ? String(client.goal).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
-      const displayWeight = client.currentWeightKg || client.weightKg;
+      const displayWeight = profile.weight;
       const item = (ok, html) => ok ? html : `<span class="tdee-missing">${html}</span>`;
       statsEl.innerHTML = [
-        item(client.age, 'Age: <b>' + client.age + '</b>'),
-        item(client.heightCm, 'Height: <b>' + client.heightCm + 'cm</b>'),
-        item(displayWeight, 'Weight: <b>' + displayWeight + 'kg</b>' + (client.currentWeightKg && client.weightKg && client.currentWeightKg !== client.weightKg ? ' (was ' + client.weightKg + ')' : '')),
-        item(client.sex, 'Sex: <b>' + (String(client.sex).toLowerCase() === 'female' ? 'Female' : 'Male') + '</b>'),
-        (goal ? 'Goal: <b>' + goal + '</b>' : '')
+        item(profile.age, 'Age: <b>' + (profile.age || 'missing') + '</b>'),
+        item(profile.height, 'Height: <b>' + (profile.height ? profile.height + 'cm' : 'missing') + '</b>'),
+        item(displayWeight, 'Weight: <b>' + (displayWeight ? displayWeight + 'kg' : 'missing') + '</b>' + (client.currentWeightKg && client.weightKg && client.currentWeightKg !== client.weightKg ? ' (was ' + escapeHtml(client.weightKg) + ')' : '')),
+        item(profile.sex, 'Sex: <b>' + (profile.sex ? (profile.sex === 'female' ? 'Female' : 'Male') : 'missing') + '</b>'),
+        (goal ? 'Goal: <b>' + escapeHtml(goal) + '</b>' : '')
       ].filter(Boolean).join(' · ');
     }
   }
 
   // Prefill fallback fields from the profile so a partial profile still computes
-  const setIfEmpty = (id, v) => {
+  const setProfileValue = (id, v) => {
     const el = document.getElementById(id);
-    if (el && v && !el.value) el.value = v;
+    if (el && v) el.value = String(v);
   };
   if (client) {
-    setIfEmpty('tdee-age', client.age);
-    setIfEmpty('tdee-height', client.heightCm);
-    setIfEmpty('tdee-weight', client.currentWeightKg || client.weightKg);
-    setIfEmpty('tdee-sex', client.sex);
+    setProfileValue('tdee-age', profile.age);
+    setProfileValue('tdee-height', profile.height);
+    setProfileValue('tdee-weight', profile.weight);
+    setProfileValue('tdee-sex', profile.sex);
   }
   tdeeRecalc();
 }
@@ -17415,14 +17626,11 @@ function tdeeGetValues() {
     const n = el ? parseFloat(el.value) : NaN;
     return isFinite(n) && n > 0 ? n : NaN;
   };
-  let age = num('tdee-age'), height = num('tdee-height'), weight = num('tdee-weight');
-  if (client) {
-    if (!isFinite(age))    age = parseFloat(client.age);
-    if (!isFinite(height)) height = parseFloat(client.heightCm);
-    if (!isFinite(weight)) weight = parseFloat(client.weightKg);
-  }
-  let sex = document.getElementById('tdee-sex')?.value || '';
-  if (!sex && client) sex = client.sex || '';
+  const profile = _tdeeProfileStats(client);
+  const age = profile.age ?? num('tdee-age');
+  const height = profile.height ?? num('tdee-height');
+  const weight = profile.weight ?? num('tdee-weight');
+  const sex = profile.sex || document.getElementById('tdee-sex')?.value || '';
   const activity = parseFloat(document.getElementById('tdee-activity')?.value) || 1.55;
   return { age, height, weight, sex, activity };
 }
@@ -17432,7 +17640,8 @@ function tdeeRecalc() {
   const valEl = document.getElementById('tdee-result');
   const subEl = document.getElementById('tdee-bmr-line');
   const btn = document.getElementById('tdee-use-btn');
-  const valid = isFinite(v.age) && isFinite(v.height) && isFinite(v.weight) && !!v.sex;
+  const valid = v.age >= 10 && v.age <= 100 && v.height >= 100 && v.height <= 250
+    && v.weight >= 30 && v.weight <= 300 && ['male', 'female'].includes(v.sex);
   if (!valid) {
     if (valEl) { valEl.textContent = '—'; valEl.classList.add('zero'); }
     if (subEl) subEl.textContent = '';
@@ -18499,7 +18708,7 @@ function selectSimpleClient(uid) {
       <div class="nutr-simple-card-title">${escapeHtml(data.name)} — Today</div>
       <div style="padding:24px 0;text-align:center;color:var(--muted);font-size:12px;">
         No macro plan assigned yet.<br>
-        <a href="#" onclick="openNutritionTools();return false;" style="color:var(--gold);font-weight:600;">Assign one →</a>
+        <button class="coach-inline-link" type="button" onclick="openNutritionTools()" style="color:var(--gold);font-weight:600;">Assign one →</button>
       </div>`;
     return;
   }
@@ -19209,21 +19418,42 @@ function coachMarkAllRead() {
   } catch(_) {}
 }
 
-function toggleCoachNotifPanel() {
+function closeCoachNotifPanel() {
   const panel = document.getElementById('coach-notif-panel');
-  if (!panel) return;
-  coachNotifOpen = !coachNotifOpen;
-  panel.classList.toggle('open', coachNotifOpen);
+  const restoreFocus = panel?.contains(document.activeElement);
+  coachNotifOpen = false;
+  panel?.classList.remove('open');
+  const trigger = document.getElementById('coach-notif-btn');
+  trigger?.setAttribute('aria-expanded', 'false');
+  if (restoreFocus) trigger?.focus();
 }
 
-// Close panel when clicking outside
+function toggleCoachNotifPanel() {
+  const panel = document.getElementById('coach-notif-panel');
+  const trigger = document.getElementById('coach-notif-btn');
+  if (!panel || !trigger) return;
+  if (coachNotifOpen) { closeCoachNotifPanel(); return; }
+  coachNotifOpen = true;
+  panel.classList.add('open');
+  trigger.setAttribute('aria-expanded', 'true');
+  const anchor = trigger.getBoundingClientRect();
+  const nav = document.getElementById('coach-mobile-tabs')?.getBoundingClientRect();
+  const bottom = nav?.width ? Math.min(innerHeight - 8, nav.top - 8) : innerHeight - 8;
+  const below = bottom - anchor.bottom - 8;
+  const above = anchor.top - 16;
+  const opensBelow = below >= Math.min(panel.scrollHeight, 320) || below >= above;
+  panel.style.maxHeight = Math.max(48, Math.min(480, opensBelow ? below : above)) + 'px';
+  panel.style.top = (opensBelow ? anchor.bottom + 8 : Math.max(8, anchor.top - panel.offsetHeight - 8)) + 'px';
+}
+
+// Non-modal notifications support pointer dismissal and Escape without trapping focus.
 document.addEventListener('click', function(e) {
   const panel = document.getElementById('coach-notif-panel');
   const btn = document.getElementById('coach-notif-btn');
-  if (coachNotifOpen && panel && !panel.contains(e.target) && btn && !btn.contains(e.target)) {
-    coachNotifOpen = false;
-    panel.classList.remove('open');
-  }
+  if (coachNotifOpen && panel && !panel.contains(e.target) && btn && !btn.contains(e.target)) closeCoachNotifPanel();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && coachNotifOpen) { e.preventDefault(); closeCoachNotifPanel(); }
 });
 
 function getTimeAgo(date) {
@@ -19274,12 +19504,15 @@ setTimeout(applySidebarState, 100);
 
 // ── DARK MODE ──
 function applyDarkModeUI(isDark) {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
   const sw = document.getElementById('theme-switch');
   const icon = document.getElementById('theme-toggle-icon');
+  const row = document.querySelector('.theme-toggle-row');
   if (sw) sw.classList.toggle('on', isDark);
+  if (row) row.setAttribute('aria-checked', isDark ? 'true' : 'false');
   if (icon) icon.textContent = isDark ? '☀️' : '🌙';
   const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeColorMeta) themeColorMeta.setAttribute('content', isDark ? '#0c0c0c' : '#EDE8DC');
+  if (themeColorMeta) themeColorMeta.setAttribute('content', isDark ? '#111820' : '#F5F0E8');
 }
 function applyDarkModeState() {
   const isDark = document.documentElement.classList.contains('dark-mode');
@@ -19506,6 +19739,7 @@ setTimeout(applyDarkModeState, 100);
       btn.style.border   = active?'1px solid rgba(255,90,43,0.5)':'1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.08)';
       btn.style.background = active?'rgba(255,90,43,0.15)':'transparent';
       btn.style.color    = active?'#FF5A2B':'#555';
+      btn.classList.toggle('is-active', active);
     });
     drawChart(uid, mode);
   };
@@ -20671,14 +20905,16 @@ textarea:focus-visible, select:focus-visible,
 
  <style id="sw-update-styles">
   #sw-update-banner {
-   position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateY(-90px);
+   position: fixed; top: 12px; left: 50%; transform: translateX(-50%) translateY(calc(-100% - 24px));
    z-index: 10000; display: flex; align-items: center; gap: 14px;
    background: #1A1712; color: #EDE9E1; border: 1px solid rgba(255,255,255,0.12);
-   border-radius: 14px; padding: 10px 10px 10px 18px; font-family: 'Inter', sans-serif;
+   border-radius: 14px; padding: 10px 10px 10px 18px; font-family: 'Manrope', sans-serif;
    font-size: 13px; font-weight: 600; box-shadow: 0 12px 40px rgba(0,0,0,0.45);
-   transition: transform 0.35s cubic-bezier(.16,1,.3,1); max-width: calc(100vw - 24px);
+   transition: transform 0.35s cubic-bezier(.16,1,.3,1), opacity 0.2s ease;
+   max-width: calc(100vw - 24px);
+   opacity: 0; pointer-events: none;
   }
-  #sw-update-banner.show { transform: translateX(-50%) translateY(0); }
+  #sw-update-banner.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
   #sw-update-banner button {
    background: #FF5A2B; border: none; color: #fff; font-weight: 700; font-size: 12px;
    padding: 7px 14px; border-radius: 9px; cursor: pointer; font-family: inherit;
@@ -20689,5 +20925,6 @@ textarea:focus-visible, select:focus-visible,
    <button onclick="location.reload()">Reload</button>
   </div>
   </div>
+  <link rel="stylesheet" href="coach-ui.css?v=9">
   </body>
   </html>
