@@ -5969,6 +5969,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </form>
       </div>
       <div class="modal-panel" id="mp-logs">
+        <div class="coach-history-heading"><h3>Workout history</h3><p>Latest 30 sessions. Open a session for exercise pictures and set-by-set results.</p></div>
         <!-- View + Metric toggles -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px" class="log-toolbar">
           <div class="log-seg" style="display:flex;gap:4px">
@@ -9319,6 +9320,8 @@ async function loadClientLogs(uid) {
   });
   try {
     const snap = await db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get();
+    await window._evolveWorkoutsLoad;
+    if (currentModalUid !== uid) return;
     renderModalStreak(snap.docs.map(d => d.data()));
     // Cache for loadClientCheckins to reuse
     window._checkinWlCache = window._checkinWlCache || {};
@@ -9334,42 +9337,15 @@ async function loadClientLogs(uid) {
       const btnId = 'log-btn-' + idx;
       const hasDetail = l.exercises && l.exercises.length > 0;
 
-      // Build per-exercise breakdown HTML
-      let detailHTML = '';
-      if (hasDetail) {
-        detailHTML = l.exercises.map(ex => {
-          const sets = ex.sets || [];
-          const doneSets = sets.filter(s => s.done);
-          const setRows = sets.map((s, si) => {
-            const isDone = s.done;
-            const sUnit = s.weightUnit || 'kg';
-            const wt = s.weight > 0 ? (s.weightDisplay !== undefined ? s.weightDisplay : s.weight) + ' ' + sUnit : '—';
-            const rp = s.reps > 0 ? s.reps : '—';
-            return `<tr class="${isDone ? 'set-done' : 'set-skipped'}">
-              <td><span class="${isDone ? 'log-set-done-badge' : 'log-set-skip-badge'}"></span>Set ${si+1}</td>
-              <td>${wt}</td>
-              <td>${rp}</td>
-              <td style="color:${isDone ? 'var(--green)' : 'var(--text3)'};font-size:10px;letter-spacing:0.5px">${isDone ? 'DONE' : 'SKIP'}</td>
-            </tr>`;
-          }).join('');
-          return `<div class="log-ex-detail-block">
-            <div class="log-ex-detail-name">${ex.name||'Exercise'} <span style="font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0">${doneSets.length}/${sets.length} sets</span></div>
-            <table class="log-set-detail-table">
-              <thead><tr><th>Set</th><th>Weight</th><th>Reps</th><th>Status</th></tr></thead>
-              <tbody>${setRows}</tbody>
-            </table>
-            ${ex.note ? '<div style="font-size:11px;color:var(--muted);margin-top:4px;padding-left:4px">Note: ' + ex.note + '</div>' : ''}
-          </div>`;
-        }).join('');
-      }
+      const detailHTML = hasDetail ? buildSumExDetail(l) : '';
 
       html += `<tr class="log-summary-row" onclick="${hasDetail ? 'toggleLogDetail(\'' + rowId + '\',\'' + btnId + '\')' : ''}">
-        <td><button class="log-expand-btn" id="${btnId}" style="${hasDetail ? '' : 'visibility:hidden'}">▼</button></td>
-        <td>${fmtDate(l.completedAt)}</td>
-        <td style="font-weight:500">${l.workoutName||'—'}</td>
-        <td>${l.totalSets||0}</td>
-        <td>${l.totalReps||0}</td>
-        <td>${l.totalVolumeDisplay !== undefined ? l.totalVolumeDisplay : (l.totalVolume||0)} ${l.weightUnit||'kg'}</td>
+        <td><button type="button" class="log-expand-btn" id="${btnId}" aria-label="View exercises for ${escapeAttr(l.workoutName || 'Workout')} on ${escapeAttr(fmtDate(l.completedAt))}" aria-expanded="false" aria-controls="${rowId}" ${hasDetail ? '' : 'disabled'}>›</button></td>
+        <td class="coach-session-date">${escapeHtml(fmtDate(l.completedAt))}</td>
+        <td class="coach-session-name">${escapeHtml(l.workoutName||'Workout')}<small>${l.exercises?.length || 0} exercises · View breakdown</small></td>
+        <td data-label="Sets">${escapeHtml(l.totalSets||0)}</td>
+        <td data-label="Reps">${escapeHtml(l.totalReps||0)}</td>
+        <td data-label="Volume">${escapeHtml(l.totalVolumeDisplay !== undefined ? l.totalVolumeDisplay : (l.totalVolume||0))} ${escapeHtml(l.weightUnit||'kg')}</td>
         <td><span class="log-badge done">Completed</span></td>
       </tr>`;
 
@@ -9396,6 +9372,7 @@ async function loadClientLogs(uid) {
       }
     });
     tbody.innerHTML = html;
+    if (snap.docs[0]?.data().exercises?.length) toggleLogDetail('log-detail-0', 'log-btn-0');
 
     // Fix shortDate: if multiple sessions share a dayKey, append time to distinguish them
     const dayCounts = {};
@@ -9419,7 +9396,7 @@ function toggleLogDetail(rowId, btnId) {
   if (!row) return;
   const isOpen = row.classList.contains('open');
   row.classList.toggle('open', !isOpen);
-  if (btn) btn.classList.toggle('open', !isOpen);
+  if (btn) { btn.classList.toggle('open', !isOpen); btn.setAttribute('aria-expanded', String(!isOpen)); }
 }
 
 // ─────────────────────────────────────────
@@ -10123,6 +10100,8 @@ async function loadClientCheckins(uid) {
       mlDocs = mlFresh.docs.map(d => d.data());
     }
 
+    await window._evolveWorkoutsLoad;
+    if (currentModalUid !== uid) return;
     const ciDocs = ciSnap.docs.map(d => d.data());
     // wlDocs and mlDocs are already mapped above
 
@@ -10171,7 +10150,7 @@ async function loadClientCheckins(uid) {
       if (!lv) return '';
       return `<div style="background:rgba(var(--line-r),var(--line-g),var(--line-b),0.03);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.07);border-radius:10px;padding:10px 12px;text-align:center;min-width:70px;flex:1">
         <div style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px">${lbl}</div>
-        <div style="font-size:18px;font-family:'Syne',sans-serif;font-weight:700;color:var(--gold);line-height:1">${lv.val}${unit}</div>
+        <div style="font-size:18px;font-family:'Syne',sans-serif;font-weight:700;color:var(--gold);line-height:1">${escapeHtml(lv.val)}${unit}</div>
       </div>`;
     };
 
@@ -10227,7 +10206,7 @@ async function loadClientCheckins(uid) {
           <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Nutrition</div>${stars(lNu?.val)}</div>
           <div><div style="font-size:10px;color:var(--muted);margin-bottom:4px">Workout Feel</div>${stars(lWo?.val)}</div>
          </div>
-         ${lNo?`<div style="margin-top:12px;padding:10px 12px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.02);border-radius:10px;font-size:12px;color:var(--text);line-height:1.5;border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.05)">${lNo.val}</div>`:''}`
+         ${lNo?`<div style="margin-top:12px;padding:10px 12px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.02);border-radius:10px;font-size:12px;color:var(--text);line-height:1.5;border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.05)">${escapeHtml(lNo.val)}</div>`:''}`
       : '<span style="color:var(--muted);font-size:12px">No wellness data recorded</span>';
 
     // ════════════════════════════
@@ -10369,7 +10348,7 @@ async function loadClientCheckins(uid) {
             <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.03);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.06);border-radius:10px;${i===0?'border-color:rgba(255,90,43,0.25);background:rgba(255,90,43,0.04);':''}">
               <div style="font-size:13px;width:22px;text-align:center">${i===0?'🥇':i===1?'🥈':i===2?'🥉':'💪'}</div>
               <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+                <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}</div>
                 <div style="font-size:10px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.35);margin-top:1px">${rec.date}</div>
               </div>
               <div style="text-align:right;flex-shrink:0">
@@ -10411,7 +10390,7 @@ async function loadClientCheckins(uid) {
           ${exProgressEntries.map(([name],i)=>`
             <button onclick="showExProgress('${exProgressUID}',${i})" id="${exProgressUID}_tab_${i}" class="${i===0?'is-active':''}"
               style="padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;${i===0?'background:#FF5A2B;color:#0A0A0A;border:none':'background:rgba(var(--line-r),var(--line-g),var(--line-b),0.05);color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.5);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.1)'}">
-              ${name}
+              ${escapeHtml(name)}
             </button>`).join('')}
         </div>
         <div id="${exProgressUID}_chart" style="position:relative;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:14px 14px 16px;overflow:visible">
@@ -10591,19 +10570,29 @@ async function loadClientCheckins(uid) {
     // ════════════════════════════
     //  RENDER
     // ════════════════════════════
-    const latestDate = ciDocs[0]?.date || wlDocs[0]?.date || 'No check-ins yet';
+    const latestWorkout = wlDocs[0];
+    const latestWorkoutDate = latestWorkout ? (latestWorkout.completedAt ? fmtDate(latestWorkout.completedAt) : latestWorkout.date || 'Date unavailable') : 'No workouts yet';
+    const summarySets = wlDocs.reduce((sum, w) => sum + (Number(w.totalSets) || 0), 0);
     const srcLabel   = ciDocs[0]?.source==='client' ? 'Client' : 'Coach';
 
     wrap.innerHTML = `
       <div class="sum-head">
         <div>
-          <div class="sum-head-date">${latestDate}</div>
-          <div class="sum-head-meta">${ciDocs.length} check-ins · ${wlDocs.length} workouts · ${mlDocs.length} meal entries</div>
+          <div class="coach-summary-eyebrow">Client progress</div>
+          <div class="sum-head-date">Training overview</div>
+          <div class="sum-head-meta">Latest workout: ${escapeHtml(latestWorkoutDate)}${latestWorkout ? ' · ' + escapeHtml(latestWorkout.workoutName || 'Workout') : ''}</div>
         </div>
         ${ciDocs.length?`<span class="sum-source${ciDocs[0]?.source==='client'?' is-client':''}">${srcLabel}</span>`:''}
       </div>
+      <div class="coach-summary-stats">
+        <div><span>Workouts</span><strong>${wlDocs.length}</strong><small>Latest 30 sessions</small></div>
+        <div><span>Sets logged</span><strong>${summarySets.toLocaleString()}</strong><small>Across loaded sessions</small></div>
+        <div><span>Meal entries</span><strong>${mlDocs.length}</strong><small>Latest 30 entries</small></div>
+        <div><span>Check-ins</span><strong>${ciDocs.length}</strong><small>${ciDocs[0]?.date ? 'Latest: ' + escapeHtml(ciDocs[0].date) : 'Not submitted yet'}</small></div>
+      </div>
       ${section('Workout Performance', '🏋️', workoutContent)}
-      ${section('Nutrition', '🥗', nutritionContent)}`;
+      ${section('Nutrition', '🥗', nutritionContent)}
+      ${ciDocs.length ? section('Body measurements', '', bodyContent) + section('Recovery & wellness', '', wellnessContent) : ''}`;
 
     // Register nutrition chart after DOM is updated
     if (typeof nutrChartUid !== 'undefined' && window.nutrChartRegister) {
@@ -10938,23 +10927,27 @@ window.wlSumToggleDetail = function(detailId, arrowId) {
   }
 };
 
+function coachLogExerciseHeading(ex, index, done, total) {
+  const name = ex.name || 'Exercise';
+  const media = _getWorkoutsRaw()[_normalizeExName(name.replace(/[()]/g, ' '))];
+  const thumbnail = media?.t && /^https:\/\//i.test(media.t) ? media.t : '';
+  return `<div class="coach-exercise-head">
+    <div class="coach-exercise-picture">
+      <span class="coach-picture-fallback">${thumbnail ? 'Preview unavailable' : 'No preview'}</span>
+      ${thumbnail ? `<img src="${escapeAttr(thumbnail)}" alt="${escapeAttr(name)} demonstration" width="112" height="84" loading="lazy" decoding="async" onerror="this.hidden=true">` : ''}
+    </div>
+    <div class="coach-exercise-title"><span class="coach-exercise-number">Exercise ${index + 1}</span><h4>${escapeHtml(name)}</h4>${ex.detail ? `<p>${escapeHtml(ex.detail)}</p>` : ''}<span class="coach-exercise-count">${done} of ${total} sets completed</span></div>
+    <span class="coach-exercise-status ${done === total && total ? 'is-complete' : ''}">${done === total && total ? 'Complete' : 'Partial'}</span>
+  </div>`;
+}
+
 function buildSumExDetail(doc) {
   var exercises = doc.exercises || [];
   if (!exercises.length) return '<div style="padding:16px 4px;font-size:12px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3);text-align:center">No exercise breakdown recorded for this session</div>';
 
-  // Per-set units are stored on each set; doc.weightUnit is 'kg' (normalized total)
-  // We'll read per-set unit from s.weightUnit in the loop.
-
-  // Session-level summary bar
-  var totalExVol = 0;
-  exercises.forEach(function(ex) {
-    (ex.sets||[]).forEach(function(s){ if(s.done && s.weight>0 && s.reps>0) totalExVol += s.weight*s.reps; });
-  });
-
   var exCards = exercises.map(function(ex, exIdx) {
     var sets     = ex.sets || [];
     var doneSets = sets.filter(function(s){ return s.done; });
-    var skipSets = sets.filter(function(s){ return !s.done; });
     var doneCount = doneSets.length;
     var totalCount = sets.length;
     var pct = totalCount > 0 ? Math.round((doneCount/totalCount)*100) : 0;
@@ -10967,11 +10960,10 @@ function buildSumExDetail(doc) {
     var exVol = 0;
     doneSets.forEach(function(s){
       if(s.weight>0&&s.reps>0) {
-        var displayW = s.weightDisplay !== undefined ? s.weightDisplay : s.weight;
-        exVol += displayW*s.reps;
+        exVol += s.weight*s.reps;
       }
     });
-    var exUnit = (doneSets[0] && doneSets[0].weightUnit) || 'kg';
+    var exUnit = 'kg';
 
     // Completion color
     var pctColor = pct===100 ? '#4ade80' : pct>=50 ? '#FF5A2B' : '#f87171';
@@ -10990,30 +10982,18 @@ function buildSumExDetail(doc) {
           (isBest ? '<span style="color:#FF5A2B;margin-right:4px" title="Best set">★</span>' : '') +
           'Set '+(si+1) +
         '</td>' +
-        '<td style="padding:7px 10px;font-size:12px;color:var(--text);font-weight:700">'+wt+'</td>' +
-        '<td style="padding:7px 10px;font-size:12px;color:var(--text)">'+rp+' reps</td>' +
+        '<td style="padding:7px 10px;font-size:12px;color:var(--text);font-weight:700">'+escapeHtml(wt)+'</td>' +
+        '<td style="padding:7px 10px;font-size:12px;color:var(--text)">'+escapeHtml(rp)+' reps</td>' +
         '<td style="padding:7px 10px;font-size:11px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.4)">'+(setVol ? setVol+' '+sUnitLabel : '—')+'</td>' +
         '<td style="padding:7px 10px;text-align:right">' +
-          '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;'+(s.done?'background:rgba(74,222,128,0.12);color:#4ade80':'background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);color:rgba(var(--line-r),var(--line-g),var(--line-b),0.2)')+'">'+(s.done?'✓':'✗')+'</span>' +
+          '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;'+(s.done?'background:rgba(74,222,128,0.12);color:#4ade80':'background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04);color:rgba(var(--line-r),var(--line-g),var(--line-b),0.2)')+'">'+(s.done?'Done':'Skipped')+'</span>' +
         '</td>' +
       '</tr>';
     }).join('');
 
-    return '<div style="background:rgba(var(--line-r),var(--line-g),var(--line-b),0.03);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.07);border-radius:12px;padding:14px 16px;margin-bottom:10px">' +
+    return '<div class="coach-exercise-card" style="background:rgba(var(--line-r),var(--line-g),var(--line-b),0.03);border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.07);border-radius:12px;padding:14px 16px;margin-bottom:10px">' +
 
-      // Exercise header
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px">' +
-        '<div style="min-width:0">' +
-          '<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">'+(ex.name||'Exercise')+'</div>' +
-          (ex.detail ? '<div style="font-size:10px;color:var(--muted)">'+ex.detail+'</div>' : '') +
-        '</div>' +
-        '<div style="display:flex;gap:6px;flex-shrink:0;align-items:center">' +
-          '<div style="text-align:center">' +
-            '<div style="font-size:16px;font-weight:800;color:'+pctColor+';font-family:\'Syne\',sans-serif;line-height:1">'+pct+'%</div>' +
-            '<div style="font-size:9px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.3);text-transform:uppercase;letter-spacing:0.5px">done</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
+      coachLogExerciseHeading(ex, exIdx, doneCount, totalCount) +
 
       // Completion bar
       '<div style="height:3px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.06);border-radius:100px;margin-bottom:12px;overflow:hidden">' +
@@ -11038,19 +11018,19 @@ function buildSumExDetail(doc) {
 
       // Sets table
       '<div style="overflow:hidden;border-radius:8px;border:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.06)">' +
-        '<table style="width:100%;border-collapse:collapse">' +
+        '<table class="coach-set-table" style="width:100%;border-collapse:collapse">' +
           '<thead><tr style="background:rgba(var(--line-r),var(--line-g),var(--line-b),0.04)">' +
             '<th style="padding:6px 10px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--line-r),var(--line-g),var(--line-b),0.25);text-align:left;font-weight:600">Set</th>' +
             '<th style="padding:6px 10px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--line-r),var(--line-g),var(--line-b),0.25);text-align:left;font-weight:600">Weight</th>' +
             '<th style="padding:6px 10px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--line-r),var(--line-g),var(--line-b),0.25);text-align:left;font-weight:600">Reps</th>' +
-            '<th style="padding:6px 10px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--line-r),var(--line-g),var(--line-b),0.25);text-align:left;font-weight:600">Vol</th>' +
+            '<th style="padding:6px 10px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:rgba(var(--line-r),var(--line-g),var(--line-b),0.25);text-align:left;font-weight:600">Volume</th>' +
             '<th style="padding:6px 10px;"></th>' +
           '</tr></thead>' +
           '<tbody>'+setRows+'</tbody>' +
         '</table>' +
       '</div>' +
 
-      (ex.note ? '<div style="margin-top:10px;padding:8px 12px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.03);border-radius:8px;font-size:11px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.5);line-height:1.5;border-left:2px solid rgba(255,90,43,0.3)">NOTE: &nbsp; '+ex.note+'</div>' : '') +
+      (ex.note ? '<div style="margin-top:10px;padding:8px 12px;background:rgba(var(--line-r),var(--line-g),var(--line-b),0.03);border-radius:8px;font-size:11px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.5);line-height:1.5;border-left:2px solid rgba(255,90,43,0.3)">NOTE: &nbsp; '+escapeHtml(ex.note)+'</div>' : '') +
 
     '</div>';
   }).join('');
@@ -11220,7 +11200,7 @@ window.setWLView = function(chartUid, view) {
       rowsHTML += `
         <tr onclick="wlSumToggleDetail('${detailId}','${arrowId}')" style="border-bottom:1px solid rgba(var(--line-r),var(--line-g),var(--line-b),0.05);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(var(--line-r),var(--line-g),var(--line-b),0.03)'" onmouseleave="this.style.background='transparent'">
           <td style="padding:9px 10px;font-size:12px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.55)">${d}</td>
-          <td style="padding:9px 10px;font-size:12px;font-weight:600;color:var(--text)">${w.workoutName||'Workout'}</td>
+          <td style="padding:9px 10px;font-size:12px;font-weight:600;color:var(--text)">${escapeHtml(w.workoutName||'Workout')}</td>
           <td style="padding:9px 10px;font-size:12px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.7);text-align:right">${w.totalSets||0}</td>
           <td style="padding:9px 10px;font-size:12px;color:rgba(var(--ink-r),var(--ink-g),var(--ink-b),0.7);text-align:right">${w.totalReps||0}</td>
           <td style="padding:9px 10px;font-size:12px;font-weight:700;color:#FF5A2B;text-align:right">${(w.totalVolumeDisplay !== undefined ? w.totalVolumeDisplay : (w.totalVolume||0)).toLocaleString()} ${w.weightUnit||'kg'}</td>
@@ -20925,6 +20905,6 @@ textarea:focus-visible, select:focus-visible,
    <button onclick="location.reload()">Reload</button>
   </div>
   </div>
-  <link rel="stylesheet" href="coach-ui.css?v=9">
+  <link rel="stylesheet" href="coach-ui.css?v=10">
   </body>
   </html>

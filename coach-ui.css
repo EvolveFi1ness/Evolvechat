@@ -3718,3 +3718,65 @@ html.evolve-ui body .notif-close { width: 40px; min-height: 40px; flex-shrink: 0
 #client-details-error{color:var(--red,#c93932);font-size:13px;line-height:1.5}
 .client-details-actions{justify-content:flex-end}
 @media(max-width:540px){.client-details-fields{grid-template-columns:1fr}.client-details-actions button{flex:1}}
+
+/* Readable training reviews share the same exercise cards in Logs and Summary. */
+.coach-history-heading h3{font-size:22px;margin:0 0 6px}
+.coach-history-heading p{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 20px}
+html.evolve-ui body #m-log-table .coach-session-name{font-size:14px!important;font-weight:700;color:var(--text)!important;min-width:150px}
+.coach-session-name small{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:5px}
+html.evolve-ui body #m-log-table .log-expand-btn{width:36px!important;height:36px!important;font-size:22px!important}
+html.evolve-ui body #m-log-table td.log-detail-cell{padding:16px!important;text-align:left!important}
+.coach-exercise-card{text-align:left;color:var(--text);overflow:hidden}
+.coach-exercise-head{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.coach-exercise-picture{position:relative;flex:0 0 112px;width:112px;height:84px;background:var(--bg3);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center}
+.coach-picture-fallback{font-size:11px;color:var(--muted);text-align:center;padding:6px}
+.coach-exercise-picture img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+.coach-exercise-picture img[hidden]{display:none!important}
+.coach-exercise-title{flex:1;min-width:0}
+.coach-exercise-number{display:block;color:var(--gold);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+.coach-exercise-title h4{font-family:var(--font-body);font-size:16px;line-height:1.35;margin:0 0 5px;overflow-wrap:anywhere;text-transform:none;letter-spacing:0}
+.coach-exercise-title p{font-size:12px;color:var(--muted);margin:0 0 4px}
+.coach-exercise-count{font-size:12px;color:var(--muted)}
+.coach-exercise-status{font-size:10px;border:1px solid var(--border);border-radius:20px;padding:5px 9px;white-space:nowrap;color:var(--muted)}
+.coach-exercise-status.is-complete{background:rgba(30,160,95,.1);color:var(--green)}
+html.evolve-ui body .coach-set-table th,html.evolve-ui body .coach-set-table td{text-align:left!important;padding:10px!important;font-size:12px!important;color:var(--text)!important}
+html.evolve-ui body .coach-set-table th{font-size:10px!important;color:var(--muted)!important}
+html.evolve-ui body .coach-set-table tr:last-child td{border-bottom:0!important}
+.coach-summary-eyebrow{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+.coach-summary-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.coach-summary-stats>div{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:16px;min-width:0}
+.coach-summary-stats span,.coach-summary-stats small{display:block;color:var(--muted);font-size:11px;line-height:1.4}
+.coach-summary-stats strong{display:block;font-size:28px;color:var(--text);font-variant-numeric:tabular-nums;margin:6px 0}
+.coach-summary-stats>div:first-child{border-top:3px solid var(--gold)}
+@media(max-width:650px){
+ .coach-summary-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .coach-exercise-head{gap:10px;flex-wrap:wrap}
+ .coach-exercise-picture{flex-basis:80px;width:80px;height:72px}
+ .coach-exercise-title h4{font-size:14px}
+ .coach-exercise-status{margin-left:auto}
+ html.evolve-ui body .coach-set-table th,html.evolve-ui body .coach-set-table td{padding:8px 5px!important;font-size:11px!important}
+ html.evolve-ui body #m-log-table{display:block;border:0!important;overflow:visible!important}
+ #m-log-table>thead{display:none}
+ #m-log-body{display:block}
+ #m-log-body>.log-summary-row{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;padding:12px;margin-bottom:10px;background:var(--bg3);border:1px solid var(--border);border-radius:12px}
+ html.evolve-ui body #m-log-table>.log-summary-row td{border:0!important}
+ html.evolve-ui body #m-log-body>.log-summary-row>td{padding:6px!important;border:0!important;min-width:0}
+ #m-log-body>.log-summary-row>td:first-child{position:absolute;right:8px;top:8px}
+ #m-log-body>.log-summary-row>.coach-session-date{grid-column:1/-1;margin-right:38px}
+ #m-log-body>.log-summary-row>.coach-session-name{grid-column:1/-1;min-width:0!important;overflow-wrap:anywhere}
+ #m-log-body>.log-summary-row>[data-label]::before{content:attr(data-label);display:block;font-size:10px;color:var(--muted);margin-bottom:4px}
+ #m-log-body>.log-summary-row>td:last-child{grid-column:1/-1}
+ #m-log-body>.log-detail-row.open{display:block}
+ html.evolve-ui body #m-log-body>.log-detail-row>td{display:block;padding:0!important;border:0!important;background:transparent!important}
+ .coach-exercise-card{padding:12px!important}
+}
+
+@media(max-width:650px){
+ .coach-set-table th:nth-child(4),.coach-set-table td:nth-child(4){display:none}
+ .coach-set-table td:nth-child(2){white-space:nowrap}
+}
+
+html.evolve-ui[data-theme="dark"] body #client-modal .modal-tab{color:var(--evolve-text-secondary)!important}
+html.evolve-ui[data-theme="dark"] body #client-modal .modal-tab.active{color:var(--evolve-text-primary)!important;border-bottom-color:var(--gold)!important}
+html.evolve-ui[data-theme="dark"] body #m-checkin-summary button{color:var(--evolve-text-secondary)!important}
+html.evolve-ui[data-theme="dark"] body #m-checkin-summary button.is-active{color:#151d27!important;background:var(--gold)!important}
