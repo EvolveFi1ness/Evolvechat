@@ -5908,7 +5908,7 @@ img, video, iframe { max-width: 100%; }
  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
  <link rel="icon" type="image/png" href="icons/icon-192.png">
  <link rel="manifest" href="manifest-client.json">
- <link rel="stylesheet" href="app-ui.css?v=20">
+ <link rel="stylesheet" href="app-ui.css?v=21">
 </head>
  <body>
 
@@ -8181,12 +8181,12 @@ async function loadHomeScreen(data) {
  } catch(e) {}
  // Personal edits take priority on refresh while the coach's plan is unchanged.
  const assignedWorkout = WORKOUTS[todayName] || null;
- const w = assignedWorkout && (_restoredCustomWkt || assignedWorkout);
+ const w = _restoredCustomWkt || assignedWorkout;
  todayWorkout = w ? { dayName: todayName, ...w } : null;
 
  if (w && w.exercises?.length) {
   // Has an assigned workout for today
-  document.getElementById('workout-day').textContent  = todayName;
+  document.getElementById('workout-day').textContent  = w.dayName || todayName;
   document.getElementById('workout-name').textContent = w.name || 'Workout';
   document.getElementById('workout-badge').textContent = w.exercises.length + ' exercise' + (w.exercises.length !== 1 ? 's' : '');
   document.getElementById('exercise-list-preview').innerHTML = w.exercises.map((ex,i) => {
@@ -8756,7 +8756,7 @@ async function buildWorkoutLogger(workout) {
  // (can happen when loadHomeScreen is called twice in quick succession e.g. initial load + onSnapshot)
  if (window._buildLoggerToken === undefined) window._buildLoggerToken = 0;
  const myToken = ++window._buildLoggerToken;
- workout = { ...workout, exercises: (workout.exercises || []).map(ex => ({ ...ex, exerciseId: getExerciseId(ex) })) };
+ workout = { ...workout, exercises: (workout?.exercises || []).map(ex => ({ ...ex, exerciseId: getExerciseId(ex) })) };
 
  const container = document.getElementById('log-exercises-container');
  container.innerHTML = '';
@@ -9439,14 +9439,14 @@ function saveLoggerState() {
    if (localStorage.getItem(definitionKey) !== definition) safeLocalStorageSet(definitionKey, definition);
   }
   const timerElapsed = _wktStartTime ? Math.floor((Date.now() - _wktStartTime) / 1000) : 0;
-  safeLocalStorageSet(_loggerStorageKey(), JSON.stringify({
+  return safeLocalStorageSet(_loggerStorageKey(), JSON.stringify({
    exercises, timerElapsed, weightUnit: workoutWeightUnit,
    // Identity tag for the workout this session belongs to, used on restore
    // to detect a plan change instead of blindly overlaying stale data.
    workoutName: (todayWorkout && todayWorkout.name)  || '',
    dayName:   (todayWorkout && todayWorkout.dayName) || ''
   }));
- } catch(e) { /* localStorage unavailable — silent fail */ }
+ } catch(e) { return false; }
 }
 
 function restoreLoggerState() {
@@ -16037,7 +16037,7 @@ document.getElementById('log-tpl-picker-modal').addEventListener('click', functi
   <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;">
    <div>
     <div style="font-size:16px;font-weight:800;color:var(--text);font-family:'Syne',sans-serif;letter-spacing:-0.3px;">My Weekly Plan</div>
-    <div style="font-size:12px;color:var(--text2);margin-top:2px;font-family:'Outfit',sans-serif;">Missed a day? Open it below and log it whenever you're ready</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:2px;font-family:'Outfit',sans-serif;">Choose any assigned day, including a missed workout. Switching keeps your progress on this device.</div>
    </div>
    <button onclick="closeAssignedPlanModal()" style="background:rgba(255,255,255,0.07);border:none;color:#888;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
   </div>
@@ -16171,7 +16171,7 @@ function renderAssignedPlanModal() {
     ${exRows}
     <button onclick="event.stopPropagation();startAssignedPlanDay('${safeDay}')" style="margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 16px;background:${doneToday ? 'rgba(255,255,255,0.05)' : 'rgba(61,203,114,0.15)'};border:1px solid ${doneToday ? 'rgba(255,255,255,0.14)' : 'rgba(61,203,114,0.35)'};border-radius:11px;color:${doneToday ? '#ccc' : '#3DCB72'};font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">
      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${doneToday ? '<polyline points="20 6 9 17 4 12"/>' : '<polygon points="5 3 19 12 5 21 5 3"/>'}</svg>
-     ${doneToday ? 'View Completed Workout' : (isToday ? 'Log This Workout' : 'Log This Workout Now')}
+     ${doneToday ? 'View Completed Workout' : (todayWorkout?.dayName === day ? 'Resume Workout' : 'Log This Workout')}
     </button>
    </div>
   </div>`;
@@ -16182,38 +16182,59 @@ function renderAssignedPlanModal() {
 // catch up on a day they missed, even if it isn't today. Completion is still
 // recorded against the real current timestamp, so the coach sees exactly
 // when it was actually done.
+let _assignedPlanSwitchBusy = false;
 async function startAssignedPlanDay(day) {
- const plan = (typeof WORKOUTS !== 'undefined') ? WORKOUTS : {};
- const w = plan[day];
- if (!w || !w.exercises || !w.exercises.length) return;
-
- // If a different workout is already active/in-progress, confirm first so
- // unsaved sets aren't silently lost.
- const hasActiveDifferent = todayWorkout && todayWorkout.exercises?.length && todayWorkout.dayName !== day;
- if (hasActiveDifferent) {
-  const confirmed = await showConfirmDialog({
-   title: 'Switch workout?',
-   message: `Loading ${day}'s workout will replace what's currently in Log Workout. Anything not yet saved will be lost.`,
-   confirmText: 'Switch',
-   cancelText: 'Cancel'
-  });
-  if (!confirmed) return;
+ const uid = currentUid || auth?.currentUser?.uid;
+ const w = WORKOUTS?.[day];
+ if (!uid || !w?.exercises?.length || _assignedPlanSwitchBusy) return;
+ if (!window._editingLogId && todayWorkout?.dayName === day && document.querySelector('.log-ex-card')) {
+  closeAssignedPlanModal(); setTab('log'); return;
  }
-
- closeAssignedPlanModal();
- if (typeof clearLoggerState === 'function') clearLoggerState();
-
- todayWorkout = { dayName: day, ...w };
- const dayBadge = document.getElementById('log-day-badge');
- if (dayBadge) dayBadge.textContent = day;
- const logSub = document.getElementById('log-sub');
- if (logSub) logSub.textContent = w.name || 'Workout';
- const barName = document.getElementById('wkt-bar-name');
- if (barName) barName.textContent = w.name || 'Workout';
-
- setTab('log');
- await buildWorkoutLogger(todayWorkout);
- showToast(`Loaded ${w.name || day + "'s Workout"} — log it now to catch up`, 'success');
+ _assignedPlanSwitchBusy = true;
+ try {
+  const hasCurrent = todayWorkout?.exercises?.length && document.querySelector('.log-ex-card') && !document.querySelector('.wkt-done-inline-banner');
+  if (hasCurrent || window._editingLogId) {
+   const confirmed = await showConfirmDialog({
+    title: 'Switch workout?',
+    message: window._editingLogId ? 'Leave the history editor? Unsaved changes to that saved workout will be discarded.' : `Open ${day}'s workout? Your current progress will stay on this device so you can return to it.`,
+    confirmText: 'Switch', cancelText: 'Cancel'
+   });
+   if (!confirmed || uid !== currentUid) return;
+  }
+  const draftsKey = _workoutStorageKey('evolve_weekly_drafts_' + phIsoDate());
+  let drafts;
+  try { drafts = JSON.parse(localStorage.getItem(draftsKey) || '{}'); } catch (_) { drafts = {}; }
+  if (!drafts || typeof drafts !== 'object' || Array.isArray(drafts)) drafts = {};
+  const sourcePlan = _stableStringify(window._lastHomeData?.assignedWorkoutPlan || WORKOUTS);
+  if (hasCurrent && !window._editingLogId) {
+   if (!saveLoggerState()) { showToast('Could not keep your current progress. Free some device storage and try again.', 'error'); return; }
+   drafts[todayWorkout.dayName || 'Custom'] = { workout: todayWorkout, logger: localStorage.getItem(_loggerStorageKey()) };
+   const encoded = JSON.stringify(drafts);
+   safeLocalStorageSet(draftsKey, encoded);
+   if (localStorage.getItem(draftsKey) !== encoded) { showToast('Could not keep your current progress. Free some device storage and try again.', 'error'); return; }
+  }
+  const draft = drafts[day];
+  const canResume = draft?.workout?.sourceAssignedPlan === sourcePlan;
+  const nextWorkout = canResume ? draft.workout : { ...w, dayName: day, sourceAssignedPlan: sourcePlan, exercises: w.exercises.map(ex => ({ ...ex, exerciseId: getExerciseId(ex) })) };
+  const definitionKey = _workoutStorageKey('evolve_custom_wkt_' + phIsoDate());
+  const definition = JSON.stringify(nextWorkout);
+  safeLocalStorageSet(definitionKey, definition);
+  if (localStorage.getItem(definitionKey) !== definition) { showToast('Could not save this workout on your device. Please try again.', 'error'); return; }
+  if (window._editingLogId) exitEditMode();
+  stopWktTimer(); _wktStartTime = null;
+  window._workoutLoggingActive = false;
+  window._buildLoggerToken = (window._buildLoggerToken || 0) + 1;
+  try { localStorage.removeItem(_loggerStorageKey()); } catch (_) {}
+  if (canResume && draft.logger) safeLocalStorageSet(_loggerStorageKey(), draft.logger);
+  todayWorkout = nextWorkout;
+  closeAssignedPlanModal(); setTab('log');
+  await buildWorkoutLogger(todayWorkout);
+  if (uid !== currentUid) return;
+  if (!document.querySelector('.wkt-done-inline-banner')) saveLoggerState();
+  showToast(canResume ? 'Workout resumed — your progress is restored.' : `Loaded ${w.name || day + "'s workout"}. Completion will be recorded on the day you finish.`, 'success');
+ } finally {
+  _assignedPlanSwitchBusy = false;
+ }
 }
 </script>
 

@@ -507,3 +507,10 @@ html.evolve-ui body .coach-preview { border-left: 3px solid var(--gold); }
 
 html.evolve-ui body .exrow-video-trigger { display: block; flex-shrink: 0; padding: 0; border: 0; border-radius: 10px; background: transparent; cursor: pointer; }
 html.evolve-ui body .exrow-video-trigger:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* Weekly-plan actions follow the same themed controls as the logger. */
+html.evolve-ui body #assigned-plan-list div[style*="color:#ddd"]{color:var(--evolve-text-primary)!important;white-space:normal!important}
+html.evolve-ui body #assigned-plan-list button[onclick*="startAssignedPlanDay"]{background:var(--evolve-orange)!important;color:#fff!important;border-color:var(--evolve-orange)!important;min-height:44px}
+html.evolve-ui[data-theme="dark"] body #assigned-plan-list button[onclick*="startAssignedPlanDay"]{color:var(--evolve-bg)!important}
+
+html.evolve-ui body #assigned-plan-list button[onclick*="startAssignedPlanDay"] svg{stroke:currentColor!important}
