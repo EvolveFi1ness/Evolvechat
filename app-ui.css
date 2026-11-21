@@ -514,3 +514,47 @@ html.evolve-ui body #assigned-plan-list button[onclick*="startAssignedPlanDay"]{
 html.evolve-ui[data-theme="dark"] body #assigned-plan-list button[onclick*="startAssignedPlanDay"]{color:var(--evolve-bg)!important}
 
 html.evolve-ui body #assigned-plan-list button[onclick*="startAssignedPlanDay"] svg{stroke:currentColor!important}
+
+/* UI/UX Master refresh: presentation only; navigation keeps its existing contract. */
+html.evolve-ui body :is(.page-title,.greeting-name,.progress-photos-title,.wkt-page-title){font-family:var(--font-body)!important;font-weight:700!important;letter-spacing:-.035em!important;line-height:1.12!important}
+html.evolve-ui body .greeting-name{font-size:clamp(2rem,3.6vw,3rem)!important}
+html.evolve-ui body :is(.page-title,.progress-photos-title,.wkt-page-title){font-size:clamp(1.75rem,2.8vw,2.5rem)!important}
+html.evolve-ui body :is(.greeting-sub,.page-sub){font-size:.9375rem!important;max-width:60ch;line-height:1.6!important}
+html.evolve-ui body :is(#tab-home-panel .section-label,.section-title,.card-title){font-size:.9375rem!important;font-weight:600!important;line-height:1.4!important;text-transform:none!important;letter-spacing:0!important}
+html.evolve-ui body :is(.workout-card,.bmi-card,.activity-feed,.home-photo-strip-wrap,.log-ex-card,.pp-section){border-radius:18px!important;border-color:var(--evolve-border-strong)!important;box-shadow:var(--evolve-panel-shadow)!important}
+html.evolve-ui body .quick-action-btn{justify-content:flex-start!important;gap:12px!important;padding:16px 20px!important;border:1px solid var(--evolve-border-strong)!important;border-radius:14px!important;background:var(--evolve-bg-raised)!important}
+html.evolve-ui body .quick-action-label{font-size:.875rem!important;font-weight:600!important}
+html.evolve-ui body #tab-home-panel .stat-strip .stat-box{display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center;gap:8px!important;padding:20px 24px!important;background:var(--evolve-bg-raised)!important;border:1px solid var(--evolve-border-strong)!important;border-radius:16px!important}
+html.evolve-ui body #tab-home-panel .stat-strip .stat-box .s-val{font-family:var(--font-body)!important;font-size:2rem!important;font-weight:700!important;line-height:1.1!important;letter-spacing:-.04em;color:var(--evolve-text-primary)!important;-webkit-text-fill-color:currentColor!important;text-shadow:none!important}
+html.evolve-ui body #tab-home-panel .stat-strip .stat-box .s-lbl{font-size:.8125rem!important;line-height:1.4!important;color:var(--evolve-text-secondary)!important}
+html.evolve-ui body .workout-card .workout-card-header{padding:28px!important;border-bottom-style:solid!important;border-bottom-color:var(--evolve-border-strong)!important}
+html.evolve-ui body .workout-card #workout-name{font-family:var(--font-body)!important;font-size:clamp(1.375rem,2.4vw,1.875rem)!important;font-weight:700!important;line-height:1.25!important;letter-spacing:-.025em!important}
+html.evolve-ui body .workout-card .workout-day{font-size:.6875rem!important;letter-spacing:.12em!important}
+html.evolve-ui body .exercise-row-preview{padding:16px 20px!important;gap:12px!important}
+html.evolve-ui body .exercise-row-preview .ex-name{font-size:.9375rem!important;font-weight:600!important;line-height:1.4!important;white-space:normal!important}
+html.evolve-ui body .workout-card-footer{padding:20px!important;background:var(--evolve-bg-raised)!important}
+html.evolve-ui body .start-btn{min-height:48px!important;border-radius:12px!important;font-size:.875rem!important}
+html.evolve-ui body .log-ex-header{padding:20px!important;background:var(--evolve-bg-raised)!important;border-bottom:1px solid var(--evolve-border)!important}
+html.evolve-ui body .log-ex-name{font-size:1rem!important;font-weight:600!important;line-height:1.4!important;white-space:normal!important}
+html.evolve-ui body .log-ex-target-badge{border-radius:8px!important;background:var(--evolve-orange-glow)!important;border-color:var(--evolve-border)!important;font-size:.75rem!important}
+html.evolve-ui body .auth-story h1{font-family:var(--font-body)!important;font-size:clamp(2.25rem,4.2vw,4rem)!important;font-weight:700!important;line-height:1.05!important;letter-spacing:-.045em!important;max-width:12ch}
+html.evolve-ui body .auth-story p{font-size:1rem!important;line-height:1.7!important;max-width:42ch}
+html.evolve-ui body :is(.auth-card,.auth-box){border-radius:24px!important;border:1px solid var(--evolve-border-strong)!important;box-shadow:var(--evolve-panel-shadow)!important}
+html.evolve-ui body .coach-preview{border:1px solid var(--evolve-border-strong)!important;border-radius:14px!important;padding:16px!important}
+@media(max-width:640px){
+ html.evolve-ui body #tab-home-panel .stat-strip .stat-box{padding:16px!important;gap:6px!important}
+ html.evolve-ui body #tab-home-panel .stat-strip .stat-box .s-val{font-size:1.75rem!important}
+ html.evolve-ui body .workout-card .workout-card-header{padding:22px 18px!important}
+ html.evolve-ui body .exercise-row-preview{padding:14px 16px!important}
+ html.evolve-ui body .quick-action-btn{padding:12px!important;gap:8px!important}
+ html.evolve-ui body .quick-action-label{font-size:.75rem!important}
+ html.evolve-ui body .log-ex-header{padding:16px!important}
+}
+@media(hover:hover) and (prefers-reduced-motion:no-preference){
+ html.evolve-ui body :is(.quick-action-btn,.client-card){transition:transform 160ms ease-out,box-shadow 160ms ease-out!important}
+ html.evolve-ui body .quick-action-btn:hover{transform:translateY(-2px);box-shadow:var(--evolve-panel-shadow)!important}
+}
+
+html.evolve-ui body #tab-home-panel .home-photo-view-all{color:var(--evolve-text-primary)!important;text-decoration:underline;text-decoration-color:var(--evolve-orange);text-underline-offset:3px}
+html.evolve-ui body #tab-home-panel .home-photo-view-all:hover{color:var(--evolve-text-primary)!important;opacity:1!important;text-decoration:underline;text-underline-offset:3px}
+html.evolve-ui body .exercise-row-preview .exrow-vid-btn{color:var(--evolve-orange)!important;background:var(--evolve-bg-sunken)!important;border-color:var(--evolve-border-strong)!important}

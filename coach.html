@@ -4448,7 +4448,7 @@ html.dark-mode .wk-modal-pill.active {
   color: #EDE9E1 !important;
 }
 </style>
- <link rel="stylesheet" href="app-ui.css?v=21">
+ <link rel="stylesheet" href="app-ui.css?v=22">
 </head>
 <body>
 
@@ -9303,7 +9303,9 @@ function switchModalTab(tab) {
   }
 }
 
+let _clientLogsRequest = 0;
 async function loadClientLogs(uid) {
+  const request = ++_clientLogsRequest;
   const tbody = document.getElementById('m-log-body');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr>';
   // Reset chart state
@@ -9323,7 +9325,7 @@ async function loadClientLogs(uid) {
   try {
     const snap = await db.collection('members').doc(uid).collection('workoutLogs').orderBy('completedAt','desc').limit(30).get();
     await window._evolveWorkoutsLoad;
-    if (currentModalUid !== uid) return;
+    if (currentModalUid !== uid || request !== _clientLogsRequest) return;
     renderModalStreak(snap.docs.map(d => d.data()));
     // Cache for loadClientCheckins to reuse
     window._checkinWlCache = window._checkinWlCache || {};
@@ -9388,6 +9390,7 @@ async function loadClientLogs(uid) {
       }
     });
   } catch(e) {
+    if (currentModalUid !== uid || request !== _clientLogsRequest) return;
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:20px">Couldn't load workout logs${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}<br><button onclick="loadClientLogs('${uid}')" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></td></tr>`;
   }
 }
@@ -9683,22 +9686,21 @@ function drawLogChart() {
 let _foodLogChart = null;
 window._foodLogsCache = window._foodLogsCache || {};
 
+let _clientFoodRequest = 0;
 async function loadClientFoodLogs(uid) {
+  const request = ++_clientFoodRequest;
   // Fire the Chart.js lazy load early so the chart paints as soon as data lands
-  ensureLibsLoaded('chart').catch(() => {});
-  // Serve from cache if available
-  if (window._foodLogsCache[uid]) {
-    const container = document.getElementById('m-food-body');
-    if (container && window._foodLogsCache[uid].html) {
-      container.innerHTML = window._foodLogsCache[uid].html;
-      return;
-    }
-  }
+  const chartReady = ensureLibsLoaded('chart').catch(() => false);
   const container = document.getElementById('m-food-body');
   container.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
   try {
-    const snap = await db.collection('members').doc(uid).collection('mealLogs')
+    // shortcut: cache one minute; use live snapshots if immediate cross-device freshness is required.
+    const cached = window._foodLogsCache[uid];
+    const reusable = cached?.snap && Date.now() - cached.time < 60000;
+    const snap = reusable ? cached.snap : await db.collection('members').doc(uid).collection('mealLogs')
       .orderBy('date','desc').limit(100).get();
+    if (currentModalUid !== uid || request !== _clientFoodRequest) return;
+    if (!reusable) window._foodLogsCache[uid] = { snap, time: Date.now() };
     // Cache for loadClientCheckins to reuse
     window._checkinMlCache = window._checkinMlCache || {};
     window._checkinMlCache[uid] = snap.docs.map(d => d.data());
@@ -9720,14 +9722,14 @@ async function loadClientFoodLogs(uid) {
     function getFoodName(e) { return e.food_name || e.mealName || e.name || ''; }
 
     // Group items by date → meal slot
-    const byDate = {};
+    const byDate = Object.create(null);
     snap.docs.forEach(d => {
       const data = d.data();
       // Skip coach-assigned items not yet logged by client
       if (data.assignedByCoach) return;
       const date = data.date || 'Unknown';
       const slot = data.mealSlot || data.mealName || 'Meal';
-      if (!byDate[date]) byDate[date] = {};
+      if (!byDate[date]) byDate[date] = Object.create(null);
       if (!byDate[date][slot]) byDate[date][slot] = [];
       byDate[date][slot].push({ id: d.id, ...data });
     });
@@ -9804,7 +9806,7 @@ async function loadClientFoodLogs(uid) {
 
       html += `<div class="fl-day-group">
         <div class="fl-day-head">
-          <span class="fl-day-date">${date}</span>
+          <span class="fl-day-date">${escapeHtml(date)}</span>
           <span class="fl-day-kcal">${Math.round(dayCal)} kcal</span>
           <span class="fl-day-macros">P ${Math.round(dayProt)}g · C ${Math.round(dayCarb)}g · F ${Math.round(dayFat)}g</span>
         </div>`;
@@ -9822,13 +9824,13 @@ async function loadClientFoodLogs(uid) {
           const name = getFoodName(e);
           const cal  = Math.round(getCal(e));
           const srv  = e.servingG ? ` · ${e.servingG}g` : '';
-          return name ? `<div style="font-size:11px;color:var(--muted);padding:2px 0">${name}${srv} — ${cal} kcal</div>` : '';
+          return name ? `<div style="font-size:11px;color:var(--muted);padding:2px 0">${escapeHtml(name)}${escapeHtml(srv)} — ${cal} kcal</div>` : '';
         }).filter(Boolean).join('');
 
         html += `<div class="meal-log-entry">
           <div class="meal-log-header">
             <div>
-              <div class="meal-log-name">${slot}</div>
+              <div class="meal-log-name">${escapeHtml(slot)}</div>
               ${mealTime ? `<div class="meal-log-time">${mealTime}</div>` : ''}
             </div>
             <div style="text-align:right;font-size:12px;color:var(--gold);font-weight:700">${Math.round(mealCal)} kcal</div>
@@ -9848,12 +9850,16 @@ async function loadClientFoodLogs(uid) {
     // ── Store chart data on window for tab switching ──
     window._flChartData = { labels: chartLabels, cals: chartCals, prot: chartProt, carb: chartCarb, fat: chartFat };
 
-    // Cache the rendered HTML so reopening is instant
-    window._foodLogsCache[uid] = { html: container.innerHTML };
+    // Chart failure must not replace the food list.
+    await chartReady;
+    if (currentModalUid !== uid || request !== _clientFoodRequest) return;
 
     // ── Render Chart.js ──
     if (_foodLogChart) { _foodLogChart.destroy(); _foodLogChart = null; }
     const ctx = document.getElementById('fl-chart-canvas');
+    if (ctx && !window.Chart) {
+      ctx.insertAdjacentHTML('afterend', `<div class="coach-empty-text" role="status">Chart unavailable. <button class="coach-empty-btn" onclick="loadClientFoodLogs('${uid}')">Retry chart</button></div>`);
+    }
     if (ctx && window.Chart) {
       const savedType = window._flChartType || 'bar';
       _foodLogChart = new Chart(ctx, buildFoodLogChartConfig('calories', savedType));
@@ -9865,6 +9871,7 @@ async function loadClientFoodLogs(uid) {
     }
 
   } catch(e) {
+    if (currentModalUid !== uid || request !== _clientFoodRequest) return;
     container.innerHTML = `<div class="coach-empty is-error">
       <div class="coach-empty-title">Couldn't load food logs</div>
       <div class="coach-empty-text">${e.message ? escapeHtml(String(e.message).slice(0,140)) : 'Something went wrong while loading this tab.'}</div>
@@ -10082,7 +10089,9 @@ function switchFoodLogChartType(chartType) {
 // ─────────────────────────────────────────
 //  CHECK-IN TAB — Full Client Summary (body + lifts + nutrition)
 // ─────────────────────────────────────────
+let _clientSummaryRequest = 0;
 async function loadClientCheckins(uid) {
+  const request = ++_clientSummaryRequest;
   const wrap = document.getElementById('m-checkin-summary');
   wrap.innerHTML = '<div style="text-align:center;color:var(--muted);padding:28px">Loading summary…</div>';
   try {
@@ -10107,7 +10116,7 @@ async function loadClientCheckins(uid) {
     }
 
     await window._evolveWorkoutsLoad;
-    if (currentModalUid !== uid) return;
+    if (currentModalUid !== uid || request !== _clientSummaryRequest) return;
     const ciDocs = ciSnap.docs.map(d => d.data());
     // wlDocs and mlDocs are already mapped above
 
@@ -10620,6 +10629,7 @@ async function loadClientCheckins(uid) {
     }
 
   } catch(e) {
+    if (currentModalUid !== uid || request !== _clientSummaryRequest) return;
     wrap.innerHTML = `<div style="text-align:center;color:#f87171;padding:20px">Couldn't load check-in summary${e.message ? ' — ' + escapeHtml(String(e.message).slice(0,140)) : ''}<br><button onclick="loadClientCheckins('${uid}')" style="margin-top:10px;background:var(--gold);color:#0A0A0A;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;">Retry</button></div>`;
   }
 }
@@ -11539,27 +11549,20 @@ window.switchWorkoutChart = function(chartUid, metric) {
 //  EXPORT CLIENT DATA → DOCX
 //  Exports: Food Log + Workout Logs + Check-ins
 // ─────────────────────────────────────────
-let _libLoadPromise = null;
+const _libLoadPromises = {};
 function ensureLibsLoaded(which) {
-  const needDocx = (!which || which === 'docx') && !window.docx;
-  const needChart = (!which || which === 'chart') && !window.Chart;
-  if (!needDocx && !needChart) return Promise.resolve();
-  if (_libLoadPromise) return _libLoadPromise;
-  _libLoadPromise = Promise.all([
-    needDocx ? new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://unpkg.com/docx@7.8.2/build/index.js';
-      s.onload = resolve; s.onerror = () => reject(new Error('docx load failed'));
-      document.head.appendChild(s);
-    }) : Promise.resolve(),
-    needChart ? new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
-      s.onload = resolve; s.onerror = () => reject(new Error('chart.js load failed'));
-      document.head.appendChild(s);
-    }) : Promise.resolve()
-  ]).finally(() => { _libLoadPromise = null; });
-  return _libLoadPromise;
+  const libraries = { docx: 'https://unpkg.com/docx@7.8.2/build/index.js', chart: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js' };
+  return Promise.all((which ? [which] : ['docx', 'chart']).map(name => {
+    if (!libraries[name] || (name === 'chart' ? window.Chart : window.docx)) return Promise.resolve();
+    if (!_libLoadPromises[name]) _libLoadPromises[name] = withTimeout(new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = libraries[name];
+      script.onload = resolve;
+      script.onerror = () => reject(new Error(name + ' load failed'));
+      document.head.appendChild(script);
+    }), 10000, name + ' library').finally(() => { delete _libLoadPromises[name]; });
+    return _libLoadPromises[name];
+  }));
 }
 
 async function exportClientDocx() {
@@ -20911,6 +20914,6 @@ textarea:focus-visible, select:focus-visible,
    <button onclick="location.reload()">Reload</button>
   </div>
   </div>
-  <link rel="stylesheet" href="coach-ui.css?v=12">
+  <link rel="stylesheet" href="coach-ui.css?v=13">
   </body>
   </html>

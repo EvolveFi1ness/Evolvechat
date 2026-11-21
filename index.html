@@ -5908,7 +5908,7 @@ img, video, iframe { max-width: 100%; }
  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
  <link rel="icon" type="image/png" href="icons/icon-192.png">
  <link rel="manifest" href="manifest-client.json">
- <link rel="stylesheet" href="app-ui.css?v=21">
+ <link rel="stylesheet" href="app-ui.css?v=22">
 </head>
  <body>
 
@@ -7957,10 +7957,10 @@ async function handleLogin() {
   currentUid = cred.user.uid;
   // Mark client as online — set+merge works whether field exists or not
   try {
-   await db.collection('members').doc(currentUid).set({
+   db.collection('members').doc(currentUid).set({
     isOnline: true,
     lastLoginAt: firebase.firestore.FieldValue.serverTimestamp()
-   }, { merge: true });
+   }, { merge: true }).catch(presenceErr => console.error('[EVOLVE] handleLogin: presence write FAILED:', presenceErr.code, presenceErr.message));
    startPresenceHeartbeat();
    // FIX (JAVASCRIPT-K4-9): removed `subscribeChatUnread(user.uid)` — no
    // `user` variable exists in this scope (it lives in the auth-state
@@ -7973,6 +7973,7 @@ async function handleLogin() {
   }
   recordLoginEvent(currentUid, email, 'login');
   const doc = await db.collection('members').doc(currentUid).get();
+  if (currentUid !== cred.user.uid || auth.currentUser?.uid !== cred.user.uid) return;
   if (doc.exists) {
    const data = doc.data();
    // Block archived (or soft-deleted) clients immediately
@@ -8120,6 +8121,7 @@ function _stableStringify(obj) {
 }
 
 async function loadHomeScreen(data) {
+ const homeUid = currentUid || auth?.currentUser?.uid;
  window._lastHomeData = data || null;
  // NOTE: the archived/deleted mid-session check that used to live here in its
  // own listener now runs inside the workout-plan listener below — same doc, so
@@ -8217,6 +8219,7 @@ async function loadHomeScreen(data) {
   // moment the coach reassigned the plan — the Firestore log was never
   // deleted, but nothing on this screen pointed to it, so it looked "removed".
   const _todayLog = await checkAnyCompletionToday();
+  if (currentUid !== homeUid || auth?.currentUser?.uid !== homeUid) return true;
   if (_todayLog) {
    document.getElementById('workout-day').textContent  = todayName;
    document.getElementById('workout-name').textContent = _todayLog.workoutName || 'Workout';
@@ -8319,6 +8322,8 @@ async function loadHomeScreen(data) {
   }
  }
 
+ if (currentUid !== homeUid || auth?.currentUser?.uid !== homeUid) return;
+
  // Show log button + footer whenever there is a coach-assigned workout
  if (w && w.exercises?.length) {
   const startBtn = document.querySelector('.start-btn');
@@ -8390,6 +8395,7 @@ async function loadHomeScreen(data) {
  // Paint profile panel AFTER setTab so hidden display:none doesn't interfere
  try { if (typeof refreshProfileDisplay === 'function') refreshProfileDisplay(data); } catch(e) {}
  await loadPastLogs();
+ if (currentUid !== homeUid || auth?.currentUser?.uid !== homeUid) return;
  loadProgressPhotos();
  // Start realtime listener for workout plan changes from coach
  const uid = currentUid || auth?.currentUser?.uid;
@@ -8551,8 +8557,7 @@ async function checkTodayCompletion(workout) {
   }
   if (!todayLog) {
    // No Firestore log yet — fall back to local flag (post-save race condition)
-   const localFlag = getTodayCompletionFlag(workout?.dayName);
-   if (localFlag) { lockLoggerCards(); return true; }
+   // The caller must build and restore local rows before applying the completion lock.
    return false;
   }
   // Check if coach reassigned the plan AFTER this completion — if so, show fresh workout
@@ -8575,7 +8580,7 @@ async function checkTodayCompletion(workout) {
     const _sameWorkout = _loggedNames.size > 0 && _overlap === _loggedNames.size && _newNames.size === _loggedNames.size;
     if (!_sameWorkout) {
      // Genuinely a different/new workout for today — clear local flag and show it fresh
-     try { localStorage.removeItem(_workoutStorageKey('evolve_completed_' + todayFormatted)); } catch(e) {}
+     try { localStorage.removeItem(_workoutStorageKey('evolve_completed_' + phIsoDate())); } catch(e) {}
      return false;
     }
     // Same exercises as what was already completed — fall through and show the completed view.
@@ -8585,8 +8590,6 @@ async function checkTodayCompletion(workout) {
   return true;
  } catch(e) {
   console.warn('checkTodayCompletion error:', e);
-  const localFlag = getTodayCompletionFlag(workout?.dayName);
-  if (localFlag) { lockLoggerCards(); return true; }
   return false;
  }
 }
@@ -8597,12 +8600,18 @@ function showCompletedWorkoutView(workout, log) {
  const container = document.getElementById('log-exercises-container');
  container.innerHTML = '';
 
+ const restoring = window._loggerRestoring;
+ window._loggerRestoring = true;
+ try {
  const exercises = log.exercises || [];
  exercises.forEach((ex, exIdx) => {
   const accentColor = WKT_ACCENT_COLORS[exIdx % WKT_ACCENT_COLORS.length];
   const card = document.createElement('div');
   card.className = 'log-ex-card';
   card.dataset.exIdx = exIdx;
+  card.dataset.exerciseId = getExerciseId(ex);
+  const unit = ex.weightUnit || ex.sets?.find(set => set.weightUnit)?.weightUnit || 'kg';
+  card.dataset.weightUnit = unit === 'lbs' ? 'lbs' : 'kg';
   card.innerHTML = `
    <div class="log-ex-header">
     <div class="log-ex-color-bar" style="background:${accentColor};"></div>
@@ -8621,17 +8630,20 @@ function showCompletedWorkoutView(workout, log) {
     <div class="set-table-head">
      <div class="set-th">SET</div>
      <div class="set-th" style="text-align:left;padding-left:4px;">PREVIOUS</div>
-     <div class="set-th wku-col-header">KG</div>
+     <div class="set-th wku-col-header">${card.dataset.weightUnit.toUpperCase()}</div>
      <div class="set-th">REPS</div>
      <div class="set-th"></div>
     </div>
     <div class="sets-container" id="sets-${exIdx}"></div>
    </div>`;
   container.appendChild(card);
+  if (ex.note) card.insertAdjacentHTML('beforeend', `<div class="log-ex-coach-note">${escapeHtml(ex.note)}</div>`);
 
   // Populate sets from the log
   (ex.sets || []).forEach(s => {
-   addSet(exIdx, s.weight || '', s.reps || '', s.done);
+   const weight = s.weightDisplay != null && (s.weightUnit || card.dataset.weightUnit) === card.dataset.weightUnit
+    ? s.weightDisplay : card.dataset.weightUnit === 'lbs' ? Math.round((Number(s.weight) || 0) * 2.20462 * 100) / 100 : (s.weight || 0);
+   addSet(exIdx, String(weight), s.reps ?? '', s.done);
   });
  });
 
@@ -8644,6 +8656,7 @@ function showCompletedWorkoutView(workout, log) {
  if (chipSets) chipSets.textContent = 'Done today';
  const chipEx = document.getElementById('wkt-chip-ex');
  if (chipEx) chipEx.textContent = exercises.length + ' exercise' + (exercises.length !== 1 ? 's' : '');
+ } finally { window._loggerRestoring = restoring; }
 }
 
 // ── PREVIOUS column: lookup + background refresh ────────────────────────────
@@ -8952,6 +8965,7 @@ async function buildWorkoutLogger(workout) {
  });
 
  restoreLoggerState();
+ if (!window._editingLogId && getTodayCompletionFlag(workout.dayName)) { lockLoggerCards(); stopWktTimer(); }
 }
 
 // ─────────────────────────────────────────
@@ -16051,20 +16065,23 @@ document.getElementById('assigned-plan-modal').addEventListener('click', functio
  if (e.target === this) closeAssignedPlanModal();
 });
 
+let _assignedPlanTransitionTimer = null;
 function openAssignedPlanModal() {
+ clearTimeout(_assignedPlanTransitionTimer);
  const modal = document.getElementById('assigned-plan-modal');
  const sheet = document.getElementById('assigned-plan-sheet');
  if (!modal || !sheet) return;
  modal.style.display = 'flex';
- setTimeout(() => { sheet.style.transform = 'translateY(0)'; }, 10);
+ _assignedPlanTransitionTimer = setTimeout(() => { sheet.style.transform = 'translateY(0)'; }, 10);
  renderAssignedPlanModal();
 }
 
 function closeAssignedPlanModal() {
+ clearTimeout(_assignedPlanTransitionTimer);
  const sheet = document.getElementById('assigned-plan-sheet');
  if (!sheet) return;
  sheet.style.transform = 'translateY(100%)';
- setTimeout(() => {
+ _assignedPlanTransitionTimer = setTimeout(() => {
   const modal = document.getElementById('assigned-plan-modal');
   if (modal) modal.style.display = 'none';
  }, 320);
@@ -16101,6 +16118,14 @@ function _isAssignedDayDoneToday(dayName) {
   const flag = (typeof getTodayCompletionFlag === 'function') ? getTodayCompletionFlag(dayName) : null;
   return !!flag;
  } catch(e) { return false; }
+}
+
+// shortcut: drafts stay on this device/date; use server drafts for cross-device resume.
+function _weeklyWorkoutDrafts() {
+ try {
+  const value = JSON.parse(localStorage.getItem(_workoutStorageKey('evolve_weekly_drafts_' + phIsoDate())) || '{}');
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+ } catch (_) { return {}; }
 }
 
 function renderAssignedPlanModal() {
@@ -16176,6 +16201,10 @@ function renderAssignedPlanModal() {
    </div>
   </div>`;
  }).join('');
+ const custom = _weeklyWorkoutDrafts().Custom;
+ if (todayWorkout?.dayName !== 'Custom' && custom?.workout?.exercises?.length && custom.workout.sourceAssignedPlan === _stableStringify(window._lastHomeData?.assignedWorkoutPlan || WORKOUTS)) {
+  list.insertAdjacentHTML('beforeend', `<button type="button" class="btn" style="width:100%;margin-top:12px" onclick="startAssignedPlanDay('Custom')">Resume ${escapeHtml(custom.workout.name || 'custom workout')}</button>`);
+ }
 }
 
 // Loads a specific assigned day's workout into the logger so a client can
@@ -16185,7 +16214,10 @@ function renderAssignedPlanModal() {
 let _assignedPlanSwitchBusy = false;
 async function startAssignedPlanDay(day) {
  const uid = currentUid || auth?.currentUser?.uid;
- const w = WORKOUTS?.[day];
+ const drafts = _weeklyWorkoutDrafts();
+ const sourcePlan = _stableStringify(window._lastHomeData?.assignedWorkoutPlan || WORKOUTS);
+ const custom = day === 'Custom' && drafts.Custom?.workout?.sourceAssignedPlan === sourcePlan ? drafts.Custom.workout : null;
+ const w = WORKOUTS?.[day] || custom;
  if (!uid || !w?.exercises?.length || _assignedPlanSwitchBusy) return;
  if (!window._editingLogId && todayWorkout?.dayName === day && document.querySelector('.log-ex-card')) {
   closeAssignedPlanModal(); setTab('log'); return;
@@ -16202,10 +16234,6 @@ async function startAssignedPlanDay(day) {
    if (!confirmed || uid !== currentUid) return;
   }
   const draftsKey = _workoutStorageKey('evolve_weekly_drafts_' + phIsoDate());
-  let drafts;
-  try { drafts = JSON.parse(localStorage.getItem(draftsKey) || '{}'); } catch (_) { drafts = {}; }
-  if (!drafts || typeof drafts !== 'object' || Array.isArray(drafts)) drafts = {};
-  const sourcePlan = _stableStringify(window._lastHomeData?.assignedWorkoutPlan || WORKOUTS);
   if (hasCurrent && !window._editingLogId) {
    if (!saveLoggerState()) { showToast('Could not keep your current progress. Free some device storage and try again.', 'error'); return; }
    drafts[todayWorkout.dayName || 'Custom'] = { workout: todayWorkout, logger: localStorage.getItem(_loggerStorageKey()) };
@@ -16217,15 +16245,21 @@ async function startAssignedPlanDay(day) {
   const canResume = draft?.workout?.sourceAssignedPlan === sourcePlan;
   const nextWorkout = canResume ? draft.workout : { ...w, dayName: day, sourceAssignedPlan: sourcePlan, exercises: w.exercises.map(ex => ({ ...ex, exerciseId: getExerciseId(ex) })) };
   const definitionKey = _workoutStorageKey('evolve_custom_wkt_' + phIsoDate());
+  const oldDefinition = localStorage.getItem(definitionKey);
+  const loggerKey = _workoutStorageKey('evolve_logger_' + phIsoDate());
   const definition = JSON.stringify(nextWorkout);
   safeLocalStorageSet(definitionKey, definition);
   if (localStorage.getItem(definitionKey) !== definition) { showToast('Could not save this workout on your device. Please try again.', 'error'); return; }
+  if (canResume && draft.logger && !safeLocalStorageSet(loggerKey, draft.logger)) {
+   if (oldDefinition == null) localStorage.removeItem(definitionKey);
+   else safeLocalStorageSet(definitionKey, oldDefinition);
+   showToast('Could not restore that draft. Your current workout is still open.', 'error'); return;
+  }
   if (window._editingLogId) exitEditMode();
   stopWktTimer(); _wktStartTime = null;
   window._workoutLoggingActive = false;
   window._buildLoggerToken = (window._buildLoggerToken || 0) + 1;
-  try { localStorage.removeItem(_loggerStorageKey()); } catch (_) {}
-  if (canResume && draft.logger) safeLocalStorageSet(_loggerStorageKey(), draft.logger);
+  if (!canResume || !draft.logger) { try { localStorage.removeItem(loggerKey); } catch (_) {} }
   todayWorkout = nextWorkout;
   closeAssignedPlanModal(); setTab('log');
   await buildWorkoutLogger(todayWorkout);
